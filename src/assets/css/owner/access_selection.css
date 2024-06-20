@@ -1,0 +1,7 @@
+.access-selection .card{
+    transform: scale(1);
+}
+.access-selection .card:hover{
+    transform: scale(0.95);
+    /*transition: transform 0.5s ease-in-out;*/
+}
