@@ -1,63 +1,73 @@
-import React, { useEffect, useState } from 'react';
-import Breadcrumd from 'Components/Breadcrumd.tsx';
-import ShopFilters from 'Components/dashboard/shop/ShopFilters.tsx';
-import ProductList from 'Components/dashboard/shop/ProductList.tsx';
-import PaginationComponent from "Components/Pagination.tsx";
-import { IProduct, ISubCategory } from "Data/Interfaces/Supply.ts";
-import { IPaginationData } from "Interfaces";
-import ProductAPI from "Data/Api/Product.ts";
-import { ICategory } from "Data/Interfaces/Category.ts";
-import CategoryAPI from "Data/Api/Category.ts";
+import React, { useCallback, useEffect, useState } from 'react';
+import ShopFilters from '@/Components/dashboard/shop/ShopFilters';
+import ProductList from '@/Components/dashboard/shop/ProductList';
+import PaginationComponent from "@/Components/Pagination";
+import { IProduct, ISubCategory } from "@/Data/Interfaces/Supply";
+import ProductAPI from "@/Data/Api/Product";
+import { ICategory } from "@/Data/Interfaces/Category";
+import CategoryAPI from "@/Data/Api/Category";
+import LoaderFilter from "@/Components/loaders/LoaderFilter";
+import LoaderArticle from "@/Components/loaders/LoaderArticle";
+import { IPaginationData } from 'Interfaces';
 
-const ShopComponent: React.FC = () => {
+const ShopComponent: React.FC<{searchTerm: string}> = ({searchTerm}) => {
     const [products, setProducts] = useState<IProduct[]>([]);
     const [paginationData, setPaginationData] = useState<IPaginationData | null>(null);
-    const [searchTerm, setSearchTerm] = useState<string>('');
     const [categories, setCategories] = useState<ICategory[]>([]);
     const [selectedSubCategories, setSelectedSubCategories] = useState<ISubCategory[]>([]);
     const [priceRange, setPriceRange] = useState<string>('');
+    const [_status, setStatus] = useState<string>('');
+    const [loadingFilter, setLoadingFilter] = useState(false);
+    const [loadingProducts, setLoadingProducts] = useState(false);
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
-            fetchData();
+            getProducts();
         }, 300);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm, selectedSubCategories, priceRange]);
+    }, [searchTerm, selectedSubCategories, priceRange, _status]);
 
-    useEffect(() => {
-        (async () => {
-            try {
-                const { data: result } = await CategoryAPI.index();
-                setCategories(result.data);
-            } catch (e) {
-                console.error('SHOP PAGE: error related to categories loading' + e);
-            }
-        })();
+    const getCategories = useCallback(async () => {
+        try {
+            setLoadingFilter(true);
+            const { data: result } = await CategoryAPI.index();
+            setCategories(result.data);
+        } catch (e) {
+            console.error('SHOP PAGE: error related to categories loading', e);
+        } finally {
+            setLoadingFilter(false);
+        }
     }, []);
 
-    const fetchData = async (page: number = 1) => {
+    useEffect(() => {
+        getCategories();
+    }, [getCategories]);
+
+    const getProducts = useCallback(async (page: number = 1) => {
         try {
+            setLoadingProducts(true);
             const subCategoryIds = selectedSubCategories.map(sc => sc.id).join(',');
-            const { data: _products } = await ProductAPI.index(searchTerm, page, subCategoryIds, priceRange);
-            setProducts(_products.data);
-            delete _products.data;
-            setPaginationData(_products);
+            const { data: _products } = await ProductAPI.index(searchTerm, page, subCategoryIds, priceRange, _status);
+            if ('data' in _products && Array.isArray(_products.data)) {
+                setProducts(_products.data);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { data, ...paginationInfo } = _products;
+                setPaginationData(paginationInfo as IPaginationData);
+            }
         } catch (error) {
             console.error('Error fetching data:', error);
+        } finally {
+            setLoadingProducts(false);
         }
-    };
+    }, [searchTerm, selectedSubCategories, priceRange, _status]);
 
     const handlePageChange = async (page: number) => {
         try {
-            await fetchData(page);
+            await getProducts(page);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
-    };
-
-    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(event.target.value);
     };
 
     const handleSubCategoryChange = (subCategories: ISubCategory[]) => {
@@ -68,56 +78,56 @@ const ShopComponent: React.FC = () => {
         setPriceRange(priceRange);
     };
 
+    const handleStatusChange = (_status: string) => {
+        setStatus(_status);
+    };
+
     const handleResetFilters = () => {
         setSelectedSubCategories([]);
         setPriceRange('');
+        setStatus('');
     };
 
     return (
-        <div className="container">
-            <Breadcrumd parent="Shop" />
-            <div className="position-relative overflow-hidden">
-                <div className="shop-part d-flex w-100">
+      <div className="" style={{width: '90%', margin: 'auto'}}>
+          <div className="position-relative overflow-hidden">
+              <div className="shop-part d-flex w-100" style={{height:'fit-content!important'}}>
+                  {loadingFilter ? <LoaderFilter /> : (
                     <ShopFilters
-                        categories={categories}
-                        selectedSubCategories={selectedSubCategories}
-                        onSubCategoryChange={handleSubCategoryChange}
-                        onPriceChange={handlePriceChange}
-                        selectedPriceRange={priceRange}
-                        onResetFilters={handleResetFilters}
+                      categories={categories}
+                      selectedSubCategories={selectedSubCategories}
+                      onSubCategoryChange={handleSubCategoryChange}
+                      onPriceChange={handlePriceChange}
+                      selectedPriceRange={priceRange}
+                      onResetFilters={handleResetFilters}
+                      onStatusChange={handleStatusChange}
+                      selectedStatus={_status}
                     />
-                    <div className="card-body p-4 pb-0" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                        <div className="d-flex justify-content-between align-items-center gap-6 mb-4">
-                            <a
-                                className="btn btn-primary d-lg-none d-flex"
-                                data-bs-toggle="offcanvas"
-                                href="#filtercategory"
-                                role="button"
-                                aria-controls="filtercategory"
-                            >
-                                <i className="ti ti-menu-2 fs-6"></i>
-                            </a>
-                            <h5 className="fs-5 mb-0 d-none d-lg-block">Products</h5>
-                            <form className="position-relative">
-                                <input
-                                    type="text"
-                                    className="form-control search-chat py-2 ps-5"
-                                    id="text-srh"
-                                    placeholder="Search Product"
-                                    value={searchTerm}
-                                    onChange={handleSearchChange}
-                                />
-                                <i className="ti ti-search position-absolute top-50 start-0 translate-middle-y fs-6 text-dark ms-3"></i>
-                            </form>
+                  )}
+                  <div className="card-body pb-0 pt-2" style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      backgroundColor: "rgba(208,208,208,0.28)",
+                      marginLeft:"300px",
+                      height:"100vh"
+                  }}>
+                      {loadingProducts ? (
+                        <div className='row px-2'>
+                            {Array.from({length: 8}).map((_, index) => <LoaderArticle key={index}/>)}
                         </div>
-                        <ProductList products={products} />
-                        {paginationData && (
-                            <PaginationComponent paginationData={paginationData} onPageChange={handlePageChange} />
-                        )}
-                    </div>
-                </div>
-            </div>
-        </div>
+                      ) : (
+                        <div>
+                            <ProductList products={products}/>
+                        </div>
+                      )}
+                      {paginationData && (
+                        <PaginationComponent paginationData={paginationData} onPageChange={handlePageChange}/>
+                      )}
+                  </div>
+              </div>
+          </div>
+      </div>
     );
 };
 

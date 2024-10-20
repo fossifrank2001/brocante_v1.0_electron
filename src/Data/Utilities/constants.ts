@@ -15,10 +15,12 @@ enum LocalStorageKeys {
 
 const Constants = {
     AUTHOR: {
-        name: "Nozakap Fossi Frank Jordan",
+        name: "Nozakap FOSSI Frank Jordan",
         phone: "+237677831959",
     },
-    BASE_URL: "http://localhost:8001/api/v1",
+    BASE_URL: "http://localhost:8000/api/v1",
+    URL: "http://localhost:8000",
+    PER_PAGE: 15,
     APP_NAME: 'Brocante V1.0',
     defaultStoredValue: JSON.stringify({
         token: null,

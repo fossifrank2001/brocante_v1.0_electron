@@ -1,7 +1,7 @@
-import axiosInstance, { IApiResponse } from "Data/Utilities/axiosInstance";
+import axiosInstance, { IApiResponseBase, IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
 import Toast from "../Utilities/Toast";
 import {IProductPayload} from "Data/Interfaces/Product.ts";
-import {ISubCategory, ISupply} from "Data/Interfaces/Supply.ts";
+import { IProduct, ISubCategory, ISupply } from 'Data/Interfaces/Supply.ts';
 import constants from "Data/Utilities/constants.ts";
 
 
@@ -9,19 +9,27 @@ class ProductAPI {
 
     static STOCK = 'stock'
     static OUT_OF_STOCK = 'out-of-stock'
-    static async index(_q = '', page = 1, sub_categories='', price_between=''): Promise<IApiResponse> {
+    static async index(
+        _q = '',
+        page = 1,
+        sub_categories='',
+        price_between='',
+        status = ''
+    ): Promise<IApiResponsePaginated<IProduct>> {
+        // eslint-disable-next-line no-useless-catch
         try {
             const url = new URL(`${constants.BASE_URL}/products`);
             const filters = {
                 ...price_between !=='' && {price_between},
-                ...sub_categories !=='' && {sub_categories}
+                ...sub_categories !=='' && {sub_categories},
+                ...status !== '' && {status}
             };
             url.searchParams.set("start", `${(page - 1) * 3}`);
-            url.searchParams.set("per_page", String(3));
+            url.searchParams.set("per_page", String(constants.PER_PAGE));
             url.searchParams.set("filters", JSON.stringify(filters));
             url.searchParams.set("q", _q);
 
-            const response =await axiosInstance.get<IApiResponse>(url.href);
+            const response =await axiosInstance.get<IApiResponsePaginated<IProduct>>(url.href);
             return response.data;
         } catch (error) {
             throw error;
@@ -30,19 +38,21 @@ class ProductAPI {
 
 
 
-    static async show(product: number): Promise<IApiResponse> {
+    static async show(product: number): Promise<IApiResponseBase<IProduct>> {
+        // eslint-disable-next-line no-useless-catch
         try {
-            const response = await axiosInstance.get<IApiResponse>(`/products/${product}`);
+            const response = await axiosInstance.get<IApiResponseBase<IProduct>>(`/products/${product}`);
             return response.data;
         } catch (error) {
             throw error;
         }
     }
 
-    static async create(paylaod: Partial<IProductPayload>): Promise<IApiResponse> {
+    static async create(paylaod: Partial<IProductPayload>): Promise<IApiResponseBase<IProduct>> {
+        // eslint-disable-next-line no-useless-catch
         try {
             const newPayload = {...paylaod, subcategory_ids: paylaod.subcategory_ids.map(subCategory => subCategory.id)}
-            const response = await axiosInstance.post<IApiResponse>('/products', newPayload);
+            const response = await axiosInstance.post<IApiResponseBase<IProduct>>('/products', newPayload);
             Toast.success(response.data.message)
             return response.data;
         } catch (error) {
@@ -50,7 +60,8 @@ class ProductAPI {
         }
     }
 
-    static async update(id: number, paylaods): Promise<IApiResponse> {
+    static async update(id: number, paylaods): Promise<IApiResponseBase<IProduct>> {
+        // eslint-disable-next-line no-useless-catch
         try {
             for (const paylaod in paylaods) {
                 if(paylaod === 'subcategory_ids'){
@@ -65,7 +76,7 @@ class ProductAPI {
                 }
             }
 
-            const response = await axiosInstance.put<IApiResponse>(`/products/${id}`, paylaods);
+            const response = await axiosInstance.put<IApiResponseBase<IProduct>>(`/products/${id}`, paylaods);
             Toast.success(response.data.message)
             return response.data;
         } catch (error) {
@@ -73,7 +84,8 @@ class ProductAPI {
         }
     }
 
-    static async delete(product: number): Promise<IApiResponse> {
+    static async delete(product: number): Promise<IApiResponseBase<IProduct>> {
+        // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.delete(`/products/${product}`);
             return response.data;

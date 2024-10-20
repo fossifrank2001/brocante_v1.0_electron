@@ -3,6 +3,7 @@ import { useFormikContext } from 'formik';
 import { Multiselect } from 'multiselect-react-dropdown';
 import { ICategory, SubCategory } from 'Data/Interfaces/Category';
 import CategoryAPI from 'Data/Api/Category';
+import { IProductPayload } from 'Interfaces';
 
 interface IProductInfoProps{
     categoryRecord?: ICategory | null
@@ -11,7 +12,7 @@ const ProductInfo: React.FC<IProductInfoProps> = ({categoryRecord}) => {
     const [categories, setCategories] = useState<ICategory[] | null>(null);
     const [category, setCategory] = useState<ICategory | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const { values, handleChange, setFieldValue, touched, errors } = useFormikContext<any>();
+    const { values, handleChange, setFieldValue, touched, errors } = useFormikContext<IProductPayload>();
 
     const getCategories = useCallback(async () => {
         try {
@@ -34,6 +35,7 @@ const ProductInfo: React.FC<IProductInfoProps> = ({categoryRecord}) => {
         getCategories();
     }, [getCategories, categoryRecord]);
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     return (
         <div className="row">
             <div className="col-12 mx-auto">
@@ -104,26 +106,27 @@ const ProductInfo: React.FC<IProductInfoProps> = ({categoryRecord}) => {
                             <label htmlFor="category">Category</label>
                             <div className="input-group">
                                 <select
-                                    className="form-select"
-                                    disabled={isLoading}
-                                    id="category"
-                                    name="category"
-                                    value={values.category || category || ''}
-                                    onChange={(e) => {
-                                        const selectedCategoryId = e.target.value;
-                                        handleChange(e);
-                                        const selectedCategory = categories?.find(category => String(category.id) === selectedCategoryId) || null;
-                                        if(selectedCategory === null || selectedCategoryId === ''){
-                                            setCategory(null);
-                                            setFieldValue('subcategory_ids', [])
-                                        }else{
-                                            setCategory(selectedCategory);
-                                        }
-                                    }}
+                                  className="form-select"
+                                  disabled={isLoading}
+                                  id="category"
+                                  name="category"
+                                  value={values.category || ''}
+                                  onChange={(e) => {
+                                      const selectedCategoryId = e.target.value;
+                                      handleChange(e);
+                                      const selectedCategory = categories?.find(category => String(category.id) === selectedCategoryId) || null;
+
+                                      if (selectedCategory === null || selectedCategoryId === '') {
+                                          setCategory(null);
+                                          setFieldValue('subcategory_ids', []);
+                                      } else {
+                                          setCategory(selectedCategory);
+                                      }
+                                  }}
                                 >
                                     <option value="" label="Select a Category" />
                                     {categories?.map(_category => (
-                                        <option key={_category.id} value={_category.id  ?? category?.id} label={_category.label} selected={_category.id === category?.id} />
+                                      <option key={_category.id} value={_category.id.toString()} label={_category.label} />
                                     ))}
                                 </select>
                             </div>
@@ -132,20 +135,25 @@ const ProductInfo: React.FC<IProductInfoProps> = ({categoryRecord}) => {
                     <div className="col-8 mb-3">
                         <label htmlFor="subcategory_ids">Sub Categories</label>
                         <Multiselect
-                            options={category?.sub_categories || []}
-                            selectedValues={values.subcategory_ids}
-                            onSelect={(selectedList: SubCategory[]) => setFieldValue('subcategory_ids', selectedList)}
-                            onRemove={(selectedList: SubCategory[]) => setFieldValue('subcategory_ids', selectedList)}
-                            displayValue="label"
-                            className=""
-                            disable={!!!category}
+                          options={category?.sub_categories || []}
+                          selectedValues={values.subcategory_ids}
+                          onSelect={(selectedList: SubCategory[]) => setFieldValue('subcategory_ids', selectedList)}
+                          onRemove={(selectedList: SubCategory[]) => setFieldValue('subcategory_ids', selectedList)}
+                          displayValue="label"
+                          className=""
+                          disable={!category}
                         />
                         {touched.subcategory_ids && errors.subcategory_ids && (
-                            <div className="text fs-10 text-danger d-flex align-items-center">
-                                <i className="ti ti-alert-circle me-2"></i>
-                                <span>{errors.subcategory_ids}</span>
-                            </div>
+                          <div className="text fs-10 text-danger d-flex align-items-center">
+                              <i className="ti ti-alert-circle me-2"></i>
+                              <span>
+                                    {Array.isArray(errors.subcategory_ids)
+                                      ? errors.subcategory_ids.map(error => error.label || 'Error').join(', ')
+                                      : errors.subcategory_ids}
+                              </span>
+                          </div>
                         )}
+
                     </div>
                     <div className="col-12 mb-3">
                         <div className="form-group">

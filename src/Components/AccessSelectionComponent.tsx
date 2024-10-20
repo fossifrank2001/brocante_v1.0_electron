@@ -1,12 +1,14 @@
-import {useState} from 'react';
 import logo from "../assets/images/logos/dark-logo.svg";
 import {Link, Typography} from "@mui/material";
 import '@/assets/css/owner/access_selection.css';
 import {useAppContext} from "../contexts/appContext";
 import PageLoadingIndicator from "./PageLoadingIndicator";
-import { IAccess } from '@/Data/Interfaces';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import {IAccess} from '@/Data/Interfaces';
+import {useAppDispatch, useAppSelector} from '@/hooks';
+import {setActivePage} from "Data/Slices/NavigationSlice.ts";
+import {Pages} from "Data/Objects/state.ts";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const icons = {
     ADMIN: "ti ti-settings",
     SELLER: "ti ti-user-circle"
@@ -39,7 +41,9 @@ export default function AccessSelectionComponent() {
             const { loadAuthorizationAsync } = await import('Data/Slices/auth/authorizationSlice');
             await dispatch(loadAuthorizationAsync({ access_id }));
         } catch (e) {
+            console.log(e)
         } finally {
+            context.togglePageLoading(false);
         }
     };
 
@@ -49,6 +53,22 @@ export default function AccessSelectionComponent() {
              data-sidebar-position="fixed" data-header-position="fixed">
             <div
                 className="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center">
+            <span className='d-flex btn text-white bg-primary align-items-center justify-content-center cursor-pointer'
+                  style={{
+                      width:'35px',
+                      height: '35px',
+                      borderRadius:'50%',
+                      position: 'absolute',
+                      top: '10px',
+                      left: '10px'
+                  }}
+                  onClick={() =>{
+                      context.togglePageLoading(true);
+                      dispatch(setActivePage({page: Pages.SHOP}))
+                  }}
+            >
+                <i className='ti ti-arrow-left'></i>
+            </span>
                 <div className="d-flex align-items-center justify-content-center w-100">
                     <div className="row flex-column justify-content-center w-100">
                         <Link href="#" className="text-nowrap logo-img text-center d-block py-3 w-100" style={{transform: "scale(1.5)"}}>

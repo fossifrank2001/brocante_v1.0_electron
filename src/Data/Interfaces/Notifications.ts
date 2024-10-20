@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 export interface INotification{
     id: number;
     type: number;
@@ -16,4 +18,10 @@ interface IData{
     nature: Tnature
     message: string
     item: string
+}
+
+export interface INotificationTableData extends Omit<INotification, 'type'> {
+    type: Tnature;
+    status: string;
+    actions: ReactNode;
 }

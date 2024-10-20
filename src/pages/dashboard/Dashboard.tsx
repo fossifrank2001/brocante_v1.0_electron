@@ -43,7 +43,8 @@ export default function Dashboard() {
                                         <h4 className="fw-semibold mb-3">$36,358</h4>
                                         <div className="d-flex align-items-center mb-3">
                                             <span
-                                                  className="me-1 rounded-circle bg-light-success round-20 d-flex align-items-center justify-content-center">
+                                                  className="me-1 rounded-circle bg-light-success
+                                                  round-20 d-flex align-items-center justify-content-center">
                                                 <i className="ti ti-arrow-up-left text-success"></i>
                                             </span>
                                             <p className="text-dark me-1 fs-3 mb-0">+9%</p>
@@ -52,12 +53,14 @@ export default function Dashboard() {
                                         <div className="d-flex align-items-center">
                                             <div className="me-4">
                                                 <span
-                                                    className="round-8 bg-primary rounded-circle me-2 d-inline-block"></span>
+                                                    className="round-8 bg-primary
+                                                    rounded-circle me-2 d-inline-block"></span>
                                                 <span className="fs-2">2023</span>
                                             </div>
                                             <div>
                                                 <span
-                                                    className="round-8 bg-light-primary rounded-circle me-2 d-inline-block"></span>
+                                                    className="round-8 bg-light-primary
+                                                    rounded-circle me-2 d-inline-block"></span>
                                                 <span className="fs-2">2023</span>
                                             </div>
                                         </div>
@@ -80,7 +83,8 @@ export default function Dashboard() {
                                         <h4 className="fw-semibold mb-3">$6,820</h4>
                                         <div className="d-flex align-items-center pb-1">
                                               <span
-                                                  className="me-2 rounded-circle bg-light-danger round-20 d-flex align-items-center justify-content-center">
+                                                  className="me-2 rounded-circle bg-light-danger
+                                                  round-20 d-flex align-items-center justify-content-center">
                                                 <i className="ti ti-arrow-down-right text-danger"></i>
                                               </span>
                                             <p className="text-dark me-1 fs-3 mb-0">+9%</p>
@@ -90,7 +94,8 @@ export default function Dashboard() {
                                     <div className="col-4">
                                         <div className="d-flex justify-content-end">
                                             <div
-                                                className="text-white bg-secondary rounded-circle p-6 d-flex align-items-center justify-content-center">
+                                                className="text-white bg-secondary rounded-circle
+                                                p-6 d-flex align-items-center justify-content-center">
                                                 <i className="ti ti-currency-dollar fs-6"></i>
                                             </div>
                                         </div>

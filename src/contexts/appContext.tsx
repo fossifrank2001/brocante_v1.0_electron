@@ -36,6 +36,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
 };
 
 // Create a custom hook to use the context
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAppContext = (): AppContextType => {
     const context = useContext(AppContext);
     if (!context) {

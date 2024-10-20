@@ -8,6 +8,7 @@ import { Pages } from '@/Data/Objects/state';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { useAppDispatch } from '@/hooks';
 import { motion } from 'framer-motion';
+import "Styles/auth.less"
 
 
 interface FormValues {
@@ -54,7 +55,7 @@ export default function ForgotComponent() {
     return <div className="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
                 data-sidebar-position="fixed" data-header-position="fixed">
         <div
-            className="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center">
+            className="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center"  style={{backgroundColor: "rgba(208,208,208,0.28)!important"}}>
             <div className="d-flex align-items-center justify-content-center w-100">
                 <div className="row justify-content-center w-100">
                     <div className="col-md-8 col-lg-6 col-xxl-3">

@@ -1,17 +1,17 @@
 import {useEffect} from 'react';
 import { useAppContext } from '@/contexts/appContext.tsx';
 import constants from "Data/Utilities/constants.ts";
-import ShopComponent from "Components/dashboard/shop/Shop.tsx";
+import CartComponent from "Components/cart";
 
-const ShopPage = () => {
+const CartPage = () => {
     const context = useAppContext();
 
     useEffect(() => {
         context.togglePageLoading();
-        document.title = constants.APP_NAME + ' .:. Shop'
+        document.title = constants.APP_NAME + ' .:. Cart'
     }, [context]);
 
-    return <ShopComponent />
+    return <CartComponent />
 };
 
-export default ShopPage;
+export default CartPage;

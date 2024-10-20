@@ -1,4 +1,4 @@
-import {SubCategory} from "Data/Interfaces/Category.ts";
+import { SubCategory } from 'Data/Interfaces/Category.ts';
 import {IProductDetail, ISupply} from "Data/Interfaces/Supply.ts";
 
 export interface IProductPayload {
@@ -9,4 +9,5 @@ export interface IProductPayload {
     subcategory_ids: SubCategory[];
     suppliers: ISupply[];
     product_details: Partial<IProductDetail>;
+    category?: string; // Change this to string
 }

@@ -1,9 +1,10 @@
 import { ILink } from "Data/Interfaces";
+import { ReactNode } from 'react';
 
 export interface IRoleList {
     success: boolean;
     data: {
-        current_page: number;
+        current_page: number; 
         data: IRole[];
         first_page_url: string;
         from: number;
@@ -24,4 +25,7 @@ export interface IRole {
     id: number;
     label: string;
     code: string;
+}
+export interface IRoleTableData extends IRole{
+    actions: ReactNode;
 }

@@ -1,15 +1,14 @@
-import {Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Link, Stack, Typography} from "@mui/material";
-import React from 'react'
+import {Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack, Typography} from "@mui/material";
 
 interface IAlert{
     openDetailModal: boolean;
-    onHandleOpenDetail: ()=>{} | any;
+    onHandleOpenDetail: ()=>void;
     content: {
         style?:string;
         icon?: string;
         message?: string
     };
-    onHandleDelete: () =>{}
+    onHandleDelete: () => void
     inProgress: boolean;
     successMessageButton?: string
     iconClasseBtn?: string

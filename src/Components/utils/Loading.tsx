@@ -15,62 +15,65 @@ const Loading = () => {
                 backgroundColor: '#f0f0f0',
             }}
         >
-            <motion.div
-                className="loader"
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-around',
-                    width: 120,
-                }}
-            >
+            <div className='d-flex flex-column gap-8 align-items-center justify-content-center'>
+                <h2 className='mb-5'><strong>Brocante</strong><span className='text-white py-1 px-3' style={{borderRadius: '10px', backgroundColor: '#007bff'}}>V1.0</span></h2>
                 <motion.div
+                    className="loader"
                     style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: '50%',
-                        backgroundColor: '#007bff',
+                        display: 'flex',
+                        justifyContent: 'space-around',
+                        width: 120,
                     }}
-                    animate={{ y: [0, -30, 0] }}
-                    transition={{
-                        duration: 0.6,
-                        repeat: Infinity,
-                        repeatType: 'loop',
-                        ease: 'easeInOut',
-                    }}
-                />
-                <motion.div
-                    style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: '50%',
-                        backgroundColor: '#007bff',
-                    }}
-                    animate={{ y: [0, -30, 0] }}
-                    transition={{
-                        duration: 0.6,
-                        repeat: Infinity,
-                        repeatType: 'loop',
-                        ease: 'easeInOut',
-                        delay: 0.2,
-                    }}
-                />
-                <motion.div
-                    style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: '50%',
-                        backgroundColor: '#007bff',
-                    }}
-                    animate={{ y: [0, -30, 0] }}
-                    transition={{
-                        duration: 0.6,
-                        repeat: Infinity,
-                        repeatType: 'loop',
-                        ease: 'easeInOut',
-                        delay: 0.4,
-                    }}
-                />
-            </motion.div>
+                >
+                    <motion.div
+                        style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: '50%',
+                            backgroundColor: '#007bff',
+                        }}
+                        animate={{ y: [0, -30, 0] }}
+                        transition={{
+                            duration: 0.6,
+                            repeat: Infinity,
+                            repeatType: 'loop',
+                            ease: 'easeInOut',
+                        }}
+                    />
+                    <motion.div
+                        style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: '50%',
+                            backgroundColor: '#007bff',
+                        }}
+                        animate={{ y: [0, -30, 0] }}
+                        transition={{
+                            duration: 0.6,
+                            repeat: Infinity,
+                            repeatType: 'loop',
+                            ease: 'easeInOut',
+                            delay: 0.2,
+                        }}
+                    />
+                    <motion.div
+                        style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: '50%',
+                            backgroundColor: '#007bff',
+                        }}
+                        animate={{ y: [0, -30, 0] }}
+                        transition={{
+                            duration: 0.6,
+                            repeat: Infinity,
+                            repeatType: 'loop',
+                            ease: 'easeInOut',
+                            delay: 0.4,
+                        }}
+                    />
+                </motion.div>
+            </div>
         </motion.div>
     );
 };

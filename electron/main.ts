@@ -2,6 +2,7 @@ import { app, BrowserWindow, Menu } from 'electron';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import installExtension, {REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } from 'electron-devtools-installer';
+import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -19,12 +20,14 @@ let win: BrowserWindow | null;
 
 function createWindow() {
   win = new BrowserWindow({
+    resizable:true,
+    movable:false,
+    //alwaysOnTop: true,
+    //show:false,
     icon: path.join(process.env.VITE_PUBLIC, 'favicon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       devTools: isDev,
-      // nodeIntegration: true,
-      // contextIsolation: false,
     }
   });
 
@@ -38,18 +41,39 @@ function createWindow() {
     win.loadFile(path.join(RENDERER_DIST, 'index.html'));
   }
 
-  const template = [
+  const template: MenuItemConstructorOptions[] = [
     {
-      label: 'Developer',
+      label: 'Developer Tools',
       submenu: [
         {
           label: 'Toggle DevTools',
-          accelerator: 'CmdOrCtrl+Shift+I',
+          accelerator: 'CmdOrCtrl+I',
           click: () => {
-            win.webContents.toggleDevTools();
+            win?.webContents.toggleDevTools();
           }
-        }
+        },
+        {
+          label: 'Reload',
+          accelerator: 'CmdOrCtrl+R',
+          role: 'reload'
+        },
+        {
+          label: 'Api Documentation',
+          accelerator: 'CmdOrCtrl+D',
+          click: () => {
+            win?.loadURL('http://127.0.0.1:8000/docs/api')
+          }
+        },
       ]
+    },
+    {
+      label: 'Home',
+      accelerator: 'CmdOrCtrl+H',
+      click: () => {
+        if (win) {
+          win.webContents.send('navigate-home');
+        }
+      }
     }
   ];
 
@@ -68,7 +92,6 @@ function createWindow() {
         });
     });
   }
-
 }
 
 app.on('window-all-closed', () => {

@@ -2,33 +2,68 @@ import Breadcrumd from '@/Components/Breadcrumd';
 import InfoItem from '@/Components/InfoItem';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { Grid } from '@mui/material';
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
 import ProductAPI from "Data/Api/Product.ts";
-import {IProduct} from "Data/Interfaces/Supply.ts";
+import { IProduct } from "Data/Interfaces/Supply.ts";
 import UtilMethods from "Data/Utilities/UtilMethods.ts";
+import constants from "Data/Utilities/constants.ts";
+import Zoom from 'react-medium-image-zoom';
+import 'react-medium-image-zoom/dist/styles.css';
 
 const ReadProduct = () => {
     const { currentPage, id } = useAppSelector((state) => state.navigaton);
     const [record, setRecord] = useState<IProduct | null>(null);
-    const [_, setIsLoading] = useState(false);
-    const dispatch = useAppDispatch()
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const dispatch = useAppDispatch();
 
     const getRecord = useCallback(async () => {
-        try{
+        try {
             setIsLoading(true);
-            const {data} = await ProductAPI.show(id)
-            setRecord(data)
-        }catch{}finally{
-            setIsLoading(true);
+            const { data } = await ProductAPI.show(id);
+            setRecord(data);
+        } catch (e) {
+            console.error(e.message);
+        } finally {
+            setIsLoading(false);
         }
-    }, [id])
+    }, [id]);
 
     useEffect(() => {
         getRecord();
     }, [getRecord]);
+
+    if (isLoading) {
+        return (
+            <div className="container">
+                <Breadcrumd parent="Articles" url={currentPage} _child={id} />
+                <div className='card'>
+                    <div className='card-body'>
+                        <h4>Product Info</h4>
+                        <span>Is loading...</span>
+                    </div>
+                </div>
+                <div className='card mt-2'>
+                    <div className='card-body'>
+                        <h4>Product Details</h4>
+                        <span>Is loading...</span>
+                    </div>
+                </div>
+                <div className='card mt-2'>
+                    <div className='card-body'>
+                        <h4>Suppliers</h4>
+                        <span>Is loading...</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!record) {
+        return <div>No product found</div>;
+    }
 
     return (
         <div className="container">
@@ -38,13 +73,14 @@ const ReadProduct = () => {
                     <div className='card-body'>
                         <h4>Product Info</h4>
                         <Grid container spacing={2}>
-                            <Grid xs={12} md={12} lg={12} xl={12} >
+                            <Grid xs={12} md={12} lg={12} xl={12}>
                                 <InfoItem
                                     label="Name"
                                     value={record.name}
                                     second={{
                                         label: `Price`,
-                                        value: <span>{record.price} <span  className='fw-bolder' style={{fontSize: '10px'}}> FCFA</span></span>,
+                                        value: <span>{record.price} <span className='fw-bolder'
+                                                                          style={{fontSize: '10px'}}> FCFA</span></span>,
                                     }}
                                 />
                                 <InfoItem
@@ -65,19 +101,39 @@ const ReadProduct = () => {
                                 />
                                 <InfoItem
                                     label="Status"
-                                    value={<span className={`${UtilMethods.getStatus(getStatusOfProduct(record?.stock_quantity))}`}>{getStatusOfProduct(record?.stock_quantity)}</span>}
+                                    value={<span
+                                        className={`${UtilMethods.getStatus(getStatusOfProduct(record?.stock_quantity))}`}>{getStatusOfProduct(record?.stock_quantity)}</span>}
                                     second={{
                                         label: `Sub categories`,
                                         value: record?.subcategories.map(subcategory => (
-                                            <a role="alert ms-1"
-                                               className="alert mb-0 py-2 badge bg-primary-subtle text-primary s
-                                                        rounded-pill text-center"
-                                            >
+                                            <a role="alert"
+                                               className="alert mb-0 py-2 badge bg-primary-subtle text-primary rounded-pill text-center">
                                                 {subcategory.label}
                                             </a>
                                         ))
                                     }}
                                 />
+
+                                <div className='card-body'>
+                                    <h4>Product Image</h4>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12}>
+                                            <Zoom>
+                                                <img
+                                                    src={record.thumbnail ? `${constants.URL}/${record.thumbnail.path}` : ''}
+                                                    alt={record.name}
+                                                    style={{
+                                                        objectFit: 'cover',
+                                                        objectPosition: 'center',
+                                                        cursor: 'zoom-in'
+                                                    }}
+                                                    width={100}
+                                                    height={100}
+                                                />
+                                            </Zoom>
+                                        </Grid>
+                                    </Grid>
+                                </div>
                             </Grid>
                         </Grid>
                     </div>
@@ -139,16 +195,18 @@ const ReadProduct = () => {
                         <Grid container spacing={2}>
                             {
                                 record.suppliers.map((supply, index) => {
-                                    return <Grid xs={12} md={6} lg={6} xl={6} className={`${index === 0? '__item-separator': ''}`}>
-                                        <InfoItem
-                                            label="Name"
-                                            value={supply?.name}
-                                            second={{
-                                                label: `Contact info`,
-                                                value: supply?.contact_info,
-                                            }}
-                                        />
-                                    </Grid>
+                                    return (
+                                        <Grid item xs={12} md={6} lg={6} xl={6} className={`${index === 0 ? '__item-separator' : ''}`}>
+                                            <InfoItem
+                                                label="Name"
+                                                value={supply?.name}
+                                                second={{
+                                                    label: `Contact info`,
+                                                    value: supply?.contact_info,
+                                                }}
+                                            />
+                                        </Grid>
+                                    )
                                 })
                             }
                             <Grid xs={12} className="d-flex align-items-center justify-content-end">
@@ -170,12 +228,11 @@ const ReadProduct = () => {
                 </div>
             </>)}
         </div>
-
     )
 }
 
-export default ReadProduct
+export default ReadProduct;
 
-const getStatusOfProduct = (_stock_quantity: number):string => {
-    return (_stock_quantity &&_stock_quantity > 0)? ProductAPI.STOCK : ProductAPI.OUT_OF_STOCK
+const getStatusOfProduct = (_stock_quantity: number): string => {
+    return (_stock_quantity && _stock_quantity > 0) ? ProductAPI.STOCK : ProductAPI.OUT_OF_STOCK;
 }

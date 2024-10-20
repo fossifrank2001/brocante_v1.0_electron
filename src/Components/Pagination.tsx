@@ -40,8 +40,15 @@ const PaginationComponent: React.FC<PaginationProps> = ({ paginationData, onPage
     };
 
     return (
-        <nav>
-            <ul className="pagination justify-content-center">
+        <nav className='position-fixed bg-white d-flex justify-content-center align-items-center' style={{
+            left:'50%',
+            bottom:'20px',
+            transform: 'translateX(50%)',
+            padding: "10px 12px",
+            borderRadius: "8px",
+            zIndex: 500
+        }}>
+            <ul className="pagination justify-content-center m-0">
                 <li className={`page-item ${!links[0].url ? 'disabled' : ''}`}>
                     <button
                         style={circleButtonStyles}
@@ -56,7 +63,7 @@ const PaginationComponent: React.FC<PaginationProps> = ({ paginationData, onPage
                     <li key={index} className={`page-item ${link.active ? 'active' : ''}`}>
                         <motion.button
                             style={circleButtonStyles}
-                            className="page-link btn-circle"
+                            className="page-link btn-circle mx-1"
                             onClick={() => {
                                 if (link.label === "&laquo; Previous") {
                                     handlePageChange(current_page - 1);
@@ -70,7 +77,8 @@ const PaginationComponent: React.FC<PaginationProps> = ({ paginationData, onPage
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                         >
-                            {link.label !== "&laquo; Previous" && link.label !== "Next &raquo;" ? link.label : mapLabelToIcon(link.label)}
+                            {link.label !== "&laquo; Previous" && link.label !== "Next &raquo;" ? link.label :
+                                mapLabelToIcon(link.label)}
                         </motion.button>
                     </li>
                 ))}

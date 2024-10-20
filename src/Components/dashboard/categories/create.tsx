@@ -46,6 +46,7 @@ const NewCategory: React.FC = () => {
             context.togglePageLoading(true);
             dispatch(setActivePage({ page: Pages.CATEGORY }));
         } catch (error) {
+            console.log(error.message)
         } finally {
             setSubmitting(false);
         }
@@ -154,7 +155,7 @@ const NewCategory: React.FC = () => {
                                 </div>
                                 <div className="row">
                                     <AnimatePresence>
-                                        {formik.values.sub_categories.map((_, index) => (
+                                        {formik.values.sub_categories.map((_: never, index: number) => (
                                             <motion.div
                                                 className='col-3'
                                                 key={index}

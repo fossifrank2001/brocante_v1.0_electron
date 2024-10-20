@@ -14,9 +14,8 @@ const Root: React.FC = () => {
     useEffect(() => {
         const timer = setTimeout(() => {
             setLoading(false);
-        }, 5000);
+        }, 1000);
 
-        // Cleanup the timer to avoid memory leaks
         return () => clearTimeout(timer);
     }, []);
 
@@ -34,7 +33,6 @@ const Root: React.FC = () => {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<Root />);
 
-// Use contextBridge (Assuming Electron context)
 window.ipcRenderer.on('main-process-message', (_event, message) => {
     console.log(message);
 });

@@ -4,17 +4,17 @@ import constants from "Data/Utilities/constants";
 import Breadcrumd from "Components/Breadcrumd";
 import {
     MaterialReactTable, MRT_ColumnDef,
-    MRT_ShowHideColumnsButton,
+    MRT_ShowHideColumnsButton, MRT_TableInstance,
     MRT_ToggleDensePaddingButton,
     MRT_ToggleFiltersButton, MRT_ToggleFullScreenButton,
     MRT_ToggleGlobalFilterButton,
     useMaterialReactTable
 } from "material-react-table";
 import {MRT_Localization_EN} from "material-react-table/locales/en";
-import axiosInstance, { IApiResponse } from "Data/Utilities/axiosInstance";
+import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
 import {Box, Link, Stack} from "@mui/material";
 import UtilMethods from '@/Data/Utilities/UtilMethods';
-import { IAccess } from '@/Data/Interfaces/Access';
+import { IAccess, IAccessTableData } from '@/Data/Interfaces/Access';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
@@ -34,7 +34,7 @@ export default function IndexAccess() {
     const [openDetailModal, setOpenDetailModal] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isDeleted, setIsDeleted] = useState(false);
-    const [_, setReady] = useState(false);
+    const [, setReady] = useState(false);
     const [inProgress, setInProgress] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
@@ -74,10 +74,11 @@ export default function IndexAccess() {
             url.searchParams.set("sorting", JSON.stringify(sortingTab));
 
             try {
-                const { status, data: result } = await axiosInstance.get<IApiResponse>(url.href);
+                const { status, data: result } = await axiosInstance.get<IApiResponsePaginated<IAccess>>(url.href);
+              const { data: accessList }: IApiResponsePaginated<IAccess> = result;
                 if (status === 200) {
-                    setAccesses(result.data.data);
-                    setRowCount(result.data.total);
+                    setAccesses(accessList.data);
+                    setRowCount(accessList.total);
                 }
                 resetScroll();
             } catch (error) {
@@ -93,93 +94,95 @@ export default function IndexAccess() {
     );
 
     useEffect(() => {
-        getAccesses();
+      (async () => await getAccesses())();
     }, [getAccesses, isDeleted]);
 
-    const tableData = useMemo(() => {
-        return accesses ? accesses.map((access) => ({
-            id: access.id,
-            user: `${access?.user?.last_name || ""} ${access?.user?.first_name || ""}`,
-            role: access?.role?.label,
-            status: access.status,
-            code: access.code,
-            actions: (
-                <Stack direction="row" spacing={1}>
-                    <Link
-                        href="#"
-                        onClick={() => {
-                            context.togglePageLoading(true);
-                            dispatch(setActivePage({
-                                page: Pages.ACCESS, 
-                                id: access.id, 
-                                param: {
-                                    sub_page: 'UPDATE'
-                                }
-                            }))
-                        }}>
-                        <i color="primary" className="ti ti-pencil"></i>
-                    </Link>
-                    {!UtilMethods.isActiveAccess(access.id) && <i
-                        onClick={() => {
-                            setAccessId(access.id)
-                            setOpenDetailModal(true)
-                        }}
-                        className="ti ti-trash cursor-pointer text-danger"
-                    ></i>}
-                </Stack>
-            ),
-        })) : [];
-    }, [accesses]);
+  const tableData: IAccessTableData[] = useMemo(() => {
+    return accesses ? accesses.map((access) => ({
+      ...access,
+      user: `${access?.user?.last_name || ""} ${access?.user?.first_name || ""}`,
+      actions: (
+        <Stack direction="row" spacing={1}>
+          <Link
+            href="#"
+            onClick={() => {
+              context.togglePageLoading(true);
+              dispatch(setActivePage({
+                page: Pages.ACCESS,
+                id: access.id,
+                param: {
+                  sub_page: 'UPDATE'
+                }
+              }))
+            }}>
+            <i color="primary" className="ti ti-pencil"></i>
+          </Link>
+          {!UtilMethods.isActiveAccess(access.id) && <i
+            onClick={() => {
+              setAccessId(access.id);
+              setOpenDetailModal(true);
+            }}
+            className="ti ti-trash cursor-pointer text-danger"
+          ></i>}
+        </Stack>
+      ),
+    })) : [];
+  }, [accesses, context, dispatch]);
 
-    const columns = useMemo<MRT_ColumnDef<IAccess>[] | any>(
-        () => [
-            {
-                accessorKey: "user",
-                header: "User",
-                size: 100,
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
-                }),
-            },
-            {
-                accessorKey: "role",
-                header: "Role",
-                size: 150,
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
-                }),
-            },
-            {
-                accessorKey: "status",
-                header: "Status",
-                size: 150,
-                Cell: ({cell}) =>  <span className={`${UtilMethods.getStatus(cell.getValue())}`}>{cell.getValue()}</span>,
-                filterVariant: "select",
-                filterSelectOptions: [
-                  {label: 'Active', value: UtilMethods.ACTIVE},
-                  {label: 'Inactive', value: UtilMethods.INACTIVE},
-                ],
-            },
-            {
-                accessorKey: "code",
-                header: "Code",
-                size: 150,
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
-                }),
-            },
-            {
-              accessorKey: "actions",
-              header: "Actions",
-              size: 150,
-              unexport: true,
-              enableColumnFilter: false,
-            },
-        ],
-        [],
-    );
 
-    const mrTable = useMaterialReactTable({
+
+
+  const columns: MRT_ColumnDef<IAccessTableData>[] = useMemo(() => [
+    {
+      accessorKey: "user",
+      header: "User",
+      size: 100,
+      muiFilterTextFieldProps: () => ({
+        inputProps: { placeHolder: "filter" },
+      }),
+    },
+    {
+      accessorKey: "role.label",  // Access the label property of the role
+      header: "Role",
+      size: 150,
+      muiFilterTextFieldProps: () => ({
+        inputProps: { placeHolder: "filter" },
+      }),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      size: 150,
+      Cell: ({ cell }) => {
+        const value = cell.getValue();
+        const status = typeof value === 'string' ? UtilMethods.getStatus(value) : '';
+        return <span className={status}>{String(value)}</span>;
+      },
+      filterVariant: "select",
+      filterSelectOptions: [
+        { label: 'Active', value: UtilMethods.ACTIVE },
+        { label: 'Inactive', value: UtilMethods.INACTIVE },
+      ],
+    },
+    {
+      accessorKey: "code",
+      header: "Code",
+      size: 150,
+      muiFilterTextFieldProps: () => ({
+        inputProps: { placeHolder: "filter" },
+      }),
+    },
+    {
+      accessorKey: "actions",
+      header: "Actions",
+      size: 150,
+      unexport: true,
+      enableColumnFilter: false,
+    },
+  ], []);
+
+
+  const mrTable : MRT_TableInstance<IAccessTableData> = useMaterialReactTable({
         columns: columns,
         data: tableData,
         enableRowSelection: true,
@@ -247,47 +250,30 @@ export default function IndexAccess() {
         ),
     });
 
-    const handleDelete = async () => {
-        try {
-            context.togglePageLoading(true)
-            setInProgress(true)
-            const {message} = await AccessAPI.delete(accessId)
-            if(UtilMethods.isOneOfAuthAccess(accessId)){
-                dispatch(removeAccessToAuthUser(accessId))
-            }
-            Toast.success(message)
-            
-        } catch (error) {
-            console.error(error)
-        }finally{
-            setOpenDetailModal(false)
-            setIsDeleted(true)
-            setInProgress(false)
-            context.togglePageLoading(false)
-        }
-    }
+  const handleDelete = async () => {
+      try {
+          context.togglePageLoading(true)
+          setInProgress(true)
+          const {message} = await AccessAPI.delete(accessId)
+          if(UtilMethods.isOneOfAuthAccess(accessId)){
+              dispatch(removeAccessToAuthUser(accessId))
+          }
+          Toast.success(message)
+
+      } catch (error) {
+          console.error(error)
+      }finally{
+          setOpenDetailModal(false)
+          setIsDeleted(true)
+          setInProgress(false)
+          context.togglePageLoading(false)
+      }
+  }
 
     return (
         <div className="container">
             <Breadcrumd parent="Accesses" />
-            <MaterialReactTable
-                table={mrTable}
-                muiTablePaperProps={{
-                    sx: {
-                        fontFamily: 'var(--bs-body-font-family)',
-                    },
-                }}
-                muiTableHeadCellProps={{
-                    sx: {
-                        fontFamily: 'var(--bs-body-font-family)',
-                    },
-                }}
-                muiTableBodyCellProps={{
-                    sx: {
-                        fontFamily: 'var(--bs-body-font-family)',
-                    },
-                }}
-            />
+            <MaterialReactTable table={mrTable} />
            <CustomAlert 
                 openDetailModal={openDetailModal} 
                 content={{style: 'ti ti-info-circle text text-danger',

@@ -3,18 +3,18 @@ import {useAppContext} from "@/contexts/appContext";
 import constants from "Data/Utilities/constants";
 import Breadcrumd from "Components/Breadcrumd";
 import {
-    MaterialReactTable, MRT_ColumnDef,
-    MRT_ShowHideColumnsButton,
-    MRT_ToggleDensePaddingButton,
-    MRT_ToggleFiltersButton, MRT_ToggleFullScreenButton,
-    MRT_ToggleGlobalFilterButton,
-    useMaterialReactTable
-} from "material-react-table";
+  MaterialReactTable, MRT_ColumnDef,
+  MRT_ShowHideColumnsButton, MRT_TableOptions,
+  MRT_ToggleDensePaddingButton,
+  MRT_ToggleFiltersButton, MRT_ToggleFullScreenButton,
+  MRT_ToggleGlobalFilterButton,
+  useMaterialReactTable
+} from 'material-react-table';
 import {MRT_Localization_EN} from "material-react-table/locales/en";
-import axiosInstance, { IApiResponse } from "Data/Utilities/axiosInstance";
+import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
 import {Box, Link, Stack} from "@mui/material";
 import UtilMethods from '@/Data/Utilities/UtilMethods';
-import { IUser } from '@/Data/Interfaces';
+import { IAppContext, IUser, IUserTableData } from '@/Data/Interfaces';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
@@ -23,7 +23,7 @@ import Toast from '@/Data/Utilities/Toast';
 import CustomAlert from '@/Components/CustomAlert';
 
 export default function IndexUser() {
-    const context = useAppContext();
+    const context: IAppContext = useAppContext();
 
     const [isError, setIsError] = useState(false);
     const [pagination, setPagination] = useState({
@@ -35,7 +35,7 @@ export default function IndexUser() {
     const [isLoading, setIsLoading] = useState(false);
     const [inProgress, setInProgress] = useState(false);
     const [isDeleted, setIsDeleted] = useState(false);
-    const [_, setReady] = useState(false);
+    const [, setReady] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [columnFilters, setColumnFilters] = useState([]);
@@ -64,8 +64,8 @@ export default function IndexUser() {
         async () => {
             setIsLoading(true);
             const url = new URL(`${constants.BASE_URL}/users`);
-            const filters = UtilMethods.formatTableFilters(columnFilters);
-            const sortingTab = UtilMethods.formatTableSorting(sorting);
+            const filters: { [p: string]: undefined } = UtilMethods.formatTableFilters(columnFilters);
+            const sortingTab: { [p: string]: undefined } = UtilMethods.formatTableSorting(sorting);
             url.searchParams.set("start", `${pagination.pageIndex * pagination.pageSize}`);
             url.searchParams.set("per_page", `${pagination.pageSize}`);
             url.searchParams.set("filters", JSON.stringify(filters));
@@ -73,10 +73,11 @@ export default function IndexUser() {
             url.searchParams.set("sorting", JSON.stringify(sortingTab));
 
             try {
-                const { status, data: result } = await axiosInstance.get<IApiResponse>(url.href);
+                const { status, data: result } = await axiosInstance.get<IApiResponsePaginated<IUser>>(url.href);
+                const { data: userList }: IApiResponsePaginated<IUser> = result;
                 if (status === 200) {
-                    setUsers(result.data.data);
-                    setRowCount(result.data.total);
+                    setUsers(userList.data);
+                    setRowCount(userList.total);
                 }
                 resetScroll();
             } catch (error) {
@@ -92,7 +93,7 @@ export default function IndexUser() {
     );
 
     useEffect(() => {
-        getUsers();
+      (async () => await getUsers())()
     }, [getUsers, isDeleted]);
 
     const handleDelete = async () => {
@@ -111,57 +112,55 @@ export default function IndexUser() {
         }
     }
 
-    const tableData: IUser[] | any = useMemo(() => {
-        return users ? users.map((user) => ({
-            id: user.id,
-            name: `${user?.last_name || ""} ${user?.first_name || ""}`,
-            email: user.email,
-            phone: user.phone,
-            gender: user.gender,
-            status: user.status,
-            actions: (
-                <Stack direction="row" spacing={1}>
-                    <Link
-                        href="#"
-                        onClick={() => {
-                            context.togglePageLoading(true);
-                            dispatch(setActivePage({
-                                page: Pages.ACCOUNT, 
-                                id: user.id, 
-                                param: {
-                                    sub_page: 'READ'
-                                }
-                            }))
-                        }}>
-                        <i color="primary" className="ti ti-eye text-dark"></i>
-                    </Link>
-                    <Link
-                        href="#"
-                        onClick={() => {
-                            context.togglePageLoading(true);
-                            dispatch(setActivePage({
-                                page: Pages.ACCOUNT, 
-                                id: user.id, 
-                                param: {
-                                    sub_page: 'UPDATE'
-                                }
-                            }))
-                        }}>
-                        <i color="primary" className="ti ti-pencil"></i>
-                    </Link>
-                    {(UtilMethods.authEmail() !== user.email) && <i
-                        onClick={() => {
-                            setUserId(user.id)
-                            setOpenDetailModal(true)
-                        }}
-                        className="ti ti-trash cursor-pointer text-danger"
-                    ></i>}
-                </Stack>
-            ),
-        })) : [];
-    }, [users]);
+    const tableData: IUserTableData[] = useMemo(() => {
+      return users ? users.map((user: IUser) => ({
+        ...user,
+        name: `${user.last_name || ""} ${user.first_name || ""}`,
+        actions: (
+          <Stack direction="row" spacing={1}>
+            <Link
+              href="#"
+              onClick={() => {
+                context.togglePageLoading(true);
+                dispatch(setActivePage({
+                  page: Pages.ACCOUNT,
+                  id: user.id,
+                  param: {
+                    sub_page: 'READ'
+                  }
+                }))
+              }}>
+              <i color="primary" className="ti ti-eye text-dark"></i>
+            </Link>
+            <Link
+              href="#"
+              onClick={() => {
+                context.togglePageLoading(true);
+                dispatch(setActivePage({
+                  page: Pages.ACCOUNT,
+                  id: user.id,
+                  param: {
+                    sub_page: 'UPDATE'
+                  }
+                }))
+              }}>
+              <i color="primary" className="ti ti-pencil"></i>
+            </Link>
+            {(UtilMethods.authEmail() !== user.email) && (
+              <i
+                onClick={() => {
+                  setUserId(user.id)
+                  setOpenDetailModal(true)
+                }}
+                className="ti ti-trash cursor-pointer text-danger"
+              ></i>
+            )}
+          </Stack>
+        ),
+      })) : [];
+    }, [users, context, dispatch]);
 
-    const columns = useMemo<MRT_ColumnDef<IUser>[] | any>(
+    const columns: MRT_ColumnDef<IUser>[] = useMemo(
         () => [
             {
                 accessorKey: "name",
@@ -180,11 +179,15 @@ export default function IndexUser() {
                 }),
             },
             {
-                accessorKey: "status",
-                header: "Status",
-                size: 150,
-                Cell: ({cell}) =>  <span className={`${UtilMethods.getStatus(cell.getValue())}`}>{cell.getValue()}</span>,
-                enableColumnFilter: false,
+              accessorKey: "status",
+              header: "Status",
+              size: 150,
+              Cell: ({ cell }) => {
+                const value = cell.getValue();
+                const status = typeof value === 'string' ? UtilMethods.getStatus(value) : '';
+                return <span className={status}>{String(value)}</span>;
+              },
+              enableColumnFilter: false,
             },
             {
                 accessorKey: "phone",
@@ -213,95 +216,89 @@ export default function IndexUser() {
         [],
     );
 
-    const mrTable = useMaterialReactTable({
-        columns: columns,
-        data: tableData,
-        enableRowSelection: true,
-        enableStickyHeader: true,
-        initialState: {
-            showColumnFilters: true,
-            density: "compact",
-        },
-        manualFiltering: true,
-        manualPagination: true,
-        manualSorting: true,
-        muiTablePaperProps: { className: "__table-expandable" },
-        muiTableContainerProps: { className: "__table-container" },
-        localization: MRT_Localization_EN,
-        muiToolbarAlertBannerProps: isError
-            ? {
-                color: "error",
-                children: "errorLoadingData",
-            }
-            : undefined,
-        onColumnFiltersChange: setColumnFilters,
-        onGlobalFilterChange: setGlobalFilter,
-        onPaginationChange: setPagination,
-        onSortingChange: setSorting,
-        onRowSelectionChange: setRowSelection,
-        rowCount,
-        state: {
-            columnFilters,
-            globalFilter,
-            isLoading,
-            pagination,
-            showAlertBanner: isError,
-            showProgressBars: isRefetching,
-            sorting,
-            rowSelection,
-        },
-        renderTopToolbarCustomActions: () => (
-            <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
-                {UtilMethods.getHabilitations(authorizations, 'account').canCreate && <button onClick={() => {
-                    context.togglePageLoading(true)
-                    dispatch(setActivePage({
-                        page: Pages.ACCOUNT,
-                        param: {
-                            sub_page: "CREATE"
-                        }
-                    }))
-                }} type='button' className='btn btn-primary' style={{ marginLeft: '12px' }}>
-                    <i className='ti ti-plus'></i>
-                    <span className='ms-2'>ADD</span>
-                </button>}
-                {UtilMethods.getHabilitations(authorizations, 'account').canExport && <button type='button' className='btn btn-outline-primary' style={{ marginLeft: '12px' }}>
-                    <i className='ti ti-file-export'></i>
-                    <span className='ms-2'>EXPORT ALL</span>
-                </button>}
-            </Box>
-        ),
-        renderToolbarInternalActions: ({ table }) => (
-            <Box>
-                <MRT_ToggleGlobalFilterButton table={table} />
-                <MRT_ToggleFiltersButton table={table} />
-                <MRT_ToggleDensePaddingButton table={table} />
-                <MRT_ShowHideColumnsButton table={table} />
-                <MRT_ToggleFullScreenButton table={table} />
-            </Box>
-        ),
-    });
+    const tableOptions: MRT_TableOptions<IUser> = {
+      columns,
+      data: tableData,
+      enableRowSelection: true,
+      enableStickyHeader: true,
+      initialState: {
+        showColumnFilters: true,
+        density: "compact",
+      },
+      manualFiltering: true,
+      manualPagination: true,
+      manualSorting: true,
+      muiTablePaperProps: { className: "__table-expandable" },
+      muiTableContainerProps: { className: "__table-container" },
+      localization: MRT_Localization_EN,
+      muiToolbarAlertBannerProps: isError
+        ? {
+          color: "error",
+          children: "Error loading data",
+        }
+        : undefined,
+      onColumnFiltersChange: setColumnFilters,
+      onGlobalFilterChange: setGlobalFilter,
+      onPaginationChange: setPagination,
+      onSortingChange: setSorting,
+      onRowSelectionChange: setRowSelection,
+      rowCount,
+      state: {
+        columnFilters,
+        globalFilter,
+        isLoading,
+        pagination,
+        showAlertBanner: isError,
+        showProgressBars: isRefetching,
+        sorting,
+        rowSelection,
+      },
+      renderTopToolbarCustomActions: () => (
+        <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
+          {UtilMethods.getHabilitations(authorizations, 'account').canCreate && (
+            <button
+              onClick={() => {
+                context.togglePageLoading(true);
+                dispatch(setActivePage({
+                  page: Pages.ACCOUNT,
+                  param: {
+                    sub_page: "CREATE"
+                  }
+                }));
+              }}
+              type='button'
+              className='btn btn-primary'
+              style={{ marginLeft: '12px' }}
+            >
+              <i className='ti ti-plus'></i>
+              <span className='ms-2'>ADD</span>
+            </button>
+          )}
+          {UtilMethods.getHabilitations(authorizations, 'account').canExport && (
+            <button type='button' className='btn btn-outline-primary' style={{ marginLeft: '12px' }}>
+              <i className='ti ti-file-export'></i>
+              <span className='ms-2'>EXPORT ALL</span>
+            </button>
+          )}
+        </Box>
+      ),
+      renderToolbarInternalActions: ({ table }) => (
+        <Box>
+          <MRT_ToggleGlobalFilterButton table={table} />
+          <MRT_ToggleFiltersButton table={table} />
+          <MRT_ToggleDensePaddingButton table={table} />
+          <MRT_ShowHideColumnsButton table={table} />
+          <MRT_ToggleFullScreenButton table={table} />
+        </Box>
+      ),
+    };
+
+    const table = useMaterialReactTable(tableOptions);
 
     return (
         <div className="container">
             <Breadcrumd parent="Users" />
-            <MaterialReactTable
-                table={mrTable}
-                muiTablePaperProps={{
-                    sx: {
-                        fontFamily: 'var(--bs-body-font-family)',
-                    },
-                }}
-                muiTableHeadCellProps={{
-                    sx: {
-                        fontFamily: 'var(--bs-body-font-family)',
-                    },
-                }}
-                muiTableBodyCellProps={{
-                    sx: {
-                        fontFamily: 'var(--bs-body-font-family)',
-                    },
-                }}
-            />   
+          <MaterialReactTable table={table} />
            <CustomAlert
                 openDetailModal={openDetailModal} 
                 content={{style: 'ti ti-info-circle text text-danger',

@@ -3,8 +3,8 @@ import {useAppContext} from "@/contexts/appContext";
 import constants from "Data/Utilities/constants";
 import Breadcrumd from "Components/Breadcrumd";
 import {
-    MaterialReactTable,
-    MRT_ShowHideColumnsButton,
+    MaterialReactTable, MRT_ColumnDef,
+    MRT_ShowHideColumnsButton, MRT_TableInstance,
     MRT_ToggleDensePaddingButton,
     MRT_ToggleFiltersButton, MRT_ToggleFullScreenButton,
     MRT_ToggleGlobalFilterButton,
@@ -14,8 +14,8 @@ import {MRT_Localization_EN} from "material-react-table/locales/en";
 import axiosInstance from "Data/Utilities/axiosInstance";
 import {Box} from "@mui/material";
 import UtilMethods from '@/Data/Utilities/UtilMethods';
-import { IMenu, IMenuList } from '@/Data/Interfaces';
-import {useAppDispatch, useAppSelector} from "@/hooks";
+import { IMenu, IMenuList, IMenuTableData } from '@/Data/Interfaces';
+import {useAppSelector} from "@/hooks";
 
 export default function IndexMenu() {
     const context = useAppContext();
@@ -26,7 +26,7 @@ export default function IndexMenu() {
         pageSize: 10,
     });
     const [isLoading, setIsLoading] = useState(false);
-    const [_, setReady] = useState(false);
+    const [, setReady] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [columnFilters, setColumnFilters] = useState([]);
@@ -50,53 +50,46 @@ export default function IndexMenu() {
     };
 
     // request all menus
-    const getMenus = useCallback(
-        async () => {
-            setIsLoading(true);
-            const url = new URL(`${constants.BASE_URL}/menus`);
-            const filters = UtilMethods.formatTableFilters(columnFilters);
-            const sortingTab = UtilMethods.formatTableSorting(sorting);
-            url.searchParams.set("start", `${pagination.pageIndex * pagination.pageSize}`);
-            url.searchParams.set("per_page", `${pagination.pageSize}`);
-            url.searchParams.set("filters", JSON.stringify(filters));
-            url.searchParams.set("q", globalFilter ?? "");
-            url.searchParams.set("sorting", JSON.stringify(sortingTab));
+    const getMenus = useCallback(async () => {
+        setIsLoading(true);
+        const url = new URL(`${constants.BASE_URL}/menus`);
+        const filters: { [p: string]: undefined } = UtilMethods.formatTableFilters(columnFilters);
+        const sortingTab: { [p: string]: undefined } = UtilMethods.formatTableSorting(sorting);
+        url.searchParams.set("start", `${pagination.pageIndex * pagination.pageSize}`);
+        url.searchParams.set("per_page", `${pagination.pageSize}`);
+        url.searchParams.set("filters", JSON.stringify(filters));
+        url.searchParams.set("q", globalFilter ?? "");
+        url.searchParams.set("sorting", JSON.stringify(sortingTab));
 
-            try {
-                const { status, data: result } = await axiosInstance.get<IMenuList>(url.href);
-                if (status === 200) {
-                    setMenus(result.data.data);
-                    setRowCount(result.data.total);
-                }
-                resetScroll();
-            } catch (error) {
-                setIsError(true);
-                setMenus([]);
-            } finally {
-                setIsLoading(false);
-                setIsRefetching(false);
-                setReady(true);
+        try {
+            const { status, data: result } = await axiosInstance.get<IMenuList>(url.href);
+            if (status === 200) {
+                setMenus(result.data.data);
+                setRowCount(result.data.total);
             }
-        },
-        [columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting],
-    );
+            resetScroll();
+        } catch (error) {
+            setIsError(true);
+            setMenus([]);
+        } finally {
+            setIsLoading(false);
+            setIsRefetching(false);
+            setReady(true);
+        }
+    }, [columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting],);
 
     useEffect(() => {
-        getMenus();
+        (async () => await getMenus())()
     }, [getMenus]);
 
-    const tableData = useMemo(() => {
+    const tableData: IMenuTableData[] = useMemo(() => {
         return menus ? menus.map((menu) => ({
-            id: menu.id,
-            label: `${menu?.label || ""}`,
-            group: menu.group,
-            order: menu.order,
+            ...menu,
             parent: menus.find(_menu => _menu.id === menu.parent_id)?.label || '',
-            code: menu?.code
         })) : [];
-    }, [menus]);
+    }, [menus]); 
 
-    const columns = useMemo(
+    const columns : MRT_ColumnDef<IMenu>[] = useMemo(
         () => [
             {
                 accessorKey: "label",
@@ -136,7 +129,7 @@ export default function IndexMenu() {
         [],
     );
 
-    const mrTable = useMaterialReactTable({
+    const mrTable : MRT_TableInstance<IMenu> = useMaterialReactTable({
         columns,
         data: tableData,
         enableRowSelection: true,
@@ -195,24 +188,7 @@ export default function IndexMenu() {
     return (
         <div className="container">
             <Breadcrumd parent="Menus" />
-            <MaterialReactTable
-                table={mrTable}
-                muiTablePaperProps={{
-                sx: {
-                    fontFamily: 'var(--bs-body-font-family)',
-                },
-                }}
-                muiTableHeadCellProps={{
-                sx: {
-                    fontFamily: 'var(--bs-body-font-family)',
-                },
-                }}
-                muiTableBodyCellProps={{
-                sx: {
-                    fontFamily: 'var(--bs-body-font-family)',
-                },
-                }}
-            />
+            <MaterialReactTable table={mrTable} />
         </div>
     );
 }

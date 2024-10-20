@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useFormik } from 'formik';
 import { useAppContext } from "@/contexts/appContext";
-import {ILoginPayload } from 'Data/Interfaces';
-import { Pages} from 'Data/Objects/state';
+import { ILoginPayload } from 'Data/Interfaces';
+import { Pages } from 'Data/Objects/state';
 import { Link } from '@mui/material';
 import logo from "@/assets/images/logos/dark-logo.svg";
 import { setActivePage } from 'Data/Slices/NavigationSlice';
 import { useAppDispatch } from '@/hooks';
 import { motion } from 'framer-motion';
+import "Styles/auth.less"
+
 interface FormValues {
     login: string;
     password: string;
@@ -15,6 +17,7 @@ interface FormValues {
 
 const LoginComponent: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const dispatch = useAppDispatch();
 
     const initialValues: FormValues = {
@@ -29,6 +32,7 @@ const LoginComponent: React.FC = () => {
             const { loginAsync } = await import('Data/Slices/auth/userSlice');
             await dispatch(loginAsync(values));
         } catch (error) {
+            console.error(error)
         } finally {
             setIsLoading(false);
         }
@@ -38,7 +42,7 @@ const LoginComponent: React.FC = () => {
         initialValues,
         onSubmit: handleSubmit,
         validate: (values: FormValues) => {
-            let errors: Partial<FormValues> = {};
+            const errors: Partial<FormValues> = {};
             if (!values.login) {
                 errors.login = 'Login field is required.';
             } else if (!(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(values.login) || /^6[0-9]{8}$/i.test(values.login))) {
@@ -51,16 +55,21 @@ const LoginComponent: React.FC = () => {
         },
     });
 
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
+
     return (
         <div className="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
-            data-sidebar-position="fixed" data-header-position="fixed">
-            <div className="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center">
+             data-sidebar-position="fixed" data-header-position="fixed">
+            <div className="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center" style={{backgroundColor: "rgba(208,208,208,0.28)!important"}}>
                 <div className="d-flex align-items-center justify-content-center w-100">
                     <div className="row justify-content-center w-100">
-                        <div className="col-md-8 col-lg-6 col-xxl-3">
+                        <div className="col-md-4 col-lg-4 col-xxl-3">
                             <div className="card mb-0" style={{
                                 border: "2px solid lightgray",
-                                borderRadius: "20PX"
+                                borderRadius: "20PX",
+                                backgroundColor: "rgba(208,208,208,0.28)!important"
                             }}>
                                 <div className="card-body">
                                     <Link href="#" className="text-nowrap logo-img text-center d-block py-3 w-100">
@@ -90,16 +99,25 @@ const LoginComponent: React.FC = () => {
                                         </div>
                                         <div className="mb-4">
                                             <label htmlFor="password" className="form-label">Password <span className="text-danger">*</span></label>
-                                            <input
-                                                type="password"
-                                                className="form-control"
-                                                id="password"
-                                                name='password'
-                                                onChange={formik.handleChange}
-                                                onBlur={formik.handleBlur}
-                                                value={formik.values.password}
-                                                style={{ ...formik.errors.password && { borderColor: "var(--bs-danger)" } }}
-                                            />
+                                            <div className="input-group">
+                                                <input
+                                                    type={showPassword ? "text" : "password"}
+                                                    className="form-control"
+                                                    id="password"
+                                                    name='password'
+                                                    onChange={formik.handleChange}
+                                                    onBlur={formik.handleBlur}
+                                                    value={formik.values.password}
+                                                    style={{ ...formik.errors.password && { borderColor: "var(--bs-danger)" } }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-secondary"
+                                                    onClick={togglePasswordVisibility}
+                                                >
+                                                    <i className={`ti ti-${showPassword ? 'eye-off' : 'eye'}`}></i>
+                                                </button>
+                                            </div>
                                             {formik.errors.password &&
                                                 <div className='text fs-10 text-danger d-flex align-items-center'>
                                                     <i className='ti ti-alert-circle me-2'></i>
@@ -117,7 +135,7 @@ const LoginComponent: React.FC = () => {
                                             <motion.button
                                                 type='submit'
                                                 className="btn btn-primary w-100 py-8 fs-4 mb-4 rounded-2"
-                                                whileTap={{scale: 0.9}}  // Add the click animation effect
+                                                whileTap={{scale: 0.9}}
                                             >
                                                 Sign In
                                             </motion.button>
@@ -129,6 +147,13 @@ const LoginComponent: React.FC = () => {
                                                 Sign In...
                                             </button>
                                         }
+                                        <Link href='#' className='d-flex align-items-center' onClick={() => {
+                                            context.togglePageLoading(true)
+                                            dispatch(setActivePage({page:Pages.HOME}))
+                                        }}>
+                                            <i className='ti ti-arrow-back me-1'></i>
+                                            <span>back to home</span>
+                                        </Link>
                                     </form>
                                 </div>
                             </div>

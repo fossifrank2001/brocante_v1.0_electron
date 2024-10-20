@@ -28,7 +28,10 @@ import ReadProductPage from "@/pages/dashboard/products/ReadProductPage.tsx";
 import AuthorizationUpdatePage from "@/pages/dashboard/authorization/AuthorizationUpdate.tsx";
 import UpdateProductPage from "@/pages/dashboard/products/UpdateProductPage.tsx";
 import NotificationPage from "@/pages/dashboard/notifications/NotificationPage.tsx";
-import ShopPage from "@/pages/dashboard/shop/ShopPage.tsx";
+import IndexCustomer from "Components/dashboard/customers";
+import IndexSell from "Components/dashboard/sells";
+import ReadSellPage from "@/pages/dashboard/sells/SellDetail.tsx";
+import IndexSupply from "Components/dashboard/suppliers";
 
 const renderContent = (currentPage, id, param) => {
   switch (currentPage) {
@@ -61,8 +64,15 @@ const renderContent = (currentPage, id, param) => {
       return <AuthorizationCreatePage />;
     case Pages.NOTIFICATION:
       return <NotificationPage />;
-    case Pages.SHOP:
-      return <ShopPage />;
+    case Pages.CUSTOMER:
+      return <IndexCustomer />;
+    case Pages.SUPPLIER:
+      return <IndexSupply />;
+    case Pages.SELL:
+      if (!id && !param) return <IndexSell />;
+      if (param.sub_page === 'UPDATE') return null;
+      if (param.sub_page === 'READ') return <ReadSellPage />;
+      return null;
     default:
       return <Dashboard />;
   }
@@ -72,7 +82,11 @@ const Layout: React.FC = () => {
   const { pageLoading } = useAppContext();
   const [role, setRole] = useState<IRole | null>(null);
   const roleId = useMemo(() => role?.id ?? null, [role]);
-  const { currentPage, id, param } = useAppSelector((state) => state.navigaton);
+  const {
+    currentPage,
+    id,
+    param
+  } = useAppSelector((state) => state.navigaton);
 
   return (
       <>

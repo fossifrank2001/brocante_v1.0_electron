@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IApiResponse } from "Data/Utilities/axiosInstance";
-import { ForgotState, Pages, ResetState} from "Data/Objects/state";
+import { Pages, ResetState} from "Data/Objects/state";
 import AuthAPI from 'Data/Api/Auth.ts';
 import store, { AppDispatch } from '@/Data/Objects/store';
 import { setActivePage } from '../NavigationSlice';
@@ -30,6 +30,7 @@ export const resetAsync = (payload: IResetPayload) => async (dispatch: AppDispat
         Toast.success(response.message)
         store.dispatch(setActivePage({page: Pages.LOGIN}))
     } catch (error) {
+        console.error(error)
     }
 };
 

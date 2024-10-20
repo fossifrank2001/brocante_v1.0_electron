@@ -15,7 +15,7 @@ import Multiselect from "multiselect-react-dropdown"
 import Toast from '@/Data/Utilities/Toast';
 
 
-interface FormValues {
+interface FormValues{
     role: number | string;
   }
 
@@ -27,7 +27,7 @@ const NewAuthorization = () => {
     const [_permissions, set_Permissions] = useState<IPermission[] | null>(null);
     const [permissions, setPermissions] = useState<IPermission[] | null>(null);
 
-    const [qRole, _] = useState('');
+    const [qRole] = useState('');
     const [roles, setRoles] = useState<IRole[] | null>(null);
 
     const [qMenu, setqMenu] = useState('');
@@ -53,6 +53,7 @@ const NewAuthorization = () => {
             context.togglePageLoading(true)
             dispatch(setActivePage({page: Pages.HABILITATION}))
         } catch (error) {
+            console.error(error)
         } finally {
             setIsLoading(false);
         }
@@ -64,9 +65,9 @@ const NewAuthorization = () => {
             const {data: permissions_} = await AuthorizationAPI.permissions(_qPerm)
             setPermissions(permissions_.data)
         } catch (error) {
-            
+            console.error(error)
         }
-    }, [qPermission])
+    }, [])
 
     useEffect(() => {
         getPermissions(qPermission)
@@ -78,9 +79,10 @@ const NewAuthorization = () => {
             const {data: _roles} = await RoleAPI.index(_qRole)
             setRoles(_roles.data)
         } catch (error) {
-            
+            console.error(error)
         }
-    }, [qRole])
+    }, [])
+    
     useEffect(() => {
         getRoles(qRole)
     }, [qRole, getRoles])
@@ -88,12 +90,12 @@ const NewAuthorization = () => {
     //--------------------------------------------
     const getMenus = useCallback(async (_qMenu) => {
         try {
-            const {data: _roles} = await MenuAPI.menus(_qMenu)
-            setMenus(_roles.data)
+            const {data: _menus} = await MenuAPI.menus(_qMenu)
+            setMenus(_menus.data)
         } catch (error) {
-            
+            console.error(error)
         }
-    }, [qMenu])
+    }, [])
     useEffect(() => {
         getMenus(qMenu)
     }, [qMenu, getMenus])
@@ -102,7 +104,7 @@ const NewAuthorization = () => {
         initialValues,
         onSubmit: handleSubmit,
         validate: (values: FormValues) => {
-            let errors: Partial<FormValues> = {};
+            const errors: Partial<FormValues> = {};
 
             if (!values.role) {
                 errors.role = 'Role field is required.';
@@ -159,7 +161,7 @@ const NewAuthorization = () => {
                                                         style={{
                                                             borderRadius: '8px!important', 
                                                         }}
-                                                        error={!!!menu}
+                                                        error={!menu}
                                                     />
                                                 </div>
                                                 {!menu &&

@@ -3,8 +3,8 @@ import {useAppContext} from "@/contexts/appContext";
 import constants from "Data/Utilities/constants";
 import Breadcrumd from "Components/Breadcrumd";
 import {
-    MaterialReactTable,
-    MRT_ShowHideColumnsButton,
+    MaterialReactTable, MRT_ColumnDef,
+    MRT_ShowHideColumnsButton, MRT_TableInstance,
     MRT_ToggleDensePaddingButton,
     MRT_ToggleFiltersButton, MRT_ToggleFullScreenButton,
     MRT_ToggleGlobalFilterButton,
@@ -12,10 +12,10 @@ import {
 } from "material-react-table";
 //import {MRT_Localization_FR} from "material-react-table/locales/fr";
 import {MRT_Localization_EN} from "material-react-table/locales/en";
-import axiosInstance from "Data/Utilities/axiosInstance";
-import {Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Link, Stack, Typography} from "@mui/material";
+import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
+import {Box, Dialog, DialogActions, DialogContent, DialogTitle, Link, Stack, Typography} from "@mui/material";
 import UtilMethods from '@/Data/Utilities/UtilMethods';
-import { IMenu, IMenuList, IRole } from '@/Data/Interfaces';
+import { IRole, IRoleTableData } from '@/Data/Interfaces';
 import { Pages } from '@/Data/Objects/state';
 import { useAppDispatch } from '@/hooks';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
@@ -41,7 +41,6 @@ export default function IndexRole() {
     const [isLoading, setIsLoading] = useState(false);
     const [isDeleted, setIsDeleted] = useState(false);
     const [roleId, setRoleId] = useState<number>(null);
-    const [ready, setReady] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [columnFilters, setColumnFilters] = useState([]);
@@ -85,10 +84,12 @@ export default function IndexRole() {
             url.searchParams.set("sorting", JSON.stringify(sortingTab));
 
             try {
-                const { status, data: result } = await axiosInstance.get<IMenuList>(url.href);
+                const { status, data: result } = await axiosInstance.get<IApiResponsePaginated<IRole>>(url.href);
+              const { data: roleList }: IApiResponsePaginated<IRole> = result;
+
                 if (status === 200) {
-                    setRoles(result.data.data);
-                    setRowCount(result.data.total);
+                    setRoles(roleList.data);
+                    setRowCount(roleList.total);
                 }
                 resetScroll();
             } catch (error) {
@@ -97,21 +98,18 @@ export default function IndexRole() {
             } finally {
                 setIsLoading(false);
                 setIsRefetching(false);
-                setReady(true);
             }
         },
         [columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, isDeleted],
     );
 
     useEffect(() => {
-        getRoles();
+      (async () => await getRoles())();
     }, [getRoles, isDeleted]);
 
-    const tableData = useMemo(() => {
+    const tableData: IRoleTableData[] = useMemo(() => {
         return roles ? roles.map((role) => ({
-            id: role.id,
-            label: `${role?.label || ""}`,
-            code: role?.code,
+            ...role,
             actions: (
                 <Stack direction="row" spacing={1}>
                     <Link
@@ -138,7 +136,7 @@ export default function IndexRole() {
         })) : [];
     }, [roles]);
 
-    const columns = useMemo(
+    const columns : MRT_ColumnDef<IRoleTableData>[] = useMemo(
         () => [
             {
                 accessorKey: "label",
@@ -167,7 +165,7 @@ export default function IndexRole() {
         [],
     );
 
-    const mrTable = useMaterialReactTable({
+    const mrTable : MRT_TableInstance<IRoleTableData> = useMaterialReactTable({
         columns,
         data: tableData,
         enableRowSelection: true,
@@ -246,8 +244,7 @@ export default function IndexRole() {
             Toast.success(message)
             setIsDeleted(true)
             dispatch(setActivePage({page: Pages.ROLE}))
-        } catch (error) {
-        } finally {
+        } catch (error) { console.log(error)} finally {
             setInProgress(false);
             setOpenUpdateModal(false)
         }
@@ -258,7 +255,7 @@ export default function IndexRole() {
         onSubmit: handleSubmit,
         enableReinitialize: true,
         validate: (values: FormValues) => {
-            let errors: Partial<FormValues> = {};
+            const errors: Partial<FormValues> = {};
 
             if (!values.label) {
                 errors.label = 'Label field is required.';
@@ -279,24 +276,7 @@ export default function IndexRole() {
     return (
         <div className="container">
             <Breadcrumd parent="Roles" />
-            <MaterialReactTable
-                table={mrTable}
-                muiTablePaperProps={{
-                sx: {
-                    fontFamily: 'var(--bs-body-font-family)',
-                },
-                }}
-                muiTableHeadCellProps={{
-                sx: {
-                    fontFamily: 'var(--bs-body-font-family)',
-                },
-                }}
-                muiTableBodyCellProps={{
-                sx: {
-                    fontFamily: 'var(--bs-body-font-family)',
-                },
-                }}
-            />
+            <MaterialReactTable  table={mrTable}/>
             <CustomAlert 
                  openDetailModal={openDetailModal} 
                  content={{style: 'ti ti-info-circle text text-danger',

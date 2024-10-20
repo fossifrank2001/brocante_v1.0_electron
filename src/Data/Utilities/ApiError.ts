@@ -1,9 +1,9 @@
 class ApiError {
     status: number;
     message: string;
-    data: any | null;
+    data: never | NonNullable<unknown>;
 
-    constructor(status: number, message: string, data: any | null = null) {
+    constructor(status: number, message: string, data: never | NonNullable<unknown> = null) {
         this.status = status;
         this.message = message;
         this.data = data;

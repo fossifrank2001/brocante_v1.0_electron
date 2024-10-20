@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect} from 'react'
+import {useEffect} from 'react'
 import {useAppContext} from "../contexts/appContext";
 import constants from "Data/Utilities/constants";
 import PageLoadingIndicator from "Components/PageLoadingIndicator";

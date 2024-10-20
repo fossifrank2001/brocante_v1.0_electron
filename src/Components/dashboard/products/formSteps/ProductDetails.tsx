@@ -1,8 +1,9 @@
 import React from 'react';
 import { useFormikContext } from 'formik';
+import { IProductPayload } from 'Interfaces';
 
 const ProductDetails: React.FC = () => {
-    const { values, handleChange, setFieldValue, touched, errors } = useFormikContext<any>();
+    const { values, handleChange, touched, errors } = useFormikContext<IProductPayload>();
 
     return (
         <div className="row">

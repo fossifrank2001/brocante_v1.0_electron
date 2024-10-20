@@ -12,7 +12,10 @@ import "Styles/Navbar.less"
 import {setActivePage} from "Data/Slices/NavigationSlice.ts";
 import {Pages} from "Data/Objects/state.ts";
 
-const Navbar = ({ onHandleChangeRole = (role?: IRole) => {} }) => {
+interface INavBarPropsInterface{
+    onHandleChangeRole: (role?: IRole) => void
+}
+const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
     const context = useAppContext();
     const dispatch = useAppDispatch();
     const { authUser } = useAppSelector(state => state.user);
@@ -34,8 +37,11 @@ const Navbar = ({ onHandleChangeRole = (role?: IRole) => {} }) => {
     const handleChangeAccess = async (access_id: number | string) => {
         try {
             context.togglePageLoading(true);
+            console.log('access_id ::: ', access_id)
             const { loadAuthorizationAsync } = await import('Data/Slices/auth/authorizationSlice');
             await dispatch(loadAuthorizationAsync({ access_id }));
+            const role = authUser?.accesses?.find(access => access.id === access_id)?.role;
+            onHandleChangeRole(role);
         } catch (e) {
             console.error(e);
         } finally {
@@ -49,7 +55,6 @@ const Navbar = ({ onHandleChangeRole = (role?: IRole) => {} }) => {
             <Link
                 key={access.id} type="button"
                 onClick={() => {
-                    onHandleChangeRole(access.role);
                     handleChangeAccess(access.id);
                     setHasClickToLoadNotif(prev => !prev);
                 }}
@@ -71,9 +76,9 @@ const Navbar = ({ onHandleChangeRole = (role?: IRole) => {} }) => {
 
     const getNotifications = useCallback(async () => {
         try {
-            const { data } = await NotificationsAPI.index();
+            const { data: notifList } = await NotificationsAPI.index();
             context.togglePageLoading(true);
-            setNotifications(data);
+            setNotifications(notifList.data);
         } catch (e) { console.error(e); }
     }, []);
 
@@ -173,7 +178,10 @@ const Navbar = ({ onHandleChangeRole = (role?: IRole) => {} }) => {
                 <div className="navbar-collapse justify-content-end px-0" id="navbarNav">
                     <ul className="navbar-nav flex-row ms-auto align-items-center justify-content-end">
                         <li className="nav-item nav-icon-hover-bg rounded-circle">
-                            <button className="btn btn-primary" onClick={() => dispatch(setActivePage({page: Pages.SHOP}))} >Shop</button>
+                            <button className="btn btn-primary d-flex align-items-center" onClick={() => dispatch(setActivePage({page: Pages.HOME}))} >
+                                <i className='ti ti-building-store me-1'></i>
+                                <span>Shop</span>
+                            </button>
                         </li>
                         <li className="nav-item nav-icon-hover-bg rounded-circle">
                             <Link className="nav-link position-relative" href="#"

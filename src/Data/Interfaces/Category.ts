@@ -1,4 +1,5 @@
 import {ISubCategory} from "Data/Interfaces/Supply.ts";
+import { ReactNode } from 'react';
 
 export interface ICategoryPayload{
     label: string;
@@ -14,4 +15,9 @@ export interface SubCategory {
 
 export interface ICategory extends ICategoryPayload{
     id: number;
+}
+
+export interface ICategoryTableData extends ICategory {
+    sub_category: number;
+    actions: ReactNode;
 }

@@ -5,24 +5,31 @@ import { useAppDispatch } from '@/hooks';
 import { Link } from "@mui/material";
 
 interface IBreadcrumb {
-    parent  : string;
+    parent  ?: string;
     url     ?: Pages;
-    _child  ?: string | number; 
+    _child  ?: string | number;
+    for_dashboard ?: boolean;
 }
 
 export default function Breadcrumd(props : IBreadcrumb) {
     const dispatch = useAppDispatch()
 
-    return <div className="card bg-info-subtle shadow-none position-relative overflow-hidden mb-2">
+    return <div className="card bg-info-subtle shadow-none position-relative overflow-hidden ">
         <div className="card-body px-4 py-1" style={{height: "75px"}}>
             <div className="row align-items-center">
                 <div className="col-9">
                     <h4 className="fw-semibold mb-8">{props.parent}</h4>
                     <nav aria-label="breadcrumb">
                         <ol className="breadcrumb">
-                            <li className="breadcrumb-item">
-                                <Link className="text-muted text-decoration-none" href='#' onClick={() => dispatch(setActivePage({page: Pages.DASHBOARD}))} >Dashboard</Link>
-                            </li>
+                            {!props.for_dashboard ? <li className="breadcrumb-item">
+                                    <Link className="text-muted text-decoration-none" href='#'
+                                          onClick={() => dispatch(setActivePage({page: Pages.DASHBOARD}))}>Dashboard</Link>
+                                </li>
+                                :<li className="breadcrumb-item">
+                                    <Link className="text-muted text-decoration-none" href='#'
+                                          onClick={() => dispatch(setActivePage({page: Pages.HOME}))}>Shop</Link>
+                                </li>
+                            }
                             {
                                 props.url?<>
                                         <li className="breadcrumb-item">

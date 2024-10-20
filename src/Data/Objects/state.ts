@@ -2,8 +2,11 @@ import { IMenu, IMenus, IUser } from "Interfaces"
 import { IHabilitation } from "../Interfaces/Habilitation"
 
 export enum Pages{
-    LOGIN = "LOGIN",
+    HOME = "HOME",
+    CART_PAGE = "CART PAGE",
     DASHBOARD = "DASHBOARD",
+    SUCCESS_ORDER = "SUCCESS ORDER",
+    LOGIN = "LOGIN",
     USER_ACCESS_PAGE = "USER ACCESS",
     FORGOT_PAGE = "FORGOT PAGE",
     RESET_PAGE = "RESET PAGE",
@@ -19,6 +22,8 @@ export enum Pages{
     BILL = "BILL",
     SELL = "SELL",
     NOTIFICATION = "NOTIFICATION",
+    CUSTOMER = "CUSTOMER",
+    SUPPLIER = "SUPPLIER",
 }
 
 export class State{
@@ -52,7 +57,11 @@ export class UserState{
 export class NavigationState{
     currentPage : Pages
     id?: number| null
-    param?: any | Object | null 
+    param?: {
+        type ?: string
+        number ?: string
+    } | null
+    lastPageBeforeLogin ?: never | undefined | Pages
 }
 
 export class UserAuthorizationState{

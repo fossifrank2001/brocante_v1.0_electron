@@ -1,7 +1,10 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { motion } from 'framer-motion';
 import {useAppDispatch} from "@/hooks";
 import {addToCart} from "Data/Slices/dashboard/seller/cartSlice.ts";
+import noImage from  "../../../assets/images/products/no_image.png"
+import UtilMethods from 'Data/Utilities/UtilMethods';
+import ProductAPI from "Data/Api/Product.ts";
 
 interface ProductCardProps {
     id:number
@@ -10,12 +13,15 @@ interface ProductCardProps {
     price: number;
     stock_quantity:number;
     oldPrice?: number;
+    status?: string
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ id, imageUrl, name, price, oldPrice,stock_quantity}) => {
+const ProductCard: React.FC<ProductCardProps> = ({ id, imageUrl, name, price, oldPrice,stock_quantity, status}) => {
     const dispatch = useAppDispatch();
-
+    const [maxHasReach, setMaxHasReach] = useState(false)
+    let counter = 0
     const handleAddToCart = () => {
+        counter++;
         const productToAdd = {
             id,
             imageUrl,
@@ -25,21 +31,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, imageUrl, name, price, ol
             quantity: stock_quantity
         };
 
-        // Dispatchez l'action pour ajouter ce produit au panier
+        setMaxHasReach(counter === stock_quantity)
         dispatch(addToCart(productToAdd));
     };
 
     return (
-        <div className="col-sm-4 col-lg-4 col-xxl-4">
+        <div className="col-sm-4 col-lg-3 col-xxl-3">
             <motion.div
-                className="card hover-img overflow-hidden border border-1 "
+                className="card hover-img overflow-hidden   border border-1 border-lightgray"
+                style={{boxShadow: "0 0 5px lightgray", borderRadius: "12px"}}
                 whileHover={{ y: -10 }}
             >
                 <div className="position-relative">
-                    <a href="#">
-                        <img src={imageUrl} className="card-img-top" alt={name} />
-                    </a>
-                    <a
+                    {imageUrl ? <a href="#" style={{height: '100px'}}>
+                            <img src={imageUrl} className="card-img-top" style={{
+                                height: '125px', objectFit:"cover", objectPosition:"center"}}  alt={name}/>
+                        </a>
+                        :
+                        <a href="#" style={{height: '100px'}}>
+                            <img src={noImage} className="card-img-top" style={{height: '125px',
+                                objectFit:"cover", objectPosition:"center"}}  alt={name}/>
+                        </a>
+                    }
+                    {(stock_quantity !== 0 && !maxHasReach)&& <a
                         href="#"
                         onClick={handleAddToCart}
                         className="text-bg-primary rounded-circle p-2 text-white d-inline-flex position-absolute bottom-0 end-0 mb-n3 me-3"
@@ -48,18 +62,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, imageUrl, name, price, ol
                         data-bs-title="Add To Cart"
                     >
                         <i className="ti ti-basket fs-4"></i>
-                    </a>
+                    </a>}
                 </div>
                 <div className="card-body pt-3 p-4">
                     <h6 className="fs-4">{name}</h6>
                     <div className="d-flex align-items-center justify-content-between">
-                        <h6 className="fs-4 mb-0">
+                        <h6 className="fs-4 mb-0 w-100 d-flex align-items-center justify-content-between">
                             <span>{price} <span  className='fw-bolder' style={{fontSize: '10px'}}> FCFA</span></span>
-                            {oldPrice && (
-                                <span className="ms-2 fw-normal text-muted fs-3">
-                                  <del>${oldPrice}</del>
-                                </span>
-                            )}
+                            {!maxHasReach ?
+                                <span className={`${UtilMethods.getStatus(status)}`}>{status}</span>
+                                :
+                                <span className={`${UtilMethods.getStatus(ProductAPI.OUT_OF_STOCK)}`}>{ProductAPI.OUT_OF_STOCK}</span>
+                            }
                         </h6>
                     </div>
                 </div>

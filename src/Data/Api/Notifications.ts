@@ -1,4 +1,5 @@
-import axiosInstance, { IApiResponse } from "Data/Utilities/axiosInstance";
+import axiosInstance, { IApiResponse, IApiResponseBase, IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
+import { INotification } from 'Interfaces';
 
 
 class NotificationsAPI {
@@ -6,9 +7,10 @@ class NotificationsAPI {
     static READ = 'read'
     static UNREAD = 'unread'
 
-    static async index(): Promise<IApiResponse> {
+    static async index(): Promise<IApiResponsePaginated<INotification>> {
+        // eslint-disable-next-line no-useless-catch
         try {
-            const response = await axiosInstance.get<IApiResponse>('/notifications');
+            const response = await axiosInstance.get<IApiResponsePaginated<INotification>>('/notifications');
             return response.data;
         } catch (error) {
             throw error;
@@ -16,9 +18,10 @@ class NotificationsAPI {
     }
 
     
-    static async count(): Promise<IApiResponse> {
+    static async count(): Promise<IApiResponseBase<never>> {
+        // eslint-disable-next-line no-useless-catch
         try {
-            const response = await axiosInstance.get<IApiResponse>('/notifications/count');
+            const response = await axiosInstance.get<IApiResponseBase<never>>('/notifications/count');
             return response.data;
         } catch (error) {
             throw error;
@@ -26,6 +29,7 @@ class NotificationsAPI {
     }
 
     static async maskAsRead(notification: number): Promise<IApiResponse> {
+        // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.post<IApiResponse>(`/notifications/${notification}/read`);
             return response.data;
@@ -35,6 +39,7 @@ class NotificationsAPI {
     }
 
     static async maskAllAsRead(): Promise<IApiResponse> {
+        // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.post<IApiResponse>(`/notifications/read-all `);
             return response.data;

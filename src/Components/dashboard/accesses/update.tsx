@@ -33,7 +33,7 @@ const UpdateAccess = () => {
     
     const [isSest, setIsSest] = useState(false);
 
-    const [qRole, _] = useState('');
+    const [qRole] = useState('');
     const [roles, setRoles] = useState<IRole[] | null>(null);
     const dispatch = useAppDispatch();
     const context = useAppContext()
@@ -72,7 +72,8 @@ const UpdateAccess = () => {
             await AccessAPI.update(id, datas);
             context.togglePageLoading(true)
             dispatch(setActivePage({page: Pages.ACCESS}))
-        } catch (error) {
+        } catch (e) {
+            console.error(e.message)
         } finally {
             setIsLoading(false);
         }
@@ -82,8 +83,8 @@ const UpdateAccess = () => {
         try {
             const {data: _users} = await UserAPI.index(_qUser)
             setUsers(_users.data)
-        } catch (error) {
-            
+        } catch (e) {
+            console.error(e.message)
         }
     }, [qUser])
     useEffect(() => {
@@ -94,8 +95,8 @@ const UpdateAccess = () => {
         try {
             const {data: _roles} = await RoleAPI.index(_qRole)
             setRoles(_roles.data)
-        } catch (error) {
-            
+        } catch (e) {
+            console.error(e.message)
         }
     }, [qRole])
     useEffect(() => {
@@ -107,7 +108,7 @@ const UpdateAccess = () => {
         enableReinitialize: true,
         onSubmit: handleSubmit,
         validate: (values: FormValues) => {
-            let errors: Partial<FormValues> = {};
+            const errors: Partial<FormValues> = {};
 
             if (!values.role_id) {
                 errors.role_id = 'Role field is required.';
@@ -168,7 +169,7 @@ const UpdateAccess = () => {
                                                             style={{
                                                                 borderRadius: '8px!important', 
                                                             }}
-                                                            error={!!!user}
+                                                            error={!(user)}
                                                         />
                                                     </div>
                                                     {!user &&

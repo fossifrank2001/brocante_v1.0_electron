@@ -3,15 +3,19 @@ import { Pages, NavigationState } from 'Data/Objects/state';
 
 // État par défaut
 const initialState: NavigationState = {
-    currentPage: Pages.LOGIN,
+    currentPage: Pages.HOME,
     id: null,
-    param: null
+    param: null,
+    lastPageBeforeLogin: undefined,
 };
 
 interface IPageHandler{
     page: Pages,
-    id?: number| null,
-    param?: any | Object | null 
+    id?: number| never | null,
+    param?: {
+        type ?: string
+        number ?: string
+    } | null
 }
 
 const navigationSlice = createSlice({
@@ -26,10 +30,21 @@ const navigationSlice = createSlice({
         },
         redirectToLogin: (state: NavigationState) => {
             state.currentPage = Pages.LOGIN;
-        }
+        },
+        setLastPageBeforeLogin(state, action: PayloadAction<{ page: Pages }>) {
+            state.lastPageBeforeLogin = action.payload.page;
+        },
+        resetLastPageBeforeLogin(state) {
+            state.lastPageBeforeLogin = undefined;
+        },
     }
 });
 
-export const { setActivePage, redirectToLogin  } = navigationSlice.actions;
+export const {
+    setActivePage,
+    redirectToLogin ,
+    setLastPageBeforeLogin,
+    resetLastPageBeforeLogin
+} = navigationSlice.actions;
 
 export default navigationSlice.reducer;

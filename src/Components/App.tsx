@@ -20,6 +20,30 @@ import Access from '@/pages/Access';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import Layout from '@/layout';
 import CustomAlert from './CustomAlert';
+import HomePage from "@/pages/Home/HomePage.tsx";
+import CartPage from "@/pages/Home/cart/CartPage.tsx";
+import SuccessSellPage from "@/pages/Home/SuccessSellPage.tsx";
+
+export const handleRedirectToDashboard = async (access_id: number | string, dispatch) => {
+  try {
+
+    const { loadAuthorizationAsync } = await import('Data/Slices/auth/authorizationSlice');
+    await dispatch(loadAuthorizationAsync({ access_id }));
+    const lastVisitedPage = localStorage.getItem('lastVisitedPage');
+
+    console.log('Last visited Page ::: APP', lastVisitedPage)
+    if (lastVisitedPage) {
+      dispatch(setActivePage({ page: lastVisitedPage }));
+    } else {
+      dispatch(setActivePage({page: Pages.DASHBOARD}));
+    }
+    localStorage.removeItem('lastVisitedPage');
+  } catch (e) {
+    console.error(e)
+  } finally {
+    console.warn('Finally process')
+  }
+};
 
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -27,7 +51,22 @@ const App: React.FC = () => {
   const { currentPage } = useAppSelector((state) => state.navigaton);
   const [openDetailModal, setOpenDetailModal] = useState(false);
   const [isOk, setIsOk] = useState(false);
-  //const context = useAppContext();
+
+  useEffect(() => {
+    const handleNavigationHome = () => {
+      dispatch(setActivePage({ page: Pages.HOME }));
+    };
+
+    if (window.ipcRenderer) {
+      window.ipcRenderer.on('navigate-home', handleNavigationHome);
+    }
+
+    return () => {
+      if (window.ipcRenderer) {
+        window.ipcRenderer.off('navigate-home', handleNavigationHome);
+      }
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     if (!token || !authUser) {
@@ -48,9 +87,17 @@ const App: React.FC = () => {
             setOpenDetailModal(true)
           } else {
               if (authUser.accesses.length > 1) {
+                const lastVisitedPage = localStorage.getItem('lastVisitedPage');
+
+                console.log('Last visited Page ::: APP', lastVisitedPage)
+                if (lastVisitedPage) {
+                  dispatch(setActivePage({ page: lastVisitedPage }));
+                } else {
                   dispatch(setActivePage({page: Pages.USER_ACCESS_PAGE}));
+                }
+                localStorage.removeItem('lastVisitedPage');
               } else {
-                  handleRedirectToDashboard(authUser.accesses[0].id);
+                  handleRedirectToDashboard(authUser.accesses[0].id, dispatch);
               }
           }
         }
@@ -58,20 +105,15 @@ const App: React.FC = () => {
     }
   }, [token, authUser, currentPage, dispatch]);
 
-  const handleRedirectToDashboard = async (access_id: number | string) => {
-    try {
-
-        const { loadAuthorizationAsync } = await import('Data/Slices/auth/authorizationSlice');
-        await dispatch(loadAuthorizationAsync({ access_id }));
-
-        dispatch(setActivePage({page: Pages.DASHBOARD}));
-    } catch (e) {
-    } finally {
-    }
-};
 
   const renderMainContent = () => {
     switch (currentPage) {
+      case Pages.HOME:
+        return <HomePage />;
+      case Pages.CART_PAGE:
+        return <CartPage />;
+      case Pages.SUCCESS_ORDER:
+        return <SuccessSellPage />;
       case Pages.LOGIN:
         return <Login />;
       case Pages.FORGOT_PAGE:
@@ -112,4 +154,5 @@ const App: React.FC = () => {
     </AppContextProvider>
   )
 }
+
 export default React.memo(App);

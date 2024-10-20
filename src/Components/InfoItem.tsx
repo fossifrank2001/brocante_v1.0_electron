@@ -1,14 +1,15 @@
 import { Typography } from "@mui/material";
+import { ReactNode } from 'react';
 
 interface IInfoItem {
     label: string
-    value: any
-    second?: any
+    value: never | ReactNode | string
+    second?: IInfoItem
 }
 
 const InfoItem = (props: IInfoItem) => {
   return (
-    <div className="__flex-row __two"> 
+    <div className="__flex-row __two">
       <div className="d-flex  align-items-center">
         <Typography color="secondary" className=" my-1"   fontWeight="medium">
           {props.label}&nbsp;:&nbsp;

@@ -1,4 +1,6 @@
 import {ICategory} from "Data/Interfaces/Category.ts";
+import { ReactNode } from 'react';
+import {IImage} from "Data/Interfaces/Image.ts";
 
 export interface ISupplyPayload{
     name : string;
@@ -48,12 +50,14 @@ export interface IProductDetail{
     current_rating: string,
 }
 
+
 export interface IProduct{
     id: number;
     name: string;
     price: number;
     stock_quantity: number;
     description: string;
+    thumbnail?: IImage | null;
     details: IProductDetail;
     suppliers: ISupplyPayload[]
     subcategories: ISubCategory[]
@@ -67,4 +71,9 @@ export interface ISubCategory{
     description: string
     category_id: number;
     category: ICategory;
+}
+
+export interface IProductTableData extends IProduct{
+    status:string;
+    actions: ReactNode;
 }

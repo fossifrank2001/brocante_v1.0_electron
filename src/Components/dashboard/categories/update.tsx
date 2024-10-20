@@ -7,7 +7,8 @@ import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
 import { useAppContext } from '@/contexts/appContext';
 import CategoryAPI from '@/Data/Api/Category';
-import {ICategoryPayload, SubCategory} from '@/Data/Interfaces/Category';
+import { ICategory, ICategoryPayload, SubCategory } from '@/Data/Interfaces/Category';
+import { IApiResponseBase } from 'Data/Utilities/axiosInstance.ts';
 
 interface CategoryFormValues extends ICategoryPayload{
 }
@@ -26,7 +27,7 @@ const UpdateCategory: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const {data} = await CategoryAPI.show(id);
+        const {data}:IApiResponseBase<ICategory> = await CategoryAPI.show(id);
         setInitialValues({
           label: data.label,
           description: data.description,
@@ -46,6 +47,7 @@ const UpdateCategory: React.FC = () => {
       context.togglePageLoading(true)
       dispatch(setActivePage({page: Pages.CATEGORY}))
     } catch (error) {
+      console.error(error)
     } finally {
       setSubmitting(false);
     }

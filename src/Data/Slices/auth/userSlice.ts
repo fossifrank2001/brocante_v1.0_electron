@@ -21,11 +21,12 @@ const userSlice = createSlice({
     initialState: defaultUserState,
     reducers: {
         loginSuccess(state: UserState, action: PayloadAction<IApiUserLogin>) {
-            console.log(action.payload)
             const { data: { user, token }, message } = action.payload;
             state.message = message;
             state.token = token;
             state.authUser = user;
+
+            // localStorage.setItem('user', JSON.stringify(user));
         },
         logoutSuccess(state: UserState, action: PayloadAction<IApiResponse>) {
             const { message } = action.payload;
@@ -56,22 +57,34 @@ const userSlice = createSlice({
 
             return state
         },
+        setFirstConnexionToFalse(state: UserState) {
+            state.authUser = {
+                ...state.authUser,
+                first_connexion: false
+            };
+
+            return state
+        },
     },
 });
 
-export const {clearUserCredential, addAccessToAuthUser, removeAccessToAuthUser} = userSlice.actions;
+export const {
+    clearUserCredential,
+    addAccessToAuthUser,
+    removeAccessToAuthUser,
+    setFirstConnexionToFalse
+} = userSlice.actions;
 
-// Action asynchrone pour la connexion
 export const loginAsync = (payload: ILoginPayload) => async (dispatch: AppDispatch) => {
     try {
         const response: IApiUserLogin  = await AuthAPI.login(payload);
         Toast.success(response.message)
         dispatch(userSlice.actions.loginSuccess(response));
     } catch (error) {
+        console.error(error)
     }
 };
 
-// Action asynchrone pour la connexion
 export const logoutAsync = () => async (dispatch: AppDispatch) => {
     try {
         const response: IApiResponse  = await AuthAPI.logout();
@@ -79,6 +92,7 @@ export const logoutAsync = () => async (dispatch: AppDispatch) => {
         store.dispatch(setActivePage({page: Pages.LOGIN}))
         dispatch(userSlice.actions.logoutSuccess(response));
     } catch (error) {
+        console.error(error)
     }
 };
 

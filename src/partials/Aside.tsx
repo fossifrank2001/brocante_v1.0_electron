@@ -1,12 +1,12 @@
-import {useCallback, useEffect, useRef} from 'react';
-import logo from '@/assets/images/logos/dark-logo.svg';
-import user from '@/assets/images/profile/user-1.jpg';
-import { useAppContext } from '@/contexts/appContext';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { Link } from '@mui/material';
-import UtilMethods from '@/Data/Utilities/UtilMethods';
-import { setActivePage } from '@/Data/Slices/NavigationSlice';
-import { motion } from 'framer-motion';
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import logo from '@/assets/images/logos/dark-logo.svg'
+import user from '@/assets/images/profile/user-1.jpg'
+import { useAppContext } from '@/contexts/appContext'
+import { useAppDispatch, useAppSelector } from '@/hooks'
+import { Link, Skeleton } from '@mui/material'
+import UtilMethods from '@/Data/Utilities/UtilMethods'
+import { setActivePage } from '@/Data/Slices/NavigationSlice'
+import { motion } from 'framer-motion'
 
 const iconOfMenus = {
     DASHBOARD: 'ti ti-layout-dashboard',
@@ -21,40 +21,53 @@ const iconOfMenus = {
     ARTICLE: 'ti ti-package',
     BILL: 'ti ti-receipt',
     SELL: 'ti ti-wallet',
-};
+    CUSTOMER: 'ti ti-users',
+    SUPPLIER: 'ti ti-users-plus',
+    INVOICE: 'ti ti-file-invoice',
+}
 
-export default function Aside({role=null}) {
-    const context = useAppContext();
+export default function Aside({ role = null }) {
+    const context = useAppContext()
     const dispatch = useAppDispatch()
-    const {auth_access_id} = useAppSelector(state => state.userAuthorizing)
-    const {authUser} = useAppSelector(state => state.user)
-    const {menus_role: menus} = useAppSelector(state => state.menus_role)
-    const {currentPage} = useAppSelector(state => state.navigaton)
-    const asideRef = useRef(null);
+    const { auth_access_id } = useAppSelector(state => state.userAuthorizing)
+    const { authUser } = useAppSelector(state => state.user)
+    const { menus_role: menus } = useAppSelector(state => state.menus_role)
+    const { currentPage } = useAppSelector(state => state.navigaton)
+    const asideRef = useRef(null)
+    const [isLoading, setIsLoading] = useState(true)
+
     const handleLogout = async () => {
         try {
-            context.togglePageLoading(true);
-            const {logoutAsync} = await import("Data/Slices/auth/userSlice")
-            await dispatch(logoutAsync());
+            context.togglePageLoading(true)
+            const { logoutAsync } = await import("Data/Slices/auth/userSlice")
+            await dispatch(logoutAsync())
         } catch (e) {
             console.error(e)
         }
-    };
+    }
 
     const getMenus = useCallback(async () => {
         try {
-            const {loadMenuByRoleAsync} = await import("Data/Slices/MenuRoleSlice")
-            const access = authUser?.accesses?.find(access => access.id === auth_access_id)
-            await dispatch(loadMenuByRoleAsync(access?.role.id));
-        } catch (e) {console.error(e)}
-    }, [role]);
+            setIsLoading(true)
+            const { loadMenuByRoleAsync } = await import("Data/Slices/MenuRoleSlice")
+            console.log('auth_access_id ASIDE FUNCTION ::: ', auth_access_id)
+            const access = authUser?.accesses ? authUser?.accesses.find(access => access.id === auth_access_id) : null
+            console.log('ROLE ASIDE FUNCTION ::: ', role)
+            await dispatch(loadMenuByRoleAsync(access?.role.id))
+        } catch (e) {
+            console.error(e)
+        } finally {
+            setIsLoading(false)
+        }
+    }, [role, auth_access_id, authUser, dispatch])
 
     useEffect(() => {
-        getMenus();
-    }, [getMenus, role]);
+        getMenus()
+        console.log('ROLE ASIDE USEEFFECT ::: ', role)
+    }, [getMenus, role])
 
     const displayMenus = menus?.map((item) => {
-        const isCurrentPage = item.code === currentPage;
+        const isCurrentPage = item.code === currentPage
 
         if (item.parent_id === null && item.url !== '#') {
             return (
@@ -64,23 +77,23 @@ export default function Aside({role=null}) {
                         className={`sidebar-link ${isCurrentPage && 'bg-primary text-white'}`}
                         onClick={() => {
                             context.togglePageLoading(true)
-                            dispatch(setActivePage({page: item.code}))
+                            dispatch(setActivePage({ page: item.code }))
                         }}
                     >
                         <span>
                             <i className={`${iconOfMenus[item.code]}`}></i>
                         </span>
-                        <span className="hide-menu" style={{userSelect:"none"}}>{UtilMethods.capitalizeFirstLetter(item.label)}</span>
+                        <span className="hide-menu" style={{ userSelect: "none" }}>{UtilMethods.capitalizeFirstLetter(item.label)}</span>
                     </motion.div>
                 </li>
-            );
+            )
         } else if (item.parent_id === null && item.url === '#') {
             return (
                 <li className="nav-small-cap mt-1 text text-primary-emphasis" key={item.id}>
                     <i className={`${iconOfMenus[item.code]} nav-small-cap-icon fs-4`}></i>
-                    <span className="hide-menu" style={{userSelect:"none"}}>{item.label.toUpperCase()}</span>
+                    <span className="hide-menu" style={{ userSelect: "none" }}>{item.label.toUpperCase()}</span>
                 </li>
-            );
+            )
         } else {
             return (
                 <li className="sidebar-item ms-2" key={item.id}>
@@ -89,23 +102,43 @@ export default function Aside({role=null}) {
                         className={`sidebar-link ${isCurrentPage && 'bg-primary text-white'}`}
                         onClick={() => {
                             context.togglePageLoading(true)
-                            dispatch(setActivePage({page: item.code}))
+                            dispatch(setActivePage({ page: item.code }))
                         }}
                     >
                         <span>
                             <i className={iconOfMenus[item.code]}></i>
                         </span>
-                        <span className="hide-menu" style={{userSelect:"none"}}>{UtilMethods.capitalizeFirstLetter(String(item.label))}</span>
+                        <span className="hide-menu" style={{ userSelect: "none" }}>{UtilMethods.capitalizeFirstLetter(String(item.label))}</span>
                     </motion.div>
                 </li>
-            );
+            )
         }
-    });
+    })
 
-    const handleRemoveSideBar = () =>{
+    const handleRemoveSideBar = () => {
         const element: HTMLElement = asideRef.current
-        element.style.transform = "translateX("+ -275 +"px)";
+        element.style.transform = "translateX(" + -275 + "px)"
     }
+
+    const SkeletonLoader = () => (
+        <>
+            {[...Array(3)].map((_, groupIndex) => (
+                <React.Fragment key={groupIndex}>
+                    <li className="nav-small-cap mt-3">
+                        <Skeleton variant="text" width={100} height={24} />
+                    </li>
+                    {[...Array(3)].map((_, itemIndex) => (
+                        <li className="sidebar-item" key={itemIndex}>
+                            <div className="sidebar-link">
+                                <Skeleton variant="circular" width={24} height={24} style={{ marginRight: '10px' }} />
+                                <Skeleton variant="text" width={150} height={24} />
+                            </div>
+                        </li>
+                    ))}
+                </React.Fragment>
+            ))}
+        </>
+    )
 
     return (
         <aside id="left-sidebar" ref={asideRef} className="left-sidebar">
@@ -119,8 +152,24 @@ export default function Aside({role=null}) {
                     </div>
                 </div>
                 <hr />
-                <nav className="sidebar-nav scroll-sidebar" data-simplebar="">
-                    <ul id="sidebarnav pt-3">{displayMenus}</ul>
+                <nav className="sidebar-nav scroll-sidebar" data-simplebar="" style={{
+                    maxHeight: 'calc(100vh - 200px)',
+                    overflowY: 'auto'
+                }}>
+                    <ul id="sidebarnav" className="pt-3">
+                        {isLoading ? (
+                            <SkeletonLoader />
+                        ) : menus && menus.length > 0 ? (
+                            displayMenus
+                        ) : (
+                            <div className='d-flex align-items-center'>
+                                <span>
+                                    <i className='ti ti-reload me-2'></i>
+                                </span>
+                                <span className="hide-menu" style={{ userSelect: "none" }}>Reload Menu</span>
+                            </div>
+                        )}
+                    </ul>
                 </nav>
                 <div
                     className="fixed-profile p-3 mb-2 bg-secondary-subtle rounded mt-3"
@@ -151,7 +200,7 @@ export default function Aside({role=null}) {
                             data-bs-toggle="tooltip"
                             data-bs-placement="top"
                             data-bs-title="logout"
-                            whileTap={{scale: 0.9}}  // Scale the button to 90% of its size when clicked
+                            whileTap={{ scale: 0.9 }}
                         >
                             <i className="ti ti-power fs-6"></i>
                         </motion.button>
@@ -159,5 +208,5 @@ export default function Aside({role=null}) {
                 </div>
             </div>
         </aside>
-    );
+    )
 }

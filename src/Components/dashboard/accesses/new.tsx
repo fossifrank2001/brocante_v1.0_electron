@@ -1,6 +1,6 @@
 import Breadcrumd from '@/Components/Breadcrumd';
 import UserAPI from '@/Data/Api/Users';
-import { IRole, IUser } from '@/Data/Interfaces';
+import { IAccess, IRole, IUser } from '@/Data/Interfaces';
 import { useAppDispatch } from '@/hooks';
 import { Autocomplete,TextField } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react'
@@ -13,6 +13,7 @@ import RoleAPI from '@/Data/Api/Role';
 import Constants from '@/Data/Utilities/constants';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { addAccessToAuthUser } from '@/Data/Slices/auth/userSlice';
+import { IApiResponseBase, IApiResponsePaginated } from 'Data/Utilities/axiosInstance.ts';
 
 
 interface FormValues {
@@ -28,7 +29,7 @@ const NewAccess = () => {
     const [users, setUsers] = useState<IUser[] | null>(null);
     const [user, setUser] = useState<IUser | null>(null);
 
-    const [qRole, _] = useState('');
+    const [qRole] = useState('');
     const [roles, setRoles] = useState<IRole[] | null>(null);
 
     const [isAdminCode, setIsAdminCode] = useState<string | null>(null)
@@ -46,51 +47,57 @@ const NewAccess = () => {
         try {
             const datas = {
                 ...values,
-                user_id: user.id
+                user_id: user?.id
+            };
+            const { data }: IApiResponseBase<IAccess> = await AccessAPI.create(datas);
+            context.togglePageLoading(true);
+
+            if (user && UtilMethods.isAuth(user.id)) {
+                dispatch(addAccessToAuthUser(data));
             }
-            const {data} = await AccessAPI.create(datas);
-            context.togglePageLoading(true)
-            
-            console.log(data)
-            if(UtilMethods.isAuth(user.id)){
-                dispatch(addAccessToAuthUser(data))
-            }
-            dispatch(setActivePage({page: Pages.ACCESS}))
+            dispatch(setActivePage({ page: Pages.ACCESS }));
         } catch (error) {
+            if (error.response) {
+                console.error(error.response.data.message || "An error occurred");
+            } else {
+                console.error(error.message);
+            }
         } finally {
             setIsLoading(false);
         }
     };
 
-    const getUsers = useCallback(async (_qUser) => {
+
+    const getUsers = useCallback(async (_qUser: string) => {
         try {
-            const {data: _users} = await UserAPI.index(_qUser)
+            const {data: _users}:IApiResponsePaginated<IUser> = await UserAPI.index(_qUser)
             setUsers(_users.data)
-        } catch (error) {
-            
+        } catch (e) {
+            console.log(e.messagge)
         }
-    }, [qUser])
+    }, [])
     useEffect(() => {
-        getUsers(qUser)
+        (async () => await getUsers(qUser))()
     }, [qUser, getUsers])
     
-    const getRoles = useCallback(async (_qRole) => {
+    const getRoles = useCallback(async (_qRole:string) => {
         try {
-            const {data: _roles} = await RoleAPI.index(_qRole)
+            const {data: _roles}:IApiResponsePaginated<IRole>  = await RoleAPI.index(_qRole)
             setRoles(_roles.data)
-        } catch (error) {
-            
+        } catch (e) {
+            console.log(e.messagge)
         }
-    }, [qRole])
+    }, [])
+    
     useEffect(() => {
-        getRoles(qRole)
+        (async () => await getRoles(qRole))()
     }, [qRole, getRoles])
 
     const formik = useFormik({
         initialValues,
         onSubmit: handleSubmit,
         validate: (values: FormValues) => {
-            let errors: Partial<FormValues> = {};
+            const errors: Partial<FormValues> = {};
 
             if (!values.role_id) {
                 errors.role_id = 'Role field is required.';
@@ -156,7 +163,7 @@ const NewAccess = () => {
                                                         style={{
                                                             borderRadius: '8px!important', 
                                                         }}
-                                                        error={!!!user}
+                                                        error={!(user)}
                                                     />
                                                 </div>
                                                 {!user &&

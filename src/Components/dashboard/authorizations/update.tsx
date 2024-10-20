@@ -65,6 +65,7 @@ const UpdateAuthorization = () => {
             setPermission(record.permission);
         }
     }, [record]);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleSubmit = async (_) => {
         setIsLoading(true);
         try {
@@ -78,6 +79,7 @@ const UpdateAuthorization = () => {
             context.togglePageLoading(true)
             dispatch(setActivePage({page: Pages.HABILITATION}))
         } catch (error) {
+            console.error(error)
         } finally {
             setIsLoading(false);
         }
@@ -89,9 +91,9 @@ const UpdateAuthorization = () => {
             const {data: permissions_} = await AuthorizationAPI.permissions(_qPerm)
             setPermissions(permissions_.data)
         } catch (error) {
-
+            console.error(error)
         }
-    }, [qPermission])
+    }, [])
     useEffect(() => {
         getPermissions(qPermission)
     }, [qPermission, getPermissions])
@@ -102,9 +104,9 @@ const UpdateAuthorization = () => {
             const {data: _roles} = await RoleAPI.index(_qRole)
             setRoles(_roles.data)
         } catch (error) {
-
+            console.error(error)
         }
-    }, [qRole])
+    }, [])
     useEffect(() => {
         getRoles(qRole)
     }, [qRole, getRoles])
@@ -115,9 +117,9 @@ const UpdateAuthorization = () => {
             const {data: _roles} = await MenuAPI.menus(_qMenu)
             setMenus(_roles.data)
         } catch (error) {
-
+            console.error(error)
         }
-    }, [qMenu])
+    }, [])
     useEffect(() => {
         getMenus(qMenu)
     }, [qMenu, getMenus])
@@ -181,7 +183,7 @@ const UpdateAuthorization = () => {
                                                                 style={{
                                                                     borderRadius: '8px!important',
                                                                 }}
-                                                                error={!!!menu}
+                                                                error={!menu}
                                                             />
                                                         </div>
                                                         {!menu &&
@@ -238,7 +240,7 @@ const UpdateAuthorization = () => {
                                                                     style={{
                                                                         borderRadius: '8px!important',
                                                                     }}
-                                                                    error={!!!role}
+                                                                    error={!role}
                                                                 />
                                                             </div>
                                                             {!role &&
@@ -295,7 +297,7 @@ const UpdateAuthorization = () => {
                                                                 style={{
                                                                     borderRadius: '8px!important',
                                                                 }}
-                                                                error={!!!permission}
+                                                                error={!permission}
                                                             />
                                                         </div>
                                                         {!permission &&

@@ -3,6 +3,7 @@ import store from "Data/Objects/store";
 import Constants from "Data/Utilities/constants";
 import ProductAPI from "Data/Api/Product.ts";
 import NotificationsAPI from "Data/Api/Notifications.ts";
+import SellAPI from "Data/Api/Sell.ts";
 
 export default class UtilMethods {
 
@@ -68,7 +69,6 @@ export default class UtilMethods {
         }
     }
 
-    
     static delai(second :number = 1) {
         return new Promise(resolve => setTimeout(resolve, second * 1000));
     }
@@ -93,7 +93,7 @@ export default class UtilMethods {
     static formatTableFilters = (columnFilters = []) => {
         return (columnFilters ?? [])
         .map(column => {
-            let values = new Map([[column.id, column.value]]);
+            const values = new Map([[column.id, column.value]]);
             return Object.fromEntries(values);
         })
         .reduce((acc, item) => {
@@ -105,7 +105,7 @@ export default class UtilMethods {
     static formatTableSorting = (sorting = []) => {
         return (sorting ?? [])
         .map(column => {
-            let values = new Map([[column.id, column.desc]]);
+            const values = new Map([[column.id, column.desc]]);
             return Object.fromEntries(values);
         })
         .reduce((acc, item) => {
@@ -120,21 +120,27 @@ export default class UtilMethods {
         return  auth?.email ?? ''
     }
 
-    static getStatus(status: string | null, _?: any): string{
-        let statusText: string = status;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    static getStatus(status: string | null, _test?: never): string{
+        const statusText: string = status;
     
         let elmt = '';
     
         switch (statusText) {
             case 'active':
+            case SellAPI.PAID:
             case NotificationsAPI.READ:
             case ProductAPI.STOCK:
                 elmt = 'mb-1 badge text-bg-success';
                 break;
             case 'inactive':
+            case SellAPI.CANCELLED:
             case ProductAPI.OUT_OF_STOCK:
             case NotificationsAPI.UNREAD:
                 elmt = 'mb-1 badge text-bg-danger';
+                break;
+            case SellAPI.PARTIALLY_PAID:
+                elmt = 'mb-1 badge text-bg-warning';
                 break;
             default:
                 elmt = 'mb-1 badge text-bg-light';
@@ -145,7 +151,9 @@ export default class UtilMethods {
     }
     
     static isAdmin (){
+        // eslint-disable-next-line no-unsafe-optional-chaining
         const {auth_access_id} = store.getState()?.userAuthorizing
+        // eslint-disable-next-line no-unsafe-optional-chaining
         const {authUser} = store.getState()?.user
 
         const access = authUser.accesses?.find(access => access.id === auth_access_id)
@@ -156,10 +164,11 @@ export default class UtilMethods {
 
         return false;
     }
-
         
     static isSeller (){
+        // eslint-disable-next-line no-unsafe-optional-chaining
         const {auth_access_id} = store.getState()?.userAuthorizing
+        // eslint-disable-next-line no-unsafe-optional-chaining
         const {authUser} = store.getState()?.user
 
         const access = authUser.accesses?.find(access => access.id === auth_access_id)
@@ -172,7 +181,9 @@ export default class UtilMethods {
     }
     
     static isActiveAccess (access_id: number){
+        // eslint-disable-next-line no-unsafe-optional-chaining
         const {auth_access_id} = store.getState()?.userAuthorizing
+        // eslint-disable-next-line no-unsafe-optional-chaining
         const {authUser} = store.getState()?.user
 
         const access = authUser.accesses?.find(access => access.id === auth_access_id)
@@ -181,6 +192,7 @@ export default class UtilMethods {
     }
     
     static isOneOfAuthAccess (access_id: number){
+        // eslint-disable-next-line no-unsafe-optional-chaining
         const {authUser} = store.getState()?.user
 
         const access = authUser.accesses?.find(access => access.id === access_id)
@@ -191,6 +203,17 @@ export default class UtilMethods {
     static isAuth (user_id: number){
 
         return store.getState()?.user.authUser.id === user_id
+    }
+
+    static formatNumber(value: number)
+    {
+        if (value === undefined || value == null || isNaN(<number>value)) {
+            return 'N/A';
+        }
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'XOF',
+        }).format(value);
     }
     
 }

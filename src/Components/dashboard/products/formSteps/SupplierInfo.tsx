@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Multiselect } from 'multiselect-react-dropdown';
 import SupplyAPI from "Data/Api/Suppliers.ts";
 import {ISupply} from "Data/Interfaces/Supply.ts";
+import { IProductPayload } from 'Interfaces';
 
 interface Supplier extends  ISupply{}
 
@@ -23,10 +24,10 @@ interface ISupplyInfoProps {
 }
 
 const SupplierInfo: React.FC <ISupplyInfoProps> = ({suppliersRecord}) => {
-    const { values, handleChange, setFieldValue } = useFormikContext<any>();
+    const { values, handleChange, setFieldValue } = useFormikContext<IProductPayload>();
     const [loading, setLoading] = useState(false);
 
-    const [_qSupply, _] = useState('');
+    const [_qSupply] = useState('');
     const [suppliers, setSuppliers] = useState<ISupply[] | null>(null);
     const [selectedSuppliers, setSelectedSupplier] = useState<ISupply[] | null>(null);
 
@@ -41,11 +42,12 @@ const SupplierInfo: React.FC <ISupplyInfoProps> = ({suppliersRecord}) => {
     };
 
 
-    const getSuppliers = useCallback(async (_q)=>{
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const getSuppliers = useCallback(async (_q:string)=>{
         try {
             setLoading(true)
             const {data: __suppliers} = await SupplyAPI.index();
-            setSuppliers(__suppliers)
+            setSuppliers(__suppliers.data)
             if(suppliersRecord){
                 setSelectedSupplier(suppliersRecord)
             }
@@ -54,7 +56,7 @@ const SupplierInfo: React.FC <ISupplyInfoProps> = ({suppliersRecord}) => {
         }finally {
             setLoading(false)
         }
-    }, [_qSupply], suppliersRecord)
+    }, [suppliersRecord])
 
     useEffect(() => {
         getSuppliers(_qSupply)

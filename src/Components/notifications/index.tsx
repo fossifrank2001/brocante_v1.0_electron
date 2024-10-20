@@ -3,19 +3,19 @@ import {useAppContext} from "@/contexts/appContext";
 import constants from "Data/Utilities/constants";
 import Breadcrumd from "Components/Breadcrumd";
 import {
-    MaterialReactTable,
+    MaterialReactTable, MRT_ColumnDef,
     MRT_ShowHideColumnsButton,
     MRT_ToggleDensePaddingButton,
     MRT_ToggleFiltersButton, MRT_ToggleFullScreenButton,
     MRT_ToggleGlobalFilterButton,
     useMaterialReactTable
-} from "material-react-table";
+} from 'material-react-table';
 import {MRT_Localization_EN} from "material-react-table/locales/en";
-import axiosInstance, {IApiResponse} from "Data/Utilities/axiosInstance";
+import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
 import {Box, Link, Stack} from "@mui/material";
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import dayjs from "dayjs";
-import {INotification} from "Data/Interfaces/Notifications.ts";
+import { INotification, INotificationTableData } from 'Data/Interfaces/Notifications.ts';
 import NotificationsAPI from "Data/Api/Notifications.ts";
 import Toast from "Data/Utilities/Toast.ts";
 
@@ -29,8 +29,7 @@ export default function NotificationIndex() {
     });
     const [isLoading, setIsLoading] = useState(false);
     const [isDeleted, setIsDeleted] = useState(false);
-    const [notificationId, setNotificationId] = useState<number>(null);
-    const [_, setReady] = useState(false);
+    const [, setReady] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [columnFilters, setColumnFilters] = useState([]);
@@ -67,10 +66,11 @@ export default function NotificationIndex() {
             url.searchParams.set("sorting", JSON.stringify(sortingTab));
 
             try {
-                const { status, data: result } = await axiosInstance.get<IApiResponse>(url.href);
+                const { status, data: result } = await axiosInstance.get<IApiResponsePaginated<INotification>>(url.href);
+                const { data: notList }: IApiResponsePaginated<INotification> = result;
                 if (status === 200) {
-                    setNotifications(result.data);
-                    setRowCount(result.data.total);
+                    setNotifications(notList.data);
+                    setRowCount(notList.total);
                 }
                 resetScroll();
             } catch (error) {
@@ -91,15 +91,11 @@ export default function NotificationIndex() {
         getProducts();
     }, [getProducts, isDeleted]);
 
-    const tableData = useMemo(() => {
+    const tableData: INotificationTableData[] = useMemo(() => {
         return notifications ? notifications.map((notification) => ({
-            id: notification.id,
+            ...notification,
             type: `${notification?.data.nature}`,
-            title: notification?.data.title,
             status: notification?.read_at? NotificationsAPI.READ : NotificationsAPI.UNREAD,
-            message: notification?.data.message,
-            read_at: notification?.read_at,
-            created_at: notification?.created_at,
             actions: (
                 <Stack direction="row" spacing={1}>
                     <Link
@@ -112,7 +108,7 @@ export default function NotificationIndex() {
         })) : [];
     }, [notifications]);
 
-    const columns = useMemo(
+    const columns: MRT_ColumnDef<INotificationTableData>[] = useMemo(
         () => [
             {
                 accessorKey: "title",
@@ -133,8 +129,12 @@ export default function NotificationIndex() {
                 accessorKey: "status",
                 header: "Status",
                 size: 150,
-                Cell: ({cell}) =>  <span className={`${UtilMethods.getStatus(cell.getValue())}`}>{cell.getValue()}</span>,
-                enableColumnFilter: false
+                Cell: ({ cell }) => {
+                    const value = cell.getValue();
+                    const status = typeof value === 'string' ? UtilMethods.getStatus(value) : '';
+                    return <span className={status}>{String(value)}</span>;
+                },
+                enableColumnFilter: false,
             },
             {
                 accessorKey: "message",
@@ -145,14 +145,20 @@ export default function NotificationIndex() {
                 accessorKey: "read_at",
                 header: "Read At",
                 size: 150,
-                Cell: ({cell}) =>  <span>{dayjs(cell.getValue()).format('DD/MM/YYYY HH:mm:ss')}</span>,
-                enableColumnFilter: false,
+                Cell: ({ cell }) => {
+                    const value = cell.getValue();
+                    return <span>{dayjs(String(value)).format('DD/MM/YYYY HH:mm:ss')}</span> ;
+                },
+                enableColumnFilter: false
             },
             {
                 accessorKey: "created_at",
                 header: "Created At",
                 size: 150,
-                Cell: ({cell}) =>  <span>{dayjs(cell.getValue()).format('DD/MM/YYYY HH:mm:ss')}</span>,
+                Cell: ({ cell }) => {
+                    const value = cell.getValue();
+                    return <span>{dayjs(String(value)).format('DD/MM/YYYY HH:mm:ss')}</span> ;
+                },
                 enableColumnFilter: false,
             },
             {
@@ -254,24 +260,7 @@ export default function NotificationIndex() {
     return (
         <div className="container">
             <Breadcrumd parent="Notifications" />
-            <MaterialReactTable
-                table={mrTable}
-                muiTablePaperProps={{
-                    sx: {
-                        fontFamily: 'var(--bs-body-font-family)',
-                    },
-                }}
-                muiTableHeadCellProps={{
-                    sx: {
-                        fontFamily: 'var(--bs-body-font-family)',
-                    },
-                }}
-                muiTableBodyCellProps={{
-                    sx: {
-                        fontFamily: 'var(--bs-body-font-family)',
-                    },
-                }}
-            />
+            <MaterialReactTable table={mrTable}/>
         </div>
     );
 }

@@ -3,15 +3,15 @@ import {useAppContext} from "@/contexts/appContext";
 import constants from "Data/Utilities/constants";
 import Breadcrumd from "Components/Breadcrumd";
 import {
-    MaterialReactTable,
-    MRT_ShowHideColumnsButton,
+    MaterialReactTable, MRT_ColumnDef,
+    MRT_ShowHideColumnsButton, MRT_TableInstance,
     MRT_ToggleDensePaddingButton,
     MRT_ToggleFiltersButton, MRT_ToggleFullScreenButton,
     MRT_ToggleGlobalFilterButton,
     useMaterialReactTable
 } from "material-react-table";
 import {MRT_Localization_EN} from "material-react-table/locales/en";
-import axiosInstance, { IApiResponse } from "Data/Utilities/axiosInstance";
+import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
 import {Box, Link, Stack} from "@mui/material";
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { useAppDispatch, useAppSelector } from '@/hooks';
@@ -19,7 +19,7 @@ import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
 import Toast from '@/Data/Utilities/Toast';
 import CustomAlert from '@/Components/CustomAlert';
-import { IHabilitation } from '@/Data/Interfaces/Habilitation';
+import { IHabilitation, IHabilitationTableData } from '@/Data/Interfaces/Habilitation';
 import { IRole } from '@/Data/Interfaces';
 import RoleAPI from '@/Data/Api/Role';
 import AuthorizationAPI from '@/Data/Api/Authorizations';
@@ -35,7 +35,7 @@ const  IndexAuthorization = () => {
     const [openDetailModal, setOpenDetailModal] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isDeleted, setIsDeleted] = useState(false);
-    const [_, setReady] = useState(false);
+    const [, setReady] = useState(false);
     const [inProgress, setInProgress] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
@@ -84,10 +84,11 @@ const  IndexAuthorization = () => {
             url.searchParams.set("sorting", JSON.stringify(sortingTab));
 
             try {
-                const { status, data: result } = await axiosInstance.get<IApiResponse>(url.href);
+                const { status, data: result } = await axiosInstance.get<IApiResponsePaginated<IHabilitation>>(url.href);
+              const { data: authorizationList }: IApiResponsePaginated<IHabilitation> = result;
                 if (status === 200) {
-                    setHabilitations(result.data.data);
-                    setRowCount(result.data.total);
+                    setHabilitations(authorizationList.data);
+                    setRowCount(authorizationList.total);
                 }
                 resetScroll();
             } catch (error) {
@@ -103,10 +104,10 @@ const  IndexAuthorization = () => {
     );
 
     useEffect(() => {
-        getAccesses();
+      (async () => await getAccesses() )();
     }, [getAccesses, isDeleted]);
 
-    const tableData = useMemo(() => {
+    const tableData:IHabilitationTableData[] = useMemo(() => {
         return habilitations ? habilitations.map((habilitation) => ({
             id: habilitation.id,
             role: habilitation?.role?.label,
@@ -140,7 +141,7 @@ const  IndexAuthorization = () => {
         })) : [];
     }, [habilitations]);
 
-    const columns = useMemo(
+    const columns : MRT_ColumnDef<IHabilitationTableData>[] = useMemo(
         () => [
             {
                 accessorKey: "menu",
@@ -182,7 +183,7 @@ const  IndexAuthorization = () => {
         [roles],
     );
 
-    const mrTable = useMaterialReactTable({
+    const mrTable : MRT_TableInstance<IHabilitationTableData>  = useMaterialReactTable({
         columns: columns,
         data: tableData,
         enableRowSelection: true,
@@ -272,21 +273,6 @@ const  IndexAuthorization = () => {
             <Breadcrumd parent="Authorizations" />
             <MaterialReactTable
                 table={mrTable}
-                muiTablePaperProps={{
-                    sx: {
-                        fontFamily: 'var(--bs-body-font-family)',
-                    },
-                }}
-                muiTableHeadCellProps={{
-                    sx: {
-                        fontFamily: 'var(--bs-body-font-family)',
-                    },
-                }}
-                muiTableBodyCellProps={{
-                    sx: {
-                        fontFamily: 'var(--bs-body-font-family)',
-                    },
-                }}
             />
            <CustomAlert 
                 openDetailModal={openDetailModal} 

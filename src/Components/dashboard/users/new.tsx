@@ -7,15 +7,16 @@ import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
 import { IUsersPayload } from '@/Data/Interfaces/Users';
 import UserAPI from "Data/Api/Users";
+import { IUser } from 'Interfaces';
 
 
-interface FormValues {
+interface FormValues extends Partial<IUser>{
     last_name: string;
     first_name: string;
     email: string;
     phone: string;
     gender: string;
-  }
+}
 
 const NewUser = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +37,8 @@ const NewUser = () => {
             await UserAPI.create(values);
             context.togglePageLoading(true)
             dispatch(setActivePage({page: Pages.ACCOUNT}))
-        } catch (error) {
+        } catch (e) {
+            console.error(e.message)
         } finally {
             setIsLoading(false);
         }
@@ -46,7 +48,7 @@ const NewUser = () => {
         initialValues,
         onSubmit: handleSubmit,
         validate: (values: FormValues) => {
-            let errors: Partial<FormValues> = {};
+            const errors: Partial<FormValues> = {};
             if (!values.last_name) {
                 errors.last_name = 'Last name field is required.';
             }

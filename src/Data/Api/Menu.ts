@@ -1,5 +1,5 @@
-import axiosInstance, { IApiResponse } from "Data/Utilities/axiosInstance";
-import { IMenuList } from "../Interfaces/Menu";
+import axiosInstance, { IApiResponseBase } from 'Data/Utilities/axiosInstance';
+import { IMenu, IMenuList } from 'Interfaces';
 
 class MenuAPI{
 
@@ -20,9 +20,15 @@ class MenuAPI{
      * @param role {number}
      * @return {Promise<IApiResponse>}
      */
-    static async menusByRole(role: number): Promise<IApiResponse> {
+    static async menusByRole(role: number): Promise<IApiResponseBase<{
+        message: string;
+        menus_role: IMenu[]
+    }>> {
         try {
-            const response = await axiosInstance.get<IApiResponse>(`/menus/${role}/menus-by-role`);
+            const response = await axiosInstance.get<IApiResponseBase<{
+                message: string;
+                menus_role: IMenu[]
+            }>>(`/menus/${role}/menus-by-role`);
             return response.data;
         } catch (error) {
             console.error("Error fetching menus by role:", error);

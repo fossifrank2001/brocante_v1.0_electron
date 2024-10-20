@@ -1,4 +1,4 @@
-import { ILink } from ".";
+import { ILink } from '.';
 import { Pages } from "../Objects/state";
 
 export interface IMenu {
@@ -37,4 +37,8 @@ export interface IMenuList {
 
 export interface IMenuRole {
     menus_role: IMenu[];
+}
+
+export interface IMenuTableData extends IMenu {
+    parent: string;
 }

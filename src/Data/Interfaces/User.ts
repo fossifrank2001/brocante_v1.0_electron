@@ -1,18 +1,25 @@
 import { IAccess as IAccessAlone } from "Data/Interfaces/Access";
+import { ReactNode } from 'react';
+import {IImage} from "Data/Interfaces/Image.ts";
 
 export interface IUser {
-    id: number;
-    last_name: string;
-    first_name: string  | null;
-    email: string;
-    phone: string;
-    gender: string;
-    created_at: string | null;
-    updated_at: string | null;
-    auth_access_id: number | null;
+    accesses: Array<IAccessAlone>;
     first_connexion: boolean;
+    id: number;
+    last_name?: string;
+    first_name?: string;
+    email: string;
+    phone?: string;
+    gender?: string;
+    thumbnail?: IImage | null;
     status: 'active' | 'inactive';
-    accesses: IAccess[];
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface IUserTableData extends IUser {
+    name: string;
+    actions: ReactNode;
 }
 
 export interface IAccess extends IAccessAlone{}
