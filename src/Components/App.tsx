@@ -1,14 +1,6 @@
 import 'Styles/App.less'
 import { AppContextProvider } from '@/contexts/appContext'
 import '@/assets/css/styles.min.css';
-//import $ from 'jquery';
-import '@/assets/libs/jquery/dist/jquery.min.js';
-import '@/assets/js/sidebarmenu.js';// eslint-disable-line no-unused-expressions, no-undef, no-restricted-globals
-import '@/assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js';// eslint-disable-line no-unused-expressions, no-undef, no-restricted-globals
-import '@/assets/js/app.min.js';
-import '@/assets/libs/apexcharts/dist/apexcharts.min.js';
-import '@/assets/libs/simplebar/dist/simplebar.js';
-import '@/assets/js/dashboard.js';
 
 import { Pages } from 'Data/Objects/state'
 import React, { useEffect, useState } from 'react';
@@ -23,6 +15,26 @@ import CustomAlert from './CustomAlert';
 import HomePage from "@/pages/Home/HomePage.tsx";
 import CartPage from "@/pages/Home/cart/CartPage.tsx";
 import SuccessSellPage from "@/pages/Home/SuccessSellPage.tsx";
+
+const scripts = [
+  '@/assets/libs/jquery/dist/jquery.min.js',
+  '@/assets/js/sidebarmenu.js',
+  '@/assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js',
+  '@/assets/js/app.min.js',
+  '@/assets/libs/apexcharts/dist/apexcharts.min.js',
+  '@/assets/libs/simplebar/dist/simplebar.js',
+  '@/assets/js/dashboard.js'
+];
+
+const loadScript = (src: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+    document.body.appendChild(script);
+  });
+};
 
 export const handleRedirectToDashboard = async (access_id: number | string, dispatch) => {
   try {
@@ -53,6 +65,17 @@ const App: React.FC = () => {
   const [isOk, setIsOk] = useState(false);
 
   useEffect(() => {
+    (async () => {
+      const loadScripts = async () => {
+        for (const script of scripts) {
+          await loadScript(script);
+        }
+      };
+      await loadScripts();
+    })()
+  }, []);
+
+  useEffect(() => {
     const handleNavigationHome = () => {
       dispatch(setActivePage({ page: Pages.HOME }));
     };
@@ -69,23 +92,24 @@ const App: React.FC = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (!token || !authUser) {
-      if(currentPage !== Pages.LOGIN){
-        return;
-      }else{
-        dispatch(setActivePage({page: Pages.LOGIN}));
-      }
-    }else {
-      if (currentPage === Pages.DASHBOARD) {
-        return
-      }else{
-        if (currentPage !== Pages.LOGIN) {
+    (async () => {
+      if (!token || !authUser) {
+        if(currentPage !== Pages.LOGIN){
+          return;
+        }else{
+          dispatch(setActivePage({page: Pages.LOGIN}));
+        }
+      }else {
+        if (currentPage === Pages.DASHBOARD) {
           return
         }else{
-          if (authUser.first_connexion) {
-            setIsOk(true)
-            setOpenDetailModal(true)
-          } else {
+          if (currentPage !== Pages.LOGIN) {
+            return
+          }else{
+            if (authUser.first_connexion) {
+              setIsOk(true)
+              setOpenDetailModal(true)
+            } else {
               if (authUser.accesses.length > 1) {
                 const lastVisitedPage = localStorage.getItem('lastVisitedPage');
 
@@ -97,12 +121,13 @@ const App: React.FC = () => {
                 }
                 localStorage.removeItem('lastVisitedPage');
               } else {
-                  handleRedirectToDashboard(authUser.accesses[0].id, dispatch);
+                await handleRedirectToDashboard(authUser.accesses[0].id, dispatch);
               }
+            }
           }
         }
       }
-    }
+    })()
   }, [token, authUser, currentPage, dispatch]);
 
 

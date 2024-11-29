@@ -1,0 +1,24 @@
+directories:
+  output: dist_electron
+  buildResources: build
+appId: com.karbura.brocante
+productName: Brocante
+mac:
+  icon: public/favicon.png
+  target:
+    - dmg
+    - zip
+win:
+  icon: public/favicon.png
+  target:
+    - nsis
+    - zip
+  sign: false
+  signAndEditExecutable: false
+linux:
+  icon: public/favicon.png
+  target:
+    - AppImage
+    - deb
+files: []
+electronVersion: 30.5.1

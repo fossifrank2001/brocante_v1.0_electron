@@ -6,6 +6,28 @@ import Item from "Components/cart/Item.tsx";
 import Toast from "Data/Utilities/Toast.ts";
 import { FormikProps } from "formik";
 import { FormValues } from "Components/cart/MultiStepFormCart.tsx";
+import UtilMethods from "Data/Utilities/UtilMethods.ts";
+
+const styles = {
+    tableContainer: {
+        border: '1px solid #dee2e6',
+        borderRadius: '0.25rem',
+        maxHeight: '400px',
+        overflowY: 'auto' as const,
+    },
+    table: {
+        marginBottom: 0,
+    },
+    tableHeadTh: {
+        borderTop: 'none',
+    },
+    stickyTop: {
+        zIndex: 1020,
+        position: 'sticky' as const,
+        top: 0,
+        backgroundColor: 'white',
+    },
+};
 
 const CartListing: React.FC<{
     cart: ICartState | never;
@@ -25,7 +47,6 @@ const CartListing: React.FC<{
     };
 
     const handleProceedToCheckout = () => {
-        // Update form values with the cart data before proceeding
         formik.setFieldValue('items', cart.items);
         formik.setFieldValue('summarize', {
             totalPrice: cart.totalPrice,
@@ -33,7 +54,6 @@ const CartListing: React.FC<{
             shippingPrice: 0,
         });
 
-        // Simulate form submission for validation and then move to the next step
         formik.submitForm().then(() => {
             if (formik.isValid) {
                 onHandleSetStep(1);
@@ -58,16 +78,16 @@ const CartListing: React.FC<{
                     </div>
                     {cart.totalQuantity > 0 ? (
                         <div className='list-items mt-2'>
-                            <div className="container">
-                                <table className='table table-striped'>
-                                    <thead>
+                            <div style={styles.tableContainer}>
+                                <table className='table table-hover' style={styles.table}>
+                                    <thead style={styles.stickyTop}>
                                     <tr>
-                                        <th>N.</th>
-                                        <th>Name</th>
-                                        <th>Quantity</th>
-                                        <th>Unit price</th>
-                                        <th>Total price</th>
-                                        <th>Action</th>
+                                        <th style={styles.tableHeadTh}>N.</th>
+                                        <th style={styles.tableHeadTh}>Name</th>
+                                        <th style={styles.tableHeadTh}>Quantity</th>
+                                        <th style={styles.tableHeadTh}>Unit price</th>
+                                        <th style={styles.tableHeadTh}>Total price</th>
+                                        <th style={styles.tableHeadTh}>Action</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -121,7 +141,7 @@ const ProcessInfo = (label: string, value: number | string) => {
         <div className='d-flex my-1 align-items-center justify-content-between'>
             <h5>{label} :</h5>
             <span className='fw-lighter'>
-                {value} <span style={{ fontSize: '10px' }}>FCFA</span>
+                {UtilMethods.formatNumber(value as number)}
             </span>
         </div>
     );

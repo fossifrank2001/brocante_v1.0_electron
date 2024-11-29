@@ -1,5 +1,4 @@
 import {useState} from 'react'
-import logo from "../../assets/images/logos/dark-logo.svg";
 import {useFormik} from "formik";
 import {useAppContext} from "../../contexts/appContext";
 import { Link } from '@mui/material';
@@ -8,6 +7,7 @@ import { Pages } from '@/Data/Objects/state';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { useAppDispatch } from '@/hooks';
 import { motion } from 'framer-motion';
+import logo from "../../../public/favicon.png"
 import "Styles/auth.less"
 
 
@@ -32,6 +32,7 @@ export default function ForgotComponent() {
             setIsLoading(true)
             await attemptForgot(values)
         }catch (e) {
+            console.log(e)
         }finally {
             setIsLoading(false)
         }
@@ -41,7 +42,7 @@ export default function ForgotComponent() {
         initialValues,
         onSubmit: handleSubmit,
         validate: (values: FormValues) => { 
-            let errors: Partial<FormValues> = {};
+            const errors: Partial<FormValues> = {};
 
             if (!values.username) {
                 errors.username = 'Login field is required.'
@@ -61,10 +62,28 @@ export default function ForgotComponent() {
                     <div className="col-md-8 col-lg-6 col-xxl-3">
                         <div className="card mb-0">
                             <div className="card-body">
-                                <Link href="#" className="text-nowrap logo-img text-center d-block py-3 w-100">
-                                    <img src={logo} width="180" alt="" />
-                                </Link>
-                                <div className="fw-lighter fs-9 text-center">Please enter the email address or phone number associated with your account and We will notify you a code to reset your password.</div>
+                                <div className="d-flex justify-content-center align-items-center py-3">
+                                    <a className="navbar-brand d-flex align-items-center" href="#" onClick={() => {
+                                        context.togglePageLoading(true)
+                                        dispatch(setActivePage({page: Pages.HOME}))
+                                    }}>
+                                        <img src={logo} alt='logo' style={{
+                                            width: '26px',
+                                            height: '26px',
+                                            objectFit: "cover",
+                                            objectPosition: "center"
+                                        }}/>
+                                        <span className='ms-1 fs-6 fw-bolder'>Brocante<span
+                                            className='bg-primary text-white py-1 px-2' style={{
+                                            borderRadius: '10px',
+                                            backgroundColor: '#007bff'
+                                        }}>V1.0</span></span>
+                                    </a>
+                                </div>
+                                <div className="fw-lighter fs-9 text-center">Please enter the email address or phone
+                                    number associated with your account and We will notify you a code to reset your
+                                    password.
+                                </div>
                                 <form onSubmit={formik.handleSubmit}>
                                     <div className="mb-3">
                                         <label htmlFor="username" className="form-label">Login <span

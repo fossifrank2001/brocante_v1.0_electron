@@ -24,7 +24,7 @@ import { IRole } from '@/Data/Interfaces';
 import RoleAPI from '@/Data/Api/Role';
 import AuthorizationAPI from '@/Data/Api/Authorizations';
 
-const  IndexAuthorization = () => {
+const IndexAuthorization = () => {
     const context = useAppContext();
 
     const [isError, setIsError] = useState(false);
@@ -64,13 +64,11 @@ const  IndexAuthorization = () => {
 
     useEffect(() => {
         (async () => {
-            const {data: _roles} = await RoleAPI.index(); 
+            const {data: _roles} = await RoleAPI.index();
             setRoles(_roles.data)
         })()
     }, [])
 
-
-    // request all menus
     const getAccesses = useCallback(
         async () => {
             setIsLoading(true);
@@ -85,7 +83,7 @@ const  IndexAuthorization = () => {
 
             try {
                 const { status, data: result } = await axiosInstance.get<IApiResponsePaginated<IHabilitation>>(url.href);
-              const { data: authorizationList }: IApiResponsePaginated<IHabilitation> = result;
+                const { data: authorizationList }: IApiResponsePaginated<IHabilitation> = result;
                 if (status === 200) {
                     setHabilitations(authorizationList.data);
                     setRowCount(authorizationList.total);
@@ -104,8 +102,13 @@ const  IndexAuthorization = () => {
     );
 
     useEffect(() => {
-      (async () => await getAccesses() )();
+        (async () => await getAccesses() )();
     }, [getAccesses, isDeleted]);
+
+    const handleRefresh = () => {
+        setIsRefetching(true);
+        getAccesses();
+    };
 
     const tableData:IHabilitationTableData[] = useMemo(() => {
         return habilitations ? habilitations.map((habilitation) => ({
@@ -120,8 +123,8 @@ const  IndexAuthorization = () => {
                         onClick={() => {
                             context.togglePageLoading(true);
                             dispatch(setActivePage({
-                                page: Pages.HABILITATION, 
-                                id: habilitation.id, 
+                                page: Pages.HABILITATION,
+                                id: habilitation.id,
                                 param: {
                                     sub_page: 'UPDATE'
                                 }
@@ -160,7 +163,7 @@ const  IndexAuthorization = () => {
                 }),
                 filterVariant: "select",
                 filterSelectOptions: roles?.map(role => ({
-                    label: UtilMethods.capitalizeFirstLetter(role?.label || ''), 
+                    label: UtilMethods.capitalizeFirstLetter(role?.label || ''),
                     value: role?.code
                 })),
             },
@@ -173,11 +176,11 @@ const  IndexAuthorization = () => {
                 }),
             },
             {
-              accessorKey: "actions",
-              header: "Actions",
-              size: 150,
-              unexport: true,
-              enableColumnFilter: false,
+                accessorKey: "actions",
+                header: "Actions",
+                size: 150,
+                unexport: true,
+                enableColumnFilter: false,
             },
         ],
         [roles],
@@ -222,6 +225,16 @@ const  IndexAuthorization = () => {
         },
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
+                <button
+                    onClick={handleRefresh}
+                    type='button'
+                    className='btn btn-outline-secondary'
+                    style={{ marginLeft: '12px' }}
+                    disabled={isLoading || isRefetching}
+                >
+                    <i className='ti ti-refresh'></i>
+                    <span className='ms-2'>Refresh</span>
+                </button>
                 {UtilMethods.isAdmin() && <button onClick={() => {
                     context.togglePageLoading(true)
                     dispatch(setActivePage({
@@ -257,7 +270,7 @@ const  IndexAuthorization = () => {
             setInProgress(true)
             const {message} = await AuthorizationAPI.delete(habilitationId)
             Toast.success(message)
-            
+
         } catch (error) {
             console.error(error)
         }finally{
@@ -274,16 +287,16 @@ const  IndexAuthorization = () => {
             <MaterialReactTable
                 table={mrTable}
             />
-           <CustomAlert 
-                openDetailModal={openDetailModal} 
+            <CustomAlert
+                openDetailModal={openDetailModal}
                 content={{style: 'ti ti-info-circle text text-danger',
                     icon: 'Warning',
                     message: 'Would you like to delete this Authorization?'
-                }}  
+                }}
                 onHandleDelete={handleDelete}
                 onHandleOpenDetail={() => setOpenDetailModal(false)}
                 inProgress= {inProgress}
-           />
+            />
         </div>
     );
 }

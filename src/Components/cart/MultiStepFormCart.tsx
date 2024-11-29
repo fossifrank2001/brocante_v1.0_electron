@@ -6,7 +6,7 @@ import "Styles/Product.less";
 import {CartItem, clearCart, ICartState} from "Data/Slices/dashboard/seller/cartSlice.ts";
 import CartListing from "Components/cart/CartListing.tsx";
 import CheckoutProcess from "Components/cart/CheckoutProcess.tsx";
-import { IPerson } from "Data/Interfaces/Person.ts";
+import {IPerson} from "Data/Interfaces/Person.ts";
 import CustomerAPI from "Data/Api/Customer.ts";
 import SellAPI from "Data/Api/Sell.ts";
 import {ISellPayload, TPayment, TTransactionType} from "Data/Interfaces/Sell.ts";
@@ -54,6 +54,7 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
     const [isLoading, setIsLoading] = useState(false);
     const today = new Date();
     const formattedToday = today.toISOString().split('T')[0];
+    const [isRefresh, setIsRefresh] = useState(false);
 
     const initialValues: FormValues = {
         person: null,
@@ -72,16 +73,16 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
 
     const getCustomers = useCallback(async (_qPerson: string) => {
         try {
-            const result = await CustomerAPI.get(_qPerson, true);
-            setPersons(result?.data || []);
+            const {data: _customers} = await CustomerAPI.get(_qPerson, true);
+            setPersons(_customers || []);
         } catch (error) {
             console.error(error);
         }
-    }, []);
+    }, [isRefresh]);
 
     useEffect(() => {
         getCustomers(qPerson);
-    }, [getCustomers, qPerson]);
+    }, [getCustomers, qPerson, isRefresh]);
 
     const validationSchema = [
         Yup.object({
@@ -158,19 +159,19 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handlePersonChange = (newPerson: IPerson) => {
-        // set(newPerson);
         console.log(newPerson)
     };
 
     const handleAddPerson = (person: IPerson) => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        setPersons([ person, ...persons]);
+        setPersons([...persons, person]);
         setqPerson('');
     };
 
+
     return (
         <div className="container px-0">
-            <div className="stepper mt-4">
+            <div className="stepper header">
                 <ul className="d-flex justify-content-between">
                     {steps.map((label, index) => (
                         <li
@@ -219,14 +220,16 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
                                         onHandleSettingPayment={setPayment}
                                         onPersonChange={handlePersonChange}
                                         payment={payment}
+                                        cart={cart}
                                         onHandleSearchCustomer={setqPerson}
                                         onAddPerson={handleAddPerson}
                                         formik={formik}
+                                        onRefreshPersons={() => setIsRefresh(prevState => !prevState)}
                                     />}
                                 </motion.div>
                             </AnimatePresence>
                         </div>
-                        <div className="row mt-3">
+                        <div className="row mt-3 sticky-bottom bg-white py-4">
                             <div className="col-12 mx-auto">
                                 <div className="d-flex justify-content-between">
                                     {step > 0 && (

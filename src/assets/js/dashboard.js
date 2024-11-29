@@ -1,15 +1,10 @@
-$(function () {
-
-
-  // =====================================
+window.initDashboardCharts = function(chartElement, breakupElement, earningElement) {
   // Profit
-  // =====================================
   var chart = {
     series: [
       { name: "Earnings this month:", data: [355, 390, 300, 350, 390, 180, 355, 390] },
       { name: "Expense this month:", data: [280, 250, 325, 215, 250, 310, 280, 250] },
     ],
-
     chart: {
       type: "bar",
       height: 345,
@@ -19,11 +14,7 @@ $(function () {
       fontFamily: 'inherit',
       sparkline: { enabled: false },
     },
-
-
     colors: ["#5D87FF", "#49BEFF"],
-
-
     plotOptions: {
       bar: {
         horizontal: false,
@@ -34,17 +25,12 @@ $(function () {
       },
     },
     markers: { size: 0 },
-
     dataLabels: {
       enabled: false,
     },
-
-
     legend: {
       show: false,
     },
-
-
     grid: {
       borderColor: "rgba(0,0,0,0.1)",
       strokeDashArray: 3,
@@ -54,7 +40,6 @@ $(function () {
         },
       },
     },
-
     xaxis: {
       type: "category",
       categories: ["16/08", "17/08", "18/08", "19/08", "20/08", "21/08", "22/08", "23/08"],
@@ -62,8 +47,6 @@ $(function () {
         style: { cssClass: "grey--text lighten-2--text fill-color" },
       },
     },
-
-
     yaxis: {
       show: true,
       min: 0,
@@ -81,10 +64,7 @@ $(function () {
       lineCap: "butt",
       colors: ["transparent"],
     },
-
-
     tooltip: { theme: "light" },
-
     responsive: [
       {
         breakpoint: 600,
@@ -97,17 +77,13 @@ $(function () {
         }
       }
     ]
-
-
   };
 
-  var chart = new ApexCharts(document.querySelector("#chart"), chart);
-  chart.render();
+  // eslint-disable-next-line no-undef
+  var chartInstance = new ApexCharts(chartElement, chart);
+  chartInstance.render();
 
-
-  // =====================================
   // Breakup
-  // =====================================
   var breakup = {
     color: "#adb5bd",
     series: [38, 40, 25],
@@ -130,16 +106,13 @@ $(function () {
     stroke: {
       show: false,
     },
-
     dataLabels: {
       enabled: false,
     },
-
     legend: {
       show: false,
     },
     colors: ["#5D87FF", "#ecf2ff", "#F9F9FD"],
-
     responsive: [
       {
         breakpoint: 991,
@@ -156,14 +129,11 @@ $(function () {
     },
   };
 
-  var chart = new ApexCharts(document.querySelector("#breakup"), breakup);
-  chart.render();
+  // eslint-disable-next-line no-undef
+  var breakupInstance = new ApexCharts(breakupElement, breakup);
+  breakupInstance.render();
 
-
-
-  // =====================================
   // Earning
-  // =====================================
   var earning = {
     chart: {
       id: "sparkline3",
@@ -192,7 +162,6 @@ $(function () {
       type: "solid",
       opacity: 0.05,
     },
-
     markers: {
       size: 0,
     },
@@ -207,5 +176,8 @@ $(function () {
       },
     },
   };
-  new ApexCharts(document.querySelector("#earning"), earning).render();
-})
+
+  // eslint-disable-next-line no-undef
+  var earningInstance = new ApexCharts(earningElement, earning);
+  earningInstance.render();
+};

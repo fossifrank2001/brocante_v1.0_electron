@@ -3,6 +3,7 @@ import {useAppDispatch} from "@/hooks";
 import {addToCart, CartItem, decreaseQuantity, removeFromCart} from "Data/Slices/dashboard/seller/cartSlice.ts";
 import {Link} from "@mui/material";
 import Toast from "Data/Utilities/Toast.ts";
+import UtilMethods from '@/Data/Utilities/UtilMethods';
 
 const circleButtonStyles = {
     borderRadius: '50%',
@@ -59,9 +60,12 @@ const Item: React.FC<{item : CartItem | never; index: number}> = ({item, index})
                 onClick={handleIncreaseQuantity}
             ><i className='ti ti-plus'></i></Link>}
         </td>
-        <td>{item.product.price} <span className='fw-bolder' style={{fontSize: '10px'}}> FCFA</span>
+        <td>
+            {UtilMethods.formatNumber(item.product.price as number)}
         </td>
-        <td className='fw-bolder'>{item.subtotal} <span className='fw-bolder' style={{fontSize: '10px'}}> FCFA</span></td>
+        <td className='fw-bolder'>
+            {UtilMethods.formatNumber(item.subtotal as number)}
+        </td>
         <td>
             <i className='ti ti-trash-off text-danger cursor-pointer' onClick={handleRemoveItemFromCart}></i>
         </td>

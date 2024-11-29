@@ -1,12 +1,11 @@
-import axiosInstance, { IApiResponse, IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
+import axiosInstance, { IApiResponse } from 'Data/Utilities/axiosInstance';
 import Toast from "Data/Utilities/Toast.ts";
-import { ISupply } from 'Interfaces';
 
 class SupplyAPI {
-    static async index(_q = ''): Promise<IApiResponsePaginated<ISupply>> {
+    static async index(_q = ''): Promise<never> {
         // eslint-disable-next-line no-useless-catch
         try {
-            const response = await axiosInstance.get<IApiResponsePaginated<ISupply>>(`/suppliers?q=${_q}`);
+            const response = await axiosInstance.get<never>(`/suppliers?q=${_q}`);
             return response.data;
         } catch (error) {
             throw error;

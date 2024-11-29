@@ -1,44 +1,38 @@
-import { app, BrowserWindow, Menu } from 'electron';
+import { app, BrowserWindow, Menu, MenuItemConstructorOptions } from 'electron';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import installExtension, {REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } from 'electron-devtools-installer';
-import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
+import installExtension, { REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } from 'electron-devtools-installer';
 
 const isDev = process.env.NODE_ENV === 'development';
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-process.env.APP_ROOT = path.join(__dirname, '..');
+const APP_ROOT = path.join(__dirname, '..');
+const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
+path.join(APP_ROOT, 'dist-electron');
+const RENDERER_DIST = path.join(APP_ROOT, 'dist');
+const VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(APP_ROOT, 'public') : RENDERER_DIST;
 
-export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
-export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron');
-export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist');
-
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST;
-
-let win: BrowserWindow | null;
+let mainWindow: BrowserWindow | null = null;
 
 function createWindow() {
-  win = new BrowserWindow({
-    resizable:true,
-    movable:false,
-    //alwaysOnTop: true,
-    //show:false,
-    icon: path.join(process.env.VITE_PUBLIC, 'favicon.png'),
+  mainWindow = new BrowserWindow({
+    resizable: true,
+    movable: true,
+    icon: path.join(VITE_PUBLIC, 'favicon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       devTools: isDev,
     }
   });
 
-  win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', (new Date).toLocaleString());
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow?.webContents.send('main-process-message', new Date().toLocaleString());
   });
 
   if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL);
+    mainWindow.loadURL(VITE_DEV_SERVER_URL);
   } else {
-    win.loadFile(path.join(RENDERER_DIST, 'index.html'));
+    mainWindow.loadFile(path.join(RENDERER_DIST, 'index.html'));
   }
 
   const template: MenuItemConstructorOptions[] = [
@@ -48,9 +42,7 @@ function createWindow() {
         {
           label: 'Toggle DevTools',
           accelerator: 'CmdOrCtrl+I',
-          click: () => {
-            win?.webContents.toggleDevTools();
-          }
+          click: () => mainWindow?.webContents.toggleDevTools()
         },
         {
           label: 'Reload',
@@ -58,38 +50,37 @@ function createWindow() {
           role: 'reload'
         },
         {
-          label: 'Api Documentation',
+          label: 'API Documentation',
           accelerator: 'CmdOrCtrl+D',
-          click: () => {
-            win?.loadURL('http://127.0.0.1:8000/docs/api')
-          }
+          click: () => mainWindow?.loadURL('http://127.0.0.1:8000/docs/api')
         },
       ]
     },
     {
       label: 'Home',
       accelerator: 'CmdOrCtrl+H',
-      click: () => {
-        if (win) {
-          win.webContents.send('navigate-home');
-        }
-      }
+      click: () => mainWindow?.webContents.send('navigate-home')
     }
   ];
 
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 
-  win.maximize();
+  mainWindow.maximize();
 
   if (isDev) {
-    win.webContents.once('dom-ready', async () => {
-      await installExtension([REDUX_DEVTOOLS, REACT_DEVELOPER_TOOLS])
-        .then((name) => console.log(`Added Extension:  ${name}`))
-        .catch((error) => console.log('An error occurred: ', error))
-        .finally(() => {
-          win?.webContents.openDevTools();
-        });
+    mainWindow.webContents.once('dom-ready', async () => {
+      try {
+        const extensionNames = await Promise.all([
+          installExtension(REDUX_DEVTOOLS),
+          installExtension(REACT_DEVELOPER_TOOLS)
+        ]);
+        console.log('Added Extensions: ', extensionNames.join(', '));
+      } catch (error) {
+        console.error('Failed to install extensions:', error);
+      } finally {
+        mainWindow?.webContents.openDevTools();
+      }
     });
   }
 }
@@ -97,7 +88,6 @@ function createWindow() {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
-    win = null;
   }
 });
 
@@ -107,12 +97,21 @@ app.on('activate', () => {
   }
 });
 
-app.whenReady().then(() => {
-  [REDUX_DEVTOOLS, REACT_DEVELOPER_TOOLS].map((extension) => {
-    installExtension(extension)
-      .then((name) => console.log(`Install extension ${name}`))
-      .catch((error) => console.log('An error has occured', error));
-  });
+app.whenReady().then(async () => {
+  try {
+    await Promise.all([
+      installExtension(REDUX_DEVTOOLS),
+      installExtension(REACT_DEVELOPER_TOOLS)
+    ]);
+    console.log('Extensions installed successfully');
+  } catch (error) {
+    console.error('Failed to install extensions:', error);
+  }
 
   createWindow();
+});
+
+// Cleanup to prevent memory leaks
+app.on('before-quit', () => {
+  mainWindow?.removeAllListeners();
 });

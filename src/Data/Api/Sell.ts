@@ -7,6 +7,7 @@ class SellAPI {
     static PARTIALLY_PAID = 'partially_paid'
     static PENDING = 'pending'
     static CANCELLED = 'canceled'
+    static UNPAID = 'unpaid'
     static async create(payload: Partial<ISellPayload>): Promise<{
         status?: boolean;
         data: ISell;

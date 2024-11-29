@@ -49,7 +49,6 @@ export default function IndexMenu() {
         }
     };
 
-    // request all menus
     const getMenus = useCallback(async () => {
         setIsLoading(true);
         const url = new URL(`${constants.BASE_URL}/menus`);
@@ -76,18 +75,23 @@ export default function IndexMenu() {
             setIsRefetching(false);
             setReady(true);
         }
-    }, [columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting],);
+    }, [columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 
     useEffect(() => {
         (async () => await getMenus())()
     }, [getMenus]);
+
+    const handleRefresh = () => {
+        setIsRefetching(true);
+        getMenus();
+    };
 
     const tableData: IMenuTableData[] = useMemo(() => {
         return menus ? menus.map((menu) => ({
             ...menu,
             parent: menus.find(_menu => _menu.id === menu.parent_id)?.label || '',
         })) : [];
-    }, [menus]); 
+    }, [menus]);
 
     const columns : MRT_ColumnDef<IMenu>[] = useMemo(
         () => [
@@ -168,6 +172,16 @@ export default function IndexMenu() {
         },
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
+                <button
+                    onClick={handleRefresh}
+                    type='button'
+                    className='btn btn-outline-secondary'
+                    style={{ marginLeft: '12px' }}
+                    disabled={isLoading || isRefetching}
+                >
+                    <i className='ti ti-refresh'></i>
+                    <span className='ms-2'>Refresh</span>
+                </button>
                 {UtilMethods.getHabilitations(authorizations, 'articles').canExport && <button type='button' className='btn btn-outline-primary' style={{ marginLeft: '12px' }}>
                     <i className='ti ti-file-export'></i>
                     <span className='ms-2'>EXPORT ALL</span>

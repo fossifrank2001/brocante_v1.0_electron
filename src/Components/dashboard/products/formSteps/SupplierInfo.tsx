@@ -47,7 +47,7 @@ const SupplierInfo: React.FC <ISupplyInfoProps> = ({suppliersRecord}) => {
         try {
             setLoading(true)
             const {data: __suppliers} = await SupplyAPI.index();
-            setSuppliers(__suppliers.data)
+            setSuppliers(__suppliers as ISupply[] | null);
             if(suppliersRecord){
                 setSelectedSupplier(suppliersRecord)
             }

@@ -212,7 +212,7 @@ export default class UtilMethods {
         }
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'XOF',
+            currency: 'XAF',
         }).format(value);
     }
     

@@ -60,7 +60,6 @@ export default function IndexAccess() {
         }
     };
 
-    // request all menus
     const getAccesses = useCallback(
         async () => {
             setIsLoading(true);
@@ -75,7 +74,7 @@ export default function IndexAccess() {
 
             try {
                 const { status, data: result } = await axiosInstance.get<IApiResponsePaginated<IAccess>>(url.href);
-              const { data: accessList }: IApiResponsePaginated<IAccess> = result;
+                const { data: accessList }: IApiResponsePaginated<IAccess> = result;
                 if (status === 200) {
                     setAccesses(accessList.data);
                     setRowCount(accessList.total);
@@ -94,95 +93,96 @@ export default function IndexAccess() {
     );
 
     useEffect(() => {
-      (async () => await getAccesses())();
+        (async () => await getAccesses())();
     }, [getAccesses, isDeleted]);
 
-  const tableData: IAccessTableData[] = useMemo(() => {
-    return accesses ? accesses.map((access) => ({
-      ...access,
-      user: `${access?.user?.last_name || ""} ${access?.user?.first_name || ""}`,
-      actions: (
-        <Stack direction="row" spacing={1}>
-          <Link
-            href="#"
-            onClick={() => {
-              context.togglePageLoading(true);
-              dispatch(setActivePage({
-                page: Pages.ACCESS,
-                id: access.id,
-                param: {
-                  sub_page: 'UPDATE'
-                }
-              }))
-            }}>
-            <i color="primary" className="ti ti-pencil"></i>
-          </Link>
-          {!UtilMethods.isActiveAccess(access.id) && <i
-            onClick={() => {
-              setAccessId(access.id);
-              setOpenDetailModal(true);
-            }}
-            className="ti ti-trash cursor-pointer text-danger"
-          ></i>}
-        </Stack>
-      ),
-    })) : [];
-  }, [accesses, context, dispatch]);
+    const handleRefresh = () => {
+        setIsRefetching(true);
+        getAccesses();
+    };
 
+    const tableData: IAccessTableData[] = useMemo(() => {
+        return accesses ? accesses.map((access) => ({
+            ...access,
+            user: `${access?.user?.last_name || ""} ${access?.user?.first_name || ""}`,
+            actions: (
+                <Stack direction="row" spacing={1}>
+                    <Link
+                        href="#"
+                        onClick={() => {
+                            context.togglePageLoading(true);
+                            dispatch(setActivePage({
+                                page: Pages.ACCESS,
+                                id: access.id,
+                                param: {
+                                    sub_page: 'UPDATE'
+                                }
+                            }))
+                        }}>
+                        <i color="primary" className="ti ti-pencil"></i>
+                    </Link>
+                    {!UtilMethods.isActiveAccess(access.id) && <i
+                        onClick={() => {
+                            setAccessId(access.id);
+                            setOpenDetailModal(true);
+                        }}
+                        className="ti ti-trash cursor-pointer text-danger"
+                    ></i>}
+                </Stack>
+            ),
+        })) : [];
+    }, [accesses, context, dispatch]);
 
+    const columns: MRT_ColumnDef<IAccessTableData>[] = useMemo(() => [
+        {
+            accessorKey: "user",
+            header: "User",
+            size: 100,
+            muiFilterTextFieldProps: () => ({
+                inputProps: { placeHolder: "filter" },
+            }),
+        },
+        {
+            accessorKey: "role.label",  // Access the label property of the role
+            header: "Role",
+            size: 150,
+            muiFilterTextFieldProps: () => ({
+                inputProps: { placeHolder: "filter" },
+            }),
+        },
+        {
+            accessorKey: "status",
+            header: "Status",
+            size: 150,
+            Cell: ({ cell }) => {
+                const value = cell.getValue();
+                const status = typeof value === 'string' ? UtilMethods.getStatus(value) : '';
+                return <span className={status}>{String(value)}</span>;
+            },
+            filterVariant: "select",
+            filterSelectOptions: [
+                { label: 'Active', value: UtilMethods.ACTIVE },
+                { label: 'Inactive', value: UtilMethods.INACTIVE },
+            ],
+        },
+        {
+            accessorKey: "code",
+            header: "Code",
+            size: 150,
+            muiFilterTextFieldProps: () => ({
+                inputProps: { placeHolder: "filter" },
+            }),
+        },
+        {
+            accessorKey: "actions",
+            header: "Actions",
+            size: 150,
+            unexport: true,
+            enableColumnFilter: false,
+        },
+    ], []);
 
-
-  const columns: MRT_ColumnDef<IAccessTableData>[] = useMemo(() => [
-    {
-      accessorKey: "user",
-      header: "User",
-      size: 100,
-      muiFilterTextFieldProps: () => ({
-        inputProps: { placeHolder: "filter" },
-      }),
-    },
-    {
-      accessorKey: "role.label",  // Access the label property of the role
-      header: "Role",
-      size: 150,
-      muiFilterTextFieldProps: () => ({
-        inputProps: { placeHolder: "filter" },
-      }),
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      size: 150,
-      Cell: ({ cell }) => {
-        const value = cell.getValue();
-        const status = typeof value === 'string' ? UtilMethods.getStatus(value) : '';
-        return <span className={status}>{String(value)}</span>;
-      },
-      filterVariant: "select",
-      filterSelectOptions: [
-        { label: 'Active', value: UtilMethods.ACTIVE },
-        { label: 'Inactive', value: UtilMethods.INACTIVE },
-      ],
-    },
-    {
-      accessorKey: "code",
-      header: "Code",
-      size: 150,
-      muiFilterTextFieldProps: () => ({
-        inputProps: { placeHolder: "filter" },
-      }),
-    },
-    {
-      accessorKey: "actions",
-      header: "Actions",
-      size: 150,
-      unexport: true,
-      enableColumnFilter: false,
-    },
-  ], []);
-
-
-  const mrTable : MRT_TableInstance<IAccessTableData> = useMaterialReactTable({
+    const mrTable : MRT_TableInstance<IAccessTableData> = useMaterialReactTable({
         columns: columns,
         data: tableData,
         enableRowSelection: true,
@@ -221,6 +221,16 @@ export default function IndexAccess() {
         },
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
+                <button
+                    onClick={handleRefresh}
+                    type='button'
+                    className='btn btn-outline-secondary'
+                    style={{ marginLeft: '12px' }}
+                    disabled={isLoading || isRefetching}
+                >
+                    <i className='ti ti-refresh'></i>
+                    <span className='ms-2'>Refresh</span>
+                </button>
                 {UtilMethods.isAdmin() && <button onClick={() => {
                     context.togglePageLoading(true)
                     dispatch(setActivePage({
@@ -250,40 +260,40 @@ export default function IndexAccess() {
         ),
     });
 
-  const handleDelete = async () => {
-      try {
-          context.togglePageLoading(true)
-          setInProgress(true)
-          const {message} = await AccessAPI.delete(accessId)
-          if(UtilMethods.isOneOfAuthAccess(accessId)){
-              dispatch(removeAccessToAuthUser(accessId))
-          }
-          Toast.success(message)
+    const handleDelete = async () => {
+        try {
+            context.togglePageLoading(true)
+            setInProgress(true)
+            const {message} = await AccessAPI.delete(accessId)
+            if(UtilMethods.isOneOfAuthAccess(accessId)){
+                dispatch(removeAccessToAuthUser(accessId))
+            }
+            Toast.success(message)
 
-      } catch (error) {
-          console.error(error)
-      }finally{
-          setOpenDetailModal(false)
-          setIsDeleted(true)
-          setInProgress(false)
-          context.togglePageLoading(false)
-      }
-  }
+        } catch (error) {
+            console.error(error)
+        }finally{
+            setOpenDetailModal(false)
+            setIsDeleted(true)
+            setInProgress(false)
+            context.togglePageLoading(false)
+        }
+    }
 
     return (
         <div className="container">
             <Breadcrumd parent="Accesses" />
             <MaterialReactTable table={mrTable} />
-           <CustomAlert 
-                openDetailModal={openDetailModal} 
+            <CustomAlert
+                openDetailModal={openDetailModal}
                 content={{style: 'ti ti-info-circle text text-danger',
                     icon: 'Warning',
                     message: 'Would you like to delete this access?'
-                }}  
+                }}
                 onHandleDelete={handleDelete}
                 onHandleOpenDetail={() => setOpenDetailModal(false)}
                 inProgress= {inProgress}
-           />
+            />
         </div>
     );
 }

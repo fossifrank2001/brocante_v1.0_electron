@@ -11,10 +11,11 @@ class ProductAPI {
     static OUT_OF_STOCK = 'out-of-stock'
     static async index(
         _q = '',
-        page = 1,
+        page = 0,
         sub_categories='',
         price_between='',
-        status = ''
+        status = '',
+        per_page:number = constants.PER_PAGE
     ): Promise<IApiResponsePaginated<IProduct>> {
         // eslint-disable-next-line no-useless-catch
         try {
@@ -24,8 +25,8 @@ class ProductAPI {
                 ...sub_categories !=='' && {sub_categories},
                 ...status !== '' && {status}
             };
-            url.searchParams.set("start", `${(page - 1) * 3}`);
-            url.searchParams.set("per_page", String(constants.PER_PAGE));
+            url.searchParams.set("start", `${(page - 1) * per_page}`);
+            url.searchParams.set("per_page", String(per_page));
             url.searchParams.set("filters", JSON.stringify(filters));
             url.searchParams.set("q", _q);
 

@@ -1,30 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './Components/App.tsx';
 import 'Styles/index.less';
 import { Provider } from "react-redux";
-import store from 'Data/Objects/store.ts';
 import { ToastContainer } from "react-toastify";
-import Loading from "Components/utils/Loading.tsx";
-import ErrorBoundary from "@/ErrorBoundary.tsx";
+import store from 'Data/Objects/store';
+import ErrorBoundary from "@/ErrorBoundary";
+import Loading from "Components/utils/Loading";
+
+import 'Styles/index.less';
+import App from "Components/App.tsx";
+
+// const App = lazy(() => import('./Components/App'));
 
 const Root: React.FC = () => {
-    const [loading, setLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 1000);
-
+        const timer = setTimeout(() => setIsLoading(false), 1000);
         return () => clearTimeout(timer);
     }, []);
 
-    return loading ? (
-        <Loading />
-    ) : (
+    if (isLoading) return <Loading />;
+
+    return (
         <ErrorBoundary>
             <Provider store={store}>
-                <App />
+                {/*<Suspense fallback={<Loading />}>*/}
+                    <App />
+                {/*</Suspense>*/}
                 <ToastContainer />
             </Provider>
         </ErrorBoundary>

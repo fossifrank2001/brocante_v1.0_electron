@@ -24,6 +24,7 @@ export enum Pages{
     NOTIFICATION = "NOTIFICATION",
     CUSTOMER = "CUSTOMER",
     SUPPLIER = "SUPPLIER",
+    INVOICE = "INVOICE"
 }
 
 export class State{

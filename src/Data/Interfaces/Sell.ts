@@ -41,7 +41,7 @@ export interface ISell {
     person ?: null | Partial<IPerson>
 }
 
-export interface ISellTableData extends ISell {
-    customer: string;
+export interface ISellTableData extends Omit<ISell, 'person_id'> {
+    person_id: string;
     actions: ReactNode;
 }

@@ -14,6 +14,7 @@ export interface IApiResponseBase<T = unknown> {
 export interface IApiResponsePaginated<T = unknown> extends IApiResponseBase<{
     data: T[];
     total: number;
+    per_page: number;
 }> {}
 
 export type IApiResponse<T = unknown> =

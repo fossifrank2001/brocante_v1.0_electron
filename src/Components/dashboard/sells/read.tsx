@@ -21,7 +21,6 @@ import Toast from '@/Data/Utilities/Toast';
 import UtilMethods from 'Data/Utilities/UtilMethods.ts';
 import dayjs from 'dayjs';
 import InvoiceAPI from 'Data/Api/Invoice.ts';
-import {DataGrid} from '@mui/x-data-grid';
 
 const ReadSell = () => {
     const { currentPage, id } = useAppSelector((state) => state.navigaton);
@@ -33,9 +32,6 @@ const ReadSell = () => {
     const [reloadRecord, setReloadRecord] = useState(false);
     const [paymentAmount, setPaymentAmount] = useState(0);
     const [paymentMethod, setPaymentMethod] = useState('Cash');
-    const [showPayments, setShowPayments] = useState(false);
-    const [pageSize, setPageSize] = useState(5);
-    const [currentPageNumber, setCurrentPageNumber] = useState(0);
 
     const fetchRecord = useCallback(async () => {
         setInProgress(true);
@@ -81,7 +77,7 @@ const ReadSell = () => {
 
         setInProgress(true);
         try {
-            const { message } = await InvoiceAPI.pay(id, { amount: paymentAmount, payment_method: paymentMethod });
+            const { message } = await InvoiceAPI.pay(record.invoice.id, { amount: paymentAmount, payment_method: paymentMethod });
             Toast.success(message);
             setReloadRecord(true);
             handleCloseModal();
@@ -107,27 +103,6 @@ const ReadSell = () => {
         setOpenCancelModal(false);
         setReason('');
     };
-
-    const toggleShowPayments = () => {
-        setShowPayments((prev) => !prev);
-    };
-    const paymentColumns = [
-        { field: 'id', headerName: 'ID', width: 90 },
-        { field: 'invoice_number', headerName: 'Invoice Number', width: 200 },
-        {
-            field: 'amount',
-            headerName: 'Montant',
-            width: 130,
-            renderCell: (params) => UtilMethods.formatNumber(params.value)
-        },
-        { field: 'payment_method', headerName: 'Payment Method', width: 200 },
-        {
-            field: 'created_at',
-            headerName: 'Created At',
-            width: 250,
-            renderCell: (params) => dayjs(params.row.created_at).format('MMMM D, YYYY h:mm A'),
-        },
-    ];
 
 
     return (
@@ -161,7 +136,7 @@ const ReadSell = () => {
                                     <i className='ti ti-download me-2'></i>
                                     <span>Download Invoice</span>
                                 </Button>
-                                <Button
+                                {record.status === SellAPI.PENDING && <Button
                                     className='d-flex align-items-center'
                                     variant="contained"
                                     color="primary"
@@ -169,7 +144,7 @@ const ReadSell = () => {
                                 >
                                     <i className='ti ti-receipt me-2'></i>
                                     <span>Pay</span>
-                                </Button>
+                                </Button>}
                             </div>
                         ) : null}
                     </div>
@@ -251,13 +226,7 @@ const ReadSell = () => {
                                                 <InfoItem label={`Item ${index + 1} Quantity`} value={item.quantity}/>
                                                 <InfoItem
                                                     label={`Item ${index + 1} Price`}
-                                                    value={
-                                                        <span>
-                                                            {item.price}
-                                                            <span className='fw-bolder'
-                                                                  style={{fontSize: '10px'}}> FCFA</span>
-                                                        </span>
-                                                    }
+                                                    value={UtilMethods.formatNumber(item.price)}
                                                 />
                                             </div>
                                         </Grid>
@@ -271,39 +240,6 @@ const ReadSell = () => {
                         </div>
                     </div>
 
-                    <div className='card mt-2'>
-                        <div className='card-body'>
-                            <Grid container spacing={2}>
-                                <Grid item xs={12}>
-                                    <Typography variant="h6">Payments</Typography>
-                                    <Button
-                                        variant="outlined"
-                                        color="primary"
-                                        onClick={toggleShowPayments}
-                                    >
-                                        {showPayments ? 'Close list of payments' : 'See list of payments'}
-                                    </Button>
-
-                                    {showPayments && (
-                                        <Box sx={{height: 400, width: '100%', marginTop: 2}}>
-                                            <DataGrid
-                                                rows={record.payments || []}
-                                                columns={paymentColumns}
-                                                pageSize={pageSize}
-                                                rowsPerPageOptions={[5, 10, 15]}
-                                                pagination
-                                                paginationMode="client"
-                                                page={currentPageNumber}
-                                                onPageChange={(newPage) => setCurrentPageNumber(newPage)}
-                                                onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-                                            />
-
-                                        </Box>
-                                    )}
-                                </Grid>
-                            </Grid>
-                        </div>
-                    </div>
                 </>
             ) : (
                 <Typography variant="h6" color="error">Failed to load sell data</Typography>

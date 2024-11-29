@@ -45,7 +45,7 @@ export default function IndexCustomer() {
 
     useLayoutEffect(() => {
         context.togglePageLoading();
-        document.title = constants.APP_NAME + ' .:. Users';
+        document.title = constants.APP_NAME + ' .:. Customers';
     }, [context]);
 
     const resetScroll = () => {
@@ -56,7 +56,6 @@ export default function IndexCustomer() {
         }
     };
 
-    // request all menus
     const getCustomers = useCallback(
         async () => {
             setIsLoading(true);
@@ -71,7 +70,7 @@ export default function IndexCustomer() {
 
             try {
                 const { status, data: result } = await axiosInstance.get<IApiResponsePaginated<IPerson>>(url.href);
-              const { data: personList }: IApiResponsePaginated<IPerson> = result;
+                const { data: personList }: IApiResponsePaginated<IPerson> = result;
                 if (status === 200) {
                     setCustomers(personList.data);
                     setRowCount(personList.total);
@@ -90,8 +89,13 @@ export default function IndexCustomer() {
     );
 
     useEffect(() => {
-      (async () => await getCustomers())()
+        (async () => await getCustomers())()
     }, [getCustomers, isDeleted]);
+
+    const handleRefresh = () => {
+        setIsRefetching(true);
+        getCustomers();
+    };
 
     const handleDelete = async () => {
         try {
@@ -145,7 +149,7 @@ export default function IndexCustomer() {
             },
             {
                 accessorKey: "firstname",
-                header: "FIrst Name",
+                header: "First Name",
                 size: 100,
                 muiFilterTextFieldProps: () => ({
                     inputProps: { placeHolder: "filter" },
@@ -160,11 +164,46 @@ export default function IndexCustomer() {
                 }),
             },
             {
-              accessorKey: "actions",
-              header: "Actions",
-              size: 150,
-              unexport: true,
-              enableColumnFilter: false,
+                accessorKey: "company_balance",
+                header: "Company Balance",
+                size: 150,
+                Cell: ({ cell }) => {
+                    const value = cell.getValue() as number;
+                    return value ? UtilMethods.formatNumber(value) : null;
+                },
+                muiFilterTextFieldProps: () => ({
+                    inputProps: { placeHolder: "filter" },
+                }),
+            },
+            {
+                accessorKey: "remaining_balance",
+                header: "Remaining Balance",
+                size: 150,
+                Cell: ({ cell }) => {
+                    const data = cell.getValue() as string;
+                    let value: unknown = 0;
+
+                    try {
+                        const remaining = JSON.parse(data);
+                        if (remaining && typeof remaining === 'object' && !Array.isArray(remaining)) {
+                            value = Object.values(remaining).reduce((acc: number, curr: number) => acc + Number(curr) , 0);
+                        }
+                    } catch (error) {
+                        console.error('Error parsing JSON:', error);
+                    }
+
+                    return value ? UtilMethods.formatNumber(value as number) : null;
+                },
+                muiFilterTextFieldProps: () => ({
+                    inputProps: { placeHolder: "filter" },
+                }),
+            },
+            {
+                accessorKey: "actions",
+                header: "Actions",
+                size: 150,
+                unexport: true,
+                enableColumnFilter: false,
             },
         ],
         [],
@@ -209,6 +248,16 @@ export default function IndexCustomer() {
         },
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
+                <button
+                    onClick={handleRefresh}
+                    type='button'
+                    className='btn btn-outline-secondary'
+                    style={{ marginLeft: '12px' }}
+                    disabled={isLoading || isRefetching}
+                >
+                    <i className='ti ti-refresh'></i>
+                    <span className='ms-2'>Refresh</span>
+                </button>
                 {UtilMethods.getHabilitations(authorizations, 'customer').canExport && <button type='button' className='btn btn-outline-primary' style={{ marginLeft: '12px' }}>
                     <i className='ti ti-file-export'></i>
                     <span className='ms-2'>EXPORT ALL</span>
@@ -230,16 +279,16 @@ export default function IndexCustomer() {
         <div className="container">
             <Breadcrumd parent="Users" />
             <MaterialReactTable table={mrTable} />
-           <CustomAlert
-                openDetailModal={openDetailModal} 
+            <CustomAlert
+                openDetailModal={openDetailModal}
                 content={{style: 'ti ti-info-circle text text-danger',
                     icon: 'Warning',
                     message: 'Would you like to delete this customer?'
-                }}  
+                }}
                 onHandleDelete={handleDelete}
                 onHandleOpenDetail={() => setOpenDetailModal(false)}
                 inProgress = {inProgress}
-           />
+            />
         </div>
     );
 }

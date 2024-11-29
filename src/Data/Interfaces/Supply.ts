@@ -4,7 +4,8 @@ import {IImage} from "Data/Interfaces/Image.ts";
 
 export interface ISupplyPayload{
     name : string;
-    contact_info : string
+    contact_info : string;
+    products_count: number
 }
 
 export interface ISupply extends ISupplyPayload{

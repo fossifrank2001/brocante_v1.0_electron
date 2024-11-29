@@ -32,6 +32,8 @@ import IndexCustomer from "Components/dashboard/customers";
 import IndexSell from "Components/dashboard/sells";
 import ReadSellPage from "@/pages/dashboard/sells/SellDetail.tsx";
 import IndexSupply from "Components/dashboard/suppliers";
+import IndexInvoice from "Components/dashboard/invoices";
+import ReadInvoicePage from "@/pages/dashboard/invoices/InvoiceDetail.tsx";
 
 const renderContent = (currentPage, id, param) => {
   switch (currentPage) {
@@ -72,6 +74,10 @@ const renderContent = (currentPage, id, param) => {
       if (!id && !param) return <IndexSell />;
       if (param.sub_page === 'UPDATE') return null;
       if (param.sub_page === 'READ') return <ReadSellPage />;
+      return null;
+    case Pages.INVOICE:
+      if (!id && !param) return <IndexInvoice />;
+      if (param.sub_page === 'READ') return <ReadInvoicePage />;
       return null;
     default:
       return <Dashboard />;

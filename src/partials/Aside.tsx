@@ -35,6 +35,7 @@ export default function Aside({ role = null }) {
     const { currentPage } = useAppSelector(state => state.navigaton)
     const asideRef = useRef(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState(null)
 
     const handleLogout = async () => {
         try {
@@ -49,6 +50,7 @@ export default function Aside({ role = null }) {
     const getMenus = useCallback(async () => {
         try {
             setIsLoading(true)
+            setError(null)
             const { loadMenuByRoleAsync } = await import("Data/Slices/MenuRoleSlice")
             console.log('auth_access_id ASIDE FUNCTION ::: ', auth_access_id)
             const access = authUser?.accesses ? authUser?.accesses.find(access => access.id === auth_access_id) : null
@@ -56,6 +58,7 @@ export default function Aside({ role = null }) {
             await dispatch(loadMenuByRoleAsync(access?.role.id))
         } catch (e) {
             console.error(e)
+            setError('Failed to load menus. Please try again.')
         } finally {
             setIsLoading(false)
         }
@@ -159,15 +162,36 @@ export default function Aside({ role = null }) {
                     <ul id="sidebarnav" className="pt-3">
                         {isLoading ? (
                             <SkeletonLoader />
+                        ) : error ? (
+                            <li className="sidebar-item">
+                                <div className="sidebar-link">
+                                    <span>{error}</span>
+                                    <motion.button
+                                        whileTap={{ scale: 0.9 }}
+                                        className="btn btn-sm btn-primary ms-2"
+                                        onClick={getMenus}
+                                    >
+                                        <i className="ti ti-reload me-1"></i>
+                                        Retry
+                                    </motion.button>
+                                </div>
+                            </li>
                         ) : menus && menus.length > 0 ? (
                             displayMenus
                         ) : (
-                            <div className='d-flex align-items-center'>
-                                <span>
-                                    <i className='ti ti-reload me-2'></i>
-                                </span>
-                                <span className="hide-menu" style={{ userSelect: "none" }}>Reload Menu</span>
-                            </div>
+                            <li className="sidebar-item">
+                                <div className="sidebar-link">
+                                    <span>No menus available</span>
+                                    <motion.button
+                                        whileTap={{ scale: 0.9 }}
+                                        className="btn btn-sm btn-primary ms-2"
+                                        onClick={getMenus}
+                                    >
+                                        <i className="ti ti-reload me-1"></i>
+                                        Reload
+                                    </motion.button>
+                                </div>
+                            </li>
                         )}
                     </ul>
                 </nav>

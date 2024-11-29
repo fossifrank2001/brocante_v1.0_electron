@@ -1,11 +1,11 @@
 import axiosInstance, { IApiResponse, InferApiResponse } from 'Data/Utilities/axiosInstance';
-import {IPerson, IPersonList} from "Data/Interfaces/Person.ts";
+import {IPerson} from "Data/Interfaces/Person.ts";
 import Toast from "Data/Utilities/Toast.ts";
 
 class CustomerAPI{
 
     // Fetch all customers
-    static async get(_q='', withoutPagination = false): Promise<IPersonList> {
+    static async get(_q='', withoutPagination = false): Promise<never> {
         try {
             const params = {
                 params: {
@@ -15,7 +15,7 @@ class CustomerAPI{
                     'Without-Pagination': withoutPagination
                 }
             };
-            const response = await axiosInstance.get<IPersonList>(`/customers`, params);
+            const response = await axiosInstance.get<never>(`/customers?q=${_q}`, params);
             return response.data;
         } catch (error) {
             console.error("Error fetching customer:", error);

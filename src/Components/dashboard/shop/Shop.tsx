@@ -9,8 +9,9 @@ import CategoryAPI from "@/Data/Api/Category";
 import LoaderFilter from "@/Components/loaders/LoaderFilter";
 import LoaderArticle from "@/Components/loaders/LoaderArticle";
 import { IPaginationData } from 'Interfaces';
+import { Alert, AlertTitle, Typography } from '@mui/material';
 
-const ShopComponent: React.FC<{searchTerm: string}> = ({searchTerm}) => {
+const ShopComponent: React.FC<{searchTerm: string, onResetFilter: () => void}> = ({searchTerm, onResetFilter}) => {
     const [products, setProducts] = useState<IProduct[]>([]);
     const [paginationData, setPaginationData] = useState<IPaginationData | null>(null);
     const [categories, setCategories] = useState<ICategory[]>([]);
@@ -19,6 +20,8 @@ const ShopComponent: React.FC<{searchTerm: string}> = ({searchTerm}) => {
     const [_status, setStatus] = useState<string>('');
     const [loadingFilter, setLoadingFilter] = useState(false);
     const [loadingProducts, setLoadingProducts] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [perPage, setPerPage] = useState<number>(10);
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
@@ -26,15 +29,18 @@ const ShopComponent: React.FC<{searchTerm: string}> = ({searchTerm}) => {
         }, 300);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm, selectedSubCategories, priceRange, _status]);
+    }, [searchTerm, selectedSubCategories, priceRange, _status, perPage]);
 
     const getCategories = useCallback(async () => {
         try {
             setLoadingFilter(true);
+            setError(null);
             const { data: result } = await CategoryAPI.index();
             setCategories(result.data);
+            setPerPage(result.per_page);
         } catch (e) {
             console.error('SHOP PAGE: error related to categories loading', e);
+            setError('Failed to load categories. Please try again.');
         } finally {
             setLoadingFilter(false);
         }
@@ -47,8 +53,9 @@ const ShopComponent: React.FC<{searchTerm: string}> = ({searchTerm}) => {
     const getProducts = useCallback(async (page: number = 1) => {
         try {
             setLoadingProducts(true);
+            setError(null);
             const subCategoryIds = selectedSubCategories.map(sc => sc.id).join(',');
-            const { data: _products } = await ProductAPI.index(searchTerm, page, subCategoryIds, priceRange, _status);
+            const { data: _products } = await ProductAPI.index(searchTerm, page, subCategoryIds, priceRange, _status, perPage);
             if ('data' in _products && Array.isArray(_products.data)) {
                 setProducts(_products.data);
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -57,17 +64,23 @@ const ShopComponent: React.FC<{searchTerm: string}> = ({searchTerm}) => {
             }
         } catch (error) {
             console.error('Error fetching data:', error);
+            setError('Failed to load products. Please try again.');
         } finally {
             setLoadingProducts(false);
         }
-    }, [searchTerm, selectedSubCategories, priceRange, _status]);
+    }, [searchTerm, selectedSubCategories, priceRange, _status, perPage]);
 
     const handlePageChange = async (page: number) => {
         try {
             await getProducts(page);
         } catch (error) {
             console.error('Error fetching data:', error);
+            setError('Failed to load products. Please try again.');
         }
+    };
+
+    const handlePerPageChange = (newPerPage: number) => {
+        setPerPage(newPerPage);
     };
 
     const handleSubCategoryChange = (subCategories: ISubCategory[]) => {
@@ -86,48 +99,93 @@ const ShopComponent: React.FC<{searchTerm: string}> = ({searchTerm}) => {
         setSelectedSubCategories([]);
         setPriceRange('');
         setStatus('');
+        setPerPage(10);
+        onResetFilter();
+    };
+
+    const handleRefreshFilters = async () => {
+        await getCategories();
+    };
+
+    const handleRefreshProducts = async () => {
+        await getProducts();
     };
 
     return (
-      <div className="" style={{width: '90%', margin: 'auto'}}>
-          <div className="position-relative overflow-hidden">
-              <div className="shop-part d-flex w-100" style={{height:'fit-content!important'}}>
-                  {loadingFilter ? <LoaderFilter /> : (
-                    <ShopFilters
-                      categories={categories}
-                      selectedSubCategories={selectedSubCategories}
-                      onSubCategoryChange={handleSubCategoryChange}
-                      onPriceChange={handlePriceChange}
-                      selectedPriceRange={priceRange}
-                      onResetFilters={handleResetFilters}
-                      onStatusChange={handleStatusChange}
-                      selectedStatus={_status}
-                    />
-                  )}
-                  <div className="card-body pb-0 pt-2" style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      backgroundColor: "rgba(208,208,208,0.28)",
-                      marginLeft:"300px",
-                      height:"100vh"
-                  }}>
-                      {loadingProducts ? (
-                        <div className='row px-2'>
-                            {Array.from({length: 8}).map((_, index) => <LoaderArticle key={index}/>)}
+        <div className="" style={{width: '90%', margin: 'auto'}}>
+            <div className="position-relative overflow-hidden">
+                <div className="shop-part d-flex w-100" style={{height:'fit-content!important'}}>
+                    {loadingFilter ? <LoaderFilter /> : (
+                        <ShopFilters
+                            categories={categories}
+                            selectedSubCategories={selectedSubCategories}
+                            onSubCategoryChange={handleSubCategoryChange}
+                            onPriceChange={handlePriceChange}
+                            selectedPriceRange={priceRange}
+                            onResetFilters={handleResetFilters}
+                            onStatusChange={handleStatusChange}
+                            selectedStatus={_status}
+                        />
+                    )}
+                    <div className="card-body pb-0 pt-2" style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        backgroundColor: "rgba(208,208,208,0.28)",
+                        marginLeft:"300px",
+                        height:"100vh"
+                    }}>
+                        <div className="d-flex justify-content-between mb-3 px-2">
+                            <button
+                                onClick={handleRefreshFilters}
+                                disabled={loadingFilter}
+                                className="btn btn-primary d-flex align-items-center justify-content-center"
+                            >
+                                <i className="ti ti-refresh"></i>
+                                <span className='ms-2'>Refresh Filters</span>
+                            </button>
+                            <button
+                                onClick={handleRefreshProducts}
+                                disabled={loadingFilter}
+                                className="btn btn-primary d-flex align-items-center justify-content-center"
+                            >
+                                <i className="ti ti-refresh"></i>
+                                <span className='ms-2'>Refresh Products</span>
+                            </button>
                         </div>
-                      ) : (
-                        <div>
-                            <ProductList products={products}/>
-                        </div>
-                      )}
-                      {paginationData && (
-                        <PaginationComponent paginationData={paginationData} onPageChange={handlePageChange}/>
-                      )}
-                  </div>
-              </div>
-          </div>
-      </div>
+                        {error && (
+                            <Alert severity="error" style={{width: '95%', margin: 'auto'}}>
+                                <AlertTitle>Error</AlertTitle>
+                                {error}
+                            </Alert>
+                        )}
+                        {loadingProducts ? (
+                            <div className='row px-2'>
+                                {Array.from({length: 8}).map((_, index) => <LoaderArticle key={index}/>)}
+                            </div>
+                        ) : products.length > 0 ? (
+                            <div>
+                                <ProductList products={products}/>
+                            </div>
+                        ) : (
+                            <Alert severity="warning" style={{width: '95%', margin: '10px auto'}}>
+                                <AlertTitle>No Products Found.</AlertTitle>
+                                <Typography>
+                                    No products match your current filters. Try adjusting your search or filter criteria.
+                                </Typography>
+                            </Alert>
+                        )}
+                        {paginationData && (
+                            <PaginationComponent
+                                paginationData={paginationData}
+                                onPageChange={handlePageChange}
+                                onPerPageChange={handlePerPageChange}
+                                perPage={perPage}
+                            />
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
 

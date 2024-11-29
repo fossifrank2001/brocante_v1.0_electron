@@ -3,12 +3,12 @@ import {useAppContext} from "@/contexts/appContext";
 import constants from "Data/Utilities/constants";
 import Breadcrumd from "Components/Breadcrumd";
 import {
-  MaterialReactTable, MRT_ColumnDef,
-  MRT_ShowHideColumnsButton, MRT_TableOptions,
-  MRT_ToggleDensePaddingButton,
-  MRT_ToggleFiltersButton, MRT_ToggleFullScreenButton,
-  MRT_ToggleGlobalFilterButton,
-  useMaterialReactTable
+    MaterialReactTable, MRT_ColumnDef,
+    MRT_ShowHideColumnsButton, MRT_TableOptions,
+    MRT_ToggleDensePaddingButton,
+    MRT_ToggleFiltersButton, MRT_ToggleFullScreenButton,
+    MRT_ToggleGlobalFilterButton,
+    useMaterialReactTable
 } from 'material-react-table';
 import {MRT_Localization_EN} from "material-react-table/locales/en";
 import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
@@ -93,7 +93,7 @@ export default function IndexUser() {
     );
 
     useEffect(() => {
-      (async () => await getUsers())()
+        (async () => await getUsers())()
     }, [getUsers, isDeleted]);
 
     const handleDelete = async () => {
@@ -112,52 +112,57 @@ export default function IndexUser() {
         }
     }
 
+    const handleRefresh = () => {
+        setIsRefetching(true);
+        getUsers();
+    };
+
     const tableData: IUserTableData[] = useMemo(() => {
-      return users ? users.map((user: IUser) => ({
-        ...user,
-        name: `${user.last_name || ""} ${user.first_name || ""}`,
-        actions: (
-          <Stack direction="row" spacing={1}>
-            <Link
-              href="#"
-              onClick={() => {
-                context.togglePageLoading(true);
-                dispatch(setActivePage({
-                  page: Pages.ACCOUNT,
-                  id: user.id,
-                  param: {
-                    sub_page: 'READ'
-                  }
-                }))
-              }}>
-              <i color="primary" className="ti ti-eye text-dark"></i>
-            </Link>
-            <Link
-              href="#"
-              onClick={() => {
-                context.togglePageLoading(true);
-                dispatch(setActivePage({
-                  page: Pages.ACCOUNT,
-                  id: user.id,
-                  param: {
-                    sub_page: 'UPDATE'
-                  }
-                }))
-              }}>
-              <i color="primary" className="ti ti-pencil"></i>
-            </Link>
-            {(UtilMethods.authEmail() !== user.email) && (
-              <i
-                onClick={() => {
-                  setUserId(user.id)
-                  setOpenDetailModal(true)
-                }}
-                className="ti ti-trash cursor-pointer text-danger"
-              ></i>
-            )}
-          </Stack>
-        ),
-      })) : [];
+        return users ? users.map((user: IUser) => ({
+            ...user,
+            name: `${user.last_name || ""} ${user.first_name || ""}`,
+            actions: (
+                <Stack direction="row" spacing={1}>
+                    <Link
+                        href="#"
+                        onClick={() => {
+                            context.togglePageLoading(true);
+                            dispatch(setActivePage({
+                                page: Pages.ACCOUNT,
+                                id: user.id,
+                                param: {
+                                    sub_page: 'READ'
+                                }
+                            }))
+                        }}>
+                        <i color="primary" className="ti ti-eye text-dark"></i>
+                    </Link>
+                    <Link
+                        href="#"
+                        onClick={() => {
+                            context.togglePageLoading(true);
+                            dispatch(setActivePage({
+                                page: Pages.ACCOUNT,
+                                id: user.id,
+                                param: {
+                                    sub_page: 'UPDATE'
+                                }
+                            }))
+                        }}>
+                        <i color="primary" className="ti ti-pencil"></i>
+                    </Link>
+                    {(UtilMethods.authEmail() !== user.email) && (
+                        <i
+                            onClick={() => {
+                                setUserId(user.id)
+                                setOpenDetailModal(true)
+                            }}
+                            className="ti ti-trash cursor-pointer text-danger"
+                        ></i>
+                    )}
+                </Stack>
+            ),
+        })) : [];
     }, [users, context, dispatch]);
 
     const columns: MRT_ColumnDef<IUser>[] = useMemo(
@@ -179,15 +184,15 @@ export default function IndexUser() {
                 }),
             },
             {
-              accessorKey: "status",
-              header: "Status",
-              size: 150,
-              Cell: ({ cell }) => {
-                const value = cell.getValue();
-                const status = typeof value === 'string' ? UtilMethods.getStatus(value) : '';
-                return <span className={status}>{String(value)}</span>;
-              },
-              enableColumnFilter: false,
+                accessorKey: "status",
+                header: "Status",
+                size: 150,
+                Cell: ({ cell }) => {
+                    const value = cell.getValue();
+                    const status = typeof value === 'string' ? UtilMethods.getStatus(value) : '';
+                    return <span className={status}>{String(value)}</span>;
+                },
+                enableColumnFilter: false,
             },
             {
                 accessorKey: "phone",
@@ -206,91 +211,100 @@ export default function IndexUser() {
                 }),
             },
             {
-              accessorKey: "actions",
-              header: "Actions",
-              size: 150,
-              unexport: true,
-              enableColumnFilter: false,
+                accessorKey: "actions",
+                header: "Actions",
+                size: 150,
+                unexport: true,
+                enableColumnFilter: false,
             },
         ],
         [],
     );
 
     const tableOptions: MRT_TableOptions<IUser> = {
-      columns,
-      data: tableData,
-      enableRowSelection: true,
-      enableStickyHeader: true,
-      initialState: {
-        showColumnFilters: true,
-        density: "compact",
-      },
-      manualFiltering: true,
-      manualPagination: true,
-      manualSorting: true,
-      muiTablePaperProps: { className: "__table-expandable" },
-      muiTableContainerProps: { className: "__table-container" },
-      localization: MRT_Localization_EN,
-      muiToolbarAlertBannerProps: isError
-        ? {
-          color: "error",
-          children: "Error loading data",
-        }
-        : undefined,
-      onColumnFiltersChange: setColumnFilters,
-      onGlobalFilterChange: setGlobalFilter,
-      onPaginationChange: setPagination,
-      onSortingChange: setSorting,
-      onRowSelectionChange: setRowSelection,
-      rowCount,
-      state: {
-        columnFilters,
-        globalFilter,
-        isLoading,
-        pagination,
-        showAlertBanner: isError,
-        showProgressBars: isRefetching,
-        sorting,
-        rowSelection,
-      },
-      renderTopToolbarCustomActions: () => (
-        <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
-          {UtilMethods.getHabilitations(authorizations, 'account').canCreate && (
-            <button
-              onClick={() => {
-                context.togglePageLoading(true);
-                dispatch(setActivePage({
-                  page: Pages.ACCOUNT,
-                  param: {
-                    sub_page: "CREATE"
-                  }
-                }));
-              }}
-              type='button'
-              className='btn btn-primary'
-              style={{ marginLeft: '12px' }}
-            >
-              <i className='ti ti-plus'></i>
-              <span className='ms-2'>ADD</span>
-            </button>
-          )}
-          {UtilMethods.getHabilitations(authorizations, 'account').canExport && (
-            <button type='button' className='btn btn-outline-primary' style={{ marginLeft: '12px' }}>
-              <i className='ti ti-file-export'></i>
-              <span className='ms-2'>EXPORT ALL</span>
-            </button>
-          )}
-        </Box>
-      ),
-      renderToolbarInternalActions: ({ table }) => (
-        <Box>
-          <MRT_ToggleGlobalFilterButton table={table} />
-          <MRT_ToggleFiltersButton table={table} />
-          <MRT_ToggleDensePaddingButton table={table} />
-          <MRT_ShowHideColumnsButton table={table} />
-          <MRT_ToggleFullScreenButton table={table} />
-        </Box>
-      ),
+        columns,
+        data: tableData,
+        enableRowSelection: true,
+        enableStickyHeader: true,
+        initialState: {
+            showColumnFilters: true,
+            density: "compact",
+        },
+        manualFiltering: true,
+        manualPagination: true,
+        manualSorting: true,
+        muiTablePaperProps: { className: "__table-expandable" },
+        muiTableContainerProps: { className: "__table-container" },
+        localization: MRT_Localization_EN,
+        muiToolbarAlertBannerProps: isError
+            ? {
+                color: "error",
+                children: "Error loading data",
+            }
+            : undefined,
+        onColumnFiltersChange: setColumnFilters,
+        onGlobalFilterChange: setGlobalFilter,
+        onPaginationChange: setPagination,
+        onSortingChange: setSorting,
+        onRowSelectionChange: setRowSelection,
+        rowCount,
+        state: {
+            columnFilters,
+            globalFilter,
+            isLoading,
+            pagination,
+            showAlertBanner: isError,
+            showProgressBars: isRefetching,
+            sorting,
+            rowSelection,
+        },
+        renderTopToolbarCustomActions: () => (
+            <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
+                <button
+                    onClick={handleRefresh}
+                    type='button'
+                    className='btn btn-outline-secondary'
+                    style={{ marginLeft: '12px' }}
+                >
+                    <i className='ti ti-refresh'></i>
+                    <span className='ms-2'>Refresh</span>
+                </button>
+                {UtilMethods.getHabilitations(authorizations, 'account').canCreate && (
+                    <button
+                        onClick={() => {
+                            context.togglePageLoading(true);
+                            dispatch(setActivePage({
+                                page: Pages.ACCOUNT,
+                                param: {
+                                    sub_page: "CREATE"
+                                }
+                            }));
+                        }}
+                        type='button'
+                        className='btn btn-primary'
+                        style={{ marginLeft: '12px' }}
+                    >
+                        <i className='ti ti-plus'></i>
+                        <span className='ms-2'>ADD</span>
+                    </button>
+                )}
+                {UtilMethods.getHabilitations(authorizations, 'account').canExport && (
+                    <button type='button' className='btn btn-outline-primary' style={{ marginLeft: '12px' }}>
+                        <i className='ti ti-file-export'></i>
+                        <span className='ms-2'>EXPORT ALL</span>
+                    </button>
+                )}
+            </Box>
+        ),
+        renderToolbarInternalActions: ({ table }) => (
+            <Box>
+                <MRT_ToggleGlobalFilterButton table={table} />
+                <MRT_ToggleFiltersButton table={table} />
+                <MRT_ToggleDensePaddingButton table={table} />
+                <MRT_ShowHideColumnsButton table={table} />
+                <MRT_ToggleFullScreenButton table={table} />
+            </Box>
+        ),
     };
 
     const table = useMaterialReactTable(tableOptions);
@@ -298,17 +312,17 @@ export default function IndexUser() {
     return (
         <div className="container">
             <Breadcrumd parent="Users" />
-          <MaterialReactTable table={table} />
-           <CustomAlert
-                openDetailModal={openDetailModal} 
+            <MaterialReactTable table={table} />
+            <CustomAlert
+                openDetailModal={openDetailModal}
                 content={{style: 'ti ti-info-circle text text-danger',
                     icon: 'Warning',
                     message: 'Would you like to delete this user?'
-                }}  
+                }}
                 onHandleDelete={handleDelete}
                 onHandleOpenDetail={() => setOpenDetailModal(false)}
                 inProgress = {inProgress}
-           />
+            />
         </div>
     );
 }

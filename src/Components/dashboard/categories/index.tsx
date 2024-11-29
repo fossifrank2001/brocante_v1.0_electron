@@ -25,8 +25,7 @@ import Toast from '@/Data/Utilities/Toast';
 import { ICategory, ICategoryTableData } from '@/Data/Interfaces/Category';
 import CategoryAPI from '@/Data/Api/Category';
 
-export default function IndexCategory()
-{
+export default function IndexCategory() {
   const context = useAppContext();
 
   const [isError, setIsError] = useState(false);
@@ -96,32 +95,37 @@ export default function IndexCategory()
     getCategories();
   }, [getCategories, isDeleted]);
 
+  const handleRefresh = () => {
+    setIsRefetching(true);
+    getCategories();
+  };
+
   const tableData: ICategoryTableData[] = useMemo(() => {
     return categories ? categories.map((category) => ({
       ...category,
       sub_category: category?.sub_categories?.length ?? 0,
       actions: (
-        <Stack direction="row" spacing={1}>
-          <Link
-            href="#"
-            onClick={() => dispatch(setActivePage({
-              page: Pages.CATEGORY,
-              id: category?.id,
-              param: {
-                sub_page: 'UPDATE'
-              }
-            }))}
-          >
-            <i color="primary" className="ti ti-pencil"></i>
-          </Link>
-          <i
-            onClick={() => {
-              setCategoryId(category.id)
-              setOpenDetailModal(true)
-            }}
-            className="ti ti-trash cursor-pointer text-danger"
-          ></i>
-        </Stack>
+          <Stack direction="row" spacing={1}>
+            <Link
+                href="#"
+                onClick={() => dispatch(setActivePage({
+                  page: Pages.CATEGORY,
+                  id: category?.id,
+                  param: {
+                    sub_page: 'UPDATE'
+                  }
+                }))}
+            >
+              <i color="primary" className="ti ti-pencil"></i>
+            </Link>
+            <i
+                onClick={() => {
+                  setCategoryId(category.id)
+                  setOpenDetailModal(true)
+                }}
+                className="ti ti-trash cursor-pointer text-danger"
+            ></i>
+          </Stack>
       ),
     })) : [];
   }, [categories, dispatch]);
@@ -146,8 +150,7 @@ export default function IndexCategory()
     },
   ], []);
 
-
-  const mrTable : MRT_TableInstance<ICategoryTableData> = useMaterialReactTable({
+  const mrTable: MRT_TableInstance<ICategoryTableData> = useMaterialReactTable({
     columns: columns,
     data: tableData,
     enableRowSelection: true,
@@ -163,11 +166,11 @@ export default function IndexCategory()
     muiTableContainerProps: { className: "__table-container" },
     localization: MRT_Localization_EN,
     muiToolbarAlertBannerProps: isError
-      ? {
-        color: "error",
-        children: "errorLoadingData",
-      }
-      : undefined,
+        ? {
+          color: "error",
+          children: "Error loading data",
+        }
+        : undefined,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     onPaginationChange: setPagination,
@@ -185,33 +188,47 @@ export default function IndexCategory()
       rowSelection,
     },
     renderTopToolbarCustomActions: () => (
-      <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
-        {UtilMethods.getHabilitations(authorizations, 'category').canCreate  && <button onClick={() => {
-          context.togglePageLoading(true)
-          dispatch(setActivePage({
-            page: Pages.ACCESS,
-            param: {
-              sub_page: "CREATE"
-            }
-          }))
-        }} type='button' className='btn btn-primary' style={{ marginLeft: '12px' }}>
-          <i className='ti ti-plus'></i>
-          <span className='ms-2'>ADD</span>
-        </button>}
-        {UtilMethods.getHabilitations(authorizations, 'category').canExport && <button type='button' className='btn btn-outline-primary' style={{ marginLeft: '12px' }}>
-          <i className='ti ti-file-export'></i>
-          <span className='ms-2'>EXPORT ALL</span>
-        </button>}
-      </Box>
+        <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
+          <button
+              onClick={handleRefresh}
+              type='button'
+              className='btn btn-outline-secondary'
+              style={{ marginLeft: '12px' }}
+              disabled={isLoading || isRefetching}
+          >
+            <i className='ti ti-refresh'></i>
+            <span className='ms-2'>Refresh</span>
+          </button>
+          {UtilMethods.getHabilitations(authorizations, 'category').canCreate && (
+              <button onClick={() => {
+                context.togglePageLoading(true)
+                dispatch(setActivePage({
+                  page: Pages.ACCESS,
+                  param: {
+                    sub_page: "CREATE"
+                  }
+                }))
+              }} type='button' className='btn btn-primary' style={{ marginLeft: '12px' }}>
+                <i className='ti ti-plus'></i>
+                <span className='ms-2'>ADD</span>
+              </button>
+          )}
+          {UtilMethods.getHabilitations(authorizations, 'category').canExport && (
+              <button type='button' className='btn btn-outline-primary' style={{ marginLeft: '12px' }}>
+                <i className='ti ti-file-export'></i>
+                <span className='ms-2'>EXPORT ALL</span>
+              </button>
+          )}
+        </Box>
     ),
     renderToolbarInternalActions: ({ table }) => (
-      <Box>
-        <MRT_ToggleGlobalFilterButton table={table} />
-        <MRT_ToggleFiltersButton table={table} />
-        <MRT_ToggleDensePaddingButton table={table} />
-        <MRT_ShowHideColumnsButton table={table} />
-        <MRT_ToggleFullScreenButton table={table} />
-      </Box>
+        <Box>
+          <MRT_ToggleGlobalFilterButton table={table} />
+          <MRT_ToggleFiltersButton table={table} />
+          <MRT_ToggleDensePaddingButton table={table} />
+          <MRT_ShowHideColumnsButton table={table} />
+          <MRT_ToggleFullScreenButton table={table} />
+        </Box>
     ),
   });
 
@@ -232,20 +249,20 @@ export default function IndexCategory()
   }
 
   return (
-    <div className="container">
-      <Breadcrumd parent="Categories" />
-      <MaterialReactTable table={mrTable} />
-      <CustomAlert
-        openDetailModal={openDetailModal}
-        content={{
-          style: 'ti ti-info-circle text text-danger',
-          icon: 'Warning',
-          message: 'Would you like to delete this category?'
-        }}
-        onHandleDelete={handleDelete}
-        onHandleOpenDetail={() => setOpenDetailModal(false)}
-        inProgress={inProgress}
-      />
-    </div>
+      <div className="container">
+        <Breadcrumd parent="Categories" />
+        <MaterialReactTable table={mrTable} />
+        <CustomAlert
+            openDetailModal={openDetailModal}
+            content={{
+              style: 'ti ti-info-circle text text-danger',
+              icon: 'Warning',
+              message: 'Would you like to delete this category?'
+            }}
+            onHandleDelete={handleDelete}
+            onHandleOpenDetail={() => setOpenDetailModal(false)}
+            inProgress={inProgress}
+        />
+      </div>
   );
 }

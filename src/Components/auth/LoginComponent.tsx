@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useFormik } from 'formik';
 import { useAppContext } from "@/contexts/appContext";
 import { ILoginPayload } from 'Data/Interfaces';
 import { Pages } from 'Data/Objects/state';
 import { Link } from '@mui/material';
-import logo from "@/assets/images/logos/dark-logo.svg";
+import logo from "../../../public/favicon.png"
 import { setActivePage } from 'Data/Slices/NavigationSlice';
 import { useAppDispatch } from '@/hooks';
 import { motion } from 'framer-motion';
@@ -72,12 +72,28 @@ const LoginComponent: React.FC = () => {
                                 backgroundColor: "rgba(208,208,208,0.28)!important"
                             }}>
                                 <div className="card-body">
-                                    <Link href="#" className="text-nowrap logo-img text-center d-block py-3 w-100">
-                                        <img src={logo} width="180" alt="" />
-                                    </Link>
+                                    <div className="d-flex justify-content-center align-items-center py-3">
+                                        <a className="navbar-brand d-flex align-items-center" href="#" onClick={() => {
+                                            context.togglePageLoading(true)
+                                            dispatch(setActivePage({page: Pages.HOME}))
+                                        }}>
+                                            <img src={logo} alt='logo' style={{
+                                                width: '26px',
+                                                height: '26px',
+                                                objectFit: "cover",
+                                                objectPosition: "center"
+                                            }}/>
+                                            <span className='ms-1 fs-6 fw-bolder'>Brocante<span
+                                                className='bg-primary text-white py-1 px-2' style={{
+                                                borderRadius: '10px',
+                                                backgroundColor: '#007bff'
+                                            }}>V1.0</span></span>
+                                        </a>
+                                    </div>
                                     <form onSubmit={formik.handleSubmit}>
                                         <div className="mb-3">
-                                            <label htmlFor="login" className="form-label">Login <span className="text-danger">*</span></label>
+                                            <label htmlFor="login" className="form-label">Login <span
+                                                className="text-danger">*</span></label>
                                             <div className="input-group">
                                                 <input
                                                     type="text"

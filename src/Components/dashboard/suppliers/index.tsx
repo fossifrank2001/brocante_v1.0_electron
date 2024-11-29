@@ -118,6 +118,7 @@ export default function IndexSupply() {
             id: user.id,
             name: user.name,
             contact_info: `${user?.contact_info || ""}`,
+            products_count: user.products_count ?? 0,
             actions: (
                 <Stack direction="row" spacing={1}>
                     <Link
@@ -152,6 +153,13 @@ export default function IndexSupply() {
             {
                 accessorKey: "contact_info",
                 header: "Contact Info",
+                size: 100,
+                unexport: true,
+                enableColumnFilter: false,
+            },
+            {
+                accessorKey: "products_count",
+                header: "Products Count",
                 size: 100,
                 unexport: true,
                 enableColumnFilter: false,

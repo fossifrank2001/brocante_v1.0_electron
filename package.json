@@ -7,21 +7,23 @@
     "appId": "com.karbura.brocante",
     "productName": "Brocante",
     "mac": {
-      "icon": "public/favicon.png",
+      "icon": "/favicon.png",
       "target": [
         "dmg",
         "zip"
       ]
     },
     "win": {
-      "icon": "public/favicon.png",
+      "icon": "/favicon.png",
       "target": [
         "nsis",
         "zip"
-      ]
+      ],
+      "sign": false,
+      "signAndEditExecutable": false
     },
     "linux": {
-      "icon": "public/favicon.png",
+      "icon": "/favicon.png",
       "target": [
         "AppImage",
         "deb"
@@ -33,11 +35,21 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && electron-builder",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "dist": "electron-builder",
-    "rebuild": "electron-rebuild"
+    "rebuild": "electron-rebuild",
+    "build": "tsc && vite build && electron-builder --config"
+  },
+  "config": {
+    "electron-builder": {
+      "electronVersion": "30.0.1",
+      "asar": true,
+      "files": [
+        "dist/**/*",
+        "dist-electron/**/*"
+      ]
+    }
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",

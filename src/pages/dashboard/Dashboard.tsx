@@ -1,114 +1,163 @@
-import {useLayoutEffect} from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import DashboardComponent from "Components/dashboard/DashboardComponent";
-import {useAppContext} from "@/contexts/appContext";
+import { useAppContext } from "@/contexts/appContext";
 import constants from "Data/Utilities/constants";
+
+declare global {
+    interface Window {
+        ApexCharts?: never;
+        initDashboardCharts?: (chart: HTMLDivElement, breakup: HTMLDivElement, earning: HTMLDivElement) => void;
+    }
+}
+
+const scripts = [
+    '@/assets/js/dashboard.js'
+];
+
+const loadScript = (src: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+        document.body.appendChild(script);
+    });
+};
 
 export default function Dashboard() {
     const context = useAppContext()
+    const chartRef = useRef<HTMLDivElement>(null);
+    const breakupRef = useRef<HTMLDivElement>(null);
+    const earningRef = useRef<HTMLDivElement>(null);
+
     useLayoutEffect(() => {
         context.togglePageLoading()
         document.title = constants.APP_NAME + ' .:. Dashboard'
     }, [context]);
 
-    return <div className="">
-        <div className="row">
-            <div className="col-lg-8 d-flex align-items-strech">
-                <div className="card w-100">
-                    <div className="card-body">
-                        <div className="d-sm-flex d-block align-items-center justify-content-between mb-9">
-                            <div className="mb-3 mb-sm-0">
-                                <h5 className="card-title fw-semibold">Sales Overview</h5>
-                            </div>
-                            <div>
-                                <select className="form-select">
-                                    <option value="1">March 2023</option>
-                                    <option value="2">April 2023</option>
-                                    <option value="3">May 2023</option>
-                                    <option value="4">June 2023</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div id="chart"></div>
-                    </div>
-                </div>
-            </div>
-            <div className="col-lg-4">
-                <div className="row">
-                    <div className="col-lg-12">
-                        <div className="card overflow-hidden">
-                            <div className="card-body p-4">
-                                <h5 className="card-title mb-9 fw-semibold">Yearly Breakup</h5>
-                                <div className="row align-items-center">
-                                    <div className="col-8">
-                                        <h4 className="fw-semibold mb-3">$36,358</h4>
-                                        <div className="d-flex align-items-center mb-3">
-                                            <span
-                                                  className="me-1 rounded-circle bg-light-success
-                                                  round-20 d-flex align-items-center justify-content-center">
-                                                <i className="ti ti-arrow-up-left text-success"></i>
-                                            </span>
-                                            <p className="text-dark me-1 fs-3 mb-0">+9%</p>
-                                            <p className="fs-3 mb-0">last year</p>
-                                        </div>
-                                        <div className="d-flex align-items-center">
-                                            <div className="me-4">
-                                                <span
-                                                    className="round-8 bg-primary
-                                                    rounded-circle me-2 d-inline-block"></span>
-                                                <span className="fs-2">2023</span>
-                                            </div>
-                                            <div>
-                                                <span
-                                                    className="round-8 bg-light-primary
-                                                    rounded-circle me-2 d-inline-block"></span>
-                                                <span className="fs-2">2023</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-4">
-                                        <div className="d-flex justify-content-center">
-                                            <div id="breakup"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-lg-12">
-                        <div className="card">
-                            <div className="card-body">
-                                <div className="row alig n-items-start">
-                                    <div className="col-8">
-                                        <h5 className="card-title mb-9 fw-semibold"> Monthly Earnings </h5>
-                                        <h4 className="fw-semibold mb-3">$6,820</h4>
-                                        <div className="d-flex align-items-center pb-1">
-                                              <span
-                                                  className="me-2 rounded-circle bg-light-danger
-                                                  round-20 d-flex align-items-center justify-content-center">
-                                                <i className="ti ti-arrow-down-right text-danger"></i>
-                                              </span>
-                                            <p className="text-dark me-1 fs-3 mb-0">+9%</p>
-                                            <p className="fs-3 mb-0">last year</p>
-                                        </div>
-                                    </div>
-                                    <div className="col-4">
-                                        <div className="d-flex justify-content-end">
-                                            <div
-                                                className="text-white bg-secondary rounded-circle
-                                                p-6 d-flex align-items-center justify-content-center">
-                                                <i className="ti ti-currency-dollar fs-6"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="earning"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <DashboardComponent />
-    </div>
+    useEffect(() => {
+        const loadScripts = async () => {
+            for (const script of scripts) {
+                await loadScript(script);
+            }
+            // After scripts are loaded, initialize charts
+            if (window.ApexCharts && window.initDashboardCharts) {
+                initCharts();
+            } else {
+                console.error('ApexCharts or initDashboardCharts not available');
+            }
+        };
 
+        loadScripts();
+
+        // Cleanup function
+        return () => {
+            scripts.forEach(src => {
+                const script = document.querySelector(`script[src="${src}"]`);
+                if (script) {
+                    document.body.removeChild(script);
+                }
+            });
+        };
+    }, []);
+
+    const initCharts = () => {
+        if (chartRef.current && breakupRef.current && earningRef.current && window.initDashboardCharts) {
+            window.initDashboardCharts(chartRef.current, breakupRef.current, earningRef.current);
+        }
+    };
+
+    return (
+        <div className="">
+            <div className="row">
+                <div className="col-lg-8 d-flex align-items-strech">
+                    <div className="card w-100">
+                        <div className="card-body">
+                            <div className="d-sm-flex d-block align-items-center justify-content-between mb-9">
+                                <div className="mb-3 mb-sm-0">
+                                    <h5 className="card-title fw-semibold">Sales Overview</h5>
+                                </div>
+                                <div>
+                                    <select className="form-select">
+                                        <option value="1">March 2023</option>
+                                        <option value="2">April 2023</option>
+                                        <option value="3">May 2023</option>
+                                        <option value="4">June 2023</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="chart" ref={chartRef}></div>
+                        </div>
+                    </div>
+                </div>
+                <div className="col-lg-4">
+                    <div className="row">
+                        <div className="col-lg-12">
+                            <div className="card overflow-hidden">
+                                <div className="card-body p-4">
+                                    <h5 className="card-title mb-9 fw-semibold">Yearly Breakup</h5>
+                                    <div className="row align-items-center">
+                                        <div className="col-8">
+                                            <h4 className="fw-semibold mb-3">$36,358</h4>
+                                            <div className="d-flex align-items-center mb-3">
+                                                <span className="me-1 rounded-circle bg-light-success round-20 d-flex align-items-center justify-content-center">
+                                                    <i className="ti ti-arrow-up-left text-success"></i>
+                                                </span>
+                                                <p className="text-dark me-1 fs-3 mb-0">+9%</p>
+                                                <p className="fs-3 mb-0">last year</p>
+                                            </div>
+                                            <div className="d-flex align-items-center">
+                                                <div className="me-4">
+                                                    <span className="round-8 bg-primary rounded-circle me-2 d-inline-block"></span>
+                                                    <span className="fs-2">2023</span>
+                                                </div>
+                                                <div>
+                                                    <span className="round-8 bg-light-primary rounded-circle me-2 d-inline-block"></span>
+                                                    <span className="fs-2">2023</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-4">
+                                            <div className="d-flex justify-content-center">
+                                                <div id="breakup" ref={breakupRef}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-lg-12">
+                            <div className="card">
+                                <div className="card-body">
+                                    <div className="row align-items-start">
+                                        <div className="col-8">
+                                            <h5 className="card-title mb-9 fw-semibold"> Monthly Earnings </h5>
+                                            <h4 className="fw-semibold mb-3">$6,820</h4>
+                                            <div className="d-flex align-items-center pb-1">
+                                                <span className="me-2 rounded-circle bg-light-danger round-20 d-flex align-items-center justify-content-center">
+                                                    <i className="ti ti-arrow-down-right text-danger"></i>
+                                                </span>
+                                                <p className="text-dark me-1 fs-3 mb-0">+9%</p>
+                                                <p className="fs-3 mb-0">last year</p>
+                                            </div>
+                                        </div>
+                                        <div className="col-4">
+                                            <div className="d-flex justify-content-end">
+                                                <div className="text-white bg-secondary rounded-circle p-6 d-flex align-items-center justify-content-center">
+                                                    <i className="ti ti-currency-dollar fs-6"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="earning" ref={earningRef}></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <DashboardComponent />
+        </div>
+    )
 }

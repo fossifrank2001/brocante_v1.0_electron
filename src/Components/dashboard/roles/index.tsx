@@ -10,7 +10,6 @@ import {
     MRT_ToggleGlobalFilterButton,
     useMaterialReactTable
 } from "material-react-table";
-//import {MRT_Localization_FR} from "material-react-table/locales/fr";
 import {MRT_Localization_EN} from "material-react-table/locales/en";
 import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
 import {Box, Dialog, DialogActions, DialogContent, DialogTitle, Link, Stack, Typography} from "@mui/material";
@@ -24,11 +23,10 @@ import RoleAPI from '@/Data/Api/Role';
 import Toast from '@/Data/Utilities/Toast';
 import { useFormik } from 'formik';
 
-
 interface FormValues {
     label: string;
     code: string;
-  }
+}
 
 export default function IndexRole() {
     const context = useAppContext();
@@ -70,7 +68,6 @@ export default function IndexRole() {
         }
     };
 
-    // request all menus
     const getRoles = useCallback(
         async () => {
             setIsLoading(true);
@@ -85,7 +82,7 @@ export default function IndexRole() {
 
             try {
                 const { status, data: result } = await axiosInstance.get<IApiResponsePaginated<IRole>>(url.href);
-              const { data: roleList }: IApiResponsePaginated<IRole> = result;
+                const { data: roleList }: IApiResponsePaginated<IRole> = result;
 
                 if (status === 200) {
                     setRoles(roleList.data);
@@ -104,8 +101,13 @@ export default function IndexRole() {
     );
 
     useEffect(() => {
-      (async () => await getRoles())();
+        (async () => await getRoles())();
     }, [getRoles, isDeleted]);
+
+    const handleRefresh = () => {
+        setIsRefetching(true);
+        getRoles();
+    };
 
     const tableData: IRoleTableData[] = useMemo(() => {
         return roles ? roles.map((role) => ({
@@ -155,11 +157,11 @@ export default function IndexRole() {
                 }),
             },
             {
-              accessorKey: "actions",
-              header: "Actions",
-              size: 150,
-              unexport: true,
-              enableColumnFilter: false,
+                accessorKey: "actions",
+                header: "Actions",
+                size: 150,
+                unexport: true,
+                enableColumnFilter: false,
             },
         ],
         [],
@@ -204,6 +206,16 @@ export default function IndexRole() {
         },
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
+                <button
+                    onClick={handleRefresh}
+                    type='button'
+                    className='btn btn-outline-secondary'
+                    style={{ marginLeft: '12px' }}
+                    disabled={isLoading || isRefetching}
+                >
+                    <i className='ti ti-refresh'></i>
+                    <span className='ms-2'>Refresh</span>
+                </button>
             </Box>
         ),
         renderToolbarInternalActions: ({ table }) => (
@@ -226,7 +238,7 @@ export default function IndexRole() {
             setInProgress(true)
             const {message} = await RoleAPI.delete(roleId)
             Toast.success(message)
-            
+
         } catch (error) {
             console.error(error)
         }finally{
@@ -260,32 +272,30 @@ export default function IndexRole() {
             if (!values.label) {
                 errors.label = 'Label field is required.';
             }
-            
+
             if (!values.code) {
                 errors.code = 'Code field is required.';
             }else if (!/^[A-Z*]{4,}$/.test(values.code)) {
                 errors.code = 'Invalid code.';
             }
 
-
             return errors;
         },
     });
-
 
     return (
         <div className="container">
             <Breadcrumd parent="Roles" />
             <MaterialReactTable  table={mrTable}/>
-            <CustomAlert 
-                 openDetailModal={openDetailModal} 
-                 content={{style: 'ti ti-info-circle text text-danger',
-                     icon: 'Warning',
-                     message: 'Would you like to delete this role?'
-                 }}  
-                 onHandleDelete={handleDelete}
-                 onHandleOpenDetail={() => setOpenDetailModal(false)}
-                 inProgress= {inProgress}
+            <CustomAlert
+                openDetailModal={openDetailModal}
+                content={{style: 'ti ti-info-circle text text-danger',
+                    icon: 'Warning',
+                    message: 'Would you like to delete this role?'
+                }}
+                onHandleDelete={handleDelete}
+                onHandleOpenDetail={() => setOpenDetailModal(false)}
+                inProgress= {inProgress}
             />
 
             <Dialog
@@ -307,7 +317,7 @@ export default function IndexRole() {
                         <div className="row">
                             <div className="col-12 mx-auto">
                                 <div className="row gap-10">
-                                    <div className="col-12 mb-3">  
+                                    <div className="col-12 mb-3">
                                         <label htmlFor="label" className="form-label">Label <span className="text-danger">*</span></label>
                                         <div className="input-group">
                                             <input
@@ -327,8 +337,8 @@ export default function IndexRole() {
                                                 <span>{formik.errors.label}</span>
                                             </div>
                                         }
-                                    </div>  
-                                    <div className="col-12 mb-3">  
+                                    </div>
+                                    <div className="col-12 mb-3">
                                         <label htmlFor="code" className="form-label">Code <span className="text-danger">*</span></label>
                                         <div className="input-group">
                                             <input
@@ -349,7 +359,7 @@ export default function IndexRole() {
                                                 <span>{formik.errors.code}</span>
                                             </div>
                                         }
-                                    </div>  
+                                    </div>
                                 </div>
                             </div>
                         </div>

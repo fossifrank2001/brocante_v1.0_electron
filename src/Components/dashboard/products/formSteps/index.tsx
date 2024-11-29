@@ -93,10 +93,12 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({record, id}) => {
             description: Yup.string(),
             price: Yup.number().required('Price is required').positive('Must be positive'),
             stock_quantity: Yup.number().required('Stock quantity is required').positive('Must be positive'),
-            subcategory_ids: Yup.array().of(Yup.object().shape({
-                id: Yup.number().required(),
-                label: Yup.string().required(),
-            })).min(1, 'At least one sub-categories is required'),
+            subcategory_ids: Yup.array().of(
+                Yup.object().shape({
+                    id: Yup.number().required(),
+                    label: Yup.string().required(),
+                })
+            ).min(1, 'At least one sub-categories is required'),
         }),
         Yup.object({
             product_details: Yup.object({
@@ -141,7 +143,7 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({record, id}) => {
         Yup.object({
             suppliers: Yup.array().of(
                 Yup.object({
-                    name: Yup.string().required('Name is equired'),
+                    name: Yup.string().required('Name is required'),
                     contact_info: Yup.string().required('Contact info is required'),
                 })
             ).min(1, 'At least one supplier is required'),
