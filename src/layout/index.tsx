@@ -105,7 +105,7 @@ const Layout: React.FC = () => {
   return (
       <>
         <PageLoadingIndicator visible={pageLoading} />
-        <div className="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6"
+        <div className="page-wrapper" id="main-wrapper"  data-layout="vertical" data-navbarbg="skin6"
              data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed">
           <Aside role={roleId} />
           <div className="body-wrapper">
