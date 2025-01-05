@@ -24,3 +24,7 @@ release
 *.njsproj
 *.sln
 *.sw?
+
+dist_electron/win-unpacked/Brocante.exe
+dist_electron/win-unpacked/resources/app.asar
+dist_electron/Brocante-0.0.1-win.zip
