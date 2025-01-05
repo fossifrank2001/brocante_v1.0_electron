@@ -2,20 +2,18 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {IApiUserLogin, ILoginPayload} from "Interfaces";
 import { Pages, UserState } from "Data/Objects/state";
 import AuthAPI from 'Data/Api/Auth.ts';
-import store, { AppDispatch } from '@/Data/Objects/store';
+import { AppDispatch } from '@/Data/Objects/store';
 import Toast from '@/Data/Utilities/Toast';
 import { IApiResponse } from '@/Data/Utilities/axiosInstance';
 import { setActivePage } from '../NavigationSlice';
 import { IAccess } from '@/Data/Interfaces/Access';
 
-// État par défaut
 const defaultUserState: UserState = {
     token: "",
     message: "",
     authUser: null
 };
 
-// Créer le slice
 const userSlice = createSlice({
     name: 'user',
     initialState: defaultUserState,
@@ -26,18 +24,27 @@ const userSlice = createSlice({
             state.token = token;
             state.authUser = user;
 
-            // localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('token', token)
         },
         logoutSuccess(state: UserState, action: PayloadAction<IApiResponse>) {
             const { message } = action.payload;
             state.message = message;
             state.token = "";
             state.authUser = null;
+            
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            localStorage.removeItem('lastVisitedPage');
         },
         clearUserCredential(state: UserState) {
             state.message = '';
             state.token = "";
             state.authUser = null;
+            
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            localStorage.removeItem('lastVisitedPage');
         },
         addAccessToAuthUser(state: UserState, action: PayloadAction<IAccess>){
             
@@ -87,14 +94,14 @@ export const loginAsync = (payload: ILoginPayload) => async (dispatch: AppDispat
 
 export const logoutAsync = () => async (dispatch: AppDispatch) => {
     try {
-        const response: IApiResponse  = await AuthAPI.logout();
-        Toast.success(response.message)
-        store.dispatch(setActivePage({page: Pages.LOGIN}))
+        const response: IApiResponse = await AuthAPI.logout();
         dispatch(userSlice.actions.logoutSuccess(response));
+        dispatch(setActivePage({page: Pages.LOGIN}));
+        Toast.success(response.message);
     } catch (error) {
-        console.error(error)
+        console.error(error);
+        dispatch(setActivePage({page: Pages.LOGIN}));
     }
 };
 
 export default userSlice.reducer;
-

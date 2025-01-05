@@ -4,6 +4,7 @@ import Constants from "Data/Utilities/constants";
 import ProductAPI from "Data/Api/Product.ts";
 import NotificationsAPI from "Data/Api/Notifications.ts";
 import SellAPI from "Data/Api/Sell.ts";
+import {IUser} from "Interfaces";
 
 export default class UtilMethods {
 
@@ -27,7 +28,7 @@ export default class UtilMethods {
              authorization.permission.label === "export " + label||
              authorization.permission.label === "disable " + label,
          ) || [];
- 
+
          return {
             canExport: !!filteredHabilitations.find(authorization => authorization.permission.label === "export " + label,),
             canRead: !!filteredHabilitations.find(authorization => authorization.permission.label === "read " + label),
@@ -90,6 +91,18 @@ export default class UtilMethods {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
+    static formatDate(date: string | undefined): string {
+        if (!date) return '';
+        
+        const options: Intl.DateTimeFormatOptions = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+        
+        return new Date(date).toLocaleDateString('en-US', options);
+    }
+
     static formatTableFilters = (columnFilters = []) => {
         return (columnFilters ?? [])
         .map(column => {
@@ -118,6 +131,12 @@ export default class UtilMethods {
         const auth = store.getState()?.user?.authUser
 
         return  auth?.email ?? ''
+    }
+
+    static authUser(): IUser{
+        const user = store.getState()?.user?.authUser
+        console.log("Connected User  ::: ", user)
+        return user
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

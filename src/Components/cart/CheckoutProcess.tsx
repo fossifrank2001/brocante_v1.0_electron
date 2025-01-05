@@ -1,4 +1,4 @@
-import React, {useRef, useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import { IPerson } from "Data/Interfaces/Person";
 import { Autocomplete, TextField, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import { FormikProps } from "formik";
@@ -29,7 +29,6 @@ export default function Component({
   onHandleSettingPayment,
   onPersonChange,
   payment,
-  onHandleSearchCustomer,
   onAddPerson,
   formik,
   cart,
@@ -43,8 +42,7 @@ export default function Component({
         firstname: '',
         phone: ''
     });
-    const [, setUnpaidAmount] = useState<number | undefined>(0);
-    const [remainingBalance, setRemainingBalance] = useState<Record<string, number> | null>(null);
+    const [remainingBalance] = useState<Record<string, number> | null>(null);
 
     const [errors, setErrors] = useState({
         phone: '',
@@ -67,31 +65,6 @@ export default function Component({
         }
     }, []);
 
-    const handlePersonSelect = (person: IPerson | null) => {
-        setRemainingBalance(null);
-        setUnpaidAmount(0);
-        setSelectedPerson(person);
-        if (person) {
-            onPersonChange(person);
-            formik.setFieldValue('person', person);
-
-            if (person.remaining_balance) {
-                try {
-                    const parsedBalance = JSON.parse(person.remaining_balance);
-                    setRemainingBalance(
-                        Array.isArray(parsedBalance) ? {} : parsedBalance
-                    );
-                } catch (error) {
-                    console.error("Error parsing remaining_balance:", error);
-                    setRemainingBalance({});
-                }
-            }
-
-            setUnpaidAmount(person.company_balance);
-        }
-    };
-
-    const personRef = useRef(null);
 
     const handleOpenDialog = () => {
         setOpen(true);
@@ -153,10 +126,12 @@ export default function Component({
         }));
     };
 
-    const handleRefresh = useCallback(() => {
+    const handleRefresh = useCallback(async () => {
         setIsRefreshing(true);
         try {
-            onRefreshPersons();
+
+            await onRefreshPersons();
+            console.log("Refreshing persons...");
         } catch (error) {
             Toast.error("Failed to refresh user data");
         } finally {
@@ -243,23 +218,21 @@ export default function Component({
                         <div className="card-body p-4 w-100">
                             <h6 className="fw-semibold fs-4">Select Customer</h6>
                             <Autocomplete
-                                ref={personRef}
-                                id="person"
+                                disablePortal
+                                id="combo-box-demo"
                                 options={persons}
+                                loading={isRefreshing}
+                                disabled={isRefreshing}
                                 getOptionLabel={(option) => `${option.firstname} ${option.lastname}`}
+                                sx={{width: "100%"}}
+                                renderInput={(params) => <TextField {...params} label="Search customer"/>}
+                                onChange={async (_, value) => {
+                                    if (value) {
+                                        onPersonChange(value);
+                                        await formik.setFieldValue('person', value);
+                                    }
+                                }}
                                 value={formik.values.person}
-                                onChange={(_, person) => handlePersonSelect(person)}
-                                onInputChange={(_, val) => onHandleSearchCustomer(String(val ?? '').trim())}
-                                isOptionEqualToValue={(option, value) => option.id === value?.id}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Select Customer"
-                                        variant="outlined"
-                                        error={Boolean(formik.errors.person && formik.touched.person)}
-                                        helperText={formik.errors.person ? 'Person is required' : ''}
-                                    />
-                                )}
                             />
                             <div className="d-flex justify-content-between align-items-center">
                                 <button type='button' className='btn btn-outline-primary'
@@ -268,11 +241,11 @@ export default function Component({
                                 </button>
                                 <button
                                     type='button'
-                                    className='btn btn-outline-secondary'
+                                    className='btn btn-outline-secondary d-flex align-items-center'
                                     onClick={handleRefresh}
                                     disabled={isRefreshing}
                                 >
-                                    <Refresh className={`${isRefreshing ? 'animate-spin' : ''}`}/>
+                                    <Refresh className={`${isRefreshing ? 'animate-spin' : ''}`} style={{ animation: isRefreshing ? 'spin 1s linear infinite' : 'none' }}/>
                                     <span className='ms-2'>Refresh</span>
                                 </button>
                             </div>
@@ -303,9 +276,9 @@ export default function Component({
                                                     autoComplete="off"
                                                     style={{position: 'absolute', top: '30%'}}
                                                     checked={_payment === payment}
-                                                    onChange={() => {
+                                                    onChange={async () => {
                                                         onHandleSettingPayment(_payment);
-                                                        formik.setFieldValue('payment', _payment);
+                                                        await formik.setFieldValue('payment', _payment);
                                                     }}
                                                 />
 

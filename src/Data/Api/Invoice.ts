@@ -10,6 +10,7 @@ interface IPayInvoicePayload {
 class InvoiceAPI {
     static async pay(invoice: number, payload: IPayInvoicePayload): Promise<IApiResponseBase<IInvoice>> {
         try {
+            
             const response = await axiosInstance.post<IApiResponseBase<IInvoice>>(`/invoices/pay/${invoice}`, payload);
             return response.data;
         } catch (error) {

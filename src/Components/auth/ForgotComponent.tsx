@@ -5,132 +5,183 @@ import { Link } from '@mui/material';
 import { IForgotPayload } from '@/Data/Interfaces';
 import { Pages } from '@/Data/Objects/state';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { motion } from 'framer-motion';
 import logo from "../../../public/favicon.png"
 import "Styles/auth.less"
-
+import Logo from '@/Components/common/Logo';
 
 interface FormValues {
     username: string;
 }
 
 export default function ForgotComponent() {
-    const [isLoading, setIsLoading] =  useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const {message, reset_token, username: _username} = useAppSelector(state => state.forgot);
     const dispatch = useAppDispatch();
-    const initialValues : FormValues = {username : ''} 
+    const initialValues: FormValues = { username: '' };
+    const context = useAppContext();
 
-    const context = useAppContext()
-    
     const attemptForgot = async (payload: IForgotPayload) => {
         const { forgotAsync } = await import('Data/Slices/auth/forgotSlice');
-        await dispatch(forgotAsync(payload));
+        return await dispatch(forgotAsync(payload));
     }
 
     const handleSubmit = async (values: IForgotPayload) => {
         try {
-            setIsLoading(true)
-            await attemptForgot(values)
-        }catch (e) {
-            console.log(e)
-        }finally {
-            setIsLoading(false)
+            context.togglePageLoading(true);
+            setIsLoading(true);
+            const result = await attemptForgot(values);
+                console.log("Result ::: ", result)
+            if (reset_token !== "") {
+                console.log(values.username)
+                context.updateUsername(_username);
+                dispatch(setActivePage({ page: Pages.RESET_PAGE }));
+            }
+        } catch (e) {
+            console.error('Error during password reset request:', e);
+        } finally {
+            setIsLoading(false);
+            context.togglePageLoading(false);
         }
     }
+
+    const handleBackToLogin = () => {
+        context.togglePageLoading(true);
+        dispatch(setActivePage({ page: Pages.LOGIN }));
+        setTimeout(() => {
+            context.togglePageLoading(false);
+        }, 500);
+    };
 
     const formik = useFormik({
         initialValues,
         onSubmit: handleSubmit,
-        validate: (values: FormValues) => { 
+        validate: (values: FormValues) => {
             const errors: Partial<FormValues> = {};
-
             if (!values.username) {
-                errors.username = 'Login field is required.'
-            }else if(!(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(values.username) || /^6[0-9]{8}$/i.test(values.username))){
-                errors.username = 'Wrong email address or phone number.'
+                errors.username = 'Login field is required.';
+            } else if (!(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(values.username) || /^6[0-9]{8}$/i.test(values.username))) {
+                errors.username = 'Wrong email address or phone number.';
             }
-            return errors
+            return errors;
         }
     });
 
-    return <div className="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
-                data-sidebar-position="fixed" data-header-position="fixed">
-        <div
-            className="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center"  style={{backgroundColor: "rgba(208,208,208,0.28)!important"}}>
-            <div className="d-flex align-items-center justify-content-center w-100">
-                <div className="row justify-content-center w-100">
-                    <div className="col-md-8 col-lg-6 col-xxl-3">
-                        <div className="card mb-0">
-                            <div className="card-body">
-                                <div className="d-flex justify-content-center align-items-center py-3">
-                                    <a className="navbar-brand d-flex align-items-center" href="#" onClick={() => {
-                                        context.togglePageLoading(true)
-                                        dispatch(setActivePage({page: Pages.HOME}))
-                                    }}>
-                                        <img src={logo} alt='logo' style={{
-                                            width: '26px',
-                                            height: '26px',
-                                            objectFit: "cover",
-                                            objectPosition: "center"
-                                        }}/>
-                                        <span className='ms-1 fs-6 fw-bolder'>Brocante<span
-                                            className='bg-primary text-white py-1 px-2' style={{
-                                            borderRadius: '10px',
-                                            backgroundColor: '#007bff'
-                                        }}>V1.0</span></span>
-                                    </a>
-                                </div>
-                                <div className="fw-lighter fs-9 text-center">Please enter the email address or phone
-                                    number associated with your account and We will notify you a code to reset your
-                                    password.
-                                </div>
-                                <form onSubmit={formik.handleSubmit}>
-                                    <div className="mb-3">
-                                        <label htmlFor="username" className="form-label">Login <span
-                                            className="text-danger">*</span></label>
-                                        <div className="input-group">
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                id="username"
-                                                name='username'
-                                                onChange={formik.handleChange}
-                                                onBlur={formik.handleBlur}
-                                                value={formik.values.username}
-                                                style={{...formik.errors.username && {borderColor: "var(--bs-danger)"}}}
-                                            />
-                                        </div>
-                                        {formik.errors.username &&
-                                            <div className='text fs-10 text-danger d-flex align-items-center'>
-                                                <i className='ti ti-alert-circle me-2'></i>
-                                                <span>{formik.errors.username}</span>
-                                            </div>
-                                        }
-                                    </div>
-                                    {!isLoading ? <motion.button
-                                        type='submit'
-                                        className="btn btn-primary w-100 py-8 fs-4 mb-2 rounded-2"
-                                        whileTap={{ scale: 0.9 }}  // Add the click animation effect
-                                    >
-                                            Forgot password
-                                    </motion.button>
-                                        :
-                                        <button className="btn btn-primary w-100 py-8 fs-4 mb-4 rounded-2" type="button" disabled>
-                                        <span className="spinner-grow spinner-grow-sm ms-4" role="status"
-                                                  aria-hidden="true"></span>
-                                            Forgot password...
-                                        </button>
-                                    }
-                                    <Link href="#"  onClick={() => {
-                                        context.togglePageLoading(true)
-                                        dispatch(setActivePage({page: Pages.LOGIN}))
-                                    }} className="text text-primary text-decoration-underline d-flex align-items-center"><i className='ti ti-arrow-back me-2'></i> <span>Back to login</span></Link>
-                                </form>
-                            </div>
-                        </div>
+    return (
+        <div className="auth-wrapper">
+            <div className="auth-container">
+                <motion.div 
+                    className="auth-card"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <div className="auth-header" onClick={() => {
+                        context.togglePageLoading(true);
+                        dispatch(setActivePage({ page: Pages.HOME }));
+                        setTimeout(() => {
+                            context.togglePageLoading(false);
+                        }, 500);
+                    }}>
+                        <Logo
+                            showVersion={true}
+                            animate={true}
+                            imageSize={40}
+                            fontSize="2rem"
+                        />
                     </div>
-                </div>
+
+                    <div className="auth-content">
+                        <motion.div 
+                            className="auth-title"
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                        >
+                            <h4>Password Reset</h4>
+                            <p>Enter your email to receive reset instructions</p>
+                        </motion.div>
+
+                        <form onSubmit={formik.handleSubmit} className="auth-form">
+                            <motion.div 
+                                className="form-group"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.3 }}
+                            >
+                                <label htmlFor="username">Email or Phone <span className="required">*</span></label>
+                                <div className="input-group">
+                                    <span className="input-group-text">
+                                        <i className="ti ti-mail"></i>
+                                    </span>
+                                    <input
+                                        type="text"
+                                        className={`form-control ${formik.errors.username && formik.touched.username ? 'is-invalid' : ''}`}
+                                        id="username"
+                                        name="username"
+                                        placeholder="Enter your email or phone"
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        value={formik.values.username}
+                                        disabled={isLoading}
+                                    />
+                                </div>
+                                {formik.errors.username && formik.touched.username && (
+                                    <motion.div 
+                                        className="error-message"
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                    >
+                                        <i className="ti ti-alert-circle"></i>
+                                        <span>{formik.errors.username}</span>
+                                    </motion.div>
+                                )}
+                            </motion.div>
+
+                            <motion.div 
+                                className="form-actions"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 }}
+                            >
+                                <motion.button
+                                    type="submit"
+                                    className="btn btn-primary w-100"
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    disabled={isLoading || !formik.isValid || !formik.dirty}
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <span className="spinner-grow spinner-grow-sm"></span>
+                                            <span>Sending Instructions...</span>
+                                        </>
+                                    ) : (
+                                        'Reset Password'
+                                    )}
+                                </motion.button>
+
+                                <motion.div 
+                                    className="back-to-login"
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    <Link
+                                        component="button"
+                                        onClick={handleBackToLogin}
+                                        className="btn-link"
+                                        disabled={isLoading}
+                                    >
+                                        <i className="ti ti-arrow-left"></i>
+                                        <span>Back to Login</span>
+                                    </Link>
+                                </motion.div>
+                            </motion.div>
+                        </form>
+                    </div>
+                </motion.div>
             </div>
         </div>
-    </div>
+    );
 }

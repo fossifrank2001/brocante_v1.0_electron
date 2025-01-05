@@ -66,14 +66,14 @@ instance.interceptors.response.use(
                     localStorage.setItem('lastVisitedPage', currentPage);
                 }
                 store.dispatch(redirectToLogin());
-                Toast.error('Session expirée. Redirection vers la page de connexion.', 2000, 'top-right');
+                Toast.error('Session has expired. Redirection to login  page.', 2000, 'top-right');
             } else {
                 Toast.error(message, 2000, 'top-right');
             }
             return Promise.reject(new ApiError(status, message, error.response.data));
         }
         else if (error.request) {
-            Toast.error('Aucune réponse du serveur.', 2000, 'top-right');
+            Toast.error('No response from server.', 2000, 'top-right');
             return Promise.reject(new ApiError(500, 'No response from server.'));
         }
 

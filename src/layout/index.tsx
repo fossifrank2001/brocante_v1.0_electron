@@ -6,7 +6,7 @@ import Footer from "@/partials/Footer";
 import { useAppContext } from "@/contexts/appContext";
 import { IRole } from '@/Data/Interfaces';
 import { Pages } from '@/Data/Objects/state';
-import { useAppSelector } from '@/hooks';
+import {useAppDispatch, useAppSelector} from '@/hooks';
 import Dashboard from '@/pages/dashboard/Dashboard';
 import IndexMenu from '@/Components/dashboard/menus';
 import IndexUser from '@/Components/dashboard/users';
@@ -34,9 +34,14 @@ import ReadSellPage from "@/pages/dashboard/sells/SellDetail.tsx";
 import IndexSupply from "Components/dashboard/suppliers";
 import IndexInvoice from "Components/dashboard/invoices";
 import ReadInvoicePage from "@/pages/dashboard/invoices/InvoiceDetail.tsx";
+import ProfileComponent from "@/Components/profile/ProfileComponent";
+import {setCurrentRole} from "Data/Slices/MenuRoleSlice.ts";
+import ComingSoon from "Components/ComingSoon.tsx";
 
 const renderContent = (currentPage, id, param) => {
   switch (currentPage) {
+    case Pages.PROFILE:
+      return <ProfileComponent />;
     case Pages.ROLE:
       if (!id && !param) return <IndexRole />;
       break;
@@ -79,8 +84,10 @@ const renderContent = (currentPage, id, param) => {
       if (!id && !param) return <IndexInvoice />;
       if (param.sub_page === 'READ') return <ReadInvoicePage />;
       return null;
-    default:
+    case Pages.DASHBOARD:
       return <Dashboard />;
+    default:
+      return <ComingSoon />;
   }
 };
 
@@ -88,6 +95,7 @@ const Layout: React.FC = () => {
   const { pageLoading } = useAppContext();
   const [role, setRole] = useState<IRole | null>(null);
   const roleId = useMemo(() => role?.id ?? null, [role]);
+  const dispatch = useAppDispatch()
   const {
     currentPage,
     id,
@@ -101,7 +109,10 @@ const Layout: React.FC = () => {
              data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed">
           <Aside role={roleId} />
           <div className="body-wrapper">
-            <Navbar onHandleChangeRole={setRole} />
+            <Navbar onHandleChangeRole={(_role) => {
+              dispatch(setCurrentRole(_role?.code));
+              setRole(_role)
+            }} />
             <div className="container-fluid" style={{backgroundColor: "rgba(208,208,208,0.08)"}}>
               {renderContent(currentPage, id, param)}
               <Footer />

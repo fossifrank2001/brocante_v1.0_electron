@@ -14,7 +14,13 @@ export interface IInvoice {
     payments: Array<never>;
     created_at?: string;
     updated_at?: string;
+    payment_details?: {
+        invoice_number: string;
+        amount_paid: number;
+        excess_amount: number;
+    };
 }
+
 
 export interface IInvoiceTableData extends IInvoice {
     actions: ReactNode;

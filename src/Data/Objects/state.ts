@@ -24,7 +24,9 @@ export enum Pages{
     NOTIFICATION = "NOTIFICATION",
     CUSTOMER = "CUSTOMER",
     SUPPLIER = "SUPPLIER",
-    INVOICE = "INVOICE"
+    INVOICE = "INVOICE",
+    ONBOARDING = "ONBOARDING",
+    PROFILE = "PROFILE"
 }
 
 export class State{
@@ -62,6 +64,12 @@ export class NavigationState{
         type ?: string
         number ?: string
     } | null
+    type ?: string
+    number ?: string
+    search?: {
+        type ?: string
+        value ?: string
+    } | null
     lastPageBeforeLogin ?: never | undefined | Pages
 }
 
@@ -87,6 +95,7 @@ export class ResendTokenState{
 
 export class MenuRoleState{
     menus_role : IMenu[]
+    active_role : string | null
 }
 
 export class MenusState{

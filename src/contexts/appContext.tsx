@@ -3,6 +3,8 @@ import React, { createContext, useCallback, useContext, useMemo, useState, React
 interface AppContextType {
     togglePageLoading: (val?: boolean) => void;
     pageLoading: boolean;
+    username?: string;
+    updateUsername: (newUsername?: string) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -13,18 +15,25 @@ interface AppContextProviderProps {
 
 export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => {
     const [pageLoading, setPageLoading] = useState(false);
+    const [username, setUsername] = useState<string | undefined>(undefined);
 
     const togglePageLoading = useCallback((val = false) => {
         console.log('CONTEXT CALL ||| ' + val);
         setPageLoading(val);
     }, []);
 
+    const updateUsername = useCallback((newUsername?: string) => {
+        setUsername(newUsername);
+    }, []);
+
     const contextValue = useMemo(
         () => ({
             togglePageLoading,
             pageLoading,
+            username,
+            updateUsername,
         }),
-        [togglePageLoading, pageLoading]
+        [togglePageLoading, pageLoading, username, updateUsername]
     );
 
     return (

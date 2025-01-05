@@ -1,7 +1,7 @@
 import "../../assets/css/skeletons/article.less"
 const LoaderArticle = () => {
     return (
-        <div className="col-sm-4 col-lg-3 col-xxl-3">
+        <div className="col-sm-4 col-lg-3 col-xxl-3 p-2">
             <div className="card hover-img overflow-hidden border border-1 border-dark skeleton-card"
                  style={{boxShadow: "0 0 5px lightgray", borderRadius: "12px"}}
             >

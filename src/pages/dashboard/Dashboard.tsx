@@ -1,35 +1,17 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
-import DashboardComponent from "Components/dashboard/DashboardComponent";
+import { useEffect, useLayoutEffect, useState } from 'react'
+import { Grid, Card, CardContent, Typography, Box, useTheme, Skeleton } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { useAppContext } from "@/contexts/appContext";
 import constants from "Data/Utilities/constants";
-
-declare global {
-    interface Window {
-        ApexCharts?: never;
-        initDashboardCharts?: (chart: HTMLDivElement, breakup: HTMLDivElement, earning: HTMLDivElement) => void;
-    }
-}
-
-const scripts = [
-    '@/assets/js/dashboard.js'
-];
-
-const loadScript = (src: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = src;
-        script.async = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-        document.body.appendChild(script);
-    });
-};
+import ReactApexChart from 'react-apexcharts';
+import { ApexOptions } from 'apexcharts';
+import { motion } from 'framer-motion';
+import DashboardComponent from '@/Components/dashboard/DashboardComponent.js';
 
 export default function Dashboard() {
-    const context = useAppContext()
-    const chartRef = useRef<HTMLDivElement>(null);
-    const breakupRef = useRef<HTMLDivElement>(null);
-    const earningRef = useRef<HTMLDivElement>(null);
+    const theme = useTheme();
+    const context = useAppContext();
+    const [loading, setLoading] = useState(true);
 
     useLayoutEffect(() => {
         context.togglePageLoading()
@@ -37,127 +19,210 @@ export default function Dashboard() {
     }, [context]);
 
     useEffect(() => {
-        const loadScripts = async () => {
-            for (const script of scripts) {
-                await loadScript(script);
-            }
-            // After scripts are loaded, initialize charts
-            if (window.ApexCharts && window.initDashboardCharts) {
-                initCharts();
-            } else {
-                console.error('ApexCharts or initDashboardCharts not available');
-            }
-        };
-
-        loadScripts();
-
-        // Cleanup function
-        return () => {
-            scripts.forEach(src => {
-                const script = document.querySelector(`script[src="${src}"]`);
-                if (script) {
-                    document.body.removeChild(script);
-                }
-            });
-        };
+        // Simuler le chargement des données
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 2000);
+        return () => clearTimeout(timer);
     }, []);
 
-    const initCharts = () => {
-        if (chartRef.current && breakupRef.current && earningRef.current && window.initDashboardCharts) {
-            window.initDashboardCharts(chartRef.current, breakupRef.current, earningRef.current);
+    const salesData: { series: { name: string, data: number[] }[], options: ApexOptions } = {
+        series: [{
+            name: 'Ventes',
+            data: [31, 40, 28, 51, 42, 109, 100].map(Number)
+        }],
+        options: {
+            chart: {
+                type: 'bar',
+                toolbar: {
+                    show: false
+                },
+                zoom: {
+                    enabled: false
+                }
+            },
+            plotOptions: {
+                bar: {
+                    borderRadius: 4,
+                    columnWidth: '85%',
+                    distributed: true,
+                    dataLabels: {
+                        position: 'top'
+                    },
+                }
+            },
+            fill: {
+                opacity: 1
+            },
+            colors: [theme.palette.primary.main],
+            dataLabels: {
+                enabled: false
+            },
+            grid: {
+                borderColor: theme.palette.divider,
+                strokeDashArray: 4,
+                xaxis: {
+                    lines: {
+                        show: false
+                    }
+                },
+                yaxis: {
+                    lines: {
+                        show: true
+                    }
+                }
+            },
+            xaxis: {
+                categories: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+                axisBorder: {
+                    show: false
+                },
+                axisTicks: {
+                    show: false
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        colors: theme.palette.text.secondary
+                    }
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: (value) => `${value}€`
+                }
+            }
         }
     };
 
-    return (
-        <div className="">
-            <div className="row">
-                <div className="col-lg-8 d-flex align-items-strech">
-                    <div className="card w-100">
-                        <div className="card-body">
-                            <div className="d-sm-flex d-block align-items-center justify-content-between mb-9">
-                                <div className="mb-3 mb-sm-0">
-                                    <h5 className="card-title fw-semibold">Sales Overview</h5>
-                                </div>
-                                <div>
-                                    <select className="form-select">
-                                        <option value="1">March 2023</option>
-                                        <option value="2">April 2023</option>
-                                        <option value="3">May 2023</option>
-                                        <option value="4">June 2023</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div id="chart" ref={chartRef}></div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-lg-4">
-                    <div className="row">
-                        <div className="col-lg-12">
-                            <div className="card overflow-hidden">
-                                <div className="card-body p-4">
-                                    <h5 className="card-title mb-9 fw-semibold">Yearly Breakup</h5>
-                                    <div className="row align-items-center">
-                                        <div className="col-8">
-                                            <h4 className="fw-semibold mb-3">$36,358</h4>
-                                            <div className="d-flex align-items-center mb-3">
-                                                <span className="me-1 rounded-circle bg-light-success round-20 d-flex align-items-center justify-content-center">
-                                                    <i className="ti ti-arrow-up-left text-success"></i>
-                                                </span>
-                                                <p className="text-dark me-1 fs-3 mb-0">+9%</p>
-                                                <p className="fs-3 mb-0">last year</p>
-                                            </div>
-                                            <div className="d-flex align-items-center">
-                                                <div className="me-4">
-                                                    <span className="round-8 bg-primary rounded-circle me-2 d-inline-block"></span>
-                                                    <span className="fs-2">2023</span>
-                                                </div>
-                                                <div>
-                                                    <span className="round-8 bg-light-primary rounded-circle me-2 d-inline-block"></span>
-                                                    <span className="fs-2">2023</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="col-4">
-                                            <div className="d-flex justify-content-center">
-                                                <div id="breakup" ref={breakupRef}></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-lg-12">
-                            <div className="card">
-                                <div className="card-body">
-                                    <div className="row align-items-start">
-                                        <div className="col-8">
-                                            <h5 className="card-title mb-9 fw-semibold"> Monthly Earnings </h5>
-                                            <h4 className="fw-semibold mb-3">$6,820</h4>
-                                            <div className="d-flex align-items-center pb-1">
-                                                <span className="me-2 rounded-circle bg-light-danger round-20 d-flex align-items-center justify-content-center">
-                                                    <i className="ti ti-arrow-down-right text-danger"></i>
-                                                </span>
-                                                <p className="text-dark me-1 fs-3 mb-0">+9%</p>
-                                                <p className="fs-3 mb-0">last year</p>
-                                            </div>
-                                        </div>
-                                        <div className="col-4">
-                                            <div className="d-flex justify-content-end">
-                                                <div className="text-white bg-secondary rounded-circle p-6 d-flex align-items-center justify-content-center">
-                                                    <i className="ti ti-currency-dollar fs-6"></i>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="earning" ref={earningRef}></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <DashboardComponent />
-        </div>
-    )
+    const revenueData: { series: number[], options: ApexOptions } = {
+        series: [44, 55, 13, 43],
+        options: {
+            chart: {
+                type: 'donut' as const
+            },
+            labels: ['Vêtements', 'Électronique', 'Meubles', 'Autres'],
+            colors: [
+                theme.palette.primary.main,
+                theme.palette.secondary.main,
+                theme.palette.success.main,
+                theme.palette.warning.main
+            ],
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '70%'
+                    }
+                }
+            },
+            legend: {
+                position: 'bottom'
+            },
+            tooltip: {
+                theme: theme.palette.mode
+            }
+        }
+    };
+
+    if (loading) {
+        return (
+            <Box sx={{ p: 3 }}>
+                <Grid container spacing={3}>
+                    <Grid item xs={12} lg={8}>
+                        <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
+                    </Grid>
+                    <Grid item xs={12} lg={4}>
+                        <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
+                    </Grid>
+                </Grid>
+            </Box>
+        );
+    }
+
+    return <>
+        <Box sx={{ p: 3 }}>
+            <Grid container spacing={3}>
+                <Grid item xs={12} lg={8}>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <Card 
+                            elevation={0}
+                            sx={{
+                                height: '100%',
+                                // background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.1)} 100%)`,
+                                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                                borderRadius: 2,
+                                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.08)}`,
+                                transition: 'all 0.3s ease-in-out',
+                                '&:hover': {
+                                    boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.12)}`,
+                                    transform: 'translateY(-2px)'
+                                }
+                            }}
+                        >
+                            <CardContent sx={{ p: 3 }}>
+                                <Typography variant="h6" gutterBottom sx={{ 
+                                    fontWeight: 600,
+                                    color: theme.palette.text.primary,
+                                    mb: 2
+                                }}>
+                                    Aperçu des ventes
+                                </Typography>
+                                <ReactApexChart 
+                                    options={salesData.options}
+                                    series={salesData.series}
+                                    type="bar"
+                                    height={350}
+                                />
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                </Grid>
+                <Grid item xs={12} lg={4}>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                    >
+                        <Card 
+                            elevation={0}
+                            sx={{
+                                height: '100%',
+                                background: theme.palette.background.paper,
+                                border: `1px solid ${theme.palette.divider}`,
+                                borderRadius: 2,
+                                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.08)}`,
+                                transition: 'all 0.3s ease-in-out',
+                                '&:hover': {
+                                    boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.12)}`,
+                                    transform: 'translateY(-2px)'
+                                }
+                            }}
+                        >
+                            <CardContent sx={{ p: 3 }}>
+                                <Typography variant="h6" gutterBottom sx={{ 
+                                    fontWeight: 600,
+                                    color: theme.palette.text.primary,
+                                    mb: 2
+                                }}>
+                                    Répartition des revenus
+                                </Typography>
+                                <ReactApexChart 
+                                    options={revenueData.options}
+                                    series={revenueData.series}
+                                    type="donut"
+                                    height={350}
+                                />
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                </Grid>
+            </Grid>
+        </Box>
+        <DashboardComponent />
+    </>
 }

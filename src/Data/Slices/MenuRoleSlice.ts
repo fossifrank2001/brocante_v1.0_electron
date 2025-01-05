@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import {createSlice, PayloadAction} from '@reduxjs/toolkit';
 import { IApiResponseBase } from 'Data/Utilities/axiosInstance';
 import {  MenuRoleState} from "Data/Objects/state";
 import { IMenu } from 'Interfaces';
@@ -7,6 +7,7 @@ import { AppDispatch } from 'Data/Objects/store';
 
 const initialState: MenuRoleState = {
     menus_role: null,
+    active_role: null
 };
 
 
@@ -20,14 +21,22 @@ const menuRoleSlice = createSlice({
         }>>) =>{
             const result  = action.payload.data
             state.menus_role = result.menus_role;
+        },
+        setCurrentRole : (state: MenuRoleState, action: PayloadAction<string>) => {
+            state.active_role = action.payload
         }
     },
 });
 
+export const {
+    loadMenuByRole,
+    setCurrentRole
+} = menuRoleSlice.actions
+
 export const loadMenuByRoleAsync = (payload: number) => async (dispatch: AppDispatch) =>{
     try {
         const response  = await MenuAPI.menusByRole(payload);
-        dispatch(menuRoleSlice.actions.loadMenuByRole(response));
+        dispatch(loadMenuByRole(response));
     } catch (error) {
         console.log('Error menu-role ::: ', error)
     }

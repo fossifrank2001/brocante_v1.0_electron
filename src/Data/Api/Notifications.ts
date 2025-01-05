@@ -7,10 +7,10 @@ class NotificationsAPI {
     static READ = 'read'
     static UNREAD = 'unread'
 
-    static async index(): Promise<IApiResponsePaginated<INotification>> {
+    static async index(): Promise<any> {
         // eslint-disable-next-line no-useless-catch
         try {
-            const response = await axiosInstance.get<IApiResponsePaginated<INotification>>('/notifications');
+            const response = await axiosInstance.get<any>('/notifications');
             return response.data;
         } catch (error) {
             throw error;

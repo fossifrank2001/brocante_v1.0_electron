@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import logo from '@/assets/images/logos/dark-logo.svg'
 import user from '@/assets/images/profile/user-1.jpg'
 import { useAppContext } from '@/contexts/appContext'
 import { useAppDispatch, useAppSelector } from '@/hooks'
-import { Link, Skeleton } from '@mui/material'
+import { Skeleton } from '@mui/material'
 import UtilMethods from '@/Data/Utilities/UtilMethods'
 import { setActivePage } from '@/Data/Slices/NavigationSlice'
 import { motion } from 'framer-motion'
+import Logo from '@/Components/common/Logo'
 
 const iconOfMenus = {
     DASHBOARD: 'ti ti-layout-dashboard',
@@ -147,9 +147,12 @@ export default function Aside({ role = null }) {
         <aside id="left-sidebar" ref={asideRef} className="left-sidebar">
             <div>
                 <div className="brand-logo d-flex align-items-center justify-content-between">
-                    <Link href="#" className="text-nowrap logo-img">
-                        <img src={logo} width="180" alt="" />
-                    </Link>
+                    <Logo 
+                        showVersion={true}
+                        fontSize="1.25rem"
+                        imageSize={30}
+                        className="ps-3"
+                    />
                     <div className="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
                         <i className="ti ti-x fs-8" onClick={handleRemoveSideBar}></i>
                     </div>
@@ -180,7 +183,7 @@ export default function Aside({ role = null }) {
                             displayMenus
                         ) : (
                             <li className="sidebar-item">
-                                <div className="sidebar-link">
+                                <div className="sidebar-link d-flex flex-column gap-3">
                                     <span>No menus available</span>
                                     <motion.button
                                         whileTap={{ scale: 0.9 }}

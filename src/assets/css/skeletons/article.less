@@ -1,58 +1,93 @@
-.skeleton-icon, .skeleton-checkbox, .skeleton-radio, .skeleton-button {
-  background: #e0e0e0;
-  border-radius: 4px;
+@keyframes shimmer {
+    0% {
+        background-position: -468px 0;
+    }
+    100% {
+        background-position: 468px 0;
+    }
 }
 
-.skeleton-icon {
-  width: 24px;
-  height: 24px;
-}
-
-.skeleton-checkbox {
-  width: 16px;
-  height: 16px;
-}
-
-.skeleton-radio {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
+.skeleton-base {
+    background: linear-gradient(
+        to right,
+        rgba(227, 230, 239, 0.2) 8%,
+        rgba(227, 230, 239, 0.5) 18%,
+        rgba(227, 230, 239, 0.2) 33%
+    );
+    background-size: 800px 100px;
+    animation: shimmer 1.5s linear infinite;
 }
 
 .skeleton-text {
-  background: #e0e0e0;
-  border-radius: 4px;
+    .skeleton-base();
+    border-radius: 4px;
+    height: 16px;
+    width: 100%;
 }
 
 .skeleton-text-short {
-  width: 120px;
-  height: 15px;
-}
-
-.skeleton-text-long {
-  width: 120px;
-  height: 12px;
-  margin-bottom: 8px;
-}
-
-.skeleton-button{
-  width: 120px;
-  height: 25px;
-  border-radius: 4px;
-}
-
-.skeleton-image {
-  background: #e0e0e0;
-  width: 100%;
-  height: 125px;
-}
-
-.skeleton-card {
-  background: #f5f5f5;
+    width: 60%;
 }
 
 .skeleton-button {
-  width: 120px;
-  background: #e0e0e0;
-  color: transparent;
+    .skeleton-base();
+    border-radius: 6px;
+    height: 38px;
+    width: 100%;
+}
+
+.skeleton-checkbox {
+    .skeleton-base();
+    border-radius: 4px;
+    height: 16px;
+    width: 16px;
+    display: inline-block;
+}
+
+.skeleton-radio {
+    .skeleton-base();
+    border-radius: 50%;
+    height: 16px;
+    width: 16px;
+    display: inline-block;
+}
+
+.text-skeleton {
+    color: rgba(227, 230, 239, 0.5) !important;
+}
+
+.skeleton-image {
+    .skeleton-base();
+    border-radius: 8px;
+    height: 200px;
+    width: 100%;
+}
+
+.skeleton-card {
+    border-radius: 8px;
+    overflow: hidden;
+    height: 100%;
+    
+    .skeleton-image {
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .skeleton-content {
+        padding: 16px;
+        
+        .skeleton-title {
+            .skeleton-base();
+            border-radius: 4px;
+            height: 24px;
+            margin-bottom: 12px;
+        }
+        
+        .skeleton-text {
+            margin-bottom: 8px;
+            &:last-child {
+                margin-bottom: 0;
+                width: 80%;
+            }
+        }
+    }
 }

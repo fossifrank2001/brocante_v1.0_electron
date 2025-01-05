@@ -3,9 +3,10 @@ import { Pages, NavigationState } from 'Data/Objects/state';
 
 // État par défaut
 const initialState: NavigationState = {
-    currentPage: Pages.HOME,
+    currentPage: localStorage.getItem('hasSeenOnboarding') && Boolean(localStorage.getItem('hasSeenOnboarding')) ? Pages.HOME : Pages.ONBOARDING,
     id: null,
     param: null,
+    search: null,
     lastPageBeforeLogin: undefined,
 };
 
@@ -15,7 +16,11 @@ interface IPageHandler{
     param?: {
         type ?: string
         number ?: string
-    } | null
+    } | null,
+    search?: {
+        type ?: string
+        value ?: string
+    }
 }
 
 const navigationSlice = createSlice({
@@ -23,13 +28,24 @@ const navigationSlice = createSlice({
     initialState,
     reducers: {
         setActivePage: (state, action: PayloadAction<Partial<IPageHandler>>) => {
-            const {page, id, param} = action.payload
+            const {page, id, param, search} = action.payload
             state.currentPage = page;
             state.id = id ?? null;
             state.param = param ?? null;
+            state.search = search ?? null;
+            
+            // Si l'utilisateur quitte l'onboarding, marquer comme vu et rediriger vers HOME
+            if (state.currentPage !== Pages.ONBOARDING && (!localStorage.getItem('hasSeenOnboarding') || !Boolean(localStorage.getItem('hasSeenOnboarding')))) {
+                localStorage.setItem('hasSeenOnboarding', '1');
+                state.currentPage = Pages.HOME;
+            }
         },
         redirectToLogin: (state: NavigationState) => {
-            state.currentPage = Pages.LOGIN;
+            if (localStorage.getItem('hasSeenOnboarding') && Boolean(localStorage.getItem('hasSeenOnboarding'))) {
+                state.currentPage = Pages.LOGIN;
+            } else {
+                state.currentPage = Pages.ONBOARDING;
+            }
         },
         setLastPageBeforeLogin(state, action: PayloadAction<{ page: Pages }>) {
             state.lastPageBeforeLogin = action.payload.page;
@@ -42,7 +58,7 @@ const navigationSlice = createSlice({
 
 export const {
     setActivePage,
-    redirectToLogin ,
+    redirectToLogin,
     setLastPageBeforeLogin,
     resetLastPageBeforeLogin
 } = navigationSlice.actions;

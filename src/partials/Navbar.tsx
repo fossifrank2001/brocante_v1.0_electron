@@ -1,7 +1,6 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState, useRef} from 'react';
 import user from "../assets/images/profile/user-1.jpg";
 import {useAppContext} from "../contexts/appContext";
-import {icons} from "Components/AccessSelectionComponent";
 import {useAppDispatch, useAppSelector} from '@/hooks';
 import {IRole} from '@/Data/Interfaces';
 import {Link} from '@mui/material';
@@ -25,6 +24,13 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
     const [notifications, setNotifications] = useState<INotification[] | null>(null);
     const [hasClickSecond, setHasClickSecond] = useState(false);
     const {totalQuantity} = useAppSelector(state => state.cart);
+    const notificationRef = useRef<HTMLDivElement>(null);
+    const accessDropdownRef = useRef<HTMLLIElement>(null);
+    const userDropdownRef = useRef<HTMLLIElement>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [showAccessDropdown, setShowAccessDropdown] = useState(false);
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
 
     const handleLogout = async () => {
         try {
@@ -49,43 +55,106 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
         }
     };
 
+    const roleIcons = {
+        'ADMIN': 'ti ti-shield-check',
+        'SELLER': 'ti ti-shopping-cart',
+        'BUYER': 'ti ti-user',
+        'SUPER_ADMIN': 'ti ti-crown',
+    };
+
+    const roleDescriptions = {
+        'ADMIN': 'Manage the entire system',
+        'SELLER': 'Create and manage your shop',
+        'BUYER': 'Browse and purchase items',
+        'SUPER_ADMIN': 'Full system control',
+    };
+
     const displayAccesses = authUser?.accesses?.map(access => {
         const isActual = access?.role?.id === authUser?.accesses?.find(access => access.id === auth_access_id)?.role?.id;
         return (
-            <Link
-                key={access.id} type="button"
+            <button
+                key={access.id}
                 onClick={() => {
                     handleChangeAccess(access.id);
-                    setHasClickToLoadNotif(prev => !prev);
+                    setShowAccessDropdown(false);
                 }}
-                href="#" className={`d-flex align-items-center gap-2 dropdown-item ${isActual ? 'bg-primary text-white' : 'btn'}`}
-                style={{ borderRadius: 0 }}
+                className={`dropdown-item d-flex align-items-center gap-3 py-2 px-3 border-0 w-100 ${
+                    isActual ? 'bg-light-primary' : 'hover-bg-light'
+                }`}
+                style={{ transition: 'all 0.2s ease' }}
             >
-                <i className={`${icons[access.role.code]} fs-6`}></i>
-                <p className="mb-0 fs-3">{access.role.label}</p>
-            </Link>
+                <div className={`rounded-circle p-2 ${isActual ? 'bg-primary' : 'bg-light'}`}>
+                    <i className={`${roleIcons[access.role.code] || 'ti ti-user'} fs-4 ${isActual ? 'text-white' : 'text-primary'}`}></i>
+                </div>
+                <div className="d-flex flex-column">
+                    <span className={`fw-semibold mb-0 ${isActual ? 'text-primary' : ''}`}>
+                        {access.role.label}
+                    </span>
+                    <small className="text-muted">
+                        {roleDescriptions[access.role.code] || 'Access to system'}
+                    </small>
+                </div>
+                {isActual && (
+                    <div className="ms-auto">
+                        <i className="ti ti-check text-primary fs-4"></i>
+                    </div>
+                )}
+            </button>
         );
     });
 
     const countNotifications = useCallback(async () => {
         try {
             const { data } = await NotificationsAPI.count();
+            console.log('Notification count:', data);
             setCount(data);
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error('Error counting notifications:', e);
+        }
     }, []);
 
     const getNotifications = useCallback(async () => {
         try {
+            setIsLoading(true);
+            setError(null);
             const { data: notifList } = await NotificationsAPI.index();
-            context.togglePageLoading(true);
-            setNotifications(notifList.data);
-        } catch (e) { console.error(e); }
+            setNotifications(notifList as INotification[]);
+        } catch (e) {
+            console.error('Error fetching notifications:', e);
+            setError('Failed to load notifications');
+        } finally {
+            setIsLoading(false);
+            context.togglePageLoading(false);
+        }
     }, []);
 
     useEffect(() => {
+        console.log('Effect triggered - hasClickToLoadNotif:', hasClickToLoadNotif);
         countNotifications();
         getNotifications();
     }, [countNotifications, getNotifications, hasClickToLoadNotif]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            // Ferme le popup des notifications
+            if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+                setHasClickToLoadNotif(false);
+            }
+            // Ferme le popup des accès
+            if (accessDropdownRef.current && !accessDropdownRef.current.contains(event.target as Node)) {
+                setShowAccessDropdown(false);
+            }
+            // Ferme le popup utilisateur
+            if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+                setShowUserDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     const renderNotificationIcon = (nature: string) => {
         switch (nature) {
@@ -143,32 +212,77 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
                         <AnimatePresence>
                             {hasClickToLoadNotif && (
                                 <motion.div
+                                    ref={notificationRef}
                                     className="notification-box position-absolute end-0 mt-2 p-3 bg-white border rounded shadow"
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    style={{ width: '400px', zIndex: 1000 }}
+                                    style={{ width: '400px', zIndex: 800, maxHeight: '500px', overflowY: 'auto' }}
                                 >
-                                    <div className="notification-header d-flex justify-content-between align-items-center">
-                                        <h6>You have {count} new notification(s)</h6>
+                                    <div className="notification-header d-flex justify-content-between align-items-center mb-3">
+                                        <h6 className="mb-0">You have {count} new notification(s)</h6>
                                     </div>
-                                    <ul className="notification-list list-unstyled">
-                                        {notifications?.map((notification) => (
-                                            <li key={notification.id} className="notification-item d-flex align-items-start mb-2">
-                                                <div className='d-flex align-items-center'>
-                                                    {renderNotificationIcon(notification.data?.nature)}
-                                                    <div className="notification-content ms-3">
-                                                        <h6 className="notification-title mb-1 fw-bolder">{notification.data?.title}</h6>
-                                                        <p className="notification-message mb-0 fs-9 opacity-75">{notification.data?.message}</p>
-                                                        <small
-                                                            className="text-muted">{timeAgo(notification.created_at)}</small>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    <div className="d-flex text-center justify-content-center">
-                                        <Link href="#" className="see-more-link text-primary text-underline" onClick={() => dispatch(setActivePage({page:Pages.NOTIFICATION}))}>Show all notifications</Link>
+                                    {isLoading ? (
+                                        <div className="text-center py-3">
+                                            <div className="spinner-border text-primary" role="status">
+                                                <span className="visually-hidden">Loading...</span>
+                                            </div>
+                                        </div>
+                                    ) : error ? (
+                                        <div className="alert alert-danger" role="alert">
+                                            {error}
+                                        </div>
+                                    ) : !notifications ? (
+                                        <div className="text-center py-3 text-muted">
+                                            Loading notifications...
+                                        </div>
+                                    ) : notifications.length === 0 ? (
+                                        <div className="text-center py-3 text-muted">
+                                            No notifications
+                                        </div>
+                                    ) : (
+                                        <ul className="notification-list list-unstyled">
+                                            {notifications.map((notification) => {
+                                                const notifData = notification.data;
+                                                return (
+                                                    <li key={notification.id} 
+                                                        className={`notification-item d-flex align-items-start mb-3 p-2 hover-bg-light rounded ${!notification.read_at ? 'bg-light' : ''}`}
+                                                    >
+                                                        <div className='d-flex align-items-start w-100'>
+                                                            {renderNotificationIcon(notifData.nature)}
+                                                            <div className="notification-content ms-3 flex-grow-1">
+                                                                <div className="d-flex justify-content-between align-items-center">
+                                                                    <h6 className="notification-title mb-1 fw-bolder">
+                                                                        {notifData.title}
+                                                                        {!notification.read_at && (
+                                                                            <span className="badge bg-primary ms-2 rounded-pill">New</span>
+                                                                        )}
+                                                                    </h6>
+                                                                    <small className="text-muted">
+                                                                        {timeAgo(notification.created_at)}
+                                                                    </small>
+                                                                </div>
+                                                                <p className="notification-message mb-0 fs-9 opacity-75">
+                                                                    {notifData.message}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    )}
+                                    <div className="d-flex text-center justify-content-center mt-3 pt-2 border-top">
+                                        <Link 
+                                            href="#" 
+                                            className="see-more-link text-primary text-decoration-none" 
+                                            onClick={() => {
+                                                dispatch(setActivePage({page:Pages.NOTIFICATION}));
+                                                setHasClickToLoadNotif(false);
+                                            }}
+                                        >
+                                            Show all notifications
+                                        </Link>
                                     </div>
                                 </motion.div>
                             )}
@@ -191,39 +305,107 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
                                 {totalQuantity > 0 && <span className="popup-badge rounded-pill bg-danger text-white fs-2">{totalQuantity}</span>}
                             </Link>
                         </li>
-                        <li className="nav-item dropdown">
-                            <Link onClick={() => {}}
-                                  className="nav-link nav-icon-hover"
-                                  href="#"
-                                  id="drop2"
-                                  data-bs-toggle="dropdown"
-                                  aria-expanded="false"
+                        <li className="nav-item dropdown position-relative" ref={accessDropdownRef}>
+                            <button
+                                type="button"
+                                className="nav-link nav-icon-hover bg-transparent border-0 position-relative"
+                                onClick={() => setShowAccessDropdown(!showAccessDropdown)}
+                                aria-expanded={showAccessDropdown}
                             >
-                                <i className='ti ti-lock-access m-1 p-1 text-white bg-primary rounded-1'></i>
-                            </Link>
-                            <div className="dropdown-menu dropdown-menu-end dropdown-menu-animate-up py-3"
-                                 aria-labelledby="drop2">
-                                <div className="message-body">
+                                <i className='ti ti-switch-3 fs-5 bg-primary text-white p-2 rounded'></i>
+                            </button>
+                            <div 
+                                className={`dropdown-menu dropdown-menu-end shadow-lg ${showAccessDropdown ? 'show' : ''}`}
+                                style={{ 
+                                    position: 'absolute',
+                                    top: '100%',
+                                    right: '0',
+                                    marginTop: '0.5rem',
+                                    minWidth: '280px',
+                                    border: 'none',
+                                    borderRadius: '0.5rem',
+                                    zIndex: 800,
+                                    backgroundColor: '#fff'
+                                }}
+                            >
+                                <div className="p-3">
+                                    <h6 className="dropdown-header border-bottom pb-2 mb-2 text-primary">
+                                        Switch Role
+                                    </h6>
                                     {displayAccesses}
                                 </div>
                             </div>
                         </li>
-                        <li className="nav-item dropdown">
-                            <Link className="nav-link nav-icon-hover" href="#" id="drop2"
-                                  data-bs-toggle="dropdown"
-                                  aria-expanded="false">
-                                <img src={user} alt="" width="35" height="35"
-                                     className="rounded-circle" />
-                            </Link>
-                            <div className="dropdown-menu dropdown-menu-end dropdown-menu-animate-up"
-                                 aria-labelledby="drop2">
-                                <div className="message-body">
-                                    <Link href="#" className="d-flex align-items-center gap-2 dropdown-item">
-                                        <i className="ti ti-user fs-6"></i>
+                        <li className="nav-item dropdown position-relative" ref={userDropdownRef}>
+                            <button
+                                type="button"
+                                className="nav-link nav-icon-hover bg-transparent border-0 d-flex align-items-center gap-2"
+                                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                                aria-expanded={showUserDropdown}
+                            >
+                                <img 
+                                    src={user} 
+                                    alt="user profile" 
+                                    width="35" 
+                                    height="35"
+                                    className="rounded-circle" 
+                                />
+                            </button>
+                            <div 
+                                className={`dropdown-menu dropdown-menu-end shadow-lg ${showUserDropdown ? 'show' : ''}`}
+                                style={{ 
+                                    position: 'absolute',
+                                    top: '100%',
+                                    right: '0',
+                                    marginTop: '0.5rem',
+                                    minWidth: '200px',
+                                    border: 'none',
+                                    borderRadius: '0.5rem',
+                                    zIndex: 800,
+                                    backgroundColor: '#fff'
+                                }}
+                            >
+                                <div className="p-3">
+                                    <div className="d-flex align-items-center border-bottom pb-3 mb-3">
+                                        <div className="flex-shrink-0">
+                                            <img 
+                                                src={user} 
+                                                alt="" 
+                                                width="45" 
+                                                height="45"
+                                                className="rounded-circle" 
+                                            />
+                                        </div>
+                                        <div className="flex-grow-1 ms-3">
+                                            <h6 className="mb-1 fw-semibold">{authUser?.last_name +' '+ authUser?.first_name}</h6>
+                                            <small className="text-muted">{authUser?.email}</small>
+                                        </div>
+                                    </div>
+                                    <a
+                                        href="#"
+                                        className="d-flex align-items-center gap-2 dropdown-item"
+                                        onClick={(e: React.SyntheticEvent) => {
+                                            e.preventDefault();
+                                            dispatch(setActivePage({ page: Pages.PROFILE }));
+                                            setShowUserDropdown(false);
+                                        }}
+                                    >
+                                        <i className="ti ti-user-circle fs-6"></i>
                                         <p className="mb-0 fs-3">My Profile</p>
-                                    </Link>
-                                    <button onClick={handleLogout} type='button'
-                                            className="btn btn-outline-primary w-75 mx-auto mt-2 d-block">Logout</button>
+                                    </a>
+                                    <button
+                                        onClick={() => {
+                                            (async () => {
+                                                context.togglePageLoading(true)
+                                                await handleLogout();
+                                                setShowUserDropdown(false);
+                                            })()
+                                        }}
+                                        className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger"
+                                    >
+                                        <i className="ti ti-logout fs-5"></i>
+                                        <span>Logout</span>
+                                    </button>
                                 </div>
                             </div>
                         </li>

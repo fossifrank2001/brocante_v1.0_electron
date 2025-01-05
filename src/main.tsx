@@ -10,8 +10,6 @@ import Loading from "Components/utils/Loading";
 import 'Styles/index.less';
 import App from "Components/App.tsx";
 
-// const App = lazy(() => import('./Components/App'));
-
 const Root: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
 
@@ -25,9 +23,7 @@ const Root: React.FC = () => {
     return (
         <ErrorBoundary>
             <Provider store={store}>
-                {/*<Suspense fallback={<Loading />}>*/}
-                    <App />
-                {/*</Suspense>*/}
+                <App />
                 <ToastContainer />
             </Provider>
         </ErrorBoundary>

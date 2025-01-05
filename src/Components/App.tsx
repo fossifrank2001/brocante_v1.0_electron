@@ -5,16 +5,16 @@ import '@/assets/css/styles.min.css';
 import { Pages } from 'Data/Objects/state'
 import React, { useEffect, useState } from 'react';
 import { setActivePage } from 'Data/Slices/NavigationSlice';
-import Forgot from '@/pages/auth/Forgot'
-import Reset from '@/pages/auth/Reset'
-import Login from '@/pages/auth/Login'
-import Access from '@/pages/Access';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import Layout from '@/layout';
 import CustomAlert from './CustomAlert';
-import HomePage from "@/pages/Home/HomePage.tsx";
+import HomePage from "@/pages/Home/HomePage";
 import CartPage from "@/pages/Home/cart/CartPage.tsx";
 import SuccessSellPage from "@/pages/Home/SuccessSellPage.tsx";
+import OnboardingLayout from '@/pages/onboarding/OnboardingLayout';
+import AuthPages from '@/Components/auth';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import Access from '@/pages/Access';
+import Layout from '@/layout';
+import LockScreen from "Components/LockScreen.tsx";
 
 const scripts = [
   '@/assets/libs/jquery/dist/jquery.min.js',
@@ -62,7 +62,8 @@ const App: React.FC = () => {
   const { token, authUser } = useAppSelector((state) => state.user);
   const { currentPage } = useAppSelector((state) => state.navigaton);
   const [openDetailModal, setOpenDetailModal] = useState(false);
-  const [isOk, setIsOk] = useState(false);
+  const [isOk] = useState(false);
+  const [isAuth, setIsAuth] = useState(false)
 
   useEffect(() => {
     (async () => {
@@ -93,58 +94,43 @@ const App: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      if (!token || !authUser) {
-        if(currentPage !== Pages.LOGIN){
-          return;
-        }else{
-          dispatch(setActivePage({page: Pages.LOGIN}));
+      const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding') && Boolean(localStorage.getItem('hasSeenOnboarding'));
+      if (!hasSeenOnboarding) {
+        if (currentPage !== Pages.ONBOARDING) {
+          dispatch(setActivePage({ page: Pages.ONBOARDING }));
         }
-      }else {
-        if (currentPage === Pages.DASHBOARD) {
-          return
-        }else{
-          if (currentPage !== Pages.LOGIN) {
-            return
-          }else{
-            if (authUser.first_connexion) {
-              setIsOk(true)
-              setOpenDetailModal(true)
-            } else {
-              if (authUser.accesses.length > 1) {
-                const lastVisitedPage = localStorage.getItem('lastVisitedPage');
+        return;
+      }
 
-                console.log('Last visited Page ::: APP', lastVisitedPage)
-                if (lastVisitedPage) {
-                  dispatch(setActivePage({ page: lastVisitedPage }));
-                } else {
-                  dispatch(setActivePage({page: Pages.USER_ACCESS_PAGE}));
-                }
-                localStorage.removeItem('lastVisitedPage');
-              } else {
-                await handleRedirectToDashboard(authUser.accesses[0].id, dispatch);
-              }
-            }
+      if (token && authUser) {
+        setIsAuth(true)
+        if (currentPage === Pages.LOGIN) {
+          if (authUser.accesses.length > 1) {
+            dispatch(setActivePage({ page: Pages.USER_ACCESS_PAGE }));
+          } else if (authUser.accesses.length === 1) {
+            await handleRedirectToDashboard(authUser.accesses[0].id, dispatch);
           }
         }
       }
     })()
   }, [token, authUser, currentPage, dispatch]);
 
-
   const renderMainContent = () => {
+    const authPages = [Pages.LOGIN, Pages.FORGOT_PAGE, Pages.RESET_PAGE];
+
+    if (authPages.includes(currentPage)) {
+      return <AuthPages />;
+    }
+
     switch (currentPage) {
+      case Pages.ONBOARDING:
+        return <OnboardingLayout />;
       case Pages.HOME:
         return <HomePage />;
       case Pages.CART_PAGE:
         return <CartPage />;
       case Pages.SUCCESS_ORDER:
         return <SuccessSellPage />;
-      case Pages.LOGIN:
-        return <Login />;
-      case Pages.FORGOT_PAGE:
-        return <Forgot />
-      case Pages.RESET_PAGE:
-        return <Reset />
       case Pages.USER_ACCESS_PAGE:
         return <Access />;
       default:
@@ -161,23 +147,25 @@ const App: React.FC = () => {
 }
 
   return (
-    <AppContextProvider>
-      {renderMainContent()}
-      
-      {isOk && <CustomAlert
-        openDetailModal={openDetailModal} 
-        content={{style: 'ti ti-info-circle text text-info',
-            icon: 'Info',
-            message: 'This is your first connexion so you should change your generated password for more security.'
-        }}  
-        onHandleDelete={handleRedirectToResetPage}
-        onHandleOpenDetail={() => setOpenDetailModal(false)}
-        inProgress= {false}
-        successMessageButton="ok"
-        iconClasseBtn="info"
-      />}
-    </AppContextProvider>
-  )
+      <AppContextProvider>
+        {isAuth && <LockScreen/>}
+        {renderMainContent()}
+
+        {isOk && <CustomAlert
+            openDetailModal={openDetailModal}
+            content={{
+              style: 'ti ti-info-circle text text-info',
+              icon: 'Info',
+              message: 'This is your first connexion so you should change your generated password for more security.'
+            }}
+            onHandleDelete={handleRedirectToResetPage}
+            onHandleOpenDetail={() => setOpenDetailModal(false)}
+            inProgress={false}
+            successMessageButton="ok"
+            iconClasseBtn="info"
+        />}
+      </AppContextProvider>
+  );
 }
 
 export default React.memo(App);

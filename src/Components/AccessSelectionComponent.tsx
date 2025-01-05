@@ -1,5 +1,3 @@
-import logo from "../assets/images/logos/dark-logo.svg";
-import {Link, Typography} from "@mui/material";
 import '@/assets/css/owner/access_selection.css';
 import {useAppContext} from "../contexts/appContext";
 import PageLoadingIndicator from "./PageLoadingIndicator";
@@ -7,82 +5,120 @@ import {IAccess} from '@/Data/Interfaces';
 import {useAppDispatch, useAppSelector} from '@/hooks';
 import {setActivePage} from "Data/Slices/NavigationSlice.ts";
 import {Pages} from "Data/Objects/state.ts";
+import { useState } from 'react';
+import Logo from '@/Components/common/Logo';
 
-// eslint-disable-next-line react-refresh/only-export-components
-export const icons = {
-    ADMIN: "ti ti-settings",
-    SELLER: "ti ti-user-circle"
-}
+const roleIcons = {
+    'ADMIN': 'ti ti-shield-check',
+    'SELLER': 'ti ti-shopping-cart',
+    'BUYER': 'ti ti-user',
+    'SUPER_ADMIN': 'ti ti-crown',
+};
+
+const roleDescriptions = {
+    'ADMIN': 'Manage the entire system and users',
+    'SELLER': 'Create and manage your shop',
+    'BUYER': 'Browse and purchase items',
+    'SUPER_ADMIN': 'Full system control and monitoring',
+};
 
 export default function AccessSelectionComponent() {
     const context = useAppContext();
     const dispatch = useAppDispatch();
-    const {authUser: currentUser} = useAppSelector((state) => state.user)
-
-    const accessElements = currentUser.accesses.map((access : IAccess) => {
-        return <div key={access.id} onClick={() => handleChangeAccess(access.id)} className="col-md-6 col-lg-5 col-xxl-5 cursor-pointer">
-            <div className="card mb-0  rounded-5" style={{
-                    border: "1px solid lightgray",
-                    borderBottom: "2px solid var(--bs-blue)!important"
-                }}
-            >
-                <div className="card-body px-0 py-4 d-flex  flex-column justify-content-center">
-                    <i className={` ${icons[access.role.code]} text-center`}  style={{fontSize: '36px'}}></i>
-                    <div className="fw-bolder text-center fs-5">{access.role.label}</div>
-                </div>
-            </div>
-        </div>
-    })
+    const {authUser: currentUser} = useAppSelector((state) => state.user);
+    const [selectedAccess, setSelectedAccess] = useState<number | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleChangeAccess = async (access_id: number | string) => {
         try {
+            setSelectedAccess(Number(access_id));
+            setIsLoading(true);
             context.togglePageLoading(true);
     
             const { loadAuthorizationAsync } = await import('Data/Slices/auth/authorizationSlice');
             await dispatch(loadAuthorizationAsync({ access_id }));
+            dispatch(setActivePage({page: Pages.DASHBOARD}));
         } catch (e) {
-            console.log(e)
+            console.error(e);
+            setSelectedAccess(null);
         } finally {
+            setIsLoading(false);
             context.togglePageLoading(false);
         }
     };
 
-    return <>
-        <PageLoadingIndicator visible={context.pageLoading}/>
-        <div className="page-wrapper access-selection" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
-             data-sidebar-position="fixed" data-header-position="fixed">
-            <div
-                className="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center">
-            <span className='d-flex btn text-white bg-primary align-items-center justify-content-center cursor-pointer'
-                  style={{
-                      width:'35px',
-                      height: '35px',
-                      borderRadius:'50%',
-                      position: 'absolute',
-                      top: '10px',
-                      left: '10px'
-                  }}
-                  onClick={() =>{
-                      context.togglePageLoading(true);
-                      dispatch(setActivePage({page: Pages.SHOP}))
-                  }}
+    const accessElements = currentUser?.accesses?.map((access: IAccess) => {
+        const isSelected = selectedAccess === access.id;
+        return (
+            <div 
+                key={access.id} 
+                onClick={() => !isLoading && handleChangeAccess(access.id)} 
+                className="col-md-6 col-lg-5 col-xxl-5 cursor-pointer"
             >
-                <i className='ti ti-arrow-left'></i>
-            </span>
-                <div className="d-flex align-items-center justify-content-center w-100">
-                    <div className="row flex-column justify-content-center w-100">
-                        <Link href="#" className="text-nowrap logo-img text-center d-block py-3 w-100" style={{transform: "scale(1.5)"}}>
-                            <img src={logo} width="180" alt="" />
-                        </Link>
-                        <Typography className="text text-center col-6 mx-auto mt-4 fs-8"> Welcome, <strong>{`${currentUser.last_name} ${currentUser.first_name}`} </strong> </Typography>
-                        <Typography className="text text-center col-6 mx-auto fs-5 mb-4 fw-lighter">Choose one of these accesses to continue navigating through the app. We're glad to have you with us!</Typography>                        <div className="col-md-8 col-lg-8 col-xxl-5 mx-auto">
-                            <div className="row align-items-center justify-content-center">
+                <div 
+                    className={`card mb-4 rounded-4 hover-shadow transition-all ${isSelected ? 'border-primary shadow' : 'border-light'}`}
+                    style={{
+                        borderWidth: isSelected ? '2px' : '1px',
+                        transform: isSelected ? 'translateY(-5px)' : 'none',
+                        transition: 'all 0.3s ease'
+                    }}
+                >
+                    <div className="card-body p-4">
+                        <div className="d-flex align-items-center mb-3">
+                            <div className={`rounded-circle p-3 ${isSelected ? 'bg-primary' : 'bg-light'}`}>
+                                <i className={`${roleIcons[access.role.code] || 'ti ti-user'} fs-4 ${isSelected ? 'text-white' : 'text-primary'}`}></i>
+                            </div>
+                            <div className="ms-3">
+                                <h5 className="mb-1 fw-bold">{access.role.label}</h5>
+                                <p className="text-muted mb-0 small">
+                                    {roleDescriptions[access.role.code] || 'Access to system'}
+                                </p>
+                            </div>
+                        </div>
+                        {isSelected && (
+                            <div className="d-flex justify-content-center mt-3">
+                                <div className="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span className="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    });
+
+    return (
+        <>
+            <PageLoadingIndicator visible={context.pageLoading}/>
+            <div 
+                className="page-wrapper access-selection min-vh-100 d-flex align-items-center justify-content-center bg-light"
+                style={{ padding: '2rem' }}
+            >
+                <div className="container">
+                    <div className="row justify-content-center">
+                        <div className="col-md-8 col-lg-6 text-center">
+                            <div className="d-flex justify-content-center mb-5">
+                                <Logo 
+                                    showVersion={true}
+                                    animate={true}
+                                    imageSize={45}
+                                    fontSize="2.5rem"
+                                />
+                            </div>
+                            
+                            <h4 className="fw-bold mb-2">Welcome back, {currentUser?.first_name}!</h4>
+                            <p className="text-muted mb-5">
+                                Please select your access role to continue to your dashboard
+                            </p>
+                            
+                            <div className="row justify-content-center g-4">
                                 {accessElements}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </>
+        </>
+    );
 }

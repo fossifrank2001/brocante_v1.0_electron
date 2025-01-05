@@ -5,6 +5,9 @@ import { IAccess } from 'Interfaces';
 
 
 class AccessAPI {
+    static ACTIVE = 'active';
+    static INACTIVE = 'inactive';
+    
     static async index(_q: string = ''): Promise<InferApiResponse<IAccess>> {
         // eslint-disable-next-line no-useless-catch
         try {

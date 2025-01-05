@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useFormik } from "formik";
 import { useAppContext } from "../../contexts/appContext";
-import { Alert } from '@mui/material';
 import { IResetPayload } from '@/Data/Interfaces';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { motion, AnimatePresence } from 'framer-motion';
-import logo from "../../../public/favicon.png"
+import { motion } from 'framer-motion';
 import "Styles/auth.less";
 import { setActivePage } from "Data/Slices/NavigationSlice.ts";
 import { Pages } from "Data/Objects/state.ts";
+import Logo from '@/Components/common/Logo';
 
 interface FormValues {
     password: string;
     password_confirmation: string;
+    code?: string;
 }
 
 const LoadingOverlay = () => (
@@ -32,29 +32,125 @@ const LoadingOverlay = () => (
 
 export default function ResetComponent() {
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [digitValues, setDigitValues] = useState(['', '', '', '', '']);
-    const [showPasswordInputs, setShowPasswordInputs] = useState(false);
+    const [codeError, setCodeError] = useState<string | null>(null);
+    const [resendTimer, setResendTimer] = useState(0);
+    const [alert, setAlert] = useState<{ type: 'success' | 'error' | null; message: string | null }>({ type: null, message: null });
+    const digitRefs = useRef<HTMLInputElement[]>([]);
+    const dispatch = useAppDispatch();
+    const appContext = useAppContext();    
+    const {reset_token, username: _username} = useAppSelector(state => state.forgot);
+
+
     const initialValues: FormValues = {
         password: '',
         password_confirmation: ''
     };
 
-    const digitRefs = useRef<HTMLInputElement[]>([]);
-    const dispatch = useAppDispatch();
-    const { reset_token: resetToken, username: usernameToResendToken } = useAppSelector((state) => state.forgot);
-    const context = useAppContext();
+    const attemptReset = async (payload: IResetPayload) => {
+        const { resetAsync } = await import('Data/Slices/auth/resetSlice');
+        return await dispatch(resetAsync(payload));
+    }
 
     const handleSubmit = async (values: FormValues) => {
         try {
-            setIsLoading(true);
             const token = digitValues.join('');
-            const datas: IResetPayload = { ...values, token };
-            const { resetAsync } = await import('Data/Slices/auth/resetSlice');
-            const { setFirstConnexionToFalse } = await import('Data/Slices/auth/userSlice');
-            dispatch(setFirstConnexionToFalse());
-            await dispatch(resetAsync(datas));
+            if (token.length !== 5) {
+                setCodeError('Please enter the complete 5-digit code');
+                return;
+            }
+            
+            appContext.togglePageLoading(true);
+            setIsLoading(true);
+            await attemptReset({ ...values, token });
         } catch (e) {
-            console.error(e);
+            console.error('Error during password reset:', e);
+            setAlert({
+                type: 'error',
+                message: 'Failed to reset password. Please try again.'
+            });
+        } finally {
+            setIsLoading(false);
+            appContext.togglePageLoading(false);
+        }
+    }
+
+    const handleBackToLogin = () => {
+        appContext.togglePageLoading(true);
+        dispatch(setActivePage({ page: Pages.LOGIN }));
+        setTimeout(() => {
+            appContext.togglePageLoading(false);
+        }, 500);
+    };
+
+    const handleKeyDown = (index: number, event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            if (index < digitRefs.current.length - 1) {
+                digitRefs.current[index + 1].focus();
+            }
+        } else if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            if (index > 0) {
+                digitRefs.current[index - 1].focus();
+            }
+        } else if (event.key === 'Backspace') {
+            const newDigitValues = [...digitValues];
+            if (!newDigitValues[index] && index > 0) {
+                newDigitValues[index - 1] = '';
+                setDigitValues(newDigitValues);
+                digitRefs.current[index - 1].focus();
+            } else {
+                newDigitValues[index] = '';
+                setDigitValues(newDigitValues);
+            }
+        }
+    };
+
+    const handleDigitChange = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
+        const value = event.target.value.slice(-1);
+        if (/^\d?$/.test(value)) {
+            const newDigitValues = [...digitValues];
+            newDigitValues[index] = value;
+            setDigitValues(newDigitValues);
+            setCodeError(null);
+
+            if (value && index < digitValues.length - 1) {
+                digitRefs.current[index + 1].focus();
+            }
+        }
+    };
+
+    const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+        event.preventDefault();
+        const pasteData = event.clipboardData.getData('text').trim();
+        const digits = pasteData.replace(/[^0-9]/g, '').slice(0, 5);
+        
+        if (digits.length > 0) {
+            const newDigitValues = Array(5).fill('');
+            [...digits].forEach((digit, i) => {
+                if (i < 5) newDigitValues[i] = digit;
+            });
+            setDigitValues(newDigitValues);
+            setCodeError(null);
+            
+            const focusIndex = Math.min(digits.length, 4);
+            digitRefs.current[focusIndex].focus();
+        }
+    };
+
+    const handleResendToken = async () => {
+        if (resendTimer > 0) return;
+        
+        try {
+            setIsLoading(true);
+            const { forgotAsync } = await import('Data/Slices/auth/forgotSlice');
+            await dispatch(forgotAsync({ username: appContext.username }));
+            
+        } catch (error) {
+            console.error(error);
         } finally {
             setIsLoading(false);
         }
@@ -65,265 +161,260 @@ export default function ResetComponent() {
         onSubmit: handleSubmit,
         validate: (values: FormValues) => {
             const errors: Partial<FormValues> = {};
-
+            
             if (!values.password) {
-                errors.password = 'Password field is required.';
-            } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(values.password)) {
-                errors.password = 'Invalid password.';
+                errors.password = 'Password is required';
+            } else if (values.password.length < 8) {
+                errors.password = 'Password must be at least 8 characters';
             }
 
-            if (!values.password_confirmation || values.password_confirmation !== values.password) {
-                errors.password_confirmation = 'Password confirmation should match with password.';
+            if (!values.password_confirmation) {
+                errors.password_confirmation = 'Please confirm your password';
+            } else if (values.password !== values.password_confirmation) {
+                errors.password_confirmation = 'Passwords do not match';
+            }
+
+            const token = digitValues.join('');
+            if (!token || token.length !== 5) {
+                setCodeError('Please enter the complete 5-digit code');
+            } else {
+                setCodeError(null);
             }
 
             return errors;
         }
     });
 
-    const handleResentToken = async () => {
-        try {
-            setIsLoading(true);
-            const { resendTokenAsync } = await import('Data/Slices/auth/resendTokenSlice');
-            await dispatch(resendTokenAsync({ username: usernameToResendToken ?? '' }));
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleKeyDown = (index: number, event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === 'ArrowRight' || event.key === 'Tab') {
-            if (index < digitRefs.current.length - 1) {
-                digitRefs.current[index + 1].focus();
-            }
-        } else if (event.key === 'ArrowLeft') {
-            if (index > 0) {
-                digitRefs.current[index - 1].focus();
-            }
-        }
-    };
-
-    useEffect(() => {
-        if (digitRefs.current.length > 0) {
-            digitRefs.current[0].focus();
-        }
-    }, []);
-
-    const handleDigitChange = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
-        const { value } = event.target;
-        if (/^\d$/.test(value)) {
-            const newDigitValues = [...digitValues];
-            newDigitValues[index] = value;
-            setDigitValues(newDigitValues);
-            if (index < digitValues.length - 1) {
-                digitRefs.current[index + 1].focus();
-            } else {
-                setShowPasswordInputs(true);
-            }
-        } else if (value === '') {
-            const newDigitValues = [...digitValues];
-            newDigitValues[index] = '';
-            setDigitValues(newDigitValues);
-            if (index > 0) {
-                digitRefs.current[index - 1].focus();
-            }
-        }
-    };
-
-    const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
-        const pasteData = event.clipboardData.getData('text');
-        if (/^\d{5}$/.test(pasteData)) {
-            const newDigitValues = pasteData.split('');
-            setDigitValues(newDigitValues);
-            newDigitValues.forEach((value, index) => {
-                if (digitRefs.current[index]) {
-                    digitRefs.current[index].value = value;
-                }
-            });
-            digitRefs.current[digitValues.length - 1]?.focus();
-            setShowPasswordInputs(true);
-        }
-        event.preventDefault();
-    };
-
     return (
-        <div className="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
-             data-sidebar-position="fixed" data-header-position="fixed" style={{ backgroundColor: "rgba(208,208,208,0.28)" }}>
-            <div className="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center"
-                 style={{ backgroundColor: "rgba(208,208,208,0.28)!important" }}>
-                <div className="d-flex align-items-center justify-content-center w-100">
-                    <div className="row justify-content-center w-100">
-                        <div className="col-md-8 col-lg-6 col-xxl-3">
-                            <motion.div
-                                className="card mb-0"
-                                initial={{ opacity: 0, y: 50 }}
+        <div className="auth-wrapper">
+            <div className="auth-container">
+                <motion.div 
+                    className="auth-card"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <div className="auth-header" onClick={() => {
+                        appContext.togglePageLoading(true);
+                        dispatch(setActivePage({ page: Pages.HOME }));
+                        setTimeout(() => {
+                            appContext.togglePageLoading(false);
+                        }, 500);
+                    }}>
+                        <Logo
+                            showVersion={true}
+                            animate={true}
+                            imageSize={40}
+                            fontSize="2rem"
+                        />
+                    </div>
+
+                    <div className="auth-content">
+                        {reset_token !== "" && (
+                            <motion.div 
+                                className={`alert alert-info`}
+                                initial={{ opacity: 0, y: -20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
+                                transition={{ duration: 0.3 }}
                             >
-                                <div className="card-body">
-                                    <div className="d-flex justify-content-center align-items-center py-3">
-                                        <a className="navbar-brand d-flex align-items-center" href="#" onClick={() => {
-                                            context.togglePageLoading(true)
-                                            dispatch(setActivePage({page: Pages.HOME}))
-                                        }}>
-                                            <img src={logo} alt='logo' style={{
-                                                width: '26px',
-                                                height: '26px',
-                                                objectFit: "cover",
-                                                objectPosition: "center"
-                                            }}/>
-                                            <span className='ms-1 fs-6 fw-bolder'>Brocante<span
-                                                className='bg-primary text-white py-1 px-2' style={{
-                                                borderRadius: '10px',
-                                                backgroundColor: '#007bff'
-                                            }}>V1.0</span></span>
-                                        </a>
-                                    </div>
-                                    {resetToken !== '' && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.5 }}
-                                        >
-                                            <Alert severity="info">{resetToken}</Alert>
-                                        </motion.div>
-                                    )}
-                                    <form onSubmit={formik.handleSubmit}>
-                                        <div className="mb-2">
-                                            <label htmlFor="exampleInputEmail1" className="form-label fw-semibold">Type
-                                                your 5 digits security code</label>
-                                            <div className="d-flex align-items-center justify-content-between">
-                                                {digitValues.map((value, index) => (
-                                                    <motion.input
-                                                        key={index}
-                                                        ref={(el) => digitRefs.current[index] = el!}
-                                                        type="text"
-                                                        className="form-control"
-                                                        placeholder=""
-                                                        maxLength={1}
-                                                        value={value}
-                                                        onChange={(e) => handleDigitChange(index, e)}
-                                                        onKeyDown={(e) => handleKeyDown(index, e)}
-                                                        onPaste={index === 0 ? handlePaste : undefined}
-                                                        style={{ textAlign: "center", margin: '2px' }}
-                                                        initial={{ opacity: 0, scale: 0.8 }}
-                                                        animate={{ opacity: 1, scale: 1 }}
-                                                        transition={{ duration: 0.2, delay: index * 0.1 }}
-                                                    />
-                                                ))}
-                                            </div>
+                                <i className={`ti ti-check`}></i>
+                                <span>{reset_token}</span>
+                            </motion.div>
+                        )}
+
+                        <motion.div 
+                            className="auth-title"
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                        >
+                            <h4>Reset Password</h4>
+                            <p>Enter the code we sent you and your new password</p>
+                        </motion.div>
+
+                        <form onSubmit={formik.handleSubmit} className="auth-form">
+                            <motion.div 
+                                className="form-group d-flex align-items-center justify-content-center flex-column"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.3 }}
+                            >
+                                <label>Security Code <span className="required">*</span></label>
+                                <div className="input-group ">
+                                    <div className="otp-container w-100">
+                                        <div className="otp-inputs">
+                                            {digitValues.map((value, index) => (
+                                                <input
+                                                    key={index}
+                                                    ref={(el) => digitRefs.current[index] = el!}
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    pattern="[0-9]*"
+                                                    maxLength={1}
+                                                    value={value}
+                                                    onChange={(e) => handleDigitChange(index, e)}
+                                                    onKeyDown={(e) => handleKeyDown(index, e)}
+                                                    onPaste={index === 0 ? handlePaste : undefined}
+                                                    disabled={isLoading}
+                                                />
+                                            ))}
                                         </div>
-
-                                        <AnimatePresence>
-                                            {showPasswordInputs && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, height: 0 }}
-                                                    animate={{ opacity: 1, height: 'auto' }}
-                                                    exit={{ opacity: 0, height: 0 }}
-                                                    transition={{ duration: 0.3 }}
+                                        <div className="resend-token">
+                                            {resendTimer > 0 ? (
+                                                <span className="timer">Resend code in {resendTimer}s</span>
+                                            ) : (
+                                                <button 
+                                                    type="button" 
+                                                    onClick={handleResendToken}
+                                                    disabled={isLoading || resendTimer > 0}
                                                 >
-                                                    <div className="mb-2">
-                                                        <label htmlFor="password" className="form-label">Password <span className="text-danger">*</span></label>
-                                                        <input
-                                                            type="password"
-                                                            className="form-control"
-                                                            id="password"
-                                                            name='password'
-                                                            onChange={formik.handleChange}
-                                                            onBlur={formik.handleBlur}
-                                                            value={formik.values.password}
-                                                            style={{ ...formik.errors.password && { borderColor: "var(--bs-danger)" } }}
-                                                        />
-                                                        {formik.errors.password && (
-                                                            <motion.div
-                                                                className='text fs-10 text-danger d-flex align-items-center'
-                                                                initial={{ opacity: 0 }}
-                                                                animate={{ opacity: 1 }}
-                                                                exit={{ opacity: 0 }}
-                                                            >
-                                                                <i className='ti ti-alert-circle me-2'></i>
-                                                                <span>{formik.errors.password}</span>
-                                                            </motion.div>
-                                                        )}
-                                                    </div>
-                                                    <div className="mb-3">
-                                                        <label htmlFor="password_confirmation" className="form-label">Password confirm<span
-                                                            className="text-danger">*</span></label>
-                                                        <input
-                                                            type="password"
-                                                            className="form-control"
-                                                            id="password_confirmation"
-                                                            name='password_confirmation'
-                                                            onChange={formik.handleChange}
-                                                            onBlur={formik.handleBlur}
-                                                            value={formik.values.password_confirmation}
-                                                            style={{ ...formik.errors.password_confirmation && { borderColor: "var(--bs-danger)" } }}
-                                                        />
-                                                        {formik.errors.password_confirmation && (
-                                                            <motion.div
-                                                                className='text fs-10 text-danger d-flex align-items-center'
-                                                                initial={{ opacity: 0 }}
-                                                                animate={{ opacity: 1 }}
-                                                                exit={{ opacity: 0 }}
-                                                            >
-                                                                <i className='ti ti-alert-circle me-2'></i>
-                                                                <span>{formik.errors.password_confirmation}</span>
-                                                            </motion.div>
-                                                        )}
-                                                    </div>
-                                                </motion.div>
+                                                    <i className="ti ti-refresh"></i>
+                                                    Resend Code
+                                                </button>
                                             )}
-                                        </AnimatePresence>
-
-                                        <AnimatePresence>
-                                            {showPasswordInputs && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: 20 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    exit={{ opacity: 0, y: 20 }}
-                                                    transition={{ duration: 0.3 }}
-                                                >
-                                                    {!isLoading ? (
-                                                        <motion.button
-                                                            type='submit'
-                                                            className="btn btn-primary w-100 py-8 fs-4 mb-2 rounded-2"
-                                                            whileHover={{ scale: 1.05 }}
-                                                            whileTap={{ scale: 0.95 }}
-                                                        >
-                                                            Verify my account
-                                                        </motion.button>
-                                                    ) : (
-                                                        <button className="btn btn-primary w-100 py-8 fs-4 mb-4 rounded-2" type="button" disabled>
-                                                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                            Please wait...
-                                                        </button>
-                                                    )}
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                    </form>
-                                    <div className="d-flex align-items-center justify-content-center">
-                                        <p className="fs-4 mb-0 fw-bold">Didn't receive the email?</p>
-                                        <motion.button
-                                            className='btn btn-light-primary text-primary fw-semibold fs-4'
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={handleResentToken}
-                                            disabled={isLoading}
-                                        >
-                                            Resend
-                                        </motion.button>
+                                        </div>
                                     </div>
                                 </div>
+                                {codeError && (
+                                    <motion.div 
+                                        className="error-message"
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                    >
+                                        <i className="ti ti-alert-circle"></i>
+                                        <span>{codeError}</span>
+                                    </motion.div>
+                                )}
                             </motion.div>
-                        </div>
+
+                            <motion.div 
+                                className="form-group"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.4 }}
+                            >
+                                <label htmlFor="password">New Password <span className="required">*</span></label>
+                                <div className="input-group">
+                                    <span className="input-group-text">
+                                        <i className="ti ti-lock"></i>
+                                    </span>
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        className={`form-control ${formik.errors.password && formik.touched.password ? 'is-invalid' : ''}`}
+                                        id="password"
+                                        name="password"
+                                        placeholder="Enter new password"
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        value={formik.values.password}
+                                        disabled={isLoading}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-secondary"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        <i className={`ti ti-eye${showPassword ? '-off' : ''}`}></i>
+                                    </button>
+                                </div>
+                                {formik.errors.password && formik.touched.password && (
+                                    <motion.div 
+                                        className="error-message"
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                    >
+                                        <i className="ti ti-alert-circle"></i>
+                                        <span>{formik.errors.password}</span>
+                                    </motion.div>
+                                )}
+                            </motion.div>
+
+                            <motion.div 
+                                className="form-group"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.5 }}
+                            >
+                                <label htmlFor="password_confirmation">Confirm Password <span className="required">*</span></label>
+                                <div className="input-group">
+                                    <span className="input-group-text">
+                                        <i className="ti ti-lock"></i>
+                                    </span>
+                                    <input
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        className={`form-control ${formik.errors.password_confirmation && formik.touched.password_confirmation ? 'is-invalid' : ''}`}
+                                        id="password_confirmation"
+                                        name="password_confirmation"
+                                        placeholder="Confirm new password"
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        value={formik.values.password_confirmation}
+                                        disabled={isLoading}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-secondary"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    >
+                                        <i className={`ti ti-eye${showConfirmPassword ? '-off' : ''}`}></i>
+                                    </button>
+                                </div>
+                                {formik.errors.password_confirmation && formik.touched.password_confirmation && (
+                                    <motion.div 
+                                        className="error-message"
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                    >
+                                        <i className="ti ti-alert-circle"></i>
+                                        <span>{formik.errors.password_confirmation}</span>
+                                    </motion.div>
+                                )}
+                            </motion.div>
+
+                            <motion.div 
+                                className="form-actions"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.6 }}
+                            >
+                                <motion.button
+                                    type="submit"
+                                    className="btn btn-primary w-100"
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    disabled={isLoading || !formik.isValid || !formik.dirty}
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <span className="spinner-grow spinner-grow-sm"></span>
+                                            <span>Resetting Password...</span>
+                                        </>
+                                    ) : (
+                                        'Reset Password'
+                                    )}
+                                </motion.button>
+
+                                <motion.div 
+                                    className=""
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={handleBackToLogin}
+                                        className="btn-link"
+                                        disabled={isLoading}
+                                    style={{backgroundColor: 'inherit', color: 'var(--va-primary)', border: 'none'}}
+                                    >
+                                        <i className="ti ti-arrow-left"></i>
+                                        <span>Back to Login</span>
+                                    </button>
+                                </motion.div>
+                            </motion.div>
+                        </form>
                     </div>
-                </div>
+                </motion.div>
             </div>
-            <AnimatePresence>
-                {isLoading && <LoadingOverlay />}
-            </AnimatePresence>
         </div>
     );
 }
