@@ -79,7 +79,8 @@ export const {
     clearUserCredential,
     addAccessToAuthUser,
     removeAccessToAuthUser,
-    setFirstConnexionToFalse
+    setFirstConnexionToFalse,
+    loginSuccess
 } = userSlice.actions;
 
 export const loginAsync = (payload: ILoginPayload) => async (dispatch: AppDispatch) => {

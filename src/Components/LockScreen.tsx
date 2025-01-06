@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import Toast from "Data/Utilities/Toast.ts";
 import UtilMethods from "Data/Utilities/UtilMethods.ts";
 import Auth from "Data/Api/Auth.ts";
+import {useAppDispatch} from "@/hooks";
+import {loginSuccess} from "Data/Slices/auth/userSlice.ts";
 
 const LockScreen = () => {
     const [isLocked, setIsLocked] = useState(false);
@@ -9,7 +11,8 @@ const LockScreen = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [lastActivity, setLastActivity] = useState(Date.now());
-    const TIMEOUT_DURATION = .5 * 60 * 1000;
+    const TIMEOUT_DURATION = 15 * 60 * 1000;
+    const dispatch = useAppDispatch()
 
     const handleUserActivity = () => {
         setLastActivity(Date.now());
@@ -49,11 +52,11 @@ const LockScreen = () => {
             }
 
             if (currentUser){
-                const {data: { token }} = await Auth.login({
+                const result = await Auth.login({
                     login: currentUser.email ?? currentUser.phone,
                     password
                 })
-                localStorage.setItem('token', token)
+                dispatch(loginSuccess(result))
                 Toast.success("screen unlocked successfully.")
                 setIsLocked(false);
                 setPassword('');
