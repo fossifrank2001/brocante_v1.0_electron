@@ -31,7 +31,7 @@ function HomePage() {
         setShowCart(totalQuantity > 0);
     }, [totalQuantity]);
 
-    useEffect(() => {
+    useEffect(() => { 
         const animateCart = async () => {
             if (totalQuantity > 0) {
                 await cartAnimation.start({

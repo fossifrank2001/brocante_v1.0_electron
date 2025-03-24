@@ -7,7 +7,6 @@ import { Pages } from '@/Data/Objects/state';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { motion } from 'framer-motion';
-import logo from "../../../public/favicon.png"
 import "Styles/auth.less"
 import Logo from '@/Components/common/Logo';
 
@@ -17,14 +16,14 @@ interface FormValues {
 
 export default function ForgotComponent() {
     const [isLoading, setIsLoading] = useState(false);
-    const {message, reset_token, username: _username} = useAppSelector(state => state.forgot);
+    const {reset_token, username: _username} = useAppSelector(state => state.forgot);
     const dispatch = useAppDispatch();
     const initialValues: FormValues = { username: '' };
     const context = useAppContext();
 
     const attemptForgot = async (payload: IForgotPayload) => {
         const { forgotAsync } = await import('Data/Slices/auth/forgotSlice');
-        return await dispatch(forgotAsync(payload));
+        return dispatch(forgotAsync(payload));
     }
 
     const handleSubmit = async (values: IForgotPayload) => {
@@ -163,7 +162,7 @@ export default function ForgotComponent() {
                                 </motion.button>
 
                                 <motion.div 
-                                    className="back-to-login"
+                                    className="back-to-login py-2"
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.95 }}
                                 >

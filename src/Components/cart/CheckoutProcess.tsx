@@ -1,14 +1,16 @@
-import React, {useState, useEffect, useCallback} from 'react';
-import { IPerson } from "Data/Interfaces/Person";
-import { Autocomplete, TextField, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
-import { FormikProps } from "formik";
-import { FormValues } from "Components/cart/MultiStepFormCart";
-import CustomerAPI from "Data/Api/Customer";
-import Toast from "Data/Utilities/Toast";
-import { IApiResponseBase } from 'Data/Utilities/axiosInstance';
-import UtilMethods from "Data/Utilities/UtilMethods";
-import {ICartState} from "Data/Slices/dashboard/seller/cartSlice.ts";
-import {Refresh} from "@mui/icons-material";
+import React, {SetStateAction, useCallback, useEffect, useState} from 'react';
+import { Autocomplete, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
+import { FormikProps } from 'formik';
+import { FormValues } from './MultiStepFormCart';
+import { ICartState } from 'Data/Slices/dashboard/seller/cartSlice';
+import { IPerson } from 'Data/Interfaces/Person';
+import CustomerAPI from 'Data/Api/Customer';
+import Toast from 'Data/Utilities/Toast';
+import UtilMethods from 'Data/Utilities/UtilMethods';
+import { IApiResponseBase } from '@/Data/Utilities/axiosInstance';
+import SuccessSellPage from "@/pages/Home/SuccessSellPage.tsx";
+import {useAppDispatch} from "@/hooks";
+import {saveCheckoutState} from "Data/Slices/dashboard/seller/checkoutSlice.ts";
 
 interface CheckoutProcessProps {
     persons: IPerson[];
@@ -24,15 +26,14 @@ interface CheckoutProcessProps {
 }
 
 export default function Component({
-  persons,
-  paymentModes,
-  onHandleSettingPayment,
-  onPersonChange,
-  payment,
-  onAddPerson,
-  formik,
-  cart,
-  onRefreshPersons
+    persons,
+    paymentModes,
+    onHandleSettingPayment,
+    onPersonChange,
+    onAddPerson,
+    formik,
+    cart,
+    onRefreshPersons
 }: CheckoutProcessProps) {
     const [, setSelectedPerson] = useState<IPerson | null>(null);
     const [open, setOpen] = useState(false);
@@ -42,444 +43,615 @@ export default function Component({
         firstname: '',
         phone: ''
     });
-    const [remainingBalance] = useState<Record<string, number> | null>(null);
-
     const [errors, setErrors] = useState({
         phone: '',
         lastname: ''
     });
     const [isLoading, setIsLoading] = useState(false);
-    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [, setIsRefreshing] = useState(false);
+    const [isFormValid, setIsFormValid] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const dispatch = useAppDispatch();
+
 
     useEffect(() => {
-        formik.setFieldValue('summarize.shippingPrice', 0);
-        if (paymentModes.includes("Cash")) {
-            console.log("Setting default payment to Cash");
-            onHandleSettingPayment("Cash");
+        if (paymentModes?.includes("Cash") && !formik.values.payment) {
             formik.setFieldValue('payment', "Cash");
-            formik.setFieldValue('transactionType', "total");
-            formik.setFieldValue('advanceAmount', 0);
-            formik.setFieldValue('has_authorized', true);
-        } else {
-            console.log("Cash payment not available in paymentModes");
+            onHandleSettingPayment("Cash");
         }
+    }, [paymentModes]);
+
+    useEffect(() => {
+        const valid  = formik.values.person &&
+                     formik.values.payment && 
+                     formik.values.transactionType &&
+                     (formik.values.transactionType !== 'advance' || formik.values.advanceAmount > 0) &&
+                     (formik.values.transactionType !== 'loan' || formik.values.date_to_pay);
+        
+        setIsFormValid(valid as SetStateAction<boolean>);
+    }, [formik.values]);
+
+    const handleOpenDialog = useCallback(() => {
+        setOpen(true);
     }, []);
 
-
-    const handleOpenDialog = () => {
-        setOpen(true);
-    };
-
-    const handleCloseDialog = () => {
+    const handleCloseDialog = useCallback(() => {
         setOpen(false);
-    };
+        setNewPerson({
+            id: 0,
+            lastname: '',
+            firstname: '',
+            phone: ''
+        });
+        setErrors({
+            phone: '',
+            lastname: ''
+        });
+    }, []);
 
-    const handleAddPerson = async () => {
+    const handleAddPerson = useCallback(async () => {
         try {
-            if (newPerson.phone && newPerson.lastname) {
-                setIsLoading(true);
-                const { data }: IApiResponseBase<IPerson> = await CustomerAPI.create(newPerson);
-                onAddPerson(data);
-                handleCloseDialog();
-                setNewPerson({ id: 0, lastname: '', firstname: '', phone: '' });
-                setSelectedPerson(null);
-            } else {
-                throw new Error('New person is not valid');
+            if (!newPerson.phone || !newPerson.lastname) {
+                setErrors({
+                    phone: !newPerson.phone ? 'Phone number is required' : '',
+                    lastname: !newPerson.lastname ? 'Last name is required' : ''
+                });
+                return;
             }
+
+            setIsLoading(true);
+            const { data }: IApiResponseBase<IPerson> = await CustomerAPI.create(newPerson);
+            onAddPerson(data);
+            Toast.success('Customer added successfully');
+            handleCloseDialog();
+            setNewPerson({ id: 0, lastname: '', firstname: '', phone: '' });
+            setSelectedPerson(null);
         } catch (error) {
             console.error(error);
             Toast.error(error);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [newPerson, onAddPerson]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
+        let error = '';
 
-        if (name === 'phone' && !/^6[0-9]{8}$/.test(value.trim())) {
-            setErrors(prev => ({
-                ...prev,
-                [name]: 'Invalid Phone number, should be like (6.......)',
-            }));
-        } else {
-            setErrors(prev => ({
-                ...prev,
-                [name]: '',
-            }));
+        if (name === 'phone') {
+            if (!/^6[0-9]{8}$/.test(value.trim())) {
+                error = 'Invalid phone number (must start with 6 and be 9 digits)';
+            }
+        } else if (name === 'lastname') {
+            if (value.trim().length < 3) {
+                error = 'Last name must be at least 3 characters';
+            }
         }
 
-        if (name === 'lastname' && value.trim().length < 3) {
-            setErrors(prev => ({
-                ...prev,
-                [name]: 'Invalid last name, should be at least 03 characters',
-            }));
-        } else {
-            setErrors(prev => ({
-                ...prev,
-                [name]: '',
-            }));
-        }
-        setNewPerson(prevPerson => ({
-            ...prevPerson,
-            [name]: value,
+        setErrors(prev => ({
+            ...prev,
+            [name]: error
         }));
-    };
 
-    const handleRefresh = useCallback(async () => {
+        setNewPerson(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    }, []);
+    useCallback(async () => {
         setIsRefreshing(true);
         try {
-
             await onRefreshPersons();
-            console.log("Refreshing persons...");
+            Toast.success('Customer list refreshed');
         } catch (error) {
-            Toast.error("Failed to refresh user data");
+            Toast.error("Failed to refresh customer list");
         } finally {
             setIsRefreshing(false);
         }
     }, [onRefreshPersons]);
+    const handlePaymentChange = (mode: string) => {
+        formik.setFieldValue('payment', mode);
+        onHandleSettingPayment(mode);
+    };
+
+    const handleTransactionTypeChange = (type: string) => {
+        formik.setFieldValue('transactionType', type);
+        if (type === 'total') {
+            formik.setFieldValue('advanceAmount', 0);
+            formik.setFieldValue('date_to_pay', null);
+        }
+    };
+
+    const handleSubmit = async () => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            await formik.submitForm();
+            if (!formik.isSubmitting && !formik.errors) {
+                dispatch(saveCheckoutState({
+                    step: 0,
+                    formData: formik.values
+                }))
+                setShowSuccess(true);
+            }
+        } catch (err) {
+            setError(err.message || 'An error occurred during the transaction');
+            Toast.error(err.message || 'An error occurred during the transaction');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
-        <div className="container">
-            <div className='row'>
-                {remainingBalance && Object.keys(remainingBalance).length > 0 && (
-                    <div className="col-xs-12 col-md-12 mx-auto">
-                        <div className="alert alert-danger">
-                            <strong>There are some unpaid for the selected customer.</strong>
-                            <ul>
-                                {Object.entries(remainingBalance).map(([key, value]) => (
-                                    <li key={key}>
-                                        Sell code: {key} | Unpaid: {UtilMethods.formatNumber(value)}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    </div>
-                )}
-                <div className="col-xs-12 col-md-12 mx-auto">
-                    <div className="alert alert-info">
-                        <strong>Amount of sell ::: </strong>
-                        <strong>{UtilMethods.formatNumber(cart.totalPrice)}</strong>
-                    </div>
-                </div>
-                <div className="col-xs-12 col-md-8 payment-method-list payment-method" style={{display: "block"}}>
-                    <div className="delivery-option w-100 btn-group-active card shadow-none border">
-                        <div className="card-body p-4 w-100">
-                            <h6 className="mb-3 fw-semibold fs-4">Delivery Option</h6>
-                            <div className="btn-group flex-row gap-3 w-100" role="group"
-                                 aria-label="Basic radio toggle button group">
-                                <div className='col-6'>
-                                    <div className="position-relative form-check btn-custom-fill flex-fill ps-0">
-                                        <input
-                                            type="radio"
-                                            className="form-check-input ms-4 round-16"
-                                            name="deliveryOpt1"
-                                            id="free_delivery"
-                                            autoComplete="off"
-                                            style={{position: 'absolute', top: '35%'}}
-                                            checked={formik.values.summarize.shippingPrice === 0}
-                                            onChange={() => formik.setFieldValue('summarize.shippingPrice', 0)}
-                                        />
-                                        <label className="btn btn-outline-primary mb-0 p-3 rounded ps-5 w-100"
-                                               htmlFor="free_delivery">
-                                            <div className="text-start ps-2">
-                                                <h6 className="fs-3 fw-semibold mb-0">Free delivery</h6>
-                                                <p className="mb-0 fs-1 text-muted">Shipping price(0 <span className=''
-                                                                                                           style={{fontSize: '10px'}}>FCFA</span>)
-                                                </p>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div className='col-6'>
-                                    <div className="position-relative form-check btn-custom-fill flex-fill ps-0">
-                                        <input type="radio" className="form-check-input ms-4 round-16"
-                                               name="deliveryOpt1"
-                                               id="fast_delivery" autoComplete="off"
-                                               style={{position: 'absolute', top: '35%'}}
-                                               onChange={() => formik.setFieldValue('summarize.shippingPrice', 500)}/>
-                                        <label className="btn btn-outline-primary mb-0 p-3 rounded ps-5 w-100"
-                                               htmlFor="fast_delivery">
-                                            <div className="text-start ps-2">
-                                                <h6 className="fs-3 fw-semibold mb-0">Fast delivery</h6>
-                                                <p className="mb-0 f-1 text-muted">Shipping price(500 <span className=''
-                                                                                                            style={{fontSize: '10px!important'}}>FCFA</span>)
-                                                </p>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
+        <>
+            {showSuccess ? (
+                <SuccessSellPage />
+            ) : (
+                <>
+                    {error && (
+                        <div className="alert alert-danger mb-4">
+                            <div className="d-flex align-items-center">
+                                <i className="ti ti-alert-circle me-2"></i>
+                                {error}
                             </div>
                         </div>
-                    </div>
-                </div>
-                <div className='col-xs-12 col-md-4'>
-                    <div className='card w-100'>
-                        <div className="card-body p-4 w-100">
-                            <h6 className="fw-semibold fs-4">Select Customer</h6>
+                    )}
+
+                    <div className="card border-0 shadow-sm mb-4">
+                        <div className="card-body">
+                            <div className="d-flex justify-content-between align-items-center mb-4">
+                                <h5 className="card-title mb-0">
+                                    <i className="ti ti-user me-2 text-primary"></i>
+                                    Select Customer
+                                </h5>
+                                <div className="d-flex gap-2">
+                                    <button 
+                                        type="button"
+                                        className="btn btn-outline-primary btn-sm"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleOpenDialog();
+                                        }}
+                                    >
+                                        <i className="ti ti-plus me-1"></i>
+                                        Add New
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-primary btn-sm ms-2"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            onRefreshPersons();
+                                        }}
+                                    >
+                                        <i className="ti ti-refresh"></i>
+                                    </button>
+                                </div>
+                            </div>
+
                             <Autocomplete
-                                disablePortal
-                                id="combo-box-demo"
                                 options={persons}
-                                loading={isRefreshing}
-                                disabled={isRefreshing}
-                                getOptionLabel={(option) => `${option.firstname} ${option.lastname}`}
-                                sx={{width: "100%"}}
-                                renderInput={(params) => <TextField {...params} label="Search customer"/>}
-                                onChange={async (_, value) => {
-                                    if (value) {
-                                        onPersonChange(value);
-                                        await formik.setFieldValue('person', value);
-                                    }
+                                getOptionLabel={(option) => `${option.lastname} ${option.firstname || ''} (${option.phone})`}
+                                onChange={(_, value) => {
+                                    formik.setFieldValue('person', value);
+                                    onPersonChange(value);
                                 }}
-                                value={formik.values.person}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Search customer"
+                                        variant="outlined"
+                                        size="small"
+                                        fullWidth
+                                        error={formik.touched.person && !formik.values.person}
+                                        helperText={formik.touched.person && !formik.values.person ? 'Customer is required' : ''}
+                                    />
+                                )}
                             />
-                            <div className="d-flex justify-content-between align-items-center">
-                                <button type='button' className='btn btn-outline-primary'
-                                        onClick={handleOpenDialog}>
-                                    Add Customer
-                                </button>
-                                <button
-                                    type='button'
-                                    className='btn btn-outline-secondary d-flex align-items-center'
-                                    onClick={handleRefresh}
-                                    disabled={isRefreshing}
-                                >
-                                    <Refresh className={`${isRefreshing ? 'animate-spin' : ''}`} style={{ animation: isRefreshing ? 'spin 1s linear infinite' : 'none' }}/>
-                                    <span className='ms-2'>Refresh</span>
-                                </button>
-                            </div>
                         </div>
                     </div>
-                </div>
-                <div className='col-xs-12 col-md-7'>
-                    <div className=' card w-100'>
-                    <div className="card-body p-4 w-100">
-                            <h6 className="mb-3 fw-semibold fs-4">Select Payment Mode</h6>
-                            <div className="btn-group flex-row gap-1 w-100" role="group"
-                                 aria-label="Basic radio toggle button group">
-                                {
-                                    paymentModes.map((_payment, key) => (
-                                        <div key={key} className='col-4'>
-                                            <div
-                                                className="position-relative form-check btn-custom-fill flex-fill ps-0"
-                                                style={_payment === payment ? {
-                                                    backgroundColor: 'rgba(17, 32, 76, 0.1)',
-                                                    borderColor: 'var(--bs-primary)'
-                                                } : {}}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    className="form-check-input ms-4 round-16"
-                                                    name="payment"
-                                                    id={`${_payment}`}
-                                                    autoComplete="off"
-                                                    style={{position: 'absolute', top: '30%'}}
-                                                    checked={_payment === payment}
-                                                    onChange={async () => {
-                                                        onHandleSettingPayment(_payment);
-                                                        await formik.setFieldValue('payment', _payment);
-                                                    }}
-                                                />
 
-                                                <label className="btn btn-outline-primary mb-0 p-3 rounded ps-5 w-100"
-                                                       htmlFor={`${_payment}`}>
-                                                    <div className="text-start ps-2">
-                                                        <h6 className="fs-3 fw-semibold mb-0">{_payment}</h6>
-                                                        <p className="mb-0 fs-1 text-muted">Pay with {_payment}</p>
-                                                    </div>
-                                                </label>
+                    <div className="card border-0 shadow-sm">
+                        <div className="card-body">
+                            <h5 className="card-title mb-4">
+                                <i className="ti ti-wallet me-2 text-primary"></i>
+                                Payment Details
+                            </h5>
+                            
+                            <div className="alert alert-info mb-4">
+                                <div className="d-flex align-items-center mb-2">
+                                    <i className="ti ti-receipt text-info me-2 fs-4"></i>
+                                    <h6 className="mb-0">Order Summary</h6>
+                                </div>
+                                <div className="ms-4">
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <span>Subtotal:</span>
+                                        <strong>{UtilMethods.formatNumber(cart.totalPrice)}</strong>
+                                    </div>
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <span>Shipping:</span>
+                                        <strong>{UtilMethods.formatNumber(formik.values.summarize?.shippingPrice || 0)}</strong>
+                                    </div>
+                                    <div className="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                        <span className="fw-bold">Total:</span>
+                                        <strong className="text-primary fs-5">
+                                            {UtilMethods.formatNumber(cart.totalPrice + (formik.values.summarize?.shippingPrice || 0))}
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mb-4">
+                                <h6 className="mb-3">
+                                    <i className="ti ti-credit-card me-2"></i>
+                                    Payment Method
+                                </h6>
+                                <div className="d-flex flex-wrap gap-2">
+                                    {paymentModes.map((mode) => (
+                                        <button
+                                            key={mode}
+                                            type="button"
+                                            className={`btn ${formik.values.payment === mode ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => handlePaymentChange(mode)}
+                                        >
+                                            <i className={`ti ti-${mode === 'Cash' ? 'cash' : 'phone'} me-2`}></i>
+                                            {mode}
+                                        </button>
+                                    ))}
+                                </div>
+                                {formik.touched.payment && !formik.values.payment && (
+                                    <div className="text-danger mt-2 small">Payment method is required</div>
+                                )}
+                            </div>
+
+                            <div className="mb-4">
+                                <h6 className="mb-3">
+                                    <i className="ti ti-truck-delivery me-2"></i>
+                                    Delivery Option
+                                </h6>
+                                <div className="row g-3">
+                                    <div className="col-md-6">
+                                        <div className={`card ${formik.values.summarize.shippingPrice === 0 ? 'border-primary' : 'border'} h-100`}>
+                                            <div className="card-body">
+                                                <div className="form-check">
+                                                    <input
+                                                        type="radio"
+                                                        className="form-check-input"
+                                                        name="deliveryOption"
+                                                        id="free_delivery"
+                                                        checked={formik.values.summarize.shippingPrice === 0}
+                                                        onChange={() => formik.setFieldValue('summarize.shippingPrice', 0)}
+                                                    />
+                                                    <label className="form-check-label" htmlFor="free_delivery">
+                                                        <strong>Free Delivery</strong>
+                                                        <p className="text-muted mb-0">Standard delivery (0 FCFA)</p>
+                                                    </label>
+                                                </div>
                                             </div>
                                         </div>
-                                    ))
-                                }
+                                    </div>
+                                    <div className="col-md-6">
+                                        <div className={`card ${formik.values.summarize.shippingPrice === 500 ? 'border-primary' : 'border'} h-100`}>
+                                            <div className="card-body">
+                                                <div className="form-check">
+                                                    <input
+                                                        type="radio"
+                                                        className="form-check-input"
+                                                        name="deliveryOption"
+                                                        id="fast_delivery"
+                                                        checked={formik.values.summarize.shippingPrice === 500}
+                                                        onChange={() => formik.setFieldValue('summarize.shippingPrice', 500)}
+                                                    />
+                                                    <label className="form-check-label" htmlFor="fast_delivery">
+                                                        <strong>Express Delivery</strong>
+                                                        <p className="text-muted mb-0">Fast delivery (500 FCFA)</p>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                <div className='col-xs-12 col-md-5'>
-                    <div className='card col-xs-12'>
-                        <div className="card-body p-4 w-100">
-                            <div className="transaction-type-section mb-4">
-                                <h5>Transaction Type</h5>
-                                <div className="d-flex justify-content-between">
-                                    <div className="w-100 me-2">
-                                        <input
-                                            type="radio"
-                                            className="btn-check"
-                                            name="transactionType"
-                                            id="total"
-                                            value="total"
-                                            checked={formik.values.transactionType === 'total'}
-                                            onChange={(e) => formik.setFieldValue('transactionType', e.target.value)}
-                                        />
-                                        <label className="btn btn-outline-primary w-100" htmlFor="total">Total</label>
-                                    </div>
 
-                                    <div className="w-100 me-2">
-                                        <input
-                                            type="radio"
-                                            className="btn-check"
-                                            name="transactionType"
-                                            id="advance"
-                                            value="advance"
-                                            checked={formik.values.transactionType === 'advance'}
-                                            onChange={(e) => formik.setFieldValue('transactionType', e.target.value)}
-                                        />
-                                        <label className="btn btn-outline-primary w-100"
-                                               htmlFor="advance">Advance</label>
+                            <div className="mb-3">
+                                <h6 className="mb-3">
+                                    <i className="ti ti-cash me-2"></i>
+                                    Transaction Type
+                                </h6>
+                                <div className="row g-3">
+                                    <div className="col-md-4">
+                                        <div
+                                            className={`card cursor-pointer ${formik.values.transactionType === 'total' ? 'border-primary bg-light' : 'border'} h-100`}
+                                            role="button"
+                                            onClick={() => handleTransactionTypeChange('total')}
+                                        >
+                                            <div className="card-body">
+                                                <div className="form-check">
+                                                    <input
+                                                        type="radio"
+                                                        className="form-check-input"
+                                                        name="transactionType"
+                                                        checked={formik.values.transactionType === 'total'}
+                                                        onChange={() => handleTransactionTypeChange('total')}
+                                                    />
+                                                    <label className="form-check-label">
+                                                        <div className="d-flex align-items-center mb-1">
+                                                            <i className="ti ti-cash-banknote text-primary me-2"></i>
+                                                            <strong>Total Payment</strong>
+                                                        </div>
+                                                        <p className="text-muted small mb-0">Pay the full amount now</p>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-
-                                    <div className="w-100">
-                                        <input
-                                            type="radio"
-                                            className="btn-check"
-                                            name="transactionType"
-                                            id="loan"
-                                            value="loan"
-                                            checked={formik.values.transactionType === 'loan'}
-                                            onChange={(e) => formik.setFieldValue('transactionType', e.target.value)}
-                                        />
-                                        <label className="btn btn-outline-primary w-100" htmlFor="loan">Loan</label>
+                                    <div className="col-md-4">
+                                        <div
+                                            className={`card cursor-pointer ${formik.values.transactionType === 'advance' ? 'border-primary bg-light' : 'border'} h-100`}
+                                            role="button"
+                                            onClick={() => handleTransactionTypeChange('advance')}
+                                        >
+                                            <div className="card-body">
+                                                <div className="form-check">
+                                                    <input
+                                                        type="radio"
+                                                        className="form-check-input"
+                                                        name="transactionType"
+                                                        checked={formik.values.transactionType === 'advance'}
+                                                        onChange={() => handleTransactionTypeChange('advance')}
+                                                    />
+                                                    <label className="form-check-label">
+                                                        <div className="d-flex align-items-center mb-1">
+                                                            <i className="ti ti-coin text-warning me-2"></i>
+                                                            <strong>Partial Payment</strong>
+                                                        </div>
+                                                        <p className="text-muted small mb-0">Pay a portion now</p>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="col-md-4">
+                                        <div
+                                            className={`card cursor-pointer ${formik.values.transactionType === 'loan' ? 'border-primary bg-light' : 'border'} h-100`}
+                                            role="button"
+                                            onClick={() => handleTransactionTypeChange('loan')}
+                                        >
+                                            <div className="card-body">
+                                                <div className="form-check">
+                                                    <input
+                                                        type="radio"
+                                                        className="form-check-input"
+                                                        name="transactionType"
+                                                        checked={formik.values.transactionType === 'loan'}
+                                                        onChange={() => handleTransactionTypeChange('loan')}
+                                                    />
+                                                    <label className="form-check-label">
+                                                        <div className="d-flex align-items-center mb-1">
+                                                            <i className="ti ti-calendar-time text-danger me-2"></i>
+                                                            <strong>Loan</strong>
+                                                        </div>
+                                                        <p className="text-muted small mb-0">Pay later</p>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
-
-                                {formik.errors.transactionType && formik.touched.transactionType && (
-                                    <div className="text-danger">{formik.errors.transactionType}</div>
+                                {formik.touched.transactionType && !formik.values.transactionType && (
+                                    <div className="text-danger small mt-2">
+                                        Please select a transaction type
+                                    </div>
                                 )}
-                            </div>
-                            <div className="row">
+
                                 {formik.values.transactionType === 'advance' && (
-                                    <div className="col-lg-6">
-                                        <div className="form-group mb-4">
-                                            <label htmlFor="loanAmount">Loan Amount</label>
-                                            <input
-                                                type="number"
-                                                name="advanceAmount"
-                                                className="form-control"
-                                                value={formik.values.advanceAmount}
-                                                onChange={(e) => formik.setFieldValue('advanceAmount', e.target.value)}
-                                                style={{...(formik.errors.advanceAmount && formik.touched.advanceAmount) && {borderColor: 'red'}}}
-                                            />
-                                            {formik.errors.advanceAmount && formik.touched.advanceAmount && (
-                                                <div className="text-danger">{formik.errors.advanceAmount}</div>
-                                            )}
-                                        </div>
+                                    <div className="mt-3">
+                                        <TextField
+                                            label="Advance Amount"
+                                            type="number"
+                                            value={formik.values.advanceAmount}
+                                            onChange={(e) => formik.setFieldValue('advanceAmount', Number(e.target.value))}
+                                            error={formik.touched.advanceAmount && !formik.values.advanceAmount}
+                                            helperText={formik.touched.advanceAmount && !formik.values.advanceAmount ? 'Please enter advance amount' : ''}
+                                            fullWidth
+                                            InputProps={{
+                                                startAdornment: <i className="ti ti-coin me-2 text-warning"></i>
+                                            }}
+                                        />
                                     </div>
                                 )}
-                                {(formik.values.transactionType === 'advance' || formik.values.transactionType === 'loan') && (
-                                    <div className="col-lg-6">
-                                        <div className="form-group mb-4">
-                                            <label htmlFor="date_to_pay">Date to Pay</label>
-                                            <input
-                                                type="date"
-                                                name="date_to_pay"
-                                                className="form-control"
-                                                value={formik.values.date_to_pay || ''}
-                                                onChange={(e) => formik.setFieldValue('date_to_pay', e.target.value)}
-                                                style={{...(formik.errors.date_to_pay && formik.touched.date_to_pay) && {borderColor: 'red'}}}
-                                                min={new Date().toISOString().split('T')[0]}
-                                            />
-                                            {formik.errors.date_to_pay && formik.touched.date_to_pay && (
-                                                <div className="text-danger">{formik.errors.date_to_pay}</div>
-                                            )}
-                                            {formik.values.transactionType === 'loan' && (
-                                                <small className="text-muted">
-                                                    Please specify the date by which the loan should be repaid.
-                                                </small>
-                                            )}
-                                            {formik.values.transactionType === 'advance' && (
-                                                <small className="text-muted">
-                                                    Please specify the date by which the advance should be completed.
-                                                </small>
-                                            )}
-                                        </div>
+
+                                {(formik.values.transactionType === 'loan' || formik.values.transactionType === 'advance') && (
+                                    <div className="mt-3">
+                                        <TextField
+                                            label="Payment Due Date"
+                                            type="date"
+                                            value={formik.values.date_to_pay}
+                                            onChange={(e) => formik.setFieldValue('date_to_pay', e.target.value)}
+                                            error={formik.touched.date_to_pay && !formik.values.date_to_pay}
+                                            helperText={formik.touched.date_to_pay && !formik.values.date_to_pay ? 'Please select payment due date' : ''}
+                                            fullWidth
+                                            InputProps={{
+                                                startAdornment: <i className="ti ti-calendar me-2 text-primary"></i>
+                                            }}
+                                        />
                                     </div>
                                 )}
                             </div>
-                            <div className="has-authorized-section row">
-                                <div className="d-flex justify-content-between align-items-center col-12">
-                                    <label className="col-form-label col-md-9" htmlFor="has_authorized">
-                                        <h5>Ignore unpaid for this sell</h5>
-                                    </label>
-                                    <div className="col-md-3">
-                                        <div className="form-check form-switch">
-                                            <input
-                                                className="form-check-input"
-                                                type="checkbox"
-                                                id="has_authorized"
-                                                name="has_authorized"
-                                                checked={formik.values.has_authorized}
-                                                onChange={(e) => formik.setFieldValue('has_authorized', e.target.checked)}
-                                            />
+                            {formik.values.person && JSON.parse(formik.values.person.remaining_balance || '{}') &&
+                                Object.keys(JSON.parse(formik.values.person.remaining_balance)).length > 0 && (
+                                    <div className="has-authorized-section bg-light rounded-3 p-3 border mb-4">
+                                        <div className="d-flex justify-content-between">
+                                            <div className="flex-grow-1">
+                                                <div className="d-flex align-items-center gap-2 mb-3">
+                                                    <i className="ti ti-alert-circle text-warning fs-4"></i>
+                                                    <div>
+                                                        <h5 className="mb-1">Outstanding Payments</h5>
+                                                        <small className="text-muted">This customer has unpaid balances from previous sales</small>
+                                                    </div>
+                                                </div>
+                                                <div className="border-top pt-2">
+                                                    <div className="row">
+                                                        {Object.entries(JSON.parse(formik.values.person.remaining_balance)).map(([saleId, amount]) => (
+                                                            <div key={saleId} className="col-md-6 mb-2">
+                                                                <div className="d-flex justify-content-between align-items-center">
+                                                                    <span className="text-muted">{saleId}</span>
+                                                                    <strong className="text-danger">{UtilMethods.formatNumber(amount as number)}</strong>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                                                        <div>
+                                                            <h6 className="mb-0">Total Unpaid</h6>
+                                                        </div>
+                                                        <div>
+                                                            <h5 className="text-danger mb-0">
+                                                                {UtilMethods.formatNumber(
+                                                                    Object.values(JSON.parse(formik.values.person.remaining_balance))
+                                                                        .reduce((a, b) => (a as number) + (b as number), 0) as number
+                                                                )}
+                                                            </h5>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="mt-3 d-flex justify-content-between align-items-center">
+                                                    <label className="form-check-label" htmlFor="has_authorized">
+                                                        Ignore unpaid for this sell
+                                                    </label>
+                                                    <div className="form-check form-switch">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            id="has_authorized"
+                                                            name="has_authorized"
+                                                            style={{
+                                                                width: '3rem',
+                                                                height: '1.5rem',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                            checked={formik.values.has_authorized}
+                                                            onChange={(e) => formik.setFieldValue('has_authorized', e.target.checked)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
+                            <button 
+                                className="btn btn-primary w-100"
+                                onClick={handleSubmit}
+                                disabled={!isFormValid || isLoading}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        Processing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="ti ti-check me-2"></i>
+                                        Complete Purchase
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    <Dialog 
+                        open={open} 
+                        onClose={handleCloseDialog} 
+                        maxWidth="sm" 
+                        fullWidth
+                        PaperProps={{
+                            className: 'rounded-3'
+                        }}
+                    >
+                        <DialogTitle className="bg-light border-bottom">
+                            <div className="d-flex align-items-center">
+                                <i className="ti ti-user-plus me-2 text-primary"></i>
+                                Add New Customer
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <Dialog open={open} onClose={handleCloseDialog}>
-                <DialogTitle>Add New Person</DialogTitle>
-                <DialogContent>
-                    <div className="d-flex align-items-center gap-3 justify-content-between">
-                        <div className="mb-3">
-                            <TextField
-                                autoFocus
-                                margin="dense"
-                                id="lastname"
-                                label="Last Name"
-                                type="text"
-                                fullWidth
-                                variant="outlined"
-                                name="lastname"
-                                value={newPerson.lastname}
-                                onChange={handleInputChange}
-                                error={Boolean(errors.lastname)}
-                                helperText={errors.lastname}
-                            />
-                        </div>
-                        <div className="mb-3">
-                            <TextField
-                                margin="dense"
-                                id="firstname"
-                                label="First Name"
-                                type="text"
-                                fullWidth
-                                variant="outlined"
-                                name="firstname"
-                                value={newPerson.firstname}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    </div>
-                    <div className="mb-3">
-                        <TextField
-                            margin="dense"
-                            id="phone"
-                            label="Phone Number"
-                            type="text"
-                            fullWidth
-                            variant="outlined"
-                            name="phone"
-                            value={newPerson.phone}
-                            onChange={handleInputChange}
-                            error={Boolean(errors.phone)}
-                            helperText={errors.phone}
-                        />
-                    </div>
-                </DialogContent>
-                <DialogActions>
-                    <button type="button" className="btn btn-secondary" onClick={handleCloseDialog}>
-                        Cancel
-                    </button>
-                    <button type="button" className="btn btn-primary" onClick={handleAddPerson} disabled={isLoading}>
-                        {isLoading ? 'Adding...' : 'Add Person'}
-                    </button>
-                </DialogActions>
-            </Dialog>
-        </div>
+                        </DialogTitle>
+                        <DialogContent className="py-4">
+                            <div className="mb-3">
+                                <TextField
+                                    label="Last Name"
+                                    name="lastname"
+                                    value={newPerson.lastname}
+                                    onChange={handleInputChange}
+                                    error={!!errors.lastname}
+                                    helperText={errors.lastname}
+                                    fullWidth
+                                    required
+                                    margin="dense"
+                                    InputProps={{
+                                        startAdornment: <i className="ti ti-user me-2 text-muted"></i>
+                                    }}
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <TextField
+                                    label="First Name"
+                                    name="firstname"
+                                    value={newPerson.firstname}
+                                    onChange={handleInputChange}
+                                    fullWidth
+                                    margin="dense"
+                                    InputProps={{
+                                        startAdornment: <i className="ti ti-user me-2 text-muted"></i>
+                                    }}
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <TextField
+                                    label="Phone Number"
+                                    name="phone"
+                                    value={newPerson.phone}
+                                    onChange={handleInputChange}
+                                    error={!!errors.phone}
+                                    helperText={errors.phone}
+                                    fullWidth
+                                    required
+                                    margin="dense"
+                                    InputProps={{
+                                        startAdornment: <i className="ti ti-phone me-2 text-muted"></i>
+                                    }}
+                                />
+                            </div>
+                        </DialogContent>
+                        <DialogActions className="bg-light border-top p-3">
+                            <button 
+                                className="btn btn-outline-secondary"
+                                onClick={handleCloseDialog}
+                                disabled={isLoading}
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                className="btn btn-primary"
+                                onClick={handleAddPerson}
+                                disabled={isLoading || !!errors.phone || !!errors.lastname}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        Adding...
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="ti ti-user-plus me-2"></i>
+                                        Add Customer
+                                    </>
+                                )}
+                            </button>
+                        </DialogActions>
+                    </Dialog>
+                </>
+            )}
+        </>
     );
 }

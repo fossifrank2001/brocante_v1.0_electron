@@ -27,7 +27,7 @@ export type InferApiResponse<T> = T extends Array<infer U>
 
 const instance = axios.create({
     baseURL: constants.BASE_URL,
-    timeout: 5000,
+    timeout: 300000,
     headers: {
         'Content-Type': 'application/json',
         'X-localization': 'en',

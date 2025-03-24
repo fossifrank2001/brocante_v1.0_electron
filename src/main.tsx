@@ -10,6 +10,7 @@ import Loading from "Components/utils/Loading";
 import 'Styles/index.less';
 import App from "Components/App.tsx";
 
+// eslint-disable-next-line react-refresh/only-export-components
 const Root: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
 

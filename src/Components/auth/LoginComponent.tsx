@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useFormik } from 'formik';
 import { useAppContext } from "@/contexts/appContext";
-import { ILoginPayload } from 'Data/Interfaces';
 import { Pages } from 'Data/Objects/state';
 import { Link, FormControlLabel, Checkbox } from '@mui/material';
 import { setActivePage } from 'Data/Slices/NavigationSlice';
 import { useAppDispatch } from '@/hooks';
 import { motion } from 'framer-motion';
-import "Styles/auth.less"
+import "Styles/auth.less";
 import Logo from '@/Components/common/Logo';
 
 interface FormValues {
@@ -187,7 +186,7 @@ export default function LoginComponent() {
                         <div className="form-group">
                             <motion.button
                                     type="submit"
-                                    className="btn btn-primary w-100"
+                                    className="btn btn-primary w-100 py-3"
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.95 }}
                                     disabled={isLoading}
