@@ -1,7 +1,7 @@
 import axiosInstance from 'Data/Utilities/axiosInstance';
 
-type RecordType = 'invoice' | 'receipt';
-type ActionType = 'open' | 'download';
+export type RecordType = 'invoice' | 'receipt';
+export type ActionType = 'open' | 'download';
 
 class StreamedDocumentAPI {
     /**

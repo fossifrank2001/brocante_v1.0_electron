@@ -14,7 +14,6 @@ import {Pages} from "Data/Objects/state.ts";
 import {useAppContext} from "@/contexts/appContext.tsx";
 import {IProduct} from "Data/Interfaces/Supply.ts";
 
-
 interface FormValues  extends  IProductPayload{}
 
 const stepVariants = {

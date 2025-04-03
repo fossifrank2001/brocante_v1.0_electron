@@ -1,170 +1,267 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import Breadcrumd from '@/Components/Breadcrumd'
-import InfoItem from '@/Components/InfoItem'
-import UserAPI from '@/Data/Api/Users'
-import { IUser } from '@/Data/Interfaces'
-import { useAppDispatch, useAppSelector } from '@/hooks'
-import { Grid, Skeleton } from '@mui/material'
-import dayjs from 'dayjs'
-import { setActivePage } from '@/Data/Slices/NavigationSlice'
-import { Pages } from '@/Data/Objects/state'
-import UtilMethods from '@/Data/Utilities/UtilMethods'
-import Toast from '@/Data/Utilities/Toast'
-import Constants from '@/Data/Utilities/constants'
+import { useCallback, useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Avatar, Grid, Paper, Skeleton, Tooltip, Typography } from '@mui/material';
+import dayjs from 'dayjs';
+import Breadcrumd from '@/Components/Breadcrumd';
+import InfoItem from '@/Components/InfoItem';
+import UserAPI from '@/Data/Api/Users';
+import { IUser } from '@/Data/Interfaces';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { setActivePage } from '@/Data/Slices/NavigationSlice';
+import { Pages } from '@/Data/Objects/state';
+import UtilMethods from '@/Data/Utilities/UtilMethods';
+import Toast from '@/Data/Utilities/Toast';
+import Constants from '@/Data/Utilities/constants';
+import '@/Styles/details.scss';
+
+const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.3, ease: "easeOut" }
+    }
+};
 
 const ReadUser = () => {
-    const { currentPage, id } = useAppSelector((state) => state.navigaton)
-    const [record, setRecord] = useState<IUser | null>(null)
-    const [inProgress, setInProgress] = useState(false)
-    const { authorizations } = useAppSelector(state => state.userAuthorizing)
-    const [isLoading, setIsLoading] = useState(true)
-    const [reload, setReload] = useState(false)
-    const dispatch = useAppDispatch()
+    const { currentPage, id } = useAppSelector((state) => state.navigaton);
+    const [record, setRecord] = useState<IUser | null>(null);
+    const [inProgress, setInProgress] = useState(false);
+    const { authorizations } = useAppSelector(state => state.userAuthorizing);
+    const [isLoading, setIsLoading] = useState(true);
+    const [reload, setReload] = useState(false);
+    const dispatch = useAppDispatch();
 
     const getRecord = useCallback(async () => {
         try {
-            setIsLoading(true)
-            const { data } = await UserAPI.show(id)
-            setRecord(data)
+            setIsLoading(true);
+            const { data } = await UserAPI.show(id);
+            setRecord(data);
         } catch (e) {
-            console.error(e.message)
+            console.error(e.message);
         } finally {
-            setIsLoading(false)
+            setIsLoading(false);
         }
-    }, [id, reload])
+    }, [id, reload]);
 
     useEffect(() => {
-        getRecord()
-    }, [getRecord])
+        getRecord();
+    }, [getRecord]);
 
     const handleTreatAccountStatus = async () => {
         try {
-            setInProgress(true)
-            let actions = null
+            setInProgress(true);
+            let actions = null;
             if (record.status === 'active') {
-                actions = UserAPI.disable
+                actions = UserAPI.disable;
             } else {
-                actions = UserAPI.reactivate
+                actions = UserAPI.reactivate;
             }
-            const { message } = await actions(id)
-            setReload(prev => !prev)
-            Toast.success(message)
+            const { message } = await actions(id);
+            setReload(prev => !prev);
+            Toast.success(message);
         } catch (e) {
-            console.error(e)
+            console.error(e);
         } finally {
-            setInProgress(false)
+            setInProgress(false);
         }
-    }
+    };
 
     const SkeletonLoader = () => (
-        <Grid container spacing={2}>
-            {[...Array(6)].map((_, index) => (
-                <Grid item xs={12} md={6} key={index}>
-                    <Skeleton variant="rectangular" height={60} />
+        <Grid container spacing={3}>
+            <Grid item xs={12} md={4}>
+                <Skeleton variant="circular" width={150} height={150} sx={{ margin: '0 auto' }} />
+                <Skeleton variant="text" width={120} height={24} sx={{ margin: '1rem auto' }} />
+            </Grid>
+            <Grid item xs={12} md={8}>
+                <Grid container spacing={2}>
+                    {[...Array(6)].map((_, index) => (
+                        <Grid item xs={12} sm={6} key={index}>
+                            <Skeleton variant="rectangular" height={80} />
+                        </Grid>
+                    ))}
                 </Grid>
-            ))}
-            <Grid item xs={12}>
-                <Skeleton variant="rectangular" height={40} width={200} style={{ marginLeft: 'auto' }} />
             </Grid>
         </Grid>
-    )
+    );
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'active':
+                return 'success';
+            case 'disabled':
+                return 'error';
+            default:
+                return 'default';
+        }
+    };
 
     return (
-        <div className="container">
+        <motion.div 
+            className="container details-container"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+        >
             <Breadcrumd parent="Users" url={currentPage} _child={id} />
-            <div className='card'>
-                <div className='card-body'>
-                    {isLoading ? (
-                        <SkeletonLoader />
-                    ) : record ? (
-                        <Grid container spacing={2}>
-                            <Grid item xs={12} md={6} lg={6} xl={6} className="__item-separator">
-                                <InfoItem
-                                    label="Last name"
-                                    value={record.last_name}
-                                    second={{
-                                        label: `First name`,
-                                        value: record.first_name,
-                                    }}
-                                />
-                                <InfoItem
-                                    label="Phone"
-                                    value={record.phone}
-                                    second={{
-                                        label: `Email`,
-                                        value: record.email,
-                                    }}
-                                />
-                                <InfoItem
-                                    label="Gender"
-                                    value={record.gender}
-                                    second={{
-                                        label: `First connexion`,
-                                        value: record.first_connexion ? 'Yes' : 'No',
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6} lg={6} xl={6} className="">
-                                <InfoItem
-                                    label="Role(s)"
-                                    value={
-                                        record?.accesses?.map((access, index) => (
-                                            <React.Fragment key={index}>
-                                                {index > 0 && ' - '}
-                                                <span className="mb-1 badge rounded-pill text-bg-light">
-                                                    {access?.role?.label}
-                                                </span>
-                                            </React.Fragment>
-                                        ))
-                                    }
-                                    second={{
-                                        label: `Status`,
-                                        value: <span className={`${UtilMethods.getStatus(record.status)}`}>{record.status}</span>,
-                                    }}
-                                />
-                                <InfoItem
-                                    label="Created At"
-                                    value={`${dayjs(record.created_at).format('DD/MM/YYYY HH:mm:ss')}`}
-                                    second={{
-                                        label: `Updated At`,
-                                        value: dayjs(record.updated_at).format('DD/MM/YYYY HH:mm:ss'),
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} className="d-flex align-items-center justify-content-end">
-                                <button className='btn d-flex align-items-center btn-outline-dark' onClick={() => {
-                                    dispatch(setActivePage({
-                                        page: Pages.ACCOUNT,
-                                        id,
-                                        param: {
-                                            sub_page: 'UPDATE'
-                                        }
-                                    }))
-                                }}>
-                                    <i className='ti ti-pencil'></i>
-                                    <span className='ms-1'>UPDATE</span>
-                                </button>
-                                {(UtilMethods.getHabilitations(authorizations, "account").canDisable && !UtilMethods.isAuth(id)) && <>
-                                    {!inProgress ? <button className={`btn ms-2 d-flex align-items-center ${record.status === Constants.STATUS_ACCESS.ACTIVE ? 'btn-danger' : 'btn-success'}`} onClick={handleTreatAccountStatus}>
-                                            <i className='ti ti-disabled-off'></i>
-                                            <span className='ms-1'>{record.status === Constants.STATUS_ACCESS.ACTIVE ? 'DISABLE' : 'REACTIVATE'}</span>
-                                        </button>
-                                        :
-                                        <button className="btn rounded-2" type="button" disabled>
-                                            <span className="spinner-grow spinner-grow-sm ms-4" role="status" aria-hidden="true"></span>
-                                            {record.status === Constants.STATUS_ACCESS.ACTIVE ? 'DISABLE...' : 'REACTIVATE...'}
-                                        </button>
-                                    }
-                                </>}
-                            </Grid>
-                        </Grid>
-                    ) : (
-                        <p>No user data available.</p>
-                    )}
+            
+            <Paper elevation={0} className="details-card">
+                <div className="card-title">
+                    <button 
+                        className="btn btn-secondary"
+                        onClick={() => dispatch(setActivePage({ page: Pages.ACCOUNT }))}
+                    >
+                        <i className="ti ti-arrow-left"></i>
+                        Back
+                    </button>
                 </div>
-            </div>
-        </div>
-    )
-}
 
-export default ReadUser
+                {isLoading ? (
+                    <SkeletonLoader />
+                ) : record ? (
+                    <Grid container spacing={3}>
+                        <Grid item xs={12} md={4} className="user-profile-section">
+                            <div className="profile-image">
+                                <Avatar
+                                    src={record.thumbnail ? `${Constants.URL}/${record.thumbnail.path}` : undefined}
+                                    alt={`${record.first_name} ${record.last_name}`}
+                                    sx={{ width: 150, height: 150 }}
+                                >
+                                    {record.first_name?.[0]}{record.last_name?.[0]}
+                                </Avatar>
+                            </div>
+                            <Typography variant="h5" className="user-name">
+                                {record.first_name} {record.last_name}
+                            </Typography>
+                            <div className={`status-badge status-${getStatusColor(record.status)}`}>
+                                {record.status}
+                            </div>
+                        </Grid>
+
+                        <Grid item xs={12} md={8}>
+                            <div className="info-grid">
+                                <div className="info-section">
+                                    <Typography variant="h6" className="section-title">
+                                        <i className="ti ti-user"></i>
+                                        Personal Information
+                                    </Typography>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12} sm={6}>
+                                            <InfoItem
+                                                label="Phone"
+                                                value={record.phone}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <InfoItem
+                                                label="Email"
+                                                value={record.email}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <InfoItem
+                                                label="Gender"
+                                                value={record.gender}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <InfoItem
+                                                label="First connexion"
+                                                value={record.first_connexion ? 'Yes' : 'No'}
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                </div>
+
+                                <div className="info-section">
+                                    <Typography variant="h6" className="section-title">
+                                        <i className="ti ti-shield"></i>
+                                        Roles & Access
+                                    </Typography>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12}>
+                                            <div className="roles-list">
+                                                {record?.accesses?.map((access, index) => (
+                                                    <Tooltip 
+                                                        key={index} 
+                                                        title={`Role assigned on ${dayjs(access.created_at).format('DD/MM/YYYY')}`}
+                                                        arrow
+                                                    >
+                                                        <span className="role-badge">
+                                                            {access?.role?.label}
+                                                        </span>
+                                                    </Tooltip>
+                                                ))}
+                                            </div>
+                                        </Grid>
+                                    </Grid>
+                                </div>
+
+                                <div className="info-section">
+                                    <Typography variant="h6" className="section-title">
+                                        <i className="ti ti-calendar"></i>
+                                        Timestamps
+                                    </Typography>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12} sm={6}>
+                                            <InfoItem
+                                                label="Created At"
+                                                value={dayjs(record.created_at).format('DD/MM/YYYY HH:mm:ss')}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <InfoItem
+                                                label="Updated At"
+                                                value={dayjs(record.updated_at).format('DD/MM/YYYY HH:mm:ss')}
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                </div>
+                            </div>
+
+                            <div className="action-buttons">
+                                <button 
+                                    className="btn btn-primary"
+                                    onClick={() => {
+                                        dispatch(setActivePage({
+                                            page: Pages.ACCOUNT,
+                                            id,
+                                            param: { sub_page: 'UPDATE' }
+                                        }));
+                                    }}
+                                >
+                                    <i className="ti ti-pencil"></i>
+                                    Edit Profile
+                                </button>
+
+                                {(UtilMethods.getHabilitations(authorizations, "account").canDisable && !UtilMethods.isAuth(id)) && (
+                                    !inProgress ? (
+                                        <button 
+                                            className={`btn ${record.status === Constants.STATUS_ACCESS.ACTIVE ? 'btn-danger' : 'btn-success'}`}
+                                            onClick={handleTreatAccountStatus}
+                                        >
+                                            <i className={`ti ti-${record.status === Constants.STATUS_ACCESS.ACTIVE ? 'user-off' : 'user-check'}`}></i>
+                                            {record.status === Constants.STATUS_ACCESS.ACTIVE ? 'Disable Account' : 'Reactivate Account'}
+                                        </button>
+                                    ) : (
+                                        <button className="btn btn-loading" disabled>
+                                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                            {record.status === Constants.STATUS_ACCESS.ACTIVE ? 'Disabling...' : 'Reactivating...'}
+                                        </button>
+                                    )
+                                )}
+                            </div>
+                        </Grid>
+                    </Grid>
+                ) : (
+                    <div className="no-data">
+                        <i className="ti ti-user-off"></i>
+                        <Typography>No user data available.</Typography>
+                    </div>
+                )}
+            </Paper>
+        </motion.div>
+    );
+};
+
+export default ReadUser;

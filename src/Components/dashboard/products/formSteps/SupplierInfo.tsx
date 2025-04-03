@@ -5,6 +5,8 @@ import { Multiselect } from 'multiselect-react-dropdown';
 import SupplyAPI from "Data/Api/Suppliers.ts";
 import {ISupply} from "Data/Interfaces/Supply.ts";
 import { IProductPayload } from 'Interfaces';
+import { Tooltip } from '@mui/material';
+import './SupplierInfo.scss';
 
 interface Supplier extends  ISupply{}
 
@@ -15,8 +17,32 @@ const buttonVariants = {
 
 const itemVariants = {
     hidden: { opacity: 0, y: -20 },
-    visible: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: 20 },
+    visible: { 
+        opacity: 1, 
+        y: 0,
+        transition: {
+            type: "spring",
+            stiffness: 300,
+            damping: 30
+        }
+    },
+    exit: { 
+        opacity: 0, 
+        y: 20,
+        transition: {
+            duration: 0.2
+        }
+    },
+};
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1
+        }
+    }
 };
 
 interface ISupplyInfoProps {
@@ -41,8 +67,6 @@ const SupplierInfo: React.FC <ISupplyInfoProps> = ({suppliersRecord}) => {
         setSelectedSupplier(selectedList);
     };
 
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const getSuppliers = useCallback(async (_q:string)=>{
         try {
             setLoading(true)
@@ -63,17 +87,26 @@ const SupplierInfo: React.FC <ISupplyInfoProps> = ({suppliersRecord}) => {
     }, [getSuppliers, _qSupply, suppliersRecord]);
 
     return (
-        <div className="row">
-            <div className="col-12 mx-auto">
-                <div className="row">
+        <div className="supplier-info">
+            <div className="card border-0 shadow-sm mb-4">
+                <div className="card-header bg-light border-0">
+                    <h6 className="mb-0 d-flex align-items-center">
+                        <i className="ti ti-users me-2 text-primary"></i>
+                        Supplier Management
+                    </h6>
+                </div>
+                <div className="card-body">
                     <AnimatePresence>
                         <FieldArray name="suppliers">
                             {({ remove, push }) => (
-                                <div className="col-12 mb-3">
-                                    <div className='row'>
-                                        <div className="col-12 mb-3">
+                                <div>
+                                    <div className="row mb-4">
+                                        <div className="col-md-9">
                                             <div className="form-group">
-                                                <label>Choose Suppliers or create a new one</label>
+                                                <label className="d-flex align-items-center gap-2 mb-2">
+                                                    <i className="ti ti-search text-primary"></i>
+                                                    Select Existing Suppliers
+                                                </label>
                                                 <Multiselect
                                                     options={suppliers ?? []}
                                                     selectedValues={selectedSuppliers ?? []}
@@ -81,73 +114,95 @@ const SupplierInfo: React.FC <ISupplyInfoProps> = ({suppliersRecord}) => {
                                                     onRemove={handleSupplierSelect}
                                                     displayValue="name"
                                                     loading={loading}
+                                                    placeholder="Search and select suppliers..."
+                                                    style={{
+                                                        chips: { background: '#4318FF' },
+                                                        searchBox: { 
+                                                            border: '1px solid #e2e8f0',
+                                                            borderRadius: '8px',
+                                                            padding: '8px'
+                                                        }
+                                                    }}
                                                 />
                                             </div>
                                         </div>
-                                        <motion.button
-                                            className='btn col-3 btn-success ms-3 btn-add d-flex justify-content-center align-items-center'
-                                            type="button"
-                                            onClick={() => push({name: '', contact_info: ''})}
-                                            variants={buttonVariants}
-                                            style={{
-                                                borderRadius: "12px",
-                                                width: '100px',
-                                                height: '100px'
-                                            }}
-                                            whileHover="hover"
-                                            whileTap="tap"
-                                        >
-                                            <i className='ti ti-plus text-white' style={{transform: "scale(2)"}}></i>
-                                        </motion.button>
+                                        <div className="col-md-3 d-flex align-items-end">
+                                            <Tooltip title="Add New Supplier" arrow placement="top">
+                                                <motion.button
+                                                    className='btn btn-primary w-100'
+                                                    type="button"
+                                                    onClick={() => push({name: '', contact_info: ''})}
+                                                    variants={buttonVariants}
+                                                    whileHover="hover"
+                                                    whileTap="tap"
+                                                >
+                                                    <i className='ti ti-plus me-2'></i>
+                                                    New Supplier
+                                                </motion.button>
+                                            </Tooltip>
+                                        </div>
+                                    </div>
+
+                                    <motion.div 
+                                        className="row g-3"
+                                        variants={containerVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                    >
                                         {values.suppliers.map((supplier: Supplier, index: number) => (
                                             <motion.div
-                                                className='col-4'
+                                                className='col-md-6 col-lg-4'
                                                 key={index}
-                                                initial="hidden"
-                                                animate="visible"
-                                                exit="exit"
                                                 variants={itemVariants}
+                                                layout
                                             >
-                                                <div className="position-relative p-2 my-2 border border-1 rounded-2">
-                                                    <div className="mx-auto">
-                                                        <div key={index} className="form-group">
-                                                            <label htmlFor={`suppliers[${index}].name`}>Supplier
-                                                                Name</label>
+                                                <div className="card h-100 border position-relative supplier-card">
+                                                    <div className="card-body">
+                                                        <Tooltip title="Remove Supplier" arrow placement="top">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => remove(index)}
+                                                                className='btn btn-icon btn-sm btn-danger position-absolute top-0 end-0 m-2'
+                                                                style={{ borderRadius: '50%' }}
+                                                            >
+                                                                <i className='ti ti-x'></i>
+                                                            </button>
+                                                        </Tooltip>
+
+                                                        <div className="form-group mb-3">
+                                                            <label className="d-flex align-items-center gap-2 text-muted mb-2">
+                                                                <i className="ti ti-building-store text-primary"></i>
+                                                                Supplier Name
+                                                            </label>
                                                             <input
                                                                 type="text"
                                                                 name={`suppliers[${index}].name`}
                                                                 className="form-control"
                                                                 onChange={handleChange}
                                                                 value={supplier.name}
+                                                                placeholder="Enter supplier name"
                                                             />
-                                                            <label htmlFor={`suppliers[${index}].contact_info`}>Contact
-                                                                Info</label>
+                                                        </div>
+
+                                                        <div className="form-group">
+                                                            <label className="d-flex align-items-center gap-2 text-muted mb-2">
+                                                                <i className="ti ti-phone text-primary"></i>
+                                                                Contact Info
+                                                            </label>
                                                             <input
                                                                 type="text"
                                                                 name={`suppliers[${index}].contact_info`}
                                                                 className="form-control"
                                                                 onChange={handleChange}
                                                                 value={supplier.contact_info}
+                                                                placeholder="Enter contact information"
                                                             />
-                                                            <span
-                                                                onClick={() => remove(index)}
-                                                                className='wrapper-btn p-1 d-flex justify-content-center align-items-center bg-danger text-white'
-                                                                style={{
-                                                                    position: 'absolute',
-                                                                    right: '4px',
-                                                                    top: '4px',
-                                                                    borderRadius: '50%',
-                                                                    cursor: 'pointer'
-                                                                }}
-                                                            >
-                                                                <i className='ti ti-x text-white'></i>
-                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </motion.div>
                                         ))}
-                                    </div>
+                                    </motion.div>
                                 </div>
                             )}
                         </FieldArray>

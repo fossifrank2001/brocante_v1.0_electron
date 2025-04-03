@@ -1,25 +1,39 @@
+import { useEffect, useLayoutEffect, useState } from 'react';
+import { useFormik } from 'formik';
+import { Skeleton, TextField, Tooltip } from '@mui/material';
+import { motion } from 'framer-motion';
 import Breadcrumd from '@/Components/Breadcrumd';
 import UserAPI from '@/Data/Api/Users';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import {useEffect, useLayoutEffect, useState} from 'react';
-import { useFormik } from 'formik';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
 import { IUsersPayload } from '@/Data/Interfaces/Users';
 import { useAppContext } from '@/contexts/appContext';
-import {IUser} from 'Interfaces';
-import {Skeleton} from "@mui/material";
+import { IUser } from 'Interfaces';
 import ThumbnailDropzone from "Components/ThumbnailDropzone.tsx";
 import constants from "Data/Utilities/constants.ts";
-import {IImage} from "Data/Interfaces/Image.ts";
+import { IImage } from "Data/Interfaces/Image.ts";
+import '@/styles/forms.scss';
 
-interface FormValues extends Partial<IUser>{
+interface FormValues extends Partial<IUser> {
     last_name: string;
     first_name: string;
     email: string;
     phone: string;
     gender: string;
 }
+
+const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.3,
+            ease: "easeOut"
+        }
+    }
+};
 
 const UpdateUser = () => {
     const { currentPage, id } = useAppSelector((state) => state.navigaton);
@@ -32,7 +46,7 @@ const UpdateUser = () => {
         gender: ''
     });
     const dispatch = useAppDispatch();
-    const context = useAppContext()
+    const context = useAppContext();
     const [isDataLoading, setIsDataLoading] = useState(true);
     const [record, setRecord] = useState<IUser | null>(null);
     const [image, setImage] = useState<IImage | null>(null);
@@ -49,9 +63,9 @@ const UpdateUser = () => {
         const fetchUser = async () => {
             try {
                 setIsDataLoading(true);
-                const {data: response} = await UserAPI.show(id);
-                setRecord(response)
-                setImage(response.thumbnail)
+                const { data: response } = await UserAPI.show(id);
+                setRecord(response);
+                setImage(response.thumbnail);
                 setInitialValues({
                     last_name: response.last_name,
                     first_name: response.first_name,
@@ -61,7 +75,7 @@ const UpdateUser = () => {
                 });
             } catch (error) {
                 console.error("Failed to fetch user", error);
-            }finally {
+            } finally {
                 setIsDataLoading(false);
             }
         };
@@ -75,7 +89,7 @@ const UpdateUser = () => {
         setIsLoading(true);
         try {
             await UserAPI.update(id, values);
-            context.togglePageLoading(true)
+            context.togglePageLoading(true);
             dispatch(setActivePage({ page: Pages.ACCOUNT }));
         } catch (error) {
             console.error("Failed to update user", error);
@@ -97,11 +111,11 @@ const UpdateUser = () => {
             if (!values.phone) {
                 errors.phone = 'Phone field is required.';
             } else if (!/^6[0-9]{8}$/i.test(values.phone)) {
-                errors.phone = 'Wrong phone number address';
+                errors.phone = 'Invalid phone number format (e.g. 612345678)';
             }
 
             if (values.email && !(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(values.email))) {
-                errors.email = 'Wrong email address';
+                errors.email = 'Invalid email address format';
             }
 
             if (!values.gender) {
@@ -114,191 +128,250 @@ const UpdateUser = () => {
 
     if (isDataLoading) {
         return (
-            <div className="container">
+            <motion.div 
+                className="container form-container"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+            >
                 <Breadcrumd parent="Users" url={currentPage} _child={id} />
-                <div className='card'>
-                    <div className='card-body'>
-                        <div className="row">
-                            <div className="col-10 mx-auto">
-                                <div className="row gap-10">
-                                    {[...Array(5)].map((_, index) => (
-                                        <div key={index} className="col-6 mb-3">
-                                            <Skeleton variant="text" width={100} height={20} className="mb-2" />
-                                            <Skeleton variant="rectangular" height={40} />
-                                        </div>
-                                    ))}
+                <div className="form-card">
+                    <div className="card-body">
+                        <div className="row g-4">
+                            {[...Array(5)].map((_, index) => (
+                                <div key={index} className="col-md-6">
+                                    <Skeleton variant="text" width={100} height={20} className="mb-2" />
+                                    <Skeleton variant="rectangular" height={40} />
                                 </div>
-                                <Skeleton variant="rectangular" width={200} height={50} className="mt-4" />
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         );
     }
 
     return (
-        <div className="container">
-        <Breadcrumd parent="Users" url={currentPage} _child={id} />
-            <div className='card'>
-                <div className='card-header'>
-                    <button className='btn d-flex align-items-center btn-outline-dark' onClick={() => {
-                        dispatch(setActivePage({ page: Pages.ACCOUNT }));
-                    }}>
-                        <i className='ti ti-arrow-left'></i>
-                        <span className='ms-1'>BACK</span>
+        <motion.div 
+            className="container form-container"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+        >
+            <Breadcrumd parent="Users" url={currentPage} _child={id} />
+            <div className="form-card">
+                <div className="card-title">
+                    <button 
+                        className="btn btn-secondary"
+                        onClick={() => dispatch(setActivePage({ page: Pages.ACCOUNT }))}
+                    >
+                        <i className="ti ti-arrow-left"></i>
+                        Back
                     </button>
                 </div>
-                <div className='card-body row row-gap-2'>
-                    <div className='col-8'>
+
+                <div className="row g-4">
+                    <div className="col-md-8">
                         <form onSubmit={formik.handleSubmit}>
-                            <div className="row">
-                                <div className="col-10 mx-auto">
-                                    <div className="row gap-10">
-                                        <div className="col-6 mb-3">
-                                            <label htmlFor="last_name" className="form-label">Last name <span
-                                                className="text-danger">*</span></label>
-                                            <div className="input-group">
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
+                            <div className="row g-4">
+                                <div className="col-md-6">
+                                    <div className="form-group">
+                                        <label htmlFor="last_name">
+                                            <i className="ti ti-user"></i>
+                                            Last Name
+                                            <span className="required-star">*</span>
+                                        </label>
+                                        <Tooltip title="Enter user's last name" arrow placement="top">
+                                            <div>
+                                                <TextField
+                                                    fullWidth
                                                     id="last_name"
-                                                    name='last_name'
-                                                    onChange={formik.handleChange}
-                                                    onBlur={formik.handleBlur}
+                                                    name="last_name"
+                                                    variant="outlined"
+                                                    size="small"
                                                     value={formik.values.last_name}
-                                                    style={{...formik.errors.last_name && {borderColor: "var(--bs-danger)"}}}
-                                                />
-                                            </div>
-                                            {formik.errors.last_name &&
-                                                <div className='text fs-10 text-danger d-flex align-items-center'>
-                                                    <i className='ti ti-alert-circle me-2'></i>
-                                                    <span>{formik.errors.last_name}</span>
-                                                </div>
-                                            }
-                                        </div>
-                                        <div className="col-6 mb-3">
-                                            <label htmlFor="first_name" className="form-label">First name</label>
-                                            <div className="input-group">
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    id="first_name"
-                                                    name='first_name'
                                                     onChange={formik.handleChange}
                                                     onBlur={formik.handleBlur}
-                                                    value={formik.values.first_name}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="col-6 mb-3">
-                                            <label htmlFor="email" className="form-label">Email</label>
-                                            <div className="input-group">
-                                                <input
-                                                    type="email"
+                                                    error={formik.touched.last_name && Boolean(formik.errors.last_name)}
+                                                    placeholder="Enter last name"
                                                     className="form-control"
-                                                    id="email"
-                                                    name='email'
-                                                    onChange={formik.handleChange}
-                                                    onBlur={formik.handleBlur}
-                                                    value={formik.values.email}
-                                                    style={{...formik.errors.email && {borderColor: "var(--bs-danger)"}}}
                                                 />
-                                            </div>
-                                            {formik.errors.email &&
-                                                <div className='text fs-10 text-danger d-flex align-items-center'>
-                                                    <i className='ti ti-alert-circle me-2'></i>
-                                                    <span>{formik.errors.email}</span>
-                                                </div>
-                                            }
-                                        </div>
-                                        <div className="col-6 mb-3">
-                                            <div className="row justify-content-between align-items-start">
-                                                <div className="col-6">
-                                                    <label htmlFor="phone" className="form-label">Phone <span
-                                                        className="text-danger">*</span></label>
-                                                    <div className="input-group">
-                                                        <input
-                                                            type="text"
-                                                            className="form-control"
-                                                            id="phone"
-                                                            name='phone'
-                                                            onChange={formik.handleChange}
-                                                            onBlur={formik.handleBlur}
-                                                            value={formik.values.phone}
-                                                            style={{...formik.errors.phone && {borderColor: "var(--bs-danger)"}}}
-                                                        />
+                                                {formik.touched.last_name && formik.errors.last_name && (
+                                                    <div className="error-feedback">
+                                                        <i className="ti ti-alert-circle"></i>
+                                                        <span>{formik.errors.last_name}</span>
                                                     </div>
-                                                    {formik.errors.phone &&
-                                                        <div
-                                                            className='text fs-10 text-danger d-flex align-items-center'>
-                                                            <i className='ti ti-alert-circle me-2'></i>
-                                                            <span>{formik.errors.phone}</span>
-                                                        </div>
-                                                    }
-                                                </div>
-                                                <div className="col-6">
-                                                    <label htmlFor="gender" className="form-label">Gender <span
-                                                        className="text-danger">*</span></label>
-                                                    <div className="input-group">
-                                                        <select
-                                                            className="form-select"
-                                                            id="gender"
-                                                            name='gender'
-                                                            onChange={formik.handleChange}
-                                                            onBlur={formik.handleBlur}
-                                                            value={formik.values.gender}
-                                                            style={{...formik.errors.gender && {borderColor: "var(--bs-danger)"}}}
-                                                        >
-                                                            <option value="" label="Select gender"/>
-                                                            <option value="male" label="Male"/>
-                                                            <option value="female" label="Female"/>
-                                                        </select>
-                                                    </div>
-                                                    {formik.errors.gender &&
-                                                        <div
-                                                            className='text fs-10 text-danger d-flex align-items-center'>
-                                                            <i className='ti ti-alert-circle me-2'></i>
-                                                            <span>{formik.errors.gender}</span>
-                                                        </div>
-                                                    }
-                                                </div>
+                                                )}
                                             </div>
-                                        </div>
+                                        </Tooltip>
                                     </div>
-                                    {!isLoading ? (
-                                        <button type='submit'
-                                                className="btn btn-primary ms-auto py-8 fs-4 mb-4 rounded-2">UPDATE
-                                            USER</button>
-                                    ) : (
-                                        <button className="btn btn-primary py-8 ms-auto fs-4 mb-4 rounded-2"
-                                                type="button"
-                                                disabled>
-                                        <span className="spinner-grow spinner-grow-sm ms-4" role="status"
-                                              aria-hidden="true"></span>
-                                            UPDATE USER...
-                                        </button>
-                                    )}
                                 </div>
+
+                                <div className="col-md-6">
+                                    <div className="form-group">
+                                        <label htmlFor="first_name">
+                                            <i className="ti ti-user"></i>
+                                            First Name
+                                        </label>
+                                        <Tooltip title="Enter user's first name" arrow placement="top">
+                                            <div>
+                                                <TextField
+                                                    fullWidth
+                                                    id="first_name"
+                                                    name="first_name"
+                                                    variant="outlined"
+                                                    size="small"
+                                                    value={formik.values.first_name}
+                                                    onChange={formik.handleChange}
+                                                    placeholder="Enter first name"
+                                                    className="form-control"
+                                                />
+                                            </div>
+                                        </Tooltip>
+                                    </div>
+                                </div>
+
+                                <div className="col-md-6">
+                                    <div className="form-group">
+                                        <label htmlFor="email">
+                                            <i className="ti ti-mail"></i>
+                                            Email
+                                        </label>
+                                        <Tooltip title="Enter user's email address" arrow placement="top">
+                                            <div>
+                                                <TextField
+                                                    fullWidth
+                                                    id="email"
+                                                    name="email"
+                                                    type="email"
+                                                    variant="outlined"
+                                                    size="small"
+                                                    value={formik.values.email}
+                                                    onChange={formik.handleChange}
+                                                    onBlur={formik.handleBlur}
+                                                    error={formik.touched.email && Boolean(formik.errors.email)}
+                                                    placeholder="Enter email address"
+                                                    className="form-control"
+                                                />
+                                                {formik.touched.email && formik.errors.email && (
+                                                    <div className="error-feedback">
+                                                        <i className="ti ti-alert-circle"></i>
+                                                        <span>{formik.errors.email}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </Tooltip>
+                                    </div>
+                                </div>
+
+                                <div className="col-md-3">
+                                    <div className="form-group">
+                                        <label htmlFor="phone">
+                                            <i className="ti ti-phone"></i>
+                                            Phone
+                                            <span className="required-star">*</span>
+                                        </label>
+                                        <Tooltip title="Enter user's phone number (format: 612345678)" arrow placement="top">
+                                            <div>
+                                                <TextField
+                                                    fullWidth
+                                                    id="phone"
+                                                    name="phone"
+                                                    variant="outlined"
+                                                    size="small"
+                                                    value={formik.values.phone}
+                                                    onChange={formik.handleChange}
+                                                    onBlur={formik.handleBlur}
+                                                    error={formik.touched.phone && Boolean(formik.errors.phone)}
+                                                    placeholder="612345678"
+                                                    className="form-control"
+                                                />
+                                                {formik.touched.phone && formik.errors.phone && (
+                                                    <div className="error-feedback">
+                                                        <i className="ti ti-alert-circle"></i>
+                                                        <span>{formik.errors.phone}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </Tooltip>
+                                    </div>
+                                </div>
+
+                                <div className="col-md-3">
+                                    <div className="form-group">
+                                        <label htmlFor="gender">
+                                            <i className="ti ti-gender-bigender"></i>
+                                            Gender
+                                            <span className="required-star">*</span>
+                                        </label>
+                                        <Tooltip title="Select user's gender" arrow placement="top">
+                                            <div>
+                                                <select
+                                                    className={`form-select ${formik.touched.gender && formik.errors.gender ? 'is-invalid' : ''}`}
+                                                    id="gender"
+                                                    name="gender"
+                                                    value={formik.values.gender}
+                                                    onChange={formik.handleChange}
+                                                    onBlur={formik.handleBlur}
+                                                >
+                                                    <option value="">Select gender</option>
+                                                    <option value="male">Male</option>
+                                                    <option value="female">Female</option>
+                                                </select>
+                                                {formik.touched.gender && formik.errors.gender && (
+                                                    <div className="error-feedback">
+                                                        <i className="ti ti-alert-circle"></i>
+                                                        <span>{formik.errors.gender}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </Tooltip>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="form-actions">
+                                <button
+                                    type="submit"
+                                    className="btn btn-primary"
+                                    disabled={isLoading || !formik.isValid || !formik.dirty}
+                                >
+                                    <i className="ti ti-device-floppy"></i>
+                                    {isLoading ? 'Updating...' : 'Update User'}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => dispatch(setActivePage({ page: Pages.ACCOUNT }))}
+                                >
+                                    <i className="ti ti-x"></i>
+                                    Cancel
+                                </button>
                             </div>
                         </form>
                     </div>
-                    <div className='col-4'>
-                        <ThumbnailDropzone
-                            onUploadSuccess={handleUploadSuccess}
+
+                    <div className="col-md-4">
+                        <div className="form-group">
+                            <label>
+                                <i className="ti ti-photo"></i>
+                                Profile Picture
+                            </label>
+                            <ThumbnailDropzone
+                                onUploadSuccess={handleUploadSuccess}
                             existingImageUrl={image ? `${constants.URL}/${image.path}` : null}
                             existingImageId={image ? image.id : null}
                             imageable={{
                                 imageable_id: record.id,
                                 imageable_type: 'User'
                             }}
-                        />
-                    </div>
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
-            )
-            }
+        </motion.div>
+    );
+};
 
 export default UpdateUser;
-

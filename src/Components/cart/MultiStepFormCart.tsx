@@ -9,6 +9,9 @@ import CustomerAPI from "Data/Api/Customer.ts";
 import SellAPI from "Data/Api/Sell.ts";
 import {ISellPayload, TPayment, TTransactionType} from "Data/Interfaces/Sell.ts";
 import {useAppDispatch} from "@/hooks";
+import {setActivePage} from "Data/Slices/NavigationSlice.ts";
+import {Pages} from "Data/Objects/state.ts";
+import {useAppContext} from "@/contexts/appContext.tsx";
 
 export interface FormValues {
     person: IPerson | null;
@@ -42,10 +45,11 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
     const [payment, setPayment] = useState<string>('');
     const [persons, setPersons] = useState<IPerson[]>([]);
     const [qPerson, setqPerson] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const [, setIsLoading] = useState(false);
     const today = new Date();
     const formattedToday = today.toISOString().split('T')[0];
     const [isRefresh, setIsRefresh] = useState(false);
+    const context = useAppContext();
 
     const initialValues: FormValues = {
         person: null,
@@ -79,7 +83,15 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
         try {
             setIsLoading(true);
             const payload = treatedDataFunc(values);
-            await SellAPI.create(payload);
+            const {data} = await SellAPI.create(payload);
+            context.togglePageLoading(true);
+            dispatch(setActivePage({
+                page: Pages.CART_PAGE,
+                param:{
+                    number: data.sell_code,
+                    type: data.transaction_type
+                }
+            }));
             dispatch(clearCart());
         } catch (error) {
             // Toast.error(error);
@@ -133,29 +145,6 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
                             />}
                         </motion.div>
                     </AnimatePresence>
-                    <div className="row mt-3 sticky-bottom bg-white py-4">
-                        <div className="col-12 mx-auto">
-                            <div className="d-flex justify-content-between">
-                                {step > 0 && (
-                                    <button
-                                        type="button"
-                                        className="btn btn-secondary d-flex align-items-center"
-                                        onClick={() => setStep(step - 1)}
-                                    >
-                                        <i className='ti ti-arrow-back me-1'></i>
-                                        <span>Back</span>
-                                    </button>
-                                )}
-                                {step === 1 && <button
-                                    type="submit"
-                                    className="btn btn-primary"
-                                    disabled={isLoading}
-                                >
-                                    Submit
-                                </button>}
-                            </div>
-                        </div>
-                    </div>
                 </Form>
             )}
         </Formik>

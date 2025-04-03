@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppDispatch } from "@/hooks";
 import { clearCart, ICartState } from "Data/Slices/dashboard/seller/cartSlice.ts";
 import { Link } from "@mui/material";
@@ -8,6 +8,8 @@ import { FormikProps } from "formik";
 import { FormValues } from "Components/cart/MultiStepFormCart.tsx";
 import UtilMethods from "Data/Utilities/UtilMethods.ts";
 import CheckoutProcess from "./CheckoutProcess";
+import SuccessSellPage from "@/pages/Home/SuccessSellPage";
+import {IPerson} from "Interfaces";
 
 const styles = {
     tableContainer: {
@@ -37,7 +39,7 @@ const CartListing: React.FC<{
     cart: ICartState | never;
     onHandleSetStep: (payload: number) => void;
     formik: FormikProps<FormValues>;
-    persons?: never[];
+    persons?: IPerson[];
     paymentModes?: string[];
     payment?: string;
     onHandleSettingPayment?: (payment: string) => void;
@@ -60,6 +62,7 @@ const CartListing: React.FC<{
 }) => {
     const dispatch = useAppDispatch();
     const [showCheckout, setShowCheckout] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
 
     const handleClearCart = () => {
         try {
@@ -82,8 +85,22 @@ const CartListing: React.FC<{
     };
 
     const handleCloseCheckout = () => {
+        if (showSuccess) {
+            dispatch(clearCart());
+        }
         setShowCheckout(false);
+        setShowSuccess(false);
     };
+
+    const handleCheckoutSuccess = () => {
+        setShowSuccess(true);
+    };
+
+    useEffect(() => {
+        if (showSuccess) {
+            setShowCheckout(true);
+        }
+    }, [showSuccess]);
 
     return (
         <div className="container">
@@ -198,27 +215,36 @@ const CartListing: React.FC<{
                 style={styles.offcanvas}
             >
                 <div className="offcanvas-header border-bottom">
-                    <h5 className="offcanvas-title" id="checkoutOffcanvasLabel">Checkout Details</h5>
                     <button 
                         type="button" 
                         className="btn-close" 
                         onClick={handleCloseCheckout}
                         aria-label="Close"
                     ></button>
+                    <h5 className="offcanvas-title" id="checkoutOffcanvasLabel">
+                        {showSuccess ? 'Transaction Complete' : 'Checkout Details'}
+                    </h5>
                 </div>
-                <div className="offcanvas-body">
-                    <CheckoutProcess
-                        persons={persons}
-                        paymentModes={paymentModes}
-                        payment={payment}
-                        onHandleSettingPayment={onHandleSettingPayment}
-                        onPersonChange={onPersonChange}
-                        onHandleSearchCustomer={onHandleSearchCustomer}
-                        onAddPerson={onAddPerson}
-                        formik={formik}
-                        cart={cart}
-                        onRefreshPersons={onRefreshPersons}
-                    />
+                <div className="offcanvas-body p-0">
+                    {showSuccess ? (
+                        <div className="p-4">
+                            <SuccessSellPage />
+                        </div>
+                    ) : (
+                        <CheckoutProcess
+                            persons={persons}
+                            paymentModes={paymentModes}
+                            payment={payment}
+                            onHandleSettingPayment={onHandleSettingPayment}
+                            onPersonChange={onPersonChange}
+                            onHandleSearchCustomer={onHandleSearchCustomer}
+                            onAddPerson={onAddPerson}
+                            formik={formik}
+                            cart={cart}
+                            onRefreshPersons={onRefreshPersons}
+                            onCheckoutSuccess={handleCheckoutSuccess}
+                        />
+                    )}
                 </div>
             </div>
 

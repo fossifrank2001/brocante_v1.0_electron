@@ -74,7 +74,7 @@ function HomePage() {
     };
 
     const notifyProductAdded = (productName: string) => {
-        Toast.success(`${productName} added to cart!`, 1000, 'bottom-right');
+        Toast.success(`${productName} added to cart!`, 1000, 'bottom-left');
     };
 
     return (

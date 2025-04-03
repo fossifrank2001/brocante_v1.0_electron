@@ -10,10 +10,6 @@ import { Pages } from "Data/Objects/state";
 import StreamedDocumentAPI from "Data/Api/StreamedDocument.ts";
 
 /**
- * This component is used to display a success message after a sale has been processed.
- * It shows the sale number and a button to download the receipt or invoice.
- * It also shows a button to go back to the home page.
- *
  * @returns {JSX.Element}
  */
 function SuccessSellPage(): JSX.Element {
@@ -23,27 +19,17 @@ function SuccessSellPage(): JSX.Element {
     const [isDownloading, setIsDownloading] = useState(false);
 
     useLayoutEffect(() => {
-        // Set the page title
         document.title = constants.APP_NAME + " .:. Success Sell";
-        // Hide the page loading indicator
         context.togglePageLoading(false);
     }, []);
 
-    /**
-     * This function handles the download of the receipt or invoice.
-     * It will call the StreamedDocumentAPI.generate function to generate the document and
-     * prompt the user to save it.
-     */
     const handleDownloadPDF = async () => {
         try {
-            // Show the page loading indicator
             setIsDownloading(true);
-            // Get the record number and document type from the navigation param
             const recordNumber = navigation.param?.number;
             const documentType = navigation.param?.type === 'total' ? 'receipt' : 'invoice';
 
             if (recordNumber) {
-                // Call the StreamedDocumentAPI.generate function to generate the document
                 await StreamedDocumentAPI.generate(documentType, recordNumber, 'download');
             } else {
                 throw new Error("Record number is missing");
@@ -51,7 +37,6 @@ function SuccessSellPage(): JSX.Element {
         } catch (e) {
             // You might want to show an error message to the user here
         } finally {
-            // Hide the page loading indicator
             setIsDownloading(false);
         }
     };

@@ -1,6 +1,7 @@
 import { IRole } from "Data/Interfaces/Role";
 import { IUser } from "Data/Interfaces/User";
 import { ReactNode } from 'react';
+import dayjs from "dayjs";
 
 export interface IAccessesPayload{
     user_id: number;
@@ -10,6 +11,8 @@ export interface IAccessesPayload{
 }
 
 export interface IAccess extends IAccessesPayload{
+    created_at ?: dayjs.ConfigType;
+    updated_at ?: dayjs.ConfigType;
     id: number;
     role?: IRole | null ;
     user?: IUser | null;
