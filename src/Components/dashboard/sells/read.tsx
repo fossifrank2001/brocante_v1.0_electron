@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
+import './timeline.css';
 import Breadcrumd from '@/Components/Breadcrumd';
 import SellAPI from '@/Data/Api/Sell';
 import Toast from '@/Data/Utilities/Toast';
@@ -10,6 +11,7 @@ import UtilMethods from '@/Data/Utilities/UtilMethods';
 import dayjs from 'dayjs';
 import '@/Styles/sells.scss';
 import StreamedDocumentAPI, {RecordType} from "Data/Api/StreamedDocument.ts";
+import {IInvoice} from "Interfaces";
 
 interface ISell {
     id: number;
@@ -30,6 +32,7 @@ interface ISell {
         total: number;
     }>;
     total_amount: number;
+    invoice: IInvoice;
     paid_amount: number;
     remaining_balance: number;
     status: string;
@@ -193,23 +196,23 @@ const ReadSell = () => {
                                             <tr key={item.id}>
                                                 <td>{item.product.name}</td>
                                                 <td className="text-center">{item.quantity}</td>
-                                                <td className="text-end">${UtilMethods.formatNumber(item.price)}</td>
-                                                <td className="text-end">${UtilMethods.formatNumber(item.total)}</td>
+                                                <td className="text-end">{UtilMethods.formatNumber(item.price)}</td>
+                                                <td className="text-end">{UtilMethods.formatNumber(item.price * item.quantity)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                     <tfoot className="table-light">
                                         <tr>
                                             <td colSpan={3} className="text-end"><strong>Total:</strong></td>
-                                            <td className="text-end"><strong>${UtilMethods.formatNumber(record.total_amount)}</strong></td>
+                                            <td className="text-end"><strong>{UtilMethods.formatNumber(record.total_amount)}</strong></td>
                                         </tr>
                                         <tr>
                                             <td colSpan={3} className="text-end"><strong>Paid:</strong></td>
-                                            <td className="text-end text-success">${UtilMethods.formatNumber(record.paid_amount)}</td>
+                                            <td className="text-end text-success">{UtilMethods.formatNumber(record.paid_amount)}</td>
                                         </tr>
                                         <tr>
                                             <td colSpan={3} className="text-end"><strong>Balance:</strong></td>
-                                            <td className="text-end text-danger">${UtilMethods.formatNumber(record.remaining_balance)}</td>
+                                            <td className="text-end text-danger">{UtilMethods.formatNumber(record.remaining_balance)}</td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -249,7 +252,29 @@ const ReadSell = () => {
                         <div className="card-body">
                             <h6 className="mb-4">Payment Timeline</h6>
                             <div className="timeline-container">
-                                {/* Add payment timeline here */}
+                                {record.invoice.payments.map((payment) => (
+                                    <div key={payment.id} className="timeline-item">
+                                        <div className="timeline-dot">
+                                            <i className="ti ti-coin"></i>
+                                        </div>
+                                        <div className="timeline-content">
+                                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                                <h6 className="mb-0">Payment #{payment.invoice_number}</h6>
+                                                <small className="text-muted">
+                                                    {new Date(payment.created_at).toLocaleDateString()}
+                                                </small>
+                                            </div>
+                                            <div className="d-flex justify-content-between">
+                                                <span className="badge bg-primary-subtle text-primary">
+                                                    {payment.payment_method}
+                                                </span>
+                                                <strong className="text-success text-md-end">
+                                                    {UtilMethods.formatNumber(payment.amount)}
+                                                </strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </motion.div>

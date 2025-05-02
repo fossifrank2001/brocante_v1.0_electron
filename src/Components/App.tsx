@@ -39,7 +39,7 @@ export const handleRedirectToDashboard = async (access_id: number | string, disp
   try {
 
     const { loadAuthorizationAsync } = await import('Data/Slices/auth/authorizationSlice');
-    await dispatch(loadAuthorizationAsync({ access_id }));
+    await dispatch(loadAuthorizationAsync({access_id}));
     const lastVisitedPage = localStorage.getItem('lastVisitedPage');
 
     console.log('Last visited Page ::: APP', lastVisitedPage)

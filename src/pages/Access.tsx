@@ -23,8 +23,8 @@ export default function Access() {
         dispatch(setActivePage({page: Pages.DASHBOARD}));
     }
 
-    return <>
+    return <div style={{ backgroundColor: "rgba(208,208,208,0.5)" }}>
         <PageLoadingIndicator visible={context.pageLoading}/>
         <AccessSelectionComponent />
-    </>
+    </div>
 }

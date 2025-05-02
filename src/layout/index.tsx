@@ -106,14 +106,15 @@ const Layout: React.FC = () => {
       <>
         <PageLoadingIndicator visible={pageLoading} />
         <div className="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6"
-             data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed">
+             data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed"
+             >
           <Aside role={roleId} />
-          <div className="body-wrapper">
+          <div className="body-wrapper" style={{backgroundColor: "rgba(208,208,208,0.5)"}}>
             <Navbar onHandleChangeRole={(_role) => {
               dispatch(setCurrentRole(_role?.code));
               setRole(_role)
             }} />
-            <div className="container-fluid" style={{backgroundColor: "rgba(208,208,208,0.08)"}}>
+            <div className="container-fluid" >
               {renderContent(currentPage, id, param)}
               <Footer />
             </div>

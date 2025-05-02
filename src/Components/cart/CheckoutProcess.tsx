@@ -103,6 +103,7 @@ export default function Component({
             setIsLoading(true);
             const { data }: IApiResponseBase<IPerson> = await CustomerAPI.create(newPerson);
             onAddPerson(data);
+            onRefreshPersons();
             Toast.success('Customer added successfully');
             handleCloseDialog();
             setNewPerson({ id: 0, lastname: '', firstname: '', phone: '' });
@@ -256,6 +257,70 @@ export default function Component({
                         )}
                     />
                 </div>
+
+                <div className="px-4">
+                    {formik.values.person && JSON.parse(formik.values.person.remaining_balance || '{}') &&
+                        Object.keys(JSON.parse(formik.values.person.remaining_balance)).length > 0 && (
+                            <div className="has-authorized-section bg-light rounded-3 p-3 border mb-4">
+                                <div className="d-flex justify-content-between">
+                                    <div className="flex-grow-1">
+                                        <div className="d-flex align-items-center gap-2 mb-3">
+                                            <i className="ti ti-alert-circle text-warning fs-4"></i>
+                                            <div>
+                                                <h5 className="mb-1">Outstanding Payments</h5>
+                                                <small className="text-muted">This customer has unpaid balances from previous sales</small>
+                                            </div>
+                                        </div>
+                                        <div className="border-top pt-2">
+                                            <div className="row">
+                                                {Object.entries(JSON.parse(formik.values.person.remaining_balance)).map(([saleId, amount]) => (
+                                                    <div key={saleId} className="col-md-6 mb-2">
+                                                        <div className="d-flex justify-content-between align-items-center">
+                                                            <span className="text-muted">{saleId}</span>
+                                                            <strong className="text-danger">{UtilMethods.formatNumber(amount as number)}</strong>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                                                <div>
+                                                    <h6 className="mb-0">Total Unpaid</h6>
+                                                </div>
+                                                <div>
+                                                    <h5 className="text-danger mb-0">
+                                                        {UtilMethods.formatNumber(
+                                                            Object.values(JSON.parse(formik.values.person.remaining_balance))
+                                                                .reduce((a, b) => (a as number) + (b as number), 0) as number
+                                                        )}
+                                                    </h5>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 d-flex justify-content-between align-items-center">
+                                            <label className="form-check-label" htmlFor="has_authorized">
+                                                Ignore unpaid for this sell
+                                            </label>
+                                            <div className="form-check form-switch">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="has_authorized"
+                                                    name="has_authorized"
+                                                    style={{
+                                                        width: '3rem',
+                                                        height: '1.5rem',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                    checked={formik.values.has_authorized}
+                                                    onChange={(e) => formik.setFieldValue('has_authorized', e.target.checked)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                </div>
             </div>
 
             <div className="card border-0 shadow-sm">
@@ -264,7 +329,7 @@ export default function Component({
                         <i className="ti ti-wallet me-2 text-primary"></i>
                         Payment Details
                     </h5>
-                    
+
                     <div className="alert alert-info mb-4">
                         <div className="d-flex align-items-center mb-2">
                             <i className="ti ti-receipt text-info me-2 fs-4"></i>
@@ -318,7 +383,8 @@ export default function Component({
                         </h6>
                         <div className="row g-3">
                             <div className="col-md-6">
-                                <div className={`card ${formik.values.summarize.shippingPrice === 0 ? 'border-primary' : 'border'} h-100`}>
+                                <div
+                                    className={`card ${formik.values.summarize.shippingPrice === 0 ? 'border-primary' : 'border'} h-100`}>
                                     <div className="card-body">
                                         <div className="form-check">
                                             <input
@@ -338,7 +404,8 @@ export default function Component({
                                 </div>
                             </div>
                             <div className="col-md-6">
-                                <div className={`card ${formik.values.summarize.shippingPrice === 500 ? 'border-primary' : 'border'} h-100`}>
+                                <div
+                                    className={`card ${formik.values.summarize.shippingPrice === 500 ? 'border-primary' : 'border'} h-100`}>
                                     <div className="card-body">
                                         <div className="form-check">
                                             <input
@@ -486,75 +553,15 @@ export default function Component({
                             </div>
                         )}
                     </div>
-                    {formik.values.person && JSON.parse(formik.values.person.remaining_balance || '{}') &&
-                        Object.keys(JSON.parse(formik.values.person.remaining_balance)).length > 0 && (
-                            <div className="has-authorized-section bg-light rounded-3 p-3 border mb-4">
-                                <div className="d-flex justify-content-between">
-                                    <div className="flex-grow-1">
-                                        <div className="d-flex align-items-center gap-2 mb-3">
-                                            <i className="ti ti-alert-circle text-warning fs-4"></i>
-                                            <div>
-                                                <h5 className="mb-1">Outstanding Payments</h5>
-                                                <small className="text-muted">This customer has unpaid balances from previous sales</small>
-                                            </div>
-                                        </div>
-                                        <div className="border-top pt-2">
-                                            <div className="row">
-                                                {Object.entries(JSON.parse(formik.values.person.remaining_balance)).map(([saleId, amount]) => (
-                                                    <div key={saleId} className="col-md-6 mb-2">
-                                                        <div className="d-flex justify-content-between align-items-center">
-                                                            <span className="text-muted">{saleId}</span>
-                                                            <strong className="text-danger">{UtilMethods.formatNumber(amount as number)}</strong>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                                                <div>
-                                                    <h6 className="mb-0">Total Unpaid</h6>
-                                                </div>
-                                                <div>
-                                                    <h5 className="text-danger mb-0">
-                                                        {UtilMethods.formatNumber(
-                                                            Object.values(JSON.parse(formik.values.person.remaining_balance))
-                                                                .reduce((a, b) => (a as number) + (b as number), 0) as number
-                                                        )}
-                                                    </h5>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="mt-3 d-flex justify-content-between align-items-center">
-                                            <label className="form-check-label" htmlFor="has_authorized">
-                                                Ignore unpaid for this sell
-                                            </label>
-                                            <div className="form-check form-switch">
-                                                <input
-                                                    className="form-check-input"
-                                                    type="checkbox"
-                                                    id="has_authorized"
-                                                    name="has_authorized"
-                                                    style={{
-                                                        width: '3rem',
-                                                        height: '1.5rem',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                    checked={formik.values.has_authorized}
-                                                    onChange={(e) => formik.setFieldValue('has_authorized', e.target.checked)}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    <button 
+                    <button
                         className="btn btn-primary w-100"
                         onClick={handleSubmit}
                         disabled={!isFormValid || isLoading}
                     >
                         {isLoading ? (
                             <>
-                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span className="spinner-border spinner-border-sm me-2" role="status"
+                                  aria-hidden="true"></span>
                                 Processing...
                             </>
                         ) : (
@@ -567,10 +574,10 @@ export default function Component({
                 </div>
             </div>
 
-            <Dialog 
-                open={open} 
-                onClose={handleCloseDialog} 
-                maxWidth="sm" 
+            <Dialog
+                open={open}
+                onClose={handleCloseDialog}
+                maxWidth="sm"
                 fullWidth
                 PaperProps={{
                     className: 'rounded-3'
@@ -583,68 +590,71 @@ export default function Component({
                     </div>
                 </DialogTitle>
                 <DialogContent className="py-4">
-                    <div className="mb-3">
+                    <div className="row">
+                        <div className="mb-3 col-lg-6">
                         <TextField
-                            label="Last Name"
-                            name="lastname"
-                            value={newPerson.lastname}
-                            onChange={handleInputChange}
-                            error={!!errors.lastname}
-                            helperText={errors.lastname}
-                            fullWidth
-                            required
-                            margin="dense"
-                            InputProps={{
-                                startAdornment: <i className="ti ti-user me-2 text-muted"></i>
-                            }}
-                        />
-                    </div>
-                    <div className="mb-3">
-                        <TextField
-                            label="First Name"
-                            name="firstname"
-                            value={newPerson.firstname}
-                            onChange={handleInputChange}
-                            fullWidth
-                            margin="dense"
-                            InputProps={{
-                                startAdornment: <i className="ti ti-user me-2 text-muted"></i>
-                            }}
-                        />
-                    </div>
-                    <div className="mb-3">
-                        <TextField
-                            label="Phone Number"
-                            name="phone"
-                            value={newPerson.phone}
-                            onChange={handleInputChange}
-                            error={!!errors.phone}
-                            helperText={errors.phone}
-                            fullWidth
-                            required
-                            margin="dense"
-                            InputProps={{
-                                startAdornment: <i className="ti ti-phone me-2 text-muted"></i>
-                            }}
-                        />
+                                label="Last Name"
+                                name="lastname"
+                                value={newPerson.lastname}
+                                onChange={handleInputChange}
+                                error={!!errors.lastname}
+                                helperText={errors.lastname}
+                                fullWidth
+                                required
+                                margin="dense"
+                                InputProps={{
+                                    startAdornment: <i className="ti ti-user me-2 text-muted"></i>
+                                }}
+                            />
+                        </div>
+                        <div className="mb-3 col-lg-6">
+                            <TextField
+                                label="First Name"
+                                name="firstname"
+                                value={newPerson.firstname}
+                                onChange={handleInputChange}
+                                fullWidth
+                                margin="dense"
+                                InputProps={{
+                                    startAdornment: <i className="ti ti-user me-2 text-muted"></i>
+                                }}
+                            />
+                        </div>
+                        <div className="mb-3 col-lg-6">
+                            <TextField
+                                label="Phone Number"
+                                name="phone"
+                                value={newPerson.phone}
+                                onChange={handleInputChange}
+                                error={!!errors.phone}
+                                helperText={errors.phone}
+                                fullWidth
+                                required
+                                margin="dense"
+                                InputProps={{
+                                    startAdornment: <i className="ti ti-phone me-2 text-muted"></i>
+                                }}
+                            />
+                        </div>
                     </div>
                 </DialogContent>
                 <DialogActions className="bg-light border-top p-3">
-                    <button 
+                    <button
                         className="btn btn-outline-secondary"
                         onClick={handleCloseDialog}
                         disabled={isLoading}
                     >
                         Cancel
                     </button>
-                    <button 
+                    <button
                         className="btn btn-primary"
                         onClick={handleAddPerson}
                         disabled={isLoading || !!errors.phone || !!errors.lastname}
                     >
                         {isLoading ? (
                             <>
-                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span className="spinner-border spinner-border-sm me-2" role="status"
+                                      aria-hidden="true"></span>
                                 Adding...
                             </>
                         ) : (

@@ -10,7 +10,7 @@ const initialState: NavigationState = {
     lastPageBeforeLogin: undefined,
 };
 
-interface IPageHandler{
+export interface IPageHandler{
     page: Pages,
     id?: number| never | null,
     param?: {
@@ -35,7 +35,7 @@ const navigationSlice = createSlice({
             state.search = search ?? null;
             
             // Si l'utilisateur quitte l'onboarding, marquer comme vu et rediriger vers HOME
-            if (state.currentPage !== Pages.ONBOARDING && (!localStorage.getItem('hasSeenOnboarding') || !Boolean(localStorage.getItem('hasSeenOnboarding')))) {
+            if (state.currentPage !== Pages.ONBOARDING && (!localStorage.getItem('hasSeenOnboarding') || !localStorage.getItem('hasSeenOnboarding'))) {
                 localStorage.setItem('hasSeenOnboarding', '1');
                 state.currentPage = Pages.HOME;
             }
