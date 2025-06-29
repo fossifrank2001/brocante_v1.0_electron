@@ -15,10 +15,7 @@ const CartComponent: React.FC = () => {
                 </div>
             </div>
             <div className="container" style={{transform: "translate(0, -16px)!important"}}>
-                <div className="" style={{
-                    height: "calc(100vh - 120px)!important",
-                    overflowY: "auto",
-                }}>
+                <div className="" style={{height: "calc(100vh - 120px)!important", overflowY: "auto",}}>
                     <div className='card m-0'>
                         <div className='card-body'>
                             <MultiStepFormCart

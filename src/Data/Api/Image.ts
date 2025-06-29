@@ -19,8 +19,8 @@ class ImageAPI {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
-            });
-            return response.data;
+            } as any);
+            return response.data as any;
         } catch (error) {
             console.error('Error uploading image:', error);
             throw error;
@@ -30,7 +30,7 @@ class ImageAPI {
     static async delete(image: string): Promise<IApiResponseBase<null>> {
         try {
             const response = await axiosInstance.delete<IApiResponseBase<null>>(`/image/${image}`);
-            return response.data;
+            return response.data as any;
         } catch (error) {
             console.error('Error deleting image:', error);
             throw error;

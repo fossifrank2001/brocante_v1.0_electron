@@ -5,6 +5,7 @@ import {addToCart} from "Data/Slices/dashboard/seller/cartSlice.ts";
 import noImage from  "../../../assets/images/products/no_image.png"
 import UtilMethods from 'Data/Utilities/UtilMethods';
 import ProductAPI from "Data/Api/Product.ts";
+import Constants from "Data/Utilities/constants.ts";
 
 interface ProductCardProps {
     id:number
@@ -44,12 +45,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, imageUrl, name, price, ol
             >
                 <div className="position-relative">
                     {imageUrl ? <a href="#" style={{height: '100px'}}>
-                            <img src={imageUrl} className="card-img-top" style={{
+                            <img src={Constants.URL +"/"+ imageUrl} className="card-img-top" style={{
                                 height: '125px', objectFit:"cover", objectPosition:"center"}}  alt={name}/>
                         </a>
                         :
                         <a href="#" style={{height: '100px'}}>
-                            <img src={noImage} className="card-img-top" style={{height: '125px',
+                            <img src={noImage as never} className="card-img-top" style={{height: '125px',
                                 objectFit:"cover", objectPosition:"center"}}  alt={name}/>
                         </a>
                     }

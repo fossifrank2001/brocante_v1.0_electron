@@ -11,7 +11,7 @@ import { Pages } from 'Data/Objects/state';
 interface StatCardProps {
     title: string;
     value: string | number;
-    subtitle?: string;
+    subtitle?: never | string | React.ReactElement;
     icon?: React.ReactNode;
     trend?: number;
     color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info';

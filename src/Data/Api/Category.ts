@@ -1,5 +1,5 @@
 import axiosInstance, { IApiResponse, IApiResponseBase, IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
-import { ICategory, ICategoryPayload } from '../Interfaces/Category';
+import { ICategory, ICategoryPayload } from 'Interfaces';
 import Toast from "../Utilities/Toast";
 
 
@@ -7,7 +7,7 @@ class CategoryAPI {
     static async index(_q = ''): Promise<IApiResponsePaginated<ICategory>> {
         try {
             const response = await axiosInstance.get<IApiResponsePaginated<ICategory>>(`/categories?q=${_q}`);
-            return response.data;
+            return response.data as IApiResponsePaginated<ICategory>;
         } catch (error) {
             throw error;
         }
@@ -18,7 +18,7 @@ class CategoryAPI {
     static async show(category: number): Promise<IApiResponseBase<ICategory>> {
         try {
             const response = await axiosInstance.get<IApiResponseBase<ICategory>>(`/categories/${category}`);
-            return response.data;
+            return response.data as IApiResponseBase<ICategory>;
         } catch (error) {
             throw error;
         }
@@ -28,7 +28,7 @@ class CategoryAPI {
         try {
             const response = await axiosInstance.post<IApiResponse>('/categories', roleData);
             Toast.success(response.data.message)
-            return response.data;
+            return response.data as IApiResponseBase<ICategory>;
         } catch (error) {
             throw error;
         }
@@ -38,7 +38,7 @@ class CategoryAPI {
         try {
             const response = await axiosInstance.put<IApiResponse>(`/categories/${id}`, categoryData);
             Toast.success(response.data.message)
-            return response.data;
+            return response.data as IApiResponse;
         } catch (error) {
             throw error;
         }

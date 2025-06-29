@@ -9,7 +9,7 @@ class UserAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.get<IApiResponsePaginated<IUser>>(`/users?q=${_q}`);
-            return response.data;
+            return response.data as never;
         } catch (error) {
             throw error;
         }
@@ -19,7 +19,7 @@ class UserAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.get<InferApiResponse<IUser>>(`/users/${user}`);
-            return response.data;
+            return response.data as never;
         } catch (error) {
             throw error;
         }
@@ -30,7 +30,7 @@ class UserAPI {
         try {
             const response = await axiosInstance.post<IApiResponse>('/users', datas);
             Toast.success(response.data.message)
-            return response.data;
+            return response.data as never;
         } catch (error) {
             throw error;
         }
@@ -41,7 +41,7 @@ class UserAPI {
         try {
             const response = await axiosInstance.put<IApiResponse>(`/users/${id}`, data);
             Toast.success(response.data.message)
-            return response.data;
+            return response.data as never;
         } catch (error) {
             throw error;
         }
@@ -52,7 +52,7 @@ class UserAPI {
         try {
             const response = await axiosInstance.delete<IApiResponse>(`/users/${user}`);
             
-            return response.data;
+            return response.data as never;
         } catch (error) {
             throw error;
         }
@@ -63,7 +63,7 @@ class UserAPI {
         try {
             const response = await axiosInstance.get<IApiResponse>(`/users/${user}/disable`);
             
-            return response.data;
+            return response.data as never;
         } catch (error) {
             throw error;
         }
@@ -74,7 +74,7 @@ class UserAPI {
          try {
             const response = await axiosInstance.get<IApiResponse>(`/users/${user}/reactivate`);
             
-            return response.data;
+            return response.data as never;
         } catch (error) {
             throw error;
         }

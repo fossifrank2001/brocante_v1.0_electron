@@ -23,7 +23,7 @@ export default function ForgotComponent() {
 
     const attemptForgot = async (payload: IForgotPayload) => {
         const { forgotAsync } = await import('Data/Slices/auth/forgotSlice');
-        return dispatch(forgotAsync(payload));
+        return dispatch(forgotAsync(payload) as never);
     }
 
     const handleSubmit = async (values: IForgotPayload) => {

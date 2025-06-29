@@ -52,7 +52,11 @@ export const SalesStats: React.FC<SalesStatsProps> = ({ stats }) => {
                     <StatCard
                         title="Total Sales"
                         value={stats.sales.total.count}
-                        subtitle={`Total Amount: ${UtilMethods.formatNumber(stats.sales.total.amount)}`}
+                        subtitle={<>
+                            <div>
+                                Total Amount: <strong>{UtilMethods.formatNumber(stats.sales.total.amount)}</strong>
+                            </div>
+                        </>}
                         icon={<ShoppingCartIcon />}
                         color="primary"
                         trend={5}
@@ -64,7 +68,11 @@ export const SalesStats: React.FC<SalesStatsProps> = ({ stats }) => {
                         <StatCard
                             title={`${status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}`}
                             value={data.count ?? 0}
-                            subtitle={`Amount: ${UtilMethods.formatNumber(data.amount ?? 0)}`}
+                            subtitle={<>
+                                <div>
+                                    Amount: <strong>{UtilMethods.formatNumber(data.amount ?? 0)}</strong>
+                                </div>
+                            </>}
                             icon={getStatusIcon(status)}
                             color={getStatusColor(status)}
                             viewMorePath={Pages.SELL}

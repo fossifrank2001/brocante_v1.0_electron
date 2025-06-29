@@ -7,7 +7,7 @@ class MenuAPI{
     static async menus(_q=''): Promise<IMenuList> {
         try {
             const response = await axiosInstance.get<IMenuList>(`/menus?q=${_q}`);
-            return response.data;
+            return response.data as any;
         } catch (error) {
             console.error("Error fetching menus:", error);
             throw error;
@@ -29,7 +29,7 @@ class MenuAPI{
                 message: string;
                 menus_role: IMenu[]
             }>>(`/menus/${role}/menus-by-role`);
-            return response.data;
+            return response.data as any;
         } catch (error) {
             console.error("Error fetching menus by role:", error);
             throw error;

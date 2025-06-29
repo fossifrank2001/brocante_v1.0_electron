@@ -267,7 +267,7 @@ export default function Component({
                                         <div className="d-flex align-items-center gap-2 mb-3">
                                             <i className="ti ti-alert-circle text-warning fs-4"></i>
                                             <div>
-                                                <h5 className="mb-1">Outstanding Payments</h5>
+                                                <h5 className="mb-1 fs-2">Outstanding Payments</h5>
                                                 <small className="text-muted">This customer has unpaid balances from previous sales</small>
                                             </div>
                                         </div>
@@ -275,17 +275,15 @@ export default function Component({
                                             <div className="row">
                                                 {Object.entries(JSON.parse(formik.values.person.remaining_balance)).map(([saleId, amount]) => (
                                                     <div key={saleId} className="col-md-6 mb-2">
-                                                        <div className="d-flex justify-content-between align-items-center">
+                                                        <div className="d-flex justify-content-between align-items-center fs-2">
                                                             <span className="text-muted">{saleId}</span>
-                                                            <strong className="text-danger">{UtilMethods.formatNumber(amount as number)}</strong>
+                                                            <strong className="text-danger fw-bolder">{UtilMethods.formatNumber(amount as number)}</strong>
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
                                             <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                                                <div>
-                                                    <h6 className="mb-0">Total Unpaid</h6>
-                                                </div>
+                                                <div><h6 className="mb-0">Total Unpaid</h6></div>
                                                 <div>
                                                     <h5 className="text-danger mb-0">
                                                         {UtilMethods.formatNumber(
@@ -346,7 +344,7 @@ export default function Component({
                             </div>
                             <div className="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
                                 <span className="fw-bold">Total:</span>
-                                <strong className="text-primary fs-5">
+                                <strong className="text-primary fs-4 fw-bolder">
                                     {UtilMethods.formatNumber(cart.totalPrice + (formik.values.summarize?.shippingPrice || 0))}
                                 </strong>
                             </div>
@@ -432,12 +430,10 @@ export default function Component({
                             <i className="ti ti-cash me-2"></i>
                             Transaction Type
                         </h6>
-                        <div className="row g-3">
-                            <div className="col-md-4">
-                                <div
-                                    className={`card cursor-pointer ${formik.values.transactionType === 'total' ? 'border-primary bg-light' : 'border'} h-100`}
-                                    role="button"
-                                    onClick={() => handleTransactionTypeChange('total')}
+                        <div style={{height: "fit-content"}} className="row g-3">
+                            <div style={{height: "fit-content"}} className="col-md-4">
+                                <div className={`card cursor-pointer ${formik.values.transactionType === 'total' ? 'border-primary bg-light' : 'border'} h-100`}
+                                    role="button" onClick={() => handleTransactionTypeChange('total')}
                                 >
                                     <div className="card-body">
                                         <div className="form-check">
@@ -451,7 +447,7 @@ export default function Component({
                                             <label className="form-check-label">
                                                 <div className="d-flex align-items-center mb-1">
                                                     <i className="ti ti-cash-banknote text-primary me-2"></i>
-                                                    <strong>Total Payment</strong>
+                                                    <strong className="text-dark fs-2">Total Payment</strong>
                                                 </div>
                                                 <p className="text-muted small mb-0">Pay the full amount now</p>
                                             </label>
@@ -459,11 +455,10 @@ export default function Component({
                                     </div>
                                 </div>
                             </div>
-                            <div className="col-md-4">
+                            <div style={{height: "fit-content"}} className="col-md-4">
                                 <div
                                     className={`card cursor-pointer ${formik.values.transactionType === 'advance' ? 'border-primary bg-light' : 'border'} h-100`}
-                                    role="button"
-                                    onClick={() => handleTransactionTypeChange('advance')}
+                                    role="button" onClick={() => handleTransactionTypeChange('advance')}
                                 >
                                     <div className="card-body">
                                         <div className="form-check">
@@ -477,7 +472,7 @@ export default function Component({
                                             <label className="form-check-label">
                                                 <div className="d-flex align-items-center mb-1">
                                                     <i className="ti ti-coin text-warning me-2"></i>
-                                                    <strong>Partial Payment</strong>
+                                                    <strong className="text-dark fs-2">Partial Payment</strong>
                                                 </div>
                                                 <p className="text-muted small mb-0">Pay a portion now</p>
                                             </label>
@@ -485,11 +480,10 @@ export default function Component({
                                     </div>
                                 </div>
                             </div>
-                            <div className="col-md-4">
+                            <div style={{height: "fit-content"}} className="col-md-4">
                                 <div
                                     className={`card cursor-pointer ${formik.values.transactionType === 'loan' ? 'border-primary bg-light' : 'border'} h-100`}
-                                    role="button"
-                                    onClick={() => handleTransactionTypeChange('loan')}
+                                    role="button" onClick={() => handleTransactionTypeChange('loan')}
                                 >
                                     <div className="card-body">
                                         <div className="form-check">
@@ -503,7 +497,7 @@ export default function Component({
                                             <label className="form-check-label">
                                                 <div className="d-flex align-items-center mb-1">
                                                     <i className="ti ti-calendar-time text-danger me-2"></i>
-                                                    <strong>Loan</strong>
+                                                    <strong className="text-dark fs-2">Loan</strong>
                                                 </div>
                                                 <p className="text-muted small mb-0">Pay later</p>
                                             </label>

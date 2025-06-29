@@ -91,7 +91,7 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
                     number: data.sell_code,
                     type: data.transaction_type
                 }
-            }));
+            } as never));
             dispatch(clearCart());
         } catch (error) {
             // Toast.error(error);
@@ -101,17 +101,9 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
         }
     };
 
-    const handleSearchCustomer = (value: string) => {
-        setqPerson(value);
-    };
-
-    const handleRefreshPersons = () => {
-        setIsRefresh(!isRefresh);
-    };
-
-    const handleSettingPayment = (value: string) => {
-        setPayment(value);
-    };
+    const handleSearchCustomer = (value: string) => {setqPerson(value);};
+    const handleRefreshPersons = () => {setIsRefresh(!isRefresh);};
+    const handleSettingPayment = (value: string) => {setPayment(value);};
 
     return (
         <Formik
@@ -133,7 +125,7 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
                             {step === 0 && <CartListing
                                 cart={cart}
                                 onHandleSetStep={setStep}
-                                formik={formik}
+                                formik={formik as never}
                                 persons={persons}
                                 paymentModes={paymentModes}
                                 payment={payment}
@@ -166,7 +158,6 @@ const treatedDataFunc = (_data: FormValues):ISellPayload => {
         remaining_balance: _data.transactionType === 'advance' ? _data.summarize.totalPrice - _data.advanceAmount : 0,
         date_to_pay: _data.transactionType === 'advance' ? new Date().toISOString() : null,
         items: _data.items.map(item => ({
-
             product_id: item.product.id,
             price: item.product.price,
             quantity: item.quantity,

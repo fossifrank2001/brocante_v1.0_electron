@@ -31,7 +31,7 @@ const styles = {
         backgroundColor: 'white',
     },
     offcanvas: {
-        width: '750px',
+        width: '600px',
     }
 };
 
@@ -123,9 +123,9 @@ const CartListing: React.FC<{
                         <div className='col-xs-12 col-lg-8'>
                             {cart.totalQuantity > 0 ? (
                                 <div className='list-items'>
-                                    <div style={styles.tableContainer} className="table-responsive">
+                                    <div style={styles.tableContainer as never} className="table-responsive">
                                         <table className='table table-hover align-middle' style={styles.table}>
-                                            <thead className="bg-light" style={styles.stickyTop}>
+                                            <thead className="bg-light" style={styles.stickyTop as never}>
                                                 <tr>
                                                     <th className="text-uppercase small fw-bold" style={styles.tableHeadTh}>N.</th>
                                                     <th className="text-uppercase small fw-bold" style={styles.tableHeadTh}>Name</th>

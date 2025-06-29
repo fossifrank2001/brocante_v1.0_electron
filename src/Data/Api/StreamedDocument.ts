@@ -1,21 +1,14 @@
 import axiosInstance from 'Data/Utilities/axiosInstance';
+import {AxiosRequestConfig} from "axios";
 
 export type RecordType = 'invoice' | 'receipt';
 export type ActionType = 'open' | 'download';
 
 class StreamedDocumentAPI {
-    /**
-     * Generate receipt|invoice
-     *
-     * @param type - The type of document to generate
-     * @param record - The record identifier
-     * @param action - The action to perform with the generated document
-     * @return {Promise<Blob>}
-     */
     static async generate(type: RecordType, record: string | number, action: ActionType = 'open'): Promise<Blob> {
         const res = await axiosInstance.get(`/download-pdf/${record}?type=${type}`, {
             responseType: 'blob'
-        });
+        } as AxiosRequestConfig);
 
         const blob = new Blob([res.data], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);

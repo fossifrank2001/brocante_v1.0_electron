@@ -7,7 +7,7 @@ class RoleAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.get<IApiResponsePaginated<IRole>>(`/roles?q=${_q}`);
-            return response.data;
+            return response.data as any;
         } catch (error) {
             throw error;
         }
@@ -17,7 +17,7 @@ class RoleAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.post<IRole>('/roles', roleData);
-            return response.data;
+            return response.data as any;
         } catch (error) {
             throw error;
         }
@@ -27,7 +27,7 @@ class RoleAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.put<IApiResponse>(`/roles/${id}`, roleData);
-            return response.data;
+            return response.data as any;
         } catch (error) {
             throw error;
         }
@@ -37,7 +37,7 @@ class RoleAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.delete(`/roles/${id}`);
-            return response.data;
+            return response.data as any;
         } catch (error) {
             throw error;
         }

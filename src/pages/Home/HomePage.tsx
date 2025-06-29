@@ -63,7 +63,7 @@ function HomePage() {
             const lastVisitedPage = localStorage.getItem('lastVisitedPage');
 
             if (lastVisitedPage) {
-                dispatch(setActivePage({ page: lastVisitedPage }));
+                dispatch(setActivePage({ page: lastVisitedPage } as any));
             } else {
                 dispatch(setActivePage({page: Pages.USER_ACCESS_PAGE}));
             }
@@ -135,8 +135,7 @@ function HomePage() {
                 </div>
                 <div className="min-vh-100 position-relative">
                     <ShopComponent searchTerm={searchTerm} onResetFilter={() => setSearchTerm('')}/>
-                    
-                    {/* Cart Button */}
+
                     <AnimatePresence>
                         {showCart && (
                             <motion.div
@@ -172,8 +171,7 @@ function HomePage() {
                                     }}
                                 >
                                     <i className="ti ti-basket fs-4" style={{ color: '#fff' }}></i>
-                                    
-                                    {/* Badge du panier */}
+
                                     {totalQuantity > 0 && (
                                         <motion.div
                                             className="position-absolute d-flex align-items-center justify-content-center"
@@ -201,7 +199,6 @@ function HomePage() {
                                         </motion.div>
                                     )}
 
-                                    {/* Animation de pulsation */}
                                     {totalQuantity > 0 && (
                                         <motion.div
                                             className="position-absolute"
