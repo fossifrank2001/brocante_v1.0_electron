@@ -349,12 +349,12 @@ const UpdateUser = () => {
                             </label>
                             <ThumbnailDropzone
                                 onUploadSuccess={handleUploadSuccess}
-                            existingImageUrl={image ? `${constants.URL}/${image.path}` : null}
-                            existingImageId={image ? image.id : null}
-                            imageable={{
-                                imageable_id: record.id,
-                                imageable_type: 'User'
-                            }}
+                                existingImageUrl={image ? `${constants.URL}/${image.path}` : null}
+                                existingImageId={image ? image.id : null}
+                                imageable={{
+                                    imageable_id: record.id,
+                                    imageable_type: 'User'
+                                }}
                             />
                         </div>
                     </div>
