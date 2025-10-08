@@ -12,7 +12,7 @@ class AccessAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.get<InferApiResponse<IAccess>>(`/accesses?q=${_q}`);
-            return response.data;
+            return response.data as InferApiResponse<IAccess>;
         } catch (error) {
             throw error;
         }
@@ -23,7 +23,7 @@ class AccessAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.get<InferApiResponse<IAccess>>(`/accesses/${user}`);
-            return response.data;
+            return response.data as InferApiResponse<IAccess>;
         } catch (error) {
             throw error;
         }
@@ -34,7 +34,7 @@ class AccessAPI {
         try {
             const response = await axiosInstance.post<IApiResponseBase<IAccess>>('/accesses', datas);
             Toast.success(response.data.message)
-            return response.data;
+            return response.data as InferApiResponse<IAccess>;
         } catch (error) {
             throw error;
         }
@@ -45,7 +45,7 @@ class AccessAPI {
         try {
             const response = await axiosInstance.put<IApiResponse>(`/accesses/${id}`, data);
             Toast.success(response.data.message)
-            return response.data;
+            return response.data as InferApiResponse<IAccess>;
         } catch (error) {
             throw error;
         }
@@ -56,7 +56,7 @@ class AccessAPI {
         try {
             const response = await axiosInstance.delete<IApiResponse>(`/accesses/${access}`);
             
-            return response.data;
+            return response.data as InferApiResponse<IAccess>;
         } catch (error) {
             throw error;
         }

@@ -31,7 +31,7 @@ class ProductAPI {
             url.searchParams.set("q", _q);
 
             const response =await axiosInstance.get<IApiResponsePaginated<IProduct>>(url.href);
-            return response.data;
+            return response.data as any;
         } catch (error) {
             throw error;
         }
@@ -43,7 +43,7 @@ class ProductAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.get<IApiResponseBase<IProduct>>(`/products/${product}`);
-            return response.data;
+            return response.data as any;
         } catch (error) {
             throw error;
         }
@@ -55,7 +55,7 @@ class ProductAPI {
             const newPayload = {...paylaod, subcategory_ids: paylaod.subcategory_ids.map(subCategory => subCategory.id)}
             const response = await axiosInstance.post<IApiResponseBase<IProduct>>('/products', newPayload);
             Toast.success(response.data.message)
-            return response.data;
+            return response.data as any;
         } catch (error) {
             throw error;
         }
@@ -79,7 +79,7 @@ class ProductAPI {
 
             const response = await axiosInstance.put<IApiResponseBase<IProduct>>(`/products/${id}`, paylaods);
             Toast.success(response.data.message)
-            return response.data;
+            return response.data as any;
         } catch (error) {
             throw error;
         }

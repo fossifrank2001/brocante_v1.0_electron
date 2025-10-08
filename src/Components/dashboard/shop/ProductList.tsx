@@ -19,14 +19,14 @@ interface ProductListProps{
 const ProductList: React.FC<ProductListProps> = ({products}) => {
     return (
         <div className="row px-2">
-            {products.map((product, index) => (
+            {products.map((product: any, index) => (
                 <ProductCard
                     key={index}
                     id={product.id}
-                    imageUrl={product.imageUrl}
+                    imageUrl={"thumbnail" in product ? product.thumbnail?.path : null}
                     name={product.name}
                     price={product.price}
-                    oldPrice={product.oldPrice}
+                    oldPrice={"oldPrice" in product ? product.oldPrice : null}
                     stock_quantity={product.stock_quantity}
                     status = {product?.stock_quantity > 0? ProductAPI.STOCK : ProductAPI.OUT_OF_STOCK}
                 />

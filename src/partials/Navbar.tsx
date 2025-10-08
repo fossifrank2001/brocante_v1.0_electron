@@ -45,7 +45,7 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
             context.togglePageLoading(true);
             console.log('access_id ::: ', access_id)
             const { loadAuthorizationAsync } = await import('Data/Slices/auth/authorizationSlice');
-            await dispatch(loadAuthorizationAsync({ access_id }));
+            await dispatch(loadAuthorizationAsync({access_id}));
             const role = authUser?.accesses?.find(access => access.id === access_id)?.role;
             onHandleChangeRole(role);
         } catch (e) {

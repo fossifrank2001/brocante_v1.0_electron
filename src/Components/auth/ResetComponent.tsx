@@ -15,33 +15,19 @@ interface FormValues {
     code?: string;
 }
 
-const LoadingOverlay = () => (
-    <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="loading-overlay"
-    >
-        <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="loading-spinner"
-        />
-    </motion.div>
-);
-
 export default function ResetComponent() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [digitValues, setDigitValues] = useState(['', '', '', '', '']);
     const [codeError, setCodeError] = useState<string | null>(null);
-    const [resendTimer, setResendTimer] = useState(0);
-    const [alert, setAlert] = useState<{ type: 'success' | 'error' | null; message: string | null }>({ type: null, message: null });
+    const [resendTimer, ] = useState(0);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [, setAlert] = useState<{ type: 'success' | 'error' | null; message: string | null }>({ type: null, message: null });
     const digitRefs = useRef<HTMLInputElement[]>([]);
     const dispatch = useAppDispatch();
     const appContext = useAppContext();    
-    const {reset_token, username: _username} = useAppSelector(state => state.forgot);
+    const {reset_token} = useAppSelector(state => state.forgot);
 
 
     const initialValues: FormValues = {
@@ -51,7 +37,7 @@ export default function ResetComponent() {
 
     const attemptReset = async (payload: IResetPayload) => {
         const { resetAsync } = await import('Data/Slices/auth/resetSlice');
-        return await dispatch(resetAsync(payload));
+        return dispatch(resetAsync(payload));
     }
 
     const handleSubmit = async (values: FormValues) => {
@@ -402,9 +388,9 @@ export default function ResetComponent() {
                                     <button
                                         type="button"
                                         onClick={handleBackToLogin}
-                                        className="btn-link"
+                                        className="btn-link py-2"
                                         disabled={isLoading}
-                                    style={{backgroundColor: 'inherit', color: 'var(--va-primary)', border: 'none'}}
+                                        style={{backgroundColor: 'inherit', color: 'var(--va-primary)', border: 'none'}}
                                     >
                                         <i className="ti ti-arrow-left"></i>
                                         <span>Back to Login</span>

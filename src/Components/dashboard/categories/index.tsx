@@ -203,7 +203,7 @@ export default function IndexCategory() {
               <button onClick={() => {
                 context.togglePageLoading(true)
                 dispatch(setActivePage({
-                  page: Pages.ACCESS,
+                  page: Pages.CATEGORY,
                   param: {
                     sub_page: "CREATE"
                   }

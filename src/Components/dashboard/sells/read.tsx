@@ -1,314 +1,349 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-    Grid,
-    Typography,
-    CircularProgress,
-    Box,
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    TextField,
-    MenuItem,
-    Select,
-} from '@mui/material';
+import { motion } from 'framer-motion';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { setActivePage } from '@/Data/Slices/NavigationSlice';
+import { Pages } from '@/Data/Objects/state';
+import './timeline.css';
 import Breadcrumd from '@/Components/Breadcrumd';
-import InfoItem from '@/Components/InfoItem';
-import SellAPI from 'Data/Api/Sell.ts';
-import { useAppSelector } from '@/hooks';
+import SellAPI from '@/Data/Api/Sell';
 import Toast from '@/Data/Utilities/Toast';
-import UtilMethods from 'Data/Utilities/UtilMethods.ts';
+import UtilMethods from '@/Data/Utilities/UtilMethods';
 import dayjs from 'dayjs';
-import InvoiceAPI from 'Data/Api/Invoice.ts';
+import '@/Styles/sells.scss';
+import StreamedDocumentAPI, {RecordType} from "Data/Api/StreamedDocument.ts";
+import {IInvoice} from "Interfaces";
+
+interface ISell {
+    id: number;
+    sell_code: string;
+    customer: {
+        firstname: string;
+        lastname: string;
+        email: string;
+        phone: string;
+    };
+    sell_items: Array<{
+        id: number;
+        product: {
+            name: string;
+        };
+        quantity: number;
+        price: number;
+        total: number;
+    }>;
+    total_amount: number;
+    invoice: IInvoice;
+    paid_amount: number;
+    remaining_balance: number;
+    status: string;
+    created_at: string;
+}
 
 const ReadSell = () => {
-    const { currentPage, id } = useAppSelector((state) => state.navigaton);
-    const [record, setRecord] = useState(null);
-    const [inProgress, setInProgress] = useState(false);
-    const [openModal, setOpenModal] = useState(false);
-    const [openCancelModal, setOpenCancelModal] = useState(false);
-    const [reason, setReason] = useState('');
-    const [reloadRecord, setReloadRecord] = useState(false);
-    const [paymentAmount, setPaymentAmount] = useState(0);
-    const [paymentMethod, setPaymentMethod] = useState('Cash');
+    const dispatch = useAppDispatch();
+    const { id } = useAppSelector((state) => state.navigaton);
+    const [record, setRecord] = useState<ISell | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [cancelReason, setCancelReason] = useState('');
+    const [processingCancel, setProcessingCancel] = useState(false);
 
     const fetchRecord = useCallback(async () => {
-        setInProgress(true);
+        setIsLoading(true);
         try {
             const { data } = await SellAPI.show(id);
-            setRecord(data);
+            setRecord(data as never);
         } catch (error) {
-            console.error(error);
-            Toast.error('Failed to load data');
+            console.error('Failed to load sale details:', error);
+            Toast.error('Failed to load sale details');
         } finally {
-            setInProgress(false);
+            setIsLoading(false);
         }
     }, [id]);
 
     useEffect(() => {
         fetchRecord();
-    }, [fetchRecord, reloadRecord]);
+    }, [fetchRecord]);
 
     const handleCancel = async () => {
-        if (!reason) {
-            Toast.error('Please provide a reason for cancellation.');
-            return;
-        }
+        if (!record || !cancelReason.trim()) return;
 
-        setInProgress(true);
+        setProcessingCancel(true);
         try {
-            const { message } = await SellAPI.cancel(id, { reason });
-            Toast.success(message);
-            handleCloseCancelModal();
-            setReloadRecord(true);
+            await SellAPI.cancel(record.id, { reason: cancelReason });
+            Toast.success('Sale cancelled successfully');
+            setShowCancelModal(false);
+            fetchRecord();
         } catch (error) {
-            console.error(error);
+            console.error('Failed to cancel sale:', error);
+            Toast.error('Failed to cancel sale');
         } finally {
-            setInProgress(false);
+            setProcessingCancel(false);
         }
     };
 
-    const handlePayment = async () => {
-        if (paymentAmount <= 0) {
-            Toast.error('Please enter a valid payment amount.');
-            return;
-        }
-
-        setInProgress(true);
+    const downloadInvoice = async () => {
+        if (!record) return;
+        
         try {
-            const { message } = await InvoiceAPI.pay(record.invoice.id, { amount: paymentAmount, payment_method: paymentMethod });
-            Toast.success(message);
-            setReloadRecord(true);
-            handleCloseModal();
+            const type: RecordType = record.status === 'paid'? 'receipt': 'invoice';
+            await StreamedDocumentAPI.generate(type, record.id, 'download');
         } catch (error) {
-            console.error(error);
-        } finally {
-            setInProgress(false);
+            console.error('Failed to download invoice:', error);
+            Toast.error('Failed to download invoice');
         }
     };
 
-    const handleOpenModal = () => {
-        setOpenModal(true);
-    };
+    if (isLoading) {
+        return (
+            <div className="container">
+                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
-    const handleCloseModal = () => {
-        setOpenModal(false);
-        setReason('');
-        setPaymentAmount(0);
-        setPaymentMethod('Cash');
-    };
-
-    const handleCloseCancelModal = () => {
-        setOpenCancelModal(false);
-        setReason('');
-    };
-
+    if (!record) {
+        return (
+            <div className="container">
+                <div className="alert alert-danger" role="alert">
+                    <i className="ti ti-alert-circle me-2"></i>
+                    Sale not found
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="container">
-            <Breadcrumd parent="Sells" url={currentPage} _child={id} />
-            {inProgress ? (
-                <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-                    <CircularProgress />
-                </Box>
-            ) : record ? (
-                <>
-                    <div className="d-flex align-items-center gap-3" style={{marginBottom: '16px'}}>
-                        {record.status === 'pending' && (
-                            <Button
-                                variant="contained"
-                                color="secondary"
-                                onClick={() => setOpenCancelModal(true)}
-                                disabled={inProgress}
-                            >
-                                {inProgress ? 'Cancelling...' : 'Cancel Sell'}
-                            </Button>
-                        )}
-                        {record.status === SellAPI.PAID ? (
-                            <Button className='d-flex align-items-center' variant="contained" color="secondary">
-                                <i className='ti ti-download ml-2'></i>
-                                <span>Download Receipt</span>
-                            </Button>
-                        ) : record.status !== SellAPI.CANCELLED ? (
-                            <div className="d-flex align-items-center gap-3">
-                                <Button className='d-flex align-items-center' variant="outlined" color="primary">
-                                    <i className='ti ti-download me-2'></i>
-                                    <span>Download Invoice</span>
-                                </Button>
-                                {record.status === SellAPI.PENDING && <Button
-                                    className='d-flex align-items-center'
-                                    variant="contained"
-                                    color="primary"
-                                    onClick={handleOpenModal}
+            <Breadcrumd parent="Sales" url={Pages.SELL} />
+
+            <div className="row g-3">
+                <div className="col-lg-8">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="card"
+                    >
+                        <div className="card-header d-flex justify-content-between align-items-center">
+                            <h5 className="mb-0">Sale Details</h5>
+                            <div className="d-flex gap-2">
+                                <button 
+                                    className="btn btn-outline-secondary btn-sm"
+                                    onClick={() => dispatch(setActivePage({ page: Pages.SELL }))}
                                 >
-                                    <i className='ti ti-receipt me-2'></i>
-                                    <span>Pay</span>
-                                </Button>}
+                                    <i className="ti ti-arrow-left me-1"></i>
+                                    Back
+                                </button>
+                                <button 
+                                    className="btn btn-primary btn-sm"
+                                    onClick={downloadInvoice}
+                                >
+                                    <i className="ti ti-file-invoice me-1"></i>
+                                    Download Invoice
+                                </button>
                             </div>
-                        ) : null}
-                    </div>
-
-                    <div className='card'>
-                        <div className='card-body'>
-                            <Grid container spacing={2}>
-                                <Grid item xs={12}>
-                                    <Typography variant="h6">Sell Information</Typography>
-                                    <InfoItem
-                                        label="Sell Code"
-                                        value={record.sell_code}
-                                        second={{
-                                            label: 'Total Amount',
-                                            value: UtilMethods.formatNumber(record.total_amount),
-                                        }}
-                                    />
-                                    <InfoItem
-                                        label="Remaining balance"
-                                        value={UtilMethods.formatNumber(record.remaining_balance)}
-                                    />
-                                    <InfoItem
-                                        label="Transaction Type"
-                                        value={record.transaction_type}
-                                        second={{
-                                            label: "Status",
-                                            value: (
-                                                <span className={UtilMethods.getStatus(record?.status)}>
-                                                    {record?.status}
-                                                </span>
-                                            ),
-                                        }}
-                                    />
-                                    <InfoItem
-                                        label="Created At"
-                                        value={record.created_at ? dayjs(record.created_at).format('MMMM D, YYYY h:mm A') : 'N/A'}
-                                        second={{
-                                            label: `Updated At`,
-                                            value: record.updated_at ? dayjs(record.updated_at).format('MMMM D, YYYY h:mm A') : 'N/A',
-                                        }}
-                                    />
-                                </Grid>
-                            </Grid>
                         </div>
-                    </div>
 
-                    <div className='card mt-2'>
-                        <div className='card-body'>
-                            <Grid container spacing={2}>
-                                <Grid item xs={12}>
-                                    <Typography variant="h6">Customer</Typography>
-                                    {record.customer ? (
+                        <div className="card-body">
+                            <div className="row mb-4">
+                                <div className="col-md-6">
+                                    <h6 className="mb-3">Customer Information</h6>
+                                    <div className="mb-2">
+                                        <strong>Name:</strong> {`${record.customer.lastname} ${record.customer.firstname}`}
+                                    </div>
+                                    <div className="mb-2">
+                                        <strong>Email:</strong> {record.customer.email}
+                                    </div>
+                                    <div className="mb-2">
+                                        <strong>Phone:</strong> {record.customer.phone}
+                                    </div>
+                                </div>
+                                <div className="col-md-6 text-md-end">
+                                    <h6 className="mb-3">Sale Information</h6>
+                                    <div className="mb-2">
+                                        <strong>Sale ID:</strong> #{record.sell_code}
+                                    </div>
+                                    <div className="mb-2">
+                                        <strong>Date:</strong> {dayjs(record.created_at).format('MMM D, YYYY h:mm A')}
+                                    </div>
+                                    <div className="mb-2">
+                                        <strong>Status:</strong> 
+                                        <span className={`badge ms-2 bg-${record.status === 'paid' ? 'success' : 
+                                            record.status === 'pending' ? 'warning' : 'danger'}`}>
+                                            {record.status}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="table-responsive mb-4">
+                                <table className="table table-bordered table-hover">
+                                    <thead className="table-light">
+                                        <tr>
+                                            <th>Item</th>
+                                            <th className="text-center">Quantity</th>
+                                            <th className="text-end">Price</th>
+                                            <th className="text-end">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {record.sell_items.map((item) => (
+                                            <tr key={item.id}>
+                                                <td>{item.product.name}</td>
+                                                <td className="text-center">{item.quantity}</td>
+                                                <td className="text-end">{UtilMethods.formatNumber(item.price)}</td>
+                                                <td className="text-end">{UtilMethods.formatNumber(item.price * item.quantity)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    <tfoot className="table-light">
+                                        <tr>
+                                            <td colSpan={3} className="text-end"><strong>Total:</strong></td>
+                                            <td className="text-end"><strong>{UtilMethods.formatNumber(record.total_amount)}</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td colSpan={3} className="text-end"><strong>Paid:</strong></td>
+                                            <td className="text-end text-success">{UtilMethods.formatNumber(record.paid_amount)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td colSpan={3} className="text-end"><strong>Balance:</strong></td>
+                                            <td className="text-end text-danger">{UtilMethods.formatNumber(record.remaining_balance)}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            {record.status !== 'cancelled' && (
+                                <div className="d-flex justify-content-end gap-2">
+                                    {record.remaining_balance > 0 && (
+                                        <button
+                                            className="btn btn-success"
+                                            onClick={() => setShowPaymentModal(true)}
+                                        >
+                                            <i className="ti ti-cash me-1"></i>
+                                            Add Payment
+                                        </button>
+                                    )}
+                                    <button
+                                        className="btn btn-danger"
+                                        onClick={() => setShowCancelModal(true)}
+                                    >
+                                        <i className="ti ti-x me-1"></i>
+                                        Cancel Sale
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                </div>
+
+                <div className="col-lg-4">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="card"
+                    >
+                        <div className="card-body">
+                            <h6 className="mb-4">Payment Timeline</h6>
+                            <div className="timeline-container">
+                                {record.invoice.payments.map((payment) => (
+                                    <div key={payment.id} className="timeline-item">
+                                        <div className="timeline-dot">
+                                            <i className="ti ti-coin"></i>
+                                        </div>
+                                        <div className="timeline-content">
+                                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                                <h6 className="mb-0">Payment #{payment.invoice_number}</h6>
+                                                <small className="text-muted">
+                                                    {new Date(payment.created_at).toLocaleDateString()}
+                                                </small>
+                                            </div>
+                                            <div className="d-flex justify-content-between">
+                                                <span className="badge bg-primary-subtle text-primary">
+                                                    {payment.payment_method}
+                                                </span>
+                                                <strong className="text-success text-md-end">
+                                                    {UtilMethods.formatNumber(payment.amount)}
+                                                </strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+            </div>
+
+            {/* Cancel Modal */}
+            {showCancelModal && (
+                <div className="modal fade show" style={{ display: 'block' }} tabIndex={-1}>
+                    <div className="modal-dialog">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Cancel Sale</h5>
+                                <button 
+                                    type="button" 
+                                    className="btn-close"
+                                    onClick={() => setShowCancelModal(false)}
+                                    disabled={processingCancel}
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="mb-3">
+                                    <label className="form-label">Reason for Cancellation</label>
+                                    <textarea
+                                        className="form-control"
+                                        rows={3}
+                                        value={cancelReason}
+                                        onChange={(e) => setCancelReason(e.target.value)}
+                                        placeholder="Please provide a reason for cancelling this sale"
+                                    ></textarea>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button
+                                    type="button"
+                                    className="btn btn-light"
+                                    onClick={() => setShowCancelModal(false)}
+                                    disabled={processingCancel}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-danger"
+                                    onClick={handleCancel}
+                                    disabled={processingCancel || !cancelReason.trim()}
+                                >
+                                    {processingCancel ? (
                                         <>
-                                            <InfoItem label="Customer Name"
-                                                      value={`${record.customer.lastname} ${record.customer.firstname}`}/>
-                                            <InfoItem label="Phone" value={record.customer.phone ?? ''} second={{
-                                                label: `Email`,
-                                                value: record.customer.email ?? ''
-                                            }}/>
+                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            Processing...
                                         </>
                                     ) : (
-                                        <Typography>No customer data available</Typography>
+                                        <>
+                                            <i className="ti ti-x me-1"></i>
+                                            Cancel Sale
+                                        </>
                                     )}
-                                </Grid>
-                            </Grid>
+                                </button>
+                            </div>
                         </div>
                     </div>
-
-                    <div className='card mt-2'>
-                        <div className='card-body'>
-                            <Typography variant="h6">Sell Items</Typography>
-                            <Grid container spacing={2}>
-                                {record.sell_items && record.sell_items.length > 0 ? (
-                                    record.sell_items.map((item, index) => (
-                                        <Grid item xs={12} md={6} key={index}>
-                                            <div>
-                                                <InfoItem label={`Item ${index + 1} Product`}
-                                                          value={item.product?.name ?? 'N/A'}/>
-                                                <InfoItem label={`Item ${index + 1} Quantity`} value={item.quantity}/>
-                                                <InfoItem
-                                                    label={`Item ${index + 1} Price`}
-                                                    value={UtilMethods.formatNumber(item.price)}
-                                                />
-                                            </div>
-                                        </Grid>
-                                    ))
-                                ) : (
-                                    <Grid item xs={12}>
-                                        <Typography>No sell items available</Typography>
-                                    </Grid>
-                                )}
-                            </Grid>
-                        </div>
-                    </div>
-
-                </>
-            ) : (
-                <Typography variant="h6" color="error">Failed to load sell data</Typography>
+                </div>
             )}
 
-            <Dialog open={openCancelModal} onClose={handleCloseCancelModal}>
-                <DialogTitle>Cancel Sell</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        label="Reason"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        value={reason}
-                        onChange={(e) => setReason(e.target.value)}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseModal} color="primary">
-                        Cancel
-                    </Button>
-                    <Button onClick={handleCancel} color="primary" disabled={inProgress}>
-                        {inProgress ? 'Cancelling...' : 'Confirm'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            <Dialog open={openModal} onClose={handleCloseModal}>
-                <DialogTitle>Payment</DialogTitle>
-                <DialogContent>
-                    <div className="mb-3">
-                        <strong>Amount</strong>
-                        <TextField
-                            autoFocus
-                            margin="dense"
-                            label="Amount"
-                            type="number"
-                            fullWidth
-                            variant="outlined"
-                            value={paymentAmount}
-                            onChange={(e) => setPaymentAmount(Number(e.target.value))}
-                        />
-                    </div>
-                    <div className="mb-3">
-                        <strong>Payment Method</strong>
-                        <Select
-                            label="Payment Method"
-                            fullWidth
-                            value={paymentMethod}
-                            onChange={(e) => setPaymentMethod(e.target.value)}
-                            variant="outlined"
-                        >
-                            <MenuItem value="Cash">Cash</MenuItem>
-                            <MenuItem value="Orange Money">Orange Money</MenuItem>
-                            <MenuItem value="MTN Money">MTN Money</MenuItem>
-                        </Select>
-                    </div>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseModal} color="primary">
-                        Cancel
-                    </Button>
-                    <Button onClick={handlePayment} color="primary" disabled={inProgress}>
-                        {inProgress ? 'Processing...' : 'Pay'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            {/* Modal Backdrop */}
+            {(showPaymentModal || showCancelModal) && (
+                <div className="modal-backdrop fade show"></div>
+            )}
         </div>
     );
 };

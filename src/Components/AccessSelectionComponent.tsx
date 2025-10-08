@@ -93,7 +93,7 @@ export default function AccessSelectionComponent() {
             <PageLoadingIndicator visible={context.pageLoading}/>
             <div 
                 className="page-wrapper access-selection min-vh-100 d-flex align-items-center justify-content-center bg-light"
-                style={{ padding: '2rem' }}
+                style={{ padding: '2rem', backgroundColor: "rgba(208,208,208,0.5)" }}
             >
                 <div className="container">
                     <div className="row justify-content-center">

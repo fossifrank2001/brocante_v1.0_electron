@@ -8,7 +8,6 @@ import { setActivePage } from 'Data/Slices/NavigationSlice';
 import CustomAlert from './CustomAlert';
 import HomePage from "@/pages/Home/HomePage";
 import CartPage from "@/pages/Home/cart/CartPage.tsx";
-import SuccessSellPage from "@/pages/Home/SuccessSellPage.tsx";
 import OnboardingLayout from '@/pages/onboarding/OnboardingLayout';
 import AuthPages from '@/Components/auth';
 import { useAppDispatch, useAppSelector } from '@/hooks';
@@ -40,7 +39,7 @@ export const handleRedirectToDashboard = async (access_id: number | string, disp
   try {
 
     const { loadAuthorizationAsync } = await import('Data/Slices/auth/authorizationSlice');
-    await dispatch(loadAuthorizationAsync({ access_id }));
+    await dispatch(loadAuthorizationAsync({access_id}));
     const lastVisitedPage = localStorage.getItem('lastVisitedPage');
 
     console.log('Last visited Page ::: APP', lastVisitedPage)
@@ -129,8 +128,6 @@ const App: React.FC = () => {
         return <HomePage />;
       case Pages.CART_PAGE:
         return <CartPage />;
-      case Pages.SUCCESS_ORDER:
-        return <SuccessSellPage />;
       case Pages.USER_ACCESS_PAGE:
         return <Access />;
       default:

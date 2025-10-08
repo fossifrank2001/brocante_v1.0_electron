@@ -6,7 +6,7 @@ class SupplyAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.get<never>(`/suppliers?q=${_q}`);
-            return response.data;
+            return response.data as any;
         } catch (error) {
             throw error;
         }

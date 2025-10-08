@@ -42,7 +42,7 @@ class InvoiceAPI {
         try {
             
             const response = await axiosInstance.post<IApiResponseBase<IInvoice>>(`/invoices/pay/${invoice}`, payload);
-            return response.data;
+            return response.data as any;
         } catch (error) {
             console.error('Error paying invoice:', error);
             throw error;
@@ -52,7 +52,7 @@ class InvoiceAPI {
     static async show(invoice: number): Promise<IApiResponseBase<IInvoice>> {
         try {
             const response = await axiosInstance.get<IApiResponseBase<IInvoice>>(`/invoices/${invoice}`);
-            return response.data;
+            return response.data as any;
         } catch (error) {
             console.error('Error showing invoice:', error);
             throw error;

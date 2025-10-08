@@ -26,7 +26,7 @@ const ShopComponent: React.FC<{searchTerm: string, onResetFilter: () => void}> =
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             getProducts();
-        }, 300);
+        }, 500);
 
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm, selectedSubCategories, priceRange, _status, perPage]);

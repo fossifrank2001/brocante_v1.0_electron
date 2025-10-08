@@ -4,7 +4,7 @@ import { IApiResponseBase } from 'Data/Utilities/axiosInstance';
 import {Pages, UserAuthorizationState } from "Data/Objects/state";
 import AuthAPI from 'Data/Api/Auth.ts';
 import store, { AppDispatch } from '@/Data/Objects/store';
-import { setActivePage } from '../NavigationSlice';
+import {IPageHandler, setActivePage} from '../NavigationSlice';
 
 const defaultUserAuthorizationState: UserAuthorizationState = {
     auth_access_id: "",
@@ -38,7 +38,7 @@ export const loadAuthorizationAsync = (payload: IAccessPayload) => async (dispat
         const lastVisitedPage = localStorage.getItem('lastVisitedPage');
 
         if (lastVisitedPage) {
-            store.dispatch(setActivePage({ page: lastVisitedPage }));
+            store.dispatch(setActivePage({ page: lastVisitedPage } as  Partial<IPageHandler>));
         } else {
             store.dispatch(setActivePage({page: Pages.DASHBOARD}))
         }

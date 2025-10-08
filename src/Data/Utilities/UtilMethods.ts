@@ -47,18 +47,13 @@ export default class UtilMethods {
 
 
     static isoToEmoji(code: string): string {
-        return code
-            ?.split("")
-            .map((letter: string) => (letter.charCodeAt(0) % 32) + 0x1f1e5)
-            .map((n) => String.fromCodePoint(n))
-            .join("");
+        return code?.split("").map((letter: string) => (letter.charCodeAt(0) % 32) + 0x1f1e5)
+            .map((n) => String.fromCodePoint(n)).join("");
     }
 
     static buildQueryString(params: { [key: string]: string }): string {
-        return Object.keys(params)
-            .filter(key => params[key] !== "")
-            .map(key => `${key}=${encodeURIComponent(params[key])}`)
-            .join("&");
+        return Object.keys(params).filter(key => params[key] !== "")
+            .map(key => `${key}=${encodeURIComponent(params[key])}`).join("&");
     }
 
     static setStatusParam(value: string, param: string = "status"): void {

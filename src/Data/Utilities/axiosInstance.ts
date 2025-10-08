@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import axios, {AxiosError, AxiosResponse, CreateAxiosDefaults} from 'axios';
 import Toast from 'Data/Utilities/Toast';
 import ApiError from 'Data/Utilities/ApiError';
 import constants from 'Data/Utilities/constants';
@@ -27,12 +27,12 @@ export type InferApiResponse<T> = T extends Array<infer U>
 
 const instance = axios.create({
     baseURL: constants.BASE_URL,
-    timeout: 5000,
+    timeout: 300000,
     headers: {
         'Content-Type': 'application/json',
         'X-localization': 'en',
     }
-});  
+} as  CreateAxiosDefaults);
 
 instance.interceptors.request.use(
     (config) => {
@@ -56,7 +56,7 @@ instance.interceptors.response.use(
     },
     (error: AxiosError) => {
         if (error.response) {
-            const _response : IApiResult = error.response
+            const _response : IApiResult|any = error.response
             const status = _response.status;
             const message = _response.data?.message || 'An error occurred.';
 
@@ -66,19 +66,19 @@ instance.interceptors.response.use(
                     localStorage.setItem('lastVisitedPage', currentPage);
                 }
                 store.dispatch(redirectToLogin());
-                Toast.error('Session has expired. Redirection to login  page.', 2000, 'top-right');
+                Toast.error("Session has expired. Redirection to login  page.", 2000, 'top-right');
             } else {
                 Toast.error(message, 2000, 'top-right');
             }
-            return Promise.reject(new ApiError(status, message, error.response.data));
+            return Promise.reject(new ApiError(status, message, error.response.data as any));
         }
         else if (error.request) {
-            Toast.error('No response from server.', 2000, 'top-right');
+            Toast.error("No response from server.", 2000, 'top-right');
             return Promise.reject(new ApiError(500, 'No response from server.'));
         }
 
         else {
-            Toast.error('Erreur lors de la configuration de la requête.', 2000, 'top-right');
+            Toast.error("Erreur lors de la configuration de la requête.", 2000, 'top-right');
             return Promise.reject(new ApiError(500, 'Error while configuring request.'));
         }
     }

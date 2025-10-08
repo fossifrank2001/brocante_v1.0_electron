@@ -9,7 +9,7 @@ class Payment {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.get<IApiResponse>(`/payments?q=${_q}`);
-            return response.data;
+            return response.data as any;
         } catch (error) {
             throw error;
         }

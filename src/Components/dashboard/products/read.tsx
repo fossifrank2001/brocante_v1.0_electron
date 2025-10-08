@@ -1,7 +1,7 @@
 import Breadcrumd from '@/Components/Breadcrumd';
 import InfoItem from '@/Components/InfoItem';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { Grid } from '@mui/material';
+import { Grid, Skeleton, CircularProgress } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
@@ -12,6 +12,8 @@ import UtilMethods from "Data/Utilities/UtilMethods.ts";
 import constants from "Data/Utilities/constants.ts";
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
+import '@/Styles/products.scss';
+import { motion } from 'framer-motion';
 
 const ReadProduct = () => {
     const { currentPage, id } = useAppSelector((state) => state.navigaton);
@@ -37,199 +39,209 @@ const ReadProduct = () => {
 
     if (isLoading) {
         return (
-            <div className="container">
+            <div className="container product-detail">
                 <Breadcrumd parent="Articles" url={currentPage} _child={id} />
-                <div className='card'>
-                    <div className='card-body'>
-                        <h4>Product Info</h4>
-                        <span>Is loading...</span>
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="card"
+                >
+                    <div className="card-body">
+                        <h4><i className="ti ti-box"></i>Product Info</h4>
+                        <Grid container spacing={3}>
+                            <Grid item xs={12}>
+                                <Skeleton variant="rectangular" height={60} />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Skeleton variant="rectangular" height={100} />
+                            </Grid>
+                        </Grid>
                     </div>
-                </div>
-                <div className='card mt-2'>
-                    <div className='card-body'>
-                        <h4>Product Details</h4>
-                        <span>Is loading...</span>
-                    </div>
-                </div>
-                <div className='card mt-2'>
-                    <div className='card-body'>
-                        <h4>Suppliers</h4>
-                        <span>Is loading...</span>
-                    </div>
-                </div>
+                </motion.div>
             </div>
         );
     }
 
     if (!record) {
-        return <div>No product found</div>;
+        return (
+            <div className="container product-detail">
+                <div className="text-center py-5">
+                    <i className="ti ti-alert-circle text-warning" style={{ fontSize: '3rem' }}></i>
+                    <h3 className="mt-3">No product found</h3>
+                    <p className="text-muted">The requested product could not be found.</p>
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className="container">
+        <div className="container product-detail">
             <Breadcrumd parent="Articles" url={currentPage} _child={id} />
-            {record && (<>
-                <div className='card'>
-                    <div className='card-body'>
-                        <h4>Product Info</h4>
-                        <Grid container spacing={2}>
-                            <Grid xs={12} md={12} lg={12} xl={12}>
-                                <InfoItem
-                                    label="Name"
-                                    value={record.name}
-                                    second={{
-                                        label: `Price`,
-                                        value: <span>{record.price} <span className='fw-bolder'
-                                                                          style={{fontSize: '10px'}}> FCFA</span></span>,
-                                    }}
-                                />
-                                <InfoItem
-                                    label="Stock"
-                                    value={record.stock_quantity}
-                                    second={{
-                                        label: `Description`,
-                                        value: record.description,
-                                    }}
-                                />
-                                <InfoItem
-                                    label="Created At"
-                                    value={`${dayjs(record.created_at).format('DD/MM/YYYY HH:mm:ss')}`}
-                                    second={{
-                                        label: `Updated At`,
-                                        value: dayjs(record.updated_at).format('DD/MM/YYYY HH:mm:ss'),
-                                    }}
-                                />
-                                <InfoItem
-                                    label="Status"
-                                    value={<span
-                                        className={`${UtilMethods.getStatus(getStatusOfProduct(record?.stock_quantity))}`}>{getStatusOfProduct(record?.stock_quantity)}</span>}
-                                    second={{
-                                        label: `Sub categories`,
-                                        value: record?.subcategories.map(subcategory => (
-                                            <a role="alert"
-                                               className="alert mb-0 py-2 badge bg-primary-subtle text-primary rounded-pill text-center">
-                                                {subcategory.label}
-                                            </a>
-                                        ))
-                                    }}
-                                />
-
-                                <div className='card-body'>
-                                    <h4>Product Image</h4>
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={12}>
-                                            <Zoom>
-                                                <img
-                                                    src={record.thumbnail ? `${constants.URL}/${record.thumbnail.path}` : ''}
-                                                    alt={record.name}
-                                                    style={{
-                                                        objectFit: 'cover',
-                                                        objectPosition: 'center',
-                                                        cursor: 'zoom-in'
-                                                    }}
-                                                    width={100}
-                                                    height={100}
-                                                />
-                                            </Zoom>
-                                        </Grid>
-                                    </Grid>
-                                </div>
-                            </Grid>
-                        </Grid>
-                    </div>
-                </div>
-                <div className='card mt-2'>
-                    <div className='card-body'>
-                        <h4>Product Details</h4>
-                        <Grid container spacing={2}>
-                            <Grid xs={12} md={6} lg={6} xl={6} className="__item-separator">
-                                <InfoItem
-                                    label="Size"
-                                    value={record?.details?.size}
-                                    second={{
-                                        label: `Quality class`,
-                                        value: record?.details?.quality_class,
-                                    }}
-                                />
-                                <InfoItem
-                                    label="Material"
-                                    value={record?.details?.material}
-                                    second={{
-                                        label: `Color`,
-                                        value: record?.details?.color,
-                                    }}
-                                />
-                                <InfoItem
-                                    label="Brand"
-                                    value={record?.details?.brand}
-                                    second={{
-                                        label: `Model`,
-                                        value: record?.details?.model,
-                                    }}
-                                />
-                            </Grid>
-                            <Grid xs={12} md={6} lg={6} xl={6}>
-                                <InfoItem
-                                    label="Weight"
-                                    value={record?.details?.weight}
-                                    second={{
-                                        label: `Dimensions`,
-                                        value: record?.details?.dimensions,
-                                    }}
-                                />
-                                <InfoItem
-                                    label="Power"
-                                    value={record?.details?.power}
-                                    second={{
-                                        label: `Voltage`,
-                                        value: record?.details?.voltage,
-                                    }}
-                                />
-                            </Grid>
-                        </Grid>
-                    </div>
-                </div>
-                <div className='card mt-2'>
-                    <div className='card-body'>
-                        <h4>Suppliers</h4>
-                        <Grid container spacing={2}>
-                            {
-                                record.suppliers.map((supply, index) => {
-                                    return (
-                                        <Grid item xs={12} md={6} lg={6} xl={6} className={`${index === 0 ? '__item-separator' : ''}`}>
-                                            <InfoItem
-                                                label="Name"
-                                                value={supply?.name}
-                                                second={{
-                                                    label: `Contact info`,
-                                                    value: supply?.contact_info,
+            {record && (
+                <>
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="card"
+                    >
+                        <div className="card-body">
+                            <h4><i className="ti ti-box"></i>Product Info</h4>
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} md={8}>
+                                    <InfoItem
+                                        label="Name"
+                                        value={record.name}
+                                        second={{
+                                            label: "Price",
+                                            value: <span className="fw-bold">{record.price} <small>FCFA</small></span>
+                                        }}
+                                    />
+                                    <InfoItem
+                                        label="Stock"
+                                        value={record.stock_quantity}
+                                        second={{
+                                            label: "Description",
+                                            value: record.description || "No description available"
+                                        }}
+                                    />
+                                    <InfoItem
+                                        label="Status"
+                                        value={
+                                            <span className={`status-badge ${record.stock_quantity > 0 ? 'in-stock' : 'out-of-stock'}`}>
+                                                {getStatusOfProduct(record.stock_quantity)}
+                                            </span>
+                                        }
+                                        second={{
+                                            label: "Sub categories",
+                                            value: (
+                                                <div className="mt-2">
+                                                    {record.subcategories.map(subcategory => (
+                                                        <span key={subcategory.label} className="subcategory-tag">
+                                                            {subcategory.label}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )
+                                        }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <div className="product-image">
+                                        <Zoom>
+                                            <img
+                                                src={record.thumbnail ? `${constants.URL}/${record.thumbnail.path}` : '/placeholder.png'}
+                                                alt={record.name}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    maxHeight: '200px',
+                                                    objectFit: 'contain'
                                                 }}
                                             />
-                                        </Grid>
-                                    )
-                                })
-                            }
-                            <Grid xs={12} className="d-flex align-items-center justify-content-end">
-                                <button className='btn d-flex align-items-center btn-outline-dark' onClick={() => {
-                                    dispatch(setActivePage({
-                                        page: Pages.ARTICLE,
-                                        id,
-                                        param: {
-                                            sub_page: 'UPDATE'
-                                        }
-                                    }))
-                                }}>
-                                    <i className='ti ti-pencil'></i>
-                                    <span className='ms-1'>UPDATE</span>
-                                </button>
+                                        </Zoom>
+                                    </div>
+                                </Grid>
                             </Grid>
-                        </Grid>
-                    </div>
-                </div>
-            </>)}
+                        </div>
+                    </motion.div>
+
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="card"
+                    >
+                        <div className="card-body">
+                            <h4><i className="ti ti-list-details"></i>Product Details</h4>
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} md={6} className="__item-separator">
+                                    <InfoItem
+                                        label="Size"
+                                        value={record.details?.size || "N/A"}
+                                        second={{
+                                            label: "Quality class",
+                                            value: record.details?.quality_class || "N/A"
+                                        }}
+                                    />
+                                    <InfoItem
+                                        label="Material"
+                                        value={record.details?.material || "N/A"}
+                                        second={{
+                                            label: "Color",
+                                            value: record.details?.color || "N/A"
+                                        }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <InfoItem
+                                        label="Brand"
+                                        value={record.details?.brand || "N/A"}
+                                        second={{
+                                            label: "Model",
+                                            value: record.details?.model || "N/A"
+                                        }}
+                                    />
+                                    <InfoItem
+                                        label="Weight"
+                                        value={record.details?.weight || "N/A"}
+                                        second={{
+                                            label: "Dimensions",
+                                            value: record.details?.dimensions || "N/A"
+                                        }}
+                                    />
+                                </Grid>
+                            </Grid>
+                        </div>
+                    </motion.div>
+
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="card"
+                    >
+                        <div className="card-body">
+                            <h4><i className="ti ti-truck-delivery"></i>Suppliers</h4>
+                            <Grid container spacing={3}>
+                                {record.suppliers.map((supply, index) => (
+                                    <Grid item key={index} xs={12} md={6}>
+                                        <div className="supplier-card">
+                                            <InfoItem
+                                                label="Name"
+                                                value={supply.name}
+                                                second={{
+                                                    label: "Contact info",
+                                                    value: supply.contact_info || "No contact information"
+                                                }}
+                                            />
+                                        </div>
+                                    </Grid>
+                                ))}
+                            </Grid>
+                            <div className="text-end mt-4">
+                                <button
+                                    className="update-button"
+                                    onClick={() => {
+                                        dispatch(setActivePage({
+                                            page: Pages.ARTICLE,
+                                            id,
+                                            param: {
+                                                sub_page: 'UPDATE'
+                                            }
+                                        }))
+                                    }}
+                                >
+                                    <i className="ti ti-pencil"></i>
+                                    Update Product
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </>
+            )}
         </div>
-    )
-}
+    );
+};
 
 export default ReadProduct;
 

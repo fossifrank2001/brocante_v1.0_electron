@@ -8,7 +8,7 @@ class AuthorizationAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.get<IApiResponsePaginated<IHabilitation>>(`/authorizations?q=${_q}`);
-            return response.data;
+            return response.data as IApiResponsePaginated<IHabilitation>;
         } catch (error) {
             throw error;
         }
@@ -18,7 +18,7 @@ class AuthorizationAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.get<IApiResponsePaginated<IPermission>>(`/permissions?q=${_q}`);
-            return response.data;
+            return response.data as IApiResponsePaginated<IPermission>;
         } catch (error) {
             throw error;
         }
@@ -28,7 +28,7 @@ class AuthorizationAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.get<IApiResponseBase<IHabilitation>>(`/authorizations/${id}`);
-            return response.data;
+            return response.data as IApiResponseBase<IHabilitation>;
         } catch (error) {
             throw error;
         }
@@ -38,7 +38,7 @@ class AuthorizationAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.post<IApiResponseBase<IHabilitation>>('/authorizations', roleData);
-            return response.data;
+            return response.data as IApiResponseBase<IHabilitation>;
         } catch (error) {
             throw error;
         }
@@ -48,7 +48,7 @@ class AuthorizationAPI {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.put<IApiResponseBase<IHabilitation>>(`/authorizations/${id}`, roleData);
-            return response.data;
+            return response.data as IApiResponseBase<IHabilitation>;
         } catch (error) {
             throw error;
         }

@@ -4,10 +4,26 @@ import { Multiselect } from 'multiselect-react-dropdown';
 import { ICategory, SubCategory } from 'Data/Interfaces/Category';
 import CategoryAPI from 'Data/Api/Category';
 import { IProductPayload } from 'Interfaces';
+import { motion } from 'framer-motion';
+import { Tooltip } from '@mui/material';
+import './ProductInfo.scss';
 
 interface IProductInfoProps{
     categoryRecord?: ICategory | null
 }
+
+const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.3,
+            ease: "easeOut"
+        }
+    }
+};
+
 const ProductInfo: React.FC<IProductInfoProps> = ({categoryRecord}) => {
     const [categories, setCategories] = useState<ICategory[] | null>(null);
     const [category, setCategory] = useState<ICategory | null>(null);
@@ -35,142 +51,196 @@ const ProductInfo: React.FC<IProductInfoProps> = ({categoryRecord}) => {
         getCategories();
     }, [getCategories, categoryRecord]);
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     return (
-        <div className="row">
-            <div className="col-12 mx-auto">
-                <div className="row gap-10">
-                    <div className="col-6 mb-3">
+        <motion.div 
+            className="product-info"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+        >
+            <div className="info-card">
+                <h6 className="card-title">
+                    <i className="ti ti-shopping-cart"></i>
+                    Basic Product Information
+                </h6>
+                <div className="row g-4">
+                    <div className="col-md-6">
                         <div className="form-group">
-                            <label htmlFor="name">Name</label>
-                            <input
-                                id="name"
-                                name="name"
-                                type="text"
-                                className="form-control"
-                                onChange={handleChange}
-                                value={values.name}
-                            />
+                            <label htmlFor="name">
+                                <i className="ti ti-tag"></i>
+                                Product Name
+                            </label>
+                            <Tooltip title="Enter the name of your product" arrow placement="top">
+                                <input
+                                    id="name"
+                                    name="name"
+                                    type="text"
+                                    className="form-control"
+                                    onChange={handleChange}
+                                    value={values.name}
+                                    placeholder="e.g., Vintage Leather Chair"
+                                />
+                            </Tooltip>
                             {touched.name && errors.name && (
-                                <div className="text fs-10 text-danger d-flex align-items-center">
-                                    <i className="ti ti-alert-circle me-2"></i>
+                                <div className="error-feedback">
+                                    <i className="ti ti-alert-circle"></i>
                                     <span>{errors.name}</span>
                                 </div>
                             )}
                         </div>
                     </div>
-                    <div className="col-6 mb-3">
-                        <div className="row gap-10">
-                            <div className="col-6 mb-3">
-                                <div className="form-group">
-                                    <label htmlFor="stock_quantity">Stock Quantity</label>
-                                    <input
-                                        id="stock_quantity"
-                                        name="stock_quantity"
-                                        type="number"
-                                        className="form-control"
-                                        onChange={handleChange}
-                                        value={values.stock_quantity}
-                                    />
-                                    {touched.stock_quantity && errors.stock_quantity && (
-                                        <div className="text fs-10 text-danger d-flex align-items-center">
-                                            <i className="ti ti-alert-circle me-2"></i>
-                                            <span>{errors.stock_quantity}</span>
-                                        </div>
-                                    )}
+
+                    <div className="col-md-3">
+                        <div className="form-group">
+                            <label htmlFor="stock_quantity">
+                                <i className="ti ti-box"></i>
+                                Stock
+                            </label>
+                            <Tooltip title="Enter available quantity" arrow placement="top">
+                                <input
+                                    id="stock_quantity"
+                                    name="stock_quantity"
+                                    type="number"
+                                    className="form-control"
+                                    onChange={handleChange}
+                                    value={values.stock_quantity}
+                                    placeholder="0"
+                                    min="0"
+                                />
+                            </Tooltip>
+                            {touched.stock_quantity && errors.stock_quantity && (
+                                <div className="error-feedback">
+                                    <i className="ti ti-alert-circle"></i>
+                                    <span>{errors.stock_quantity}</span>
                                 </div>
-                            </div>
-                            <div className="col-6 mb-3">
-                                <div className="form-group">
-                                    <label htmlFor="price">Price</label>
-                                    <input
-                                        id="price"
-                                        name="price"
-                                        type="number"
-                                        className="form-control"
-                                        onChange={handleChange}
-                                        value={values.price}
-                                    />
-                                    {touched.price && errors.price && (
-                                        <div className="text fs-10 text-danger d-flex align-items-center">
-                                            <i className="ti ti-alert-circle me-2"></i>
-                                            <span>{errors.price}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </div>
-                    <div className="col-4 mb-3">
-                        <div className="form-group">
-                            <label htmlFor="category">Category</label>
-                            <div className="input-group">
-                                <select
-                                  className="form-select"
-                                  disabled={isLoading}
-                                  id="category"
-                                  name="category"
-                                  value={values.category || ''}
-                                  onChange={(e) => {
-                                      const selectedCategoryId = e.target.value;
-                                      handleChange(e);
-                                      const selectedCategory = categories?.find(category => String(category.id) === selectedCategoryId) || null;
 
-                                      if (selectedCategory === null || selectedCategoryId === '') {
-                                          setCategory(null);
-                                          setFieldValue('subcategory_ids', []);
-                                      } else {
-                                          setCategory(selectedCategory);
-                                      }
-                                  }}
+                    <div className="col-md-3">
+                        <div className="form-group">
+                            <label htmlFor="price">
+                                <i className="ti ti-currency-euro"></i>
+                                Price
+                            </label>
+                            <Tooltip title="Enter product price" arrow placement="top">
+                                <input
+                                    id="price"
+                                    name="price"
+                                    type="number"
+                                    className="form-control"
+                                    onChange={handleChange}
+                                    value={values.price}
+                                    placeholder="0.00"
+                                    min="0"
+                                    step="0.01"
+                                />
+                            </Tooltip>
+                            {touched.price && errors.price && (
+                                <div className="error-feedback">
+                                    <i className="ti ti-alert-circle"></i>
+                                    <span>{errors.price}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="col-md-4">
+                        <div className="form-group">
+                            <label htmlFor="category">
+                                <i className="ti ti-category"></i>
+                                Category
+                            </label>
+                            <Tooltip title="Select product category" arrow placement="top">
+                                <select
+                                    className="form-select"
+                                    disabled={isLoading}
+                                    id="category"
+                                    name="category"
+                                    value={values.category || ''}
+                                    onChange={(e) => {
+                                        const selectedCategoryId = e.target.value;
+                                        handleChange(e);
+                                        const selectedCategory = categories?.find(category => String(category.id) === selectedCategoryId) || null;
+
+                                        if (selectedCategory === null || selectedCategoryId === '') {
+                                            setCategory(null);
+                                            setFieldValue('subcategory_ids', []);
+                                        } else {
+                                            setCategory(selectedCategory);
+                                        }
+                                    }}
                                 >
                                     <option value="" label="Select a Category" />
                                     {categories?.map(_category => (
-                                      <option key={_category.id} value={_category.id.toString()} label={_category.label} />
+                                        <option key={_category.id} value={_category.id.toString()} label={_category.label} />
                                     ))}
                                 </select>
-                            </div>
+                            </Tooltip>
                         </div>
                     </div>
-                    <div className="col-8 mb-3">
-                        <label htmlFor="subcategory_ids">Sub Categories</label>
-                        <Multiselect
-                          options={category?.sub_categories || []}
-                          selectedValues={values.subcategory_ids}
-                          onSelect={(selectedList: SubCategory[]) => setFieldValue('subcategory_ids', selectedList)}
-                          onRemove={(selectedList: SubCategory[]) => setFieldValue('subcategory_ids', selectedList)}
-                          displayValue="label"
-                          className=""
-                          disable={!category}
-                        />
-                        {touched.subcategory_ids && errors.subcategory_ids && (
-                          <div className="text fs-10 text-danger d-flex align-items-center">
-                              <i className="ti ti-alert-circle me-2"></i>
-                              <span>
-                                    {Array.isArray(errors.subcategory_ids)
-                                      ? errors.subcategory_ids.map(error => error.label || 'Error').join(', ')
-                                      : errors.subcategory_ids}
-                              </span>
-                          </div>
-                        )}
 
-                    </div>
-                    <div className="col-12 mb-3">
+                    <div className="col-md-8">
                         <div className="form-group">
-                            <label htmlFor="description">Description</label>
-                            <textarea
-                                id="description"
-                                name="description"
-                                className="form-control"
-                                onChange={handleChange}
-                                value={values.description}
-                                style={{resize:'none', minHeight:'100px'}}
-                            />
+                            <label htmlFor="subcategory_ids">
+                                <i className="ti ti-tags"></i>
+                                Sub Categories
+                            </label>
+                            <Tooltip title="Select relevant sub-categories" arrow placement="top">
+                                <div>
+                                    <Multiselect
+                                        options={category?.sub_categories || []}
+                                        selectedValues={values.subcategory_ids}
+                                        onSelect={(selectedList: SubCategory[]) => setFieldValue('subcategory_ids', selectedList)}
+                                        onRemove={(selectedList: SubCategory[]) => setFieldValue('subcategory_ids', selectedList)}
+                                        displayValue="label"
+                                        placeholder="Select sub-categories"
+                                        disable={!category}
+                                        style={{
+                                            chips: { background: '#4318FF' },
+                                            searchBox: { 
+                                                border: '1px solid #e2e8f0',
+                                                borderRadius: '8px',
+                                                padding: '8px'
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </Tooltip>
+                            {touched.subcategory_ids && errors.subcategory_ids && (
+                                <div className="error-feedback">
+                                    <i className="ti ti-alert-circle"></i>
+                                    <span>
+                                        {Array.isArray(errors.subcategory_ids)
+                                            ? errors.subcategory_ids.map(error => error.label || 'Error').join(', ')
+                                            : errors.subcategory_ids}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="col-12">
+                        <div className="form-group mb-0">
+                            <label htmlFor="description">
+                                <i className="ti ti-file-description"></i>
+                                Description
+                            </label>
+                            <Tooltip title="Describe your product" arrow placement="top">
+                                <textarea
+                                    id="description"
+                                    name="description"
+                                    className="form-control"
+                                    onChange={handleChange}
+                                    value={values.description}
+                                    placeholder="Enter a detailed description of your product..."
+                                />
+                            </Tooltip>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 
