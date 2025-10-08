@@ -18,8 +18,8 @@ const Constants = {
         name: "Nozakap FOSSI Frank Jordan",
         phone: "+237677831959",
     },
-    BASE_URL: "http://localhost:8000/api/v1",
-    URL: "http://localhost:8000",
+    BASE_URL: "http://brocante.local/api/v1",
+    URL: "http://brocante.local",
     PER_PAGE: 15,
     APP_NAME: 'Brocante V1.0',
     defaultStoredValue: JSON.stringify({

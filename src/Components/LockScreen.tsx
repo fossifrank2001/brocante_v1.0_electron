@@ -11,7 +11,7 @@ const LockScreen = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [lastActivity, setLastActivity] = useState(Date.now());
-    const TIMEOUT_DURATION = 15 * 60 * 1000;
+    const TIMEOUT_DURATION = .5 * 60 * 1000;
     const dispatch = useAppDispatch()
 
     const handleUserActivity = () => {

@@ -14,6 +14,8 @@ import {useAppContext} from "@/contexts/appContext.tsx";
 import {useAppDispatch} from "@/hooks";
 import {setActivePage} from "Data/Slices/NavigationSlice.ts";
 import {Pages} from "Data/Objects/state.ts";
+import DebtRecoveryModal from './DebtRecoveryModal';
+import InvoiceAPI from 'Data/Api/Invoice';
 
 export interface FormValues {
     person: IPerson | null;
@@ -27,7 +29,8 @@ export interface FormValues {
         tax: number;
         shippingPrice: number;
     };
-    has_authorized: boolean
+    has_authorized: boolean;
+    amount_paid: number;
 }
 
 const stepVariants = {
@@ -55,6 +58,8 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
     const today = new Date();
     const formattedToday = today.toISOString().split('T')[0];
     const [isRefresh, setIsRefresh] = useState(false);
+    const [openDebtModal, setOpenDebtModal] = useState(false);
+    const [pendingSubmission, setPendingSubmission] = useState<FormValues | null>(null);
 
     const initialValues: FormValues = {
         person: null,
@@ -68,7 +73,8 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
             shippingPrice: 0
         },
         date_to_pay: formattedToday,
-        has_authorized: true
+        has_authorized: true,
+        amount_paid: 0
     };
 
     const getCustomers = useCallback(async (_qPerson: string) => {
@@ -125,36 +131,101 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
                     }
                     return Yup.date().notRequired().nullable();
                 }),
-            has_authorized: Yup.boolean().default(true)
+            has_authorized: Yup.boolean().default(true),
+            amount_paid: Yup.number()
+                .required('Le montant payé est requis')
+                .min(0, 'Le montant doit être supérieur ou égal à 0')
         })
     ];
 
     const handleSubmit = async (values: FormValues, actions: FormikHelpers<FormValues>) => {
         if (isLastStep) {
-            try {
-                setIsLoading(true)
-                const treatedData = treatedDataFunc(values)
-                const result = await SellAPI.create(treatedData)
-                actions.resetForm();
-
-                dispatch(clearCart());
-                context.togglePageLoading()
-                dispatch(setActivePage({
-                    page: Pages.SUCCESS_ORDER,
-                    param: {
-                        type: treatedData.transaction_type,
-                        number: result.data?.sell_code
-                    }
-                }))
-            } catch (error) {
-                console.error(error);
-            }finally {
-                setIsLoading(false)
+            // Vérifier s'il faut ouvrir le modal de recouvrement
+            const excessAmount = values.amount_paid - cart.totalPrice;
+            const customer = values.person;
+            const companyBalance = customer?.company_balance || 0;
+            const remainingBalance = customer?.remaining_balance ? JSON.parse(customer.remaining_balance) : {};
+            const hasDebts = Object.keys(remainingBalance).length > 0;
+            
+            // Ouvrir le modal si : (excédent > 0 OU company_balance > 0) ET le client a des dettes
+            if ((excessAmount > 0 || companyBalance > 0) && hasDebts) {
+                setPendingSubmission(values);
+                setOpenDebtModal(true);
+                actions.setSubmitting(false);
+                return;
             }
+            
+            // Sinon, soumettre directement
+            await submitSell(values, actions);
         } else {
             setStep(step + 1);
         }
         actions.setSubmitting(false);
+    };
+    
+    const submitSell = async (values: FormValues, actions: FormikHelpers<FormValues>) => {
+        try {
+            setIsLoading(true);
+            const treatedData = treatedDataFunc(values);
+            const result = await SellAPI.create(treatedData);
+            actions.resetForm();
+
+            dispatch(clearCart());
+            context.togglePageLoading();
+            dispatch(setActivePage({
+                page: Pages.SUCCESS_ORDER,
+                param: {
+                    type: treatedData.transaction_type,
+                    number: result.data?.sell_code
+                }
+            }));
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    const handleDebtRecoveryConfirm = async (useCompanyBalance: boolean, useExcess: boolean) => {
+        if (!pendingSubmission) return;
+        
+        try {
+            setIsLoading(true);
+            
+            // TODO: Créer un nouvel endpoint backend qui gère:
+            // 1. Création de la vente avec paiement
+            // 2. Si useExcess: utiliser l'excédent pour recouvrer les dettes
+            // 3. Si useCompanyBalance: utiliser le solde client pour recouvrer les dettes
+            
+            console.log('Options de recouvrement:', { useCompanyBalance, useExcess });
+            
+            const treatedData = treatedDataFunc(pendingSubmission);
+            const result = await SellAPI.create(treatedData);
+            
+            // Appeler le recouvrement si nécessaire
+            if (useCompanyBalance && pendingSubmission.person?.id) {
+                await InvoiceAPI.useCustomerBalance({
+                    customer_id: pendingSubmission.person.id
+                });
+            }
+            
+            dispatch(clearCart());
+            context.togglePageLoading();
+            dispatch(setActivePage({
+                page: Pages.SUCCESS_ORDER,
+                param: {
+                    type: treatedData.transaction_type,
+                    number: result.data?.sell_code
+                }
+            }));
+            
+            setOpenDebtModal(false);
+            setPendingSubmission(null);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -255,6 +326,22 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
                     </Form>
                 )}
             </Formik>
+            
+            {/* Modal de Recouvrement des Dettes */}
+            {pendingSubmission && pendingSubmission.person && (
+                <DebtRecoveryModal
+                    open={openDebtModal}
+                    onClose={() => {
+                        setOpenDebtModal(false);
+                        setPendingSubmission(null);
+                    }}
+                    customer={pendingSubmission.person}
+                    excessAmount={Math.max(0, pendingSubmission.amount_paid - cart.totalPrice)}
+                    totalAmount={cart.totalPrice}
+                    onConfirm={handleDebtRecoveryConfirm}
+                    loading={isLoading}
+                />
+            )}
         </div>
     );
 };
@@ -264,6 +351,30 @@ export default MultiStepFormCart;
 
 const treatedDataFunc = (_data: FormValues):ISellPayload => {
     console.log("Data ::: ", _data)
+    
+    const totalWithShipping = _data.summarize.totalPrice + _data.summarize.shippingPrice;
+    
+    // Calcul du montant réellement payé selon le type de transaction
+    let actualAmountPaid = 0;
+    
+    switch(_data.transactionType) {
+        case 'total':
+            // TOTAL: Le caissier saisit le montant reçu (peut être > total)
+            actualAmountPaid = _data.amount_paid;
+            break;
+        case 'advance':
+            // ADVANCE: Le montant de l'avance (toujours < total)
+            actualAmountPaid = _data.advanceAmount;
+            break;
+        case 'loan':
+            // LOAN: Rien payé maintenant
+            actualAmountPaid = 0;
+            break;
+    }
+    
+    // Calcul de la dette sur cette vente
+    const remainingBalance = Math.max(0, totalWithShipping - actualAmountPaid);
+    
     const formattedData = {
         person_id: _data.person.id,
         payment: _data.payment,
@@ -271,9 +382,9 @@ const treatedDataFunc = (_data: FormValues):ISellPayload => {
         tax: _data.summarize.tax,
         shipping_price: _data.summarize.shippingPrice,
         transaction_type: _data.transactionType,
-        amount_paid: _data.transactionType === 'advance' ? _data.advanceAmount : (_data.transactionType === 'loan') ? 0: _data.summarize.totalPrice,
-        remaining_balance: _data.transactionType === 'advance' ? _data.summarize.totalPrice - _data.advanceAmount : 0,
-        date_to_pay: _data.transactionType === 'advance' ? new Date().toISOString() : null,
+        amount_paid: actualAmountPaid,
+        remaining_balance: remainingBalance,
+        date_to_pay: _data.transactionType === 'advance' || _data.transactionType === 'loan' ? _data.date_to_pay : null,
         items: _data.items.map(item => ({
             product_id: item.product.id,
             price: item.product.price,
@@ -284,5 +395,9 @@ const treatedDataFunc = (_data: FormValues):ISellPayload => {
     };
 
     console.log("Formatted data ::: ", formattedData)
+    console.log("Transaction type:", _data.transactionType)
+    console.log("Amount paid:", actualAmountPaid)
+    console.log("Remaining balance:", remainingBalance)
+    
     return formattedData;
 };

@@ -491,15 +491,41 @@ const ReadInvoice = () => {
                                     <Box sx={{ pl: 2 }}>
                                         {paymentResponse.debt_coverage.covered_debts?.length > 0 && (
                                             <>
-                                                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                                                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
                                                     Dettes Couvertes:
                                                 </Typography>
                                                 {paymentResponse.debt_coverage.covered_debts.map((debt, index) => (
-                                                    <Box key={index} className="info-item">
-                                                        <Typography className="label">Vente {debt.sale_id}:</Typography>
-                                                        <Typography className="value">
-                                                            {debt.amount_covered.toFixed(2)} €
-                                                        </Typography>
+                                                    <Box key={index} sx={{ 
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        mb: 1,
+                                                        p: 1,
+                                                        backgroundColor: '#f0f7ff',
+                                                        borderRadius: 1,
+                                                        border: '1px solid #bbdefb'
+                                                    }}>
+                                                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                                            <Typography sx={{ fontWeight: 500 }}>
+                                                                Vente {debt.sale_id}:
+                                                            </Typography>
+                                                            <Typography sx={{ color: '#1976d2', fontWeight: 'bold' }}>
+                                                                {debt.amount_covered.toFixed(2)} FCFA
+                                                            </Typography>
+                                                        </Box>
+                                                        {debt.paid_with && (
+                                                            <Typography sx={{ 
+                                                                fontSize: '0.875rem',
+                                                                color: debt.paid_with === 'customer_balance' ? '#2e7d32' : '#ed6c02',
+                                                                backgroundColor: debt.paid_with === 'customer_balance' ? '#e8f5e9' : '#fff3e0',
+                                                                px: 1.5,
+                                                                py: 0.5,
+                                                                borderRadius: 1,
+                                                                fontWeight: 500
+                                                            }}>
+                                                                {debt.paid_with === 'customer_balance' ? '💰 Solde Client' : '💵 Excédent Paiement'}
+                                                            </Typography>
+                                                        )}
                                                     </Box>
                                                 ))}
                                             </>

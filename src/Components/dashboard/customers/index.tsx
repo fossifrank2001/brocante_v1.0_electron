@@ -12,13 +12,14 @@ import {
 } from "material-react-table";
 import {MRT_Localization_EN} from "material-react-table/locales/en";
 import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
-import {Box, Link, Stack} from "@mui/material";
+import {Box, Link, Stack, Tooltip, IconButton, Chip} from "@mui/material";
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { useAppSelector } from '@/hooks';
 import Toast from '@/Data/Utilities/Toast';
 import CustomAlert from '@/Components/CustomAlert';
 import CustomerAPI from "Data/Api/Customer.ts";
 import { IPerson, IPersonTableData } from 'Interfaces';
+import UseCustomerBalance from './UseCustomerBalance';
 
 export default function IndexCustomer() {
     const context = useAppContext();
@@ -30,6 +31,8 @@ export default function IndexCustomer() {
     });
     const [openDetailModal, setOpenDetailModal] = useState(false);
     const [customerId, setCustomerId] = useState<number | null>(null);
+    const [openBalanceModal, setOpenBalanceModal] = useState(false);
+    const [selectedCustomer, setSelectedCustomer] = useState<IPerson | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [inProgress, setInProgress] = useState(false);
     const [isDeleted, setIsDeleted] = useState(false);
@@ -113,11 +116,37 @@ export default function IndexCustomer() {
         }
     }
 
+    const handleOpenBalanceModal = (customer: IPerson) => {
+        setSelectedCustomer(customer);
+        setOpenBalanceModal(true);
+    };
+
+    const handleCloseBalanceModal = () => {
+        setOpenBalanceModal(false);
+        setSelectedCustomer(null);
+    };
+
+    const handleBalanceSuccess = () => {
+        handleRefresh();
+    };
+
     const tableData : IPersonTableData[] = useMemo(() => {
         return customers ? customers.map((person) => ({
             ...person,
             actions: (
                 <Stack direction="row" spacing={1}>
+                    <Tooltip title="Utiliser le solde client">
+                        <IconButton
+                            size="small"
+                            onClick={() => handleOpenBalanceModal(person)}
+                            disabled={!person.company_balance || person.company_balance === 0}
+                            sx={{
+                                color: person.company_balance && person.company_balance > 0 ? '#2e7d32' : '#ccc'
+                            }}
+                        >
+                            <i className="ti ti-wallet"></i>
+                        </IconButton>
+                    </Tooltip>
                     <Link
                         href="#"
                         onClick={() => {
@@ -167,9 +196,30 @@ export default function IndexCustomer() {
                 accessorKey: "company_balance",
                 header: "Company Balance",
                 size: 150,
-                Cell: ({ cell }) => {
+                Cell: ({ cell, row }) => {
                     const value = cell.getValue() as number;
-                    return value ? UtilMethods.formatNumber(value) : null;
+                    const hasBalance = value && value > 0;
+                    return (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <span style={{ 
+                                fontWeight: hasBalance ? 'bold' : 'normal',
+                                color: hasBalance ? '#2e7d32' : 'inherit'
+                            }}>
+                                {value ? UtilMethods.formatNumber(value) : '0'}
+                            </span>
+                            {hasBalance && (
+                                <Chip 
+                                    label="💰" 
+                                    size="small" 
+                                    sx={{ 
+                                        height: 20,
+                                        backgroundColor: '#e8f5e9',
+                                        color: '#2e7d32'
+                                    }}
+                                />
+                            )}
+                        </Box>
+                    );
                 },
                 muiFilterTextFieldProps: () => ({
                     inputProps: { placeHolder: "filter" },
@@ -289,6 +339,14 @@ export default function IndexCustomer() {
                 onHandleOpenDetail={() => setOpenDetailModal(false)}
                 inProgress = {inProgress}
             />
+            {selectedCustomer && (
+                <UseCustomerBalance
+                    customer={selectedCustomer}
+                    open={openBalanceModal}
+                    onClose={handleCloseBalanceModal}
+                    onSuccess={handleBalanceSuccess}
+                />
+            )}
         </div>
     );
 }
