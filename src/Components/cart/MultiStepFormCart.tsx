@@ -15,7 +15,11 @@ import {useAppDispatch} from "@/hooks";
 import {setActivePage} from "Data/Slices/NavigationSlice.ts";
 import {Pages} from "Data/Objects/state.ts";
 import DebtRecoveryModal from './DebtRecoveryModal';
-import InvoiceAPI from 'Data/Api/Invoice';
+import Toast from "Data/Utilities/Toast";
+
+// LocalStorage keys
+const CART_STEP_KEY = 'brocante_cart_step';
+const CART_FORM_DATA_KEY = 'brocante_cart_form_data';
 
 export interface FormValues {
     person: IPerson | null;
@@ -31,6 +35,8 @@ export interface FormValues {
     };
     has_authorized: boolean;
     amount_paid: number;
+    use_company_balance?: boolean;
+    use_surplus_for_debts?: boolean;
 }
 
 const stepVariants = {
@@ -44,7 +50,17 @@ interface IMultiStepFormCartProps {
 }
 
 const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
-    const [step, setStep] = useState<number>(0);
+    // Load saved step from localStorage
+    const loadSavedStep = () => {
+        try {
+            const savedStep = localStorage.getItem(CART_STEP_KEY);
+            return savedStep ? parseInt(savedStep) : 0;
+        } catch (error) {
+            return 0;
+        }
+    };
+
+    const [step, setStep] = useState<number>(loadSavedStep());
     const steps = ['Cart Listing', 'Checkout Process'];
     const context = useAppContext();
     const dispatch = useAppDispatch();
@@ -61,6 +77,11 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
     const [openDebtModal, setOpenDebtModal] = useState(false);
     const [pendingSubmission, setPendingSubmission] = useState<FormValues | null>(null);
 
+    // Save step to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem(CART_STEP_KEY, step.toString());
+    }, [step]);
+
     const initialValues: FormValues = {
         person: null,
         payment: "Cash",
@@ -73,8 +94,10 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
             shippingPrice: 0
         },
         date_to_pay: formattedToday,
-        has_authorized: true,
-        amount_paid: 0
+        has_authorized: false,
+        amount_paid: 0,
+        use_company_balance: false,
+        use_surplus_for_debts: true,
     };
 
     const getCustomers = useCallback(async (_qPerson: string) => {
@@ -163,14 +186,16 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
         actions.setSubmitting(false);
     };
     
-    const submitSell = async (values: FormValues, actions: FormikHelpers<FormValues>) => {
+    const submitSell = async (values: FormValues, actions: FormikHelpers<FormValues>, useCompanyBalance = false, useSurplusForDebts = false) => {
         try {
             setIsLoading(true);
-            const treatedData = treatedDataFunc(values);
+            const treatedData = treatedDataFunc(values, useCompanyBalance, useSurplusForDebts);
             const result = await SellAPI.create(treatedData);
             actions.resetForm();
 
             dispatch(clearCart());
+            localStorage.removeItem(CART_STEP_KEY);
+            localStorage.removeItem(CART_FORM_DATA_KEY);
             context.togglePageLoading();
             dispatch(setActivePage({
                 page: Pages.SUCCESS_ORDER,
@@ -199,17 +224,21 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
             
             console.log('Options de recouvrement:', { useCompanyBalance, useExcess });
             
-            const treatedData = treatedDataFunc(pendingSubmission);
+            // Backend gère maintenant company_balance et surplus automatiquement
+            const treatedData = treatedDataFunc(pendingSubmission, useCompanyBalance, useExcess);
             const result = await SellAPI.create(treatedData);
             
-            // Appeler le recouvrement si nécessaire
-            if (useCompanyBalance && pendingSubmission.person?.id) {
-                await InvoiceAPI.useCustomerBalance({
-                    customer_id: pendingSubmission.person.id
-                });
+            // Afficher le message si des dettes ont été recouvertes
+            const responseData = result.data as any;
+            if (responseData?.debts_recovered && responseData.debts_recovered.length > 0) {
+                const message = `${responseData.debts_recovered.length} dette(s) recouverte(s) !`;
+                Toast.success(message, 3000, 'top-right');
+                await new Promise(resolve => setTimeout(resolve, 3000));
             }
-            
+
             dispatch(clearCart());
+            localStorage.removeItem(CART_STEP_KEY);
+            localStorage.removeItem(CART_FORM_DATA_KEY);
             context.togglePageLoading();
             dispatch(setActivePage({
                 page: Pages.SUCCESS_ORDER,
@@ -218,7 +247,7 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
                     number: result.data?.sell_code
                 }
             }));
-            
+
             setOpenDebtModal(false);
             setPendingSubmission(null);
         } catch (error) {
@@ -349,7 +378,7 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
 export default MultiStepFormCart;
 
 
-const treatedDataFunc = (_data: FormValues):ISellPayload => {
+const treatedDataFunc = (_data: FormValues, useCompanyBalance = false, useSurplusForDebts = false):ISellPayload => {
     console.log("Data ::: ", _data)
     
     const totalWithShipping = _data.summarize.totalPrice + _data.summarize.shippingPrice;
@@ -391,7 +420,9 @@ const treatedDataFunc = (_data: FormValues):ISellPayload => {
             quantity: item.quantity,
             total_unit: item.subtotal
         })),
-        has_authorized: _data.has_authorized
+        has_authorized: _data.has_authorized,
+        use_company_balance: useCompanyBalance,
+        use_surplus_for_debts: useSurplusForDebts
     };
 
     console.log("Formatted data ::: ", formattedData)

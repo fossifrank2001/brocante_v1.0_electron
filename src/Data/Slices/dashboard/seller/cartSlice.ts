@@ -1,6 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from "Data/Objects/store";
 
+// LocalStorage key for cart persistence
+const CART_STORAGE_KEY = 'brocante_cart_state';
+
 interface IProduct {
     id: number;
     imageUrl: string;
@@ -22,15 +25,38 @@ export interface ICartState {
     totalPrice: number;
 }
 
-const initialState: ICartState = {
-    items: [],
-    totalQuantity: 0,
-    totalPrice: 0
+// Load cart from localStorage if available
+const loadCartFromStorage = (): ICartState => {
+    try {
+        const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+        if (savedCart) {
+            return JSON.parse(savedCart);
+        }
+    } catch (error) {
+        console.error('Error loading cart from localStorage:', error);
+    }
+    return {
+        items: [],
+        totalQuantity: 0,
+        totalPrice: 0
+    };
 };
+
+// Save cart to localStorage
+const saveCartToStorage = (state: ICartState) => {
+    try {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state));
+    } catch (error) {
+        console.error('Error saving cart to localStorage:', error);
+    }
+};
+
+const initialState: ICartState = loadCartFromStorage();
 
 const updateCartTotals = (state: ICartState) => {
     state.totalQuantity = state.items.reduce((total, item) => total + item.quantity, 0);
     state.totalPrice = state.items.reduce((total, item) => total + item.subtotal, 0);
+    saveCartToStorage(state);
 };
 
 export const cartSlice = createSlice({
@@ -94,6 +120,7 @@ export const cartSlice = createSlice({
             state.items = [];
             state.totalQuantity = 0;
             state.totalPrice = 0;
+            localStorage.removeItem(CART_STORAGE_KEY);
         },
     },
 });

@@ -12,6 +12,9 @@ export interface ISellPayload {
     tax: number;
     shipping_price: number;
     items: Item[];
+    has_authorized?: boolean;
+    use_company_balance?: boolean;
+    use_surplus_for_debts?: boolean;
 }
 
 export type TTransactionType = 'total' | 'advance' | 'loan';

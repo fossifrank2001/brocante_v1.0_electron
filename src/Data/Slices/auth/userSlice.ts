@@ -8,11 +8,31 @@ import { IApiResponse } from '@/Data/Utilities/axiosInstance';
 import { setActivePage } from '../NavigationSlice';
 import { IAccess } from '@/Data/Interfaces/Access';
 
-const defaultUserState: UserState = {
-    token: "",
-    message: "",
-    authUser: null
+// Restaurer le token et l'utilisateur depuis localStorage
+const loadUserFromStorage = (): UserState => {
+    try {
+        const savedToken = localStorage.getItem('token');
+        const savedUser = localStorage.getItem('user');
+        
+        if (savedToken && savedUser) {
+            return {
+                token: savedToken,
+                message: '',
+                authUser: JSON.parse(savedUser)
+            };
+        }
+    } catch (error) {
+        console.error('Error loading user from localStorage:', error);
+    }
+    
+    return {
+        token: "",
+        message: "",
+        authUser: null
+    };
 };
+
+const defaultUserState: UserState = loadUserFromStorage();
 
 const userSlice = createSlice({
     name: 'user',

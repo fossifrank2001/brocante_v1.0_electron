@@ -55,7 +55,13 @@ export default function Aside({ role = null }) {
             console.log('auth_access_id ASIDE FUNCTION ::: ', auth_access_id)
             const access = authUser?.accesses ? authUser?.accesses.find(access => access.id === auth_access_id) : null
             console.log('ROLE ASIDE FUNCTION ::: ', role)
-            await dispatch(loadMenuByRoleAsync(access?.role.id))
+            
+            // Vérification defensive pour éviter l'erreur si access ou role est undefined
+            if (access && access.role && access.role.id) {
+                await dispatch(loadMenuByRoleAsync(access.role.id))
+            } else {
+                console.warn('Access or role not found for user:', { access, auth_access_id, authUser })
+            }
         } catch (e) {
             console.error(e)
             setError('Failed to load menus. Please try again.')
@@ -198,41 +204,43 @@ export default function Aside({ role = null }) {
                         )}
                     </ul>
                 </nav>
-                <div
-                    className="fixed-profile p-3 mb-2 bg-secondary-subtle rounded mt-3"
-                    style={{
-                        position: 'absolute',
-                        bottom: '0',
-                        left: '50%',
-                        right: 'auto',
-                        width: '80%',
-                        margin: '0 auto',
-                        transform: 'translateX(-50%)',
-                    }}
-                >
-                    <div className="hstack gap-3">
-                        <div className="john-img">
-                            <img src={user} className="rounded-circle" width="40" height="40" alt="modernize-img" />
+                {authUser && (
+                    <div
+                        className="fixed-profile p-3 mb-2 bg-secondary-subtle rounded mt-3"
+                        style={{
+                            position: 'absolute',
+                            bottom: '0',
+                            left: '50%',
+                            right: 'auto',
+                            width: '80%',
+                            margin: '0 auto',
+                            transform: 'translateX(-50%)',
+                        }}
+                    >
+                        <div className="hstack gap-3">
+                            <div className="john-img">
+                                <img src={user} className="rounded-circle" width="40" height="40" alt="modernize-img" />
+                            </div>
+                            <div className="john-title">
+                                <h6 className="mb-0 fs-4 fw-semibold">{`${authUser.last_name?.split(' ')[0] || 'User'}...`}</h6>
+                                <span className="fs-2">{UtilMethods.getAuthRole(auth_access_id)}</span>
+                            </div>
+                            <motion.button
+                                onClick={handleLogout}
+                                className="border-0 bg-transparent text-primary ms-auto p-0"
+                                tabIndex={0}
+                                type="button"
+                                aria-label="logout"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                data-bs-title="logout"
+                                whileTap={{ scale: 0.9 }}
+                            >
+                                <i className="ti ti-power fs-6"></i>
+                            </motion.button>
                         </div>
-                        <div className="john-title">
-                            <h6 className="mb-0 fs-4 fw-semibold">{`${authUser?.last_name.split(' ')[0]}...`}</h6>
-                            <span className="fs-2">{UtilMethods.getAuthRole(auth_access_id)}</span>
-                        </div>
-                        <motion.button
-                            onClick={handleLogout}
-                            className="border-0 bg-transparent text-primary ms-auto p-0"
-                            tabIndex={0}
-                            type="button"
-                            aria-label="logout"
-                            data-bs-toggle="tooltip"
-                            data-bs-placement="top"
-                            data-bs-title="logout"
-                            whileTap={{ scale: 0.9 }}
-                        >
-                            <i className="ti ti-power fs-6"></i>
-                        </motion.button>
                     </div>
-                </div>
+                )}
             </div>
         </aside>
     )

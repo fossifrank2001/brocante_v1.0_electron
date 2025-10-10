@@ -45,6 +45,22 @@ class CustomerAPI{
             throw error;
         }
     }
+
+    /**
+     * Recouvrir les dettes d'un client avec son company_balance
+     * Les dettes sont traitées du plus petit au plus grand pour maximiser le nombre de dettes payées
+     */
+    static async recoverDebts(personId: number): Promise<IApiResponse>{
+        try {
+            const response = await axiosInstance.post(`/customers/${personId}/recover-debts`);
+            Toast.success(response.data.message, 3000, 'top-right');
+            return response.data;
+        } catch (error: any) {
+            const errorMsg = error.response?.data?.message || "Erreur lors du recouvrement des dettes";
+            Toast.error(errorMsg, 3000, 'top-right');
+            throw error;
+        }
+    }
 }
 
 export default CustomerAPI;

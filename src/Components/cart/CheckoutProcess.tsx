@@ -54,6 +54,15 @@ export default function CheckoutProcess({
     const [errors, setErrors] = useState({ phone: '', lastname: '' });
     const [isLoading, setIsLoading] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [useCompanyBalance, setUseCompanyBalance] = useState(false);
+    const [isRecoveringDebts, setIsRecoveringDebts] = useState(false);
+    const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+    const [recoveryResult, setRecoveryResult] = useState<any>(null);
+
+    // Calculer le prix après application du company_balance
+    const companyBalance = selectedPerson?.company_balance || 0;
+    const companyBalanceToUse = useCompanyBalance ? Math.min(companyBalance, cart.totalPrice) : 0;
+    const priceAfterBalance = cart.totalPrice - companyBalanceToUse;
 
     useEffect(() => {
         formik.setFieldValue('summarize.shippingPrice', 0);
@@ -113,6 +122,28 @@ export default function CheckoutProcess({
         }
     }, [onRefreshPersons]);
 
+    const handleRecoverDebts = async () => {
+        if (!selectedPerson) return;
+        
+        try {
+            setIsRecoveringDebts(true);
+            const result = await CustomerAPI.recoverDebts(selectedPerson.id as number);
+            setRecoveryResult(result.data);
+            setShowRecoveryModal(true);
+            
+            // Rafraîchir les données du client après le recouvrement
+            await handleRefresh();
+            
+            // Mettre à jour les dettes localement
+            setCustomerDebts(result.data.remaining_debts > 0 ? JSON.parse(selectedPerson.remaining_balance || '{}') : {});
+            setTotalDebts(result.data.remaining_debts || 0);
+        } catch (error) {
+            console.error('Error recovering debts:', error);
+        } finally {
+            setIsRecoveringDebts(false);
+        }
+    };
+
     return (
         <Box sx={{ p: 3, backgroundColor: '#f5f7fa', minHeight: '100vh' }}>
             <Grid container spacing={3}>
@@ -136,6 +167,48 @@ export default function CheckoutProcess({
                                             <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
                                                 +{UtilMethods.formatNumber(selectedPerson.company_balance)} FCFA
                                             </Typography>
+                                        </Box>
+                                        <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(46, 125, 50, 0.1)', borderRadius: 2 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <input
+                                                    type="checkbox"
+                                                    id="use_company_balance"
+                                                    checked={useCompanyBalance}
+                                                    onChange={(e) => {
+                                                        const checked = e.target.checked;
+                                                        setUseCompanyBalance(checked);
+                                                        formik.setFieldValue('use_company_balance', checked);
+                                                    }}
+                                                />
+                                                <label htmlFor="use_company_balance" style={{ cursor: 'pointer' }}>
+                                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                        ✅ Utiliser ce solde pour réduire le prix de la vente actuelle
+                                                    </Typography>
+                                                </label>
+                                            </Box>
+                                            {useCompanyBalance && (
+                                                <Box sx={{ mt: 2, p: 1.5, backgroundColor: 'white', borderRadius: 1 }}>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                                        <Typography variant="caption">Prix initial :</Typography>
+                                                        <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                                            {UtilMethods.formatNumber(cart.totalPrice)} FCFA
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                                        <Typography variant="caption" color="success.main">Solde utilisé :</Typography>
+                                                        <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
+                                                            -{UtilMethods.formatNumber(companyBalanceToUse)} FCFA
+                                                        </Typography>
+                                                    </Box>
+                                                    <Divider sx={{ my: 1 }} />
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>À payer :</Typography>
+                                                        <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
+                                                            {UtilMethods.formatNumber(priceAfterBalance)} FCFA
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                            )}
                                         </Box>
                                     </Alert>
                                 )}
@@ -171,6 +244,24 @@ export default function CheckoutProcess({
                                                     {UtilMethods.formatNumber(totalDebts)} FCFA
                                                 </Typography>
                                             </Box>
+                                            {selectedPerson.company_balance && selectedPerson.company_balance > 0 && (
+                                                <Box sx={{ mt: 2 }}>
+                                                    <Button
+                                                        variant="contained"
+                                                        color="success"
+                                                        fullWidth
+                                                        disabled={isRecoveringDebts}
+                                                        onClick={handleRecoverDebts}
+                                                        startIcon={<AccountBalance />}
+                                                        sx={{ borderRadius: 2 }}
+                                                    >
+                                                        {isRecoveringDebts ? 'Recouvrement en cours...' : '💰 Recouvrir mes dettes avec mon solde'}
+                                                    </Button>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, textAlign: 'center' }}>
+                                                        Les dettes seront payées du plus petit au plus grand montant
+                                                    </Typography>
+                                                </Box>
+                                            )}
                                         </Alert>
                                     </>
                                 )}
@@ -181,16 +272,25 @@ export default function CheckoutProcess({
 
                 {/* Montant Total de la Vente */}
                 <Grid item xs={12}>
-                    <Card elevation={3} sx={{ borderRadius: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+                    <Card elevation={3} sx={{ borderRadius: 3, background: useCompanyBalance ? 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
                         <CardContent>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <AttachMoney sx={{ fontSize: 32 }} />
-                                    <Typography variant="h6">Montant Total de la Vente</Typography>
+                                    <Typography variant="h6">
+                                        {useCompanyBalance ? 'Montant à Payer (après réduction)' : 'Montant Total de la Vente'}
+                                    </Typography>
                                 </Box>
-                                <Typography variant="h3" sx={{ fontWeight: 'bold' }}>
-                                    {UtilMethods.formatNumber(cart.totalPrice)} <span style={{ fontSize: '0.5em' }}>FCFA</span>
-                                </Typography>
+                                <Box>
+                                    {useCompanyBalance && companyBalanceToUse > 0 && (
+                                        <Typography variant="body2" sx={{ textDecoration: 'line-through', opacity: 0.7 }}>
+                                            {UtilMethods.formatNumber(cart.totalPrice)} FCFA
+                                        </Typography>
+                                    )}
+                                    <Typography variant="h3" sx={{ fontWeight: 'bold' }}>
+                                        {UtilMethods.formatNumber(useCompanyBalance ? priceAfterBalance : cart.totalPrice)} <span style={{ fontSize: '0.5em' }}>FCFA</span>
+                                    </Typography>
+                                </Box>
                             </Box>
                         </CardContent>
                     </Card>
@@ -398,14 +498,14 @@ export default function CheckoutProcess({
                                                 sx={{ mb: 2 }}
                                             />
                                             {formik.values.amount_paid > 0 && (
-                                                <Alert severity={formik.values.amount_paid >= cart.totalPrice ? "success" : "warning"} sx={{ borderRadius: 2 }}>
+                                                <Alert severity={formik.values.amount_paid >= priceAfterBalance ? "success" : "warning"} sx={{ borderRadius: 2 }}>
                                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                                         <Typography variant="body2">
-                                                            {formik.values.amount_paid >= cart.totalPrice ? '✅ Excédent :' : '⚠️ Dette restante :'}
+                                                            {formik.values.amount_paid >= priceAfterBalance ? '✅ Excédent :' : '⚠️ Dette restante :'}
                                                         </Typography>
                                                         <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                                            {formik.values.amount_paid >= cart.totalPrice ? '+' : ''}
-                                                            {UtilMethods.formatNumber(Math.abs(formik.values.amount_paid - cart.totalPrice))} FCFA
+                                                            {formik.values.amount_paid >= priceAfterBalance ? '+' : ''}
+                                                            {UtilMethods.formatNumber(Math.abs(formik.values.amount_paid - priceAfterBalance))} FCFA
                                                         </Typography>
                                                     </Box>
                                                 </Alert>
@@ -437,7 +537,7 @@ export default function CheckoutProcess({
                                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                                         <Typography variant="body2">⏳ Reste à payer :</Typography>
                                                         <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                                            {UtilMethods.formatNumber(cart.totalPrice - formik.values.advanceAmount)} FCFA
+                                                            {UtilMethods.formatNumber(priceAfterBalance - formik.values.advanceAmount)} FCFA
                                                         </Typography>
                                                     </Box>
                                                 </Alert>
@@ -446,16 +546,28 @@ export default function CheckoutProcess({
                                     )}
 
                                     {formik.values.transactionType === 'loan' && (
-                                        <Alert severity="warning" icon={<Warning />} sx={{ borderRadius: 2 }}>
+                                        <Alert severity={useCompanyBalance && priceAfterBalance === 0 ? "success" : "warning"} icon={useCompanyBalance && priceAfterBalance === 0 ? <CheckCircle /> : <Warning />} sx={{ borderRadius: 2 }}>
                                             <Typography variant="body2" sx={{ mb: 1 }}>
-                                                Le client ne paie rien maintenant.
+                                                {useCompanyBalance && priceAfterBalance === 0 
+                                                    ? '✅ Le prêt est entièrement couvert par le solde client !'
+                                                    : 'Le client ne paie rien maintenant.'}
                                             </Typography>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, p: 1.5, backgroundColor: '#fff3e0', borderRadius: 1 }}>
-                                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Montant total à payer :</Typography>
-                                                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#ed6c02' }}>
-                                                    {UtilMethods.formatNumber(cart.totalPrice)} FCFA
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, p: 1.5, backgroundColor: useCompanyBalance && priceAfterBalance === 0 ? '#e8f5e9' : '#fff3e0', borderRadius: 1 }}>
+                                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                                    {useCompanyBalance && priceAfterBalance === 0 ? 'Payé avec solde client :' : 'Montant total à payer :'}
+                                                </Typography>
+                                                <Typography variant="h6" sx={{ fontWeight: 'bold', color: useCompanyBalance && priceAfterBalance === 0 ? '#2e7d32' : '#ed6c02' }}>
+                                                    {UtilMethods.formatNumber(useCompanyBalance ? companyBalanceToUse : cart.totalPrice)} FCFA
                                                 </Typography>
                                             </Box>
+                                            {useCompanyBalance && priceAfterBalance > 0 && (
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, p: 1.5, backgroundColor: '#ffebee', borderRadius: 1 }}>
+                                                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Dette restante :</Typography>
+                                                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#d32f2f' }}>
+                                                        {UtilMethods.formatNumber(priceAfterBalance)} FCFA
+                                                    </Typography>
+                                                </Box>
+                                            )}
                                         </Alert>
                                     )}
                                 </Grid>
@@ -500,6 +612,89 @@ export default function CheckoutProcess({
                     </Card>
                 </Grid>
             </Grid>
+
+            {/* Modal Résultat du Recouvrement */}
+            <Dialog open={showRecoveryModal} onClose={() => setShowRecoveryModal(false)} maxWidth="md" fullWidth>
+                <DialogTitle>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <CheckCircle sx={{ color: '#2e7d32' }} />
+                        Recouvrement des Dettes Réussi
+                    </Box>
+                </DialogTitle>
+                <DialogContent>
+                    {recoveryResult && (
+                        <Box sx={{ mt: 2 }}>
+                            <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }}>
+                                <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                    ✅ {recoveryResult.fully_paid_count} dette(s) entièrement payée(s) sur {recoveryResult.debts_count}
+                                </Typography>
+                                <Typography variant="body2">
+                                    Montant total recouvré: {UtilMethods.formatNumber(recoveryResult.total_recovered)} FCFA
+                                </Typography>
+                            </Alert>
+
+                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>Détails du recouvrement:</Typography>
+                            <Box sx={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                {recoveryResult.debts_recovered.map((debt: any, index: number) => (
+                                    <Card key={index} sx={{ mb: 2, borderLeft: debt.fully_paid ? '4px solid #2e7d32' : '4px solid #ff9800' }}>
+                                        <CardContent>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                                    Vente {debt.sell_code}
+                                                </Typography>
+                                                <Chip 
+                                                    label={debt.fully_paid ? 'Payée' : 'Partielle'} 
+                                                    color={debt.fully_paid ? 'success' : 'warning'} 
+                                                    size="small" 
+                                                />
+                                            </Box>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                                <Typography variant="body2" color="text.secondary">Dette initiale:</Typography>
+                                                <Typography variant="body2">{UtilMethods.formatNumber(debt.debt_amount)} FCFA</Typography>
+                                            </Box>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                                <Typography variant="body2" color="success.main">Montant payé:</Typography>
+                                                <Typography variant="body2" color="success.main" sx={{ fontWeight: 'bold' }}>
+                                                    {UtilMethods.formatNumber(debt.amount_recovered)} FCFA
+                                                </Typography>
+                                            </Box>
+                                            {!debt.fully_paid && debt.remaining && (
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, p: 1, backgroundColor: '#fff3e0', borderRadius: 1 }}>
+                                                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Reste à payer:</Typography>
+                                                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#ed6c02' }}>
+                                                        {UtilMethods.formatNumber(debt.remaining)} FCFA
+                                                    </Typography>
+                                                </Box>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </Box>
+
+                            <Divider sx={{ my: 2 }} />
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 2, backgroundColor: '#f5f5f5', borderRadius: 2 }}>
+                                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Nouveau solde client:</Typography>
+                                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
+                                    {UtilMethods.formatNumber(recoveryResult.new_company_balance)} FCFA
+                                </Typography>
+                            </Box>
+                            {recoveryResult.remaining_debts > 0 && (
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 2, mt: 1, backgroundColor: '#ffebee', borderRadius: 2 }}>
+                                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Dettes restantes:</Typography>
+                                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#d32f2f' }}>
+                                        {UtilMethods.formatNumber(recoveryResult.remaining_debts)} FCFA
+                                    </Typography>
+                                </Box>
+                            )}
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setShowRecoveryModal(false)} variant="contained">
+                        Fermer
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Dialog Nouveau Client */}
             <Dialog open={open} onClose={handleCloseDialog} maxWidth="sm" fullWidth>

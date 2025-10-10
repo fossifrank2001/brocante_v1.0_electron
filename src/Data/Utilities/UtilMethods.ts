@@ -72,11 +72,16 @@ export default class UtilMethods {
     static getAuthRole(access_id: number | string): string {
         const accesses = store.getState()?.user?.authUser?.accesses
 
-        if(accesses?.length > 1){
-            return accesses?.find(access => access.id === access_id).role.label
+        if (!accesses || accesses.length === 0) {
+            return 'Unknown Role'
         }
 
-        return  accesses[0].role.label
+        if (accesses.length > 1) {
+            const access = accesses.find(access => access.id === access_id)
+            return access?.role?.label || 'Unknown Role'
+        }
+
+        return accesses[0]?.role?.label || 'Unknown Role'
     }
 
     static capitalizeFirstLetter(str: string):string {

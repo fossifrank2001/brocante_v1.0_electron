@@ -37,6 +37,29 @@ export default function AccessSelectionComponent() {
     
             const { loadAuthorizationAsync } = await import('Data/Slices/auth/authorizationSlice');
             await dispatch(loadAuthorizationAsync({ access_id }));
+            
+            // Vérifier si un panier existe pour les SELLER
+            const selectedAccessData = currentUser?.accesses?.find(acc => acc.id === Number(access_id));
+            const isSeller = selectedAccessData?.role?.code === 'SELLER';
+            
+            if (isSeller) {
+                // Vérifier si un panier existe dans localStorage
+                const cartData = localStorage.getItem('brocante_cart_state');
+                if (cartData) {
+                    try {
+                        const parsedCart = JSON.parse(cartData);
+                        if (parsedCart.items && parsedCart.items.length > 0) {
+                            // Rediriger vers le panier si des articles existent
+                            dispatch(setActivePage({page: Pages.CART_PAGE}));
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('Error parsing cart data:', error);
+                    }
+                }
+            }
+            
+            // Par défaut, rediriger vers le dashboard
             dispatch(setActivePage({page: Pages.DASHBOARD}));
         } catch (e) {
             console.error(e);
