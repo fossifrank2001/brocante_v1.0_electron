@@ -94,6 +94,30 @@ class ProductAPI {
             throw error;
         }
     }
+
+    static async findByReference(reference: string, type: 'internal' | 'barcode' | 'auto' = 'auto'): Promise<IApiResponseBase<IProduct>> {
+        // eslint-disable-next-line no-useless-catch
+        try {
+            const response = await axiosInstance.post<IApiResponseBase<IProduct>>('/products/find-by-reference', {
+                reference,
+                type
+            });
+            return response.data as any;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async generateQRCode(productId: number): Promise<IApiResponseBase<{ product: IProduct; qr_code_url: string }>> {
+        // eslint-disable-next-line no-useless-catch
+        try {
+            const response = await axiosInstance.post<IApiResponseBase<{ product: IProduct; qr_code_url: string }>>(`/products/${productId}/generate-qr`);
+            Toast.success(response.data.message);
+            return response.data as any;
+        } catch (error) {
+            throw error;
+        }
+    }
 }
 
 export default ProductAPI;

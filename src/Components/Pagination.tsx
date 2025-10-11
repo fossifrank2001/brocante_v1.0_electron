@@ -46,14 +46,22 @@ export default function PaginationComponent({ paginationData, onPageChange, onPe
     };
 
     return (
-        <nav className='position-fixed bg-white d-flex justify-content-between align-items-center' style={{
-            left:'50%',
-            bottom:'20px',
-            padding: "10px 12px",
-            borderRadius: "8px",
-            zIndex: 500
-        }}>
-            <div className="d-flex align-items-center me-2">
+        <nav
+            className='position-fixed d-flex align-items-center'
+            style={{
+                left: '50%',
+                transform: 'translateX(-50%)',
+                bottom: '20px',
+                padding: '10px 14px',
+                borderRadius: '12px',
+                zIndex: 1100,
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                backdropFilter: 'saturate(180%) blur(8px)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                gap: '12px'
+            }}
+        >
+            <div className="d-flex align-items-center">
                 <FormControl variant="outlined" size="small" style={{ minWidth: 120 }}>
                     <InputLabel id="per-page-select-label">Per page</InputLabel>
                     <Select
@@ -71,10 +79,15 @@ export default function PaginationComponent({ paginationData, onPageChange, onPe
                     </Select>
                 </FormControl>
             </div>
-            <ul className="pagination justify-content-center m-0">
+            <ul className="pagination justify-content-center align-items-center m-0" style={{ gap: '8px' }}>
                 <li className={`page-item ${!links[0].url ? 'disabled' : ''}`}>
                     <button
-                        style={circleButtonStyles}
+                        style={{
+                            ...circleButtonStyles,
+                            backgroundColor: 'white',
+                            color: '#1976d2',
+                            border: '1px solid #e0e0e0'
+                        }}
                         className="page-link"
                         onClick={() => handlePageChange(1)}
                         disabled={!links[0].url}
@@ -83,33 +96,49 @@ export default function PaginationComponent({ paginationData, onPageChange, onPe
                         <i className="ti ti-chevrons-left" aria-hidden="true"></i>
                     </button>
                 </li>
-                {links.map((link, index) => (
-                    <li key={index} className={`page-item ${link.active ? 'active' : ''}`}>
-                        <motion.button
-                            style={circleButtonStyles}
-                            className="page-link btn-circle mx-1"
-                            onClick={() => {
-                                if (link.label === "&laquo; Previous") {
-                                    handlePageChange(current_page - 1);
-                                } else if (link.label === "Next &raquo;") {
-                                    handlePageChange(current_page + 1);
-                                } else {
-                                    handlePageChange(parseInt(link.label));
-                                }
-                            }}
-                            disabled={!link.url}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            aria-label={link.label}
-                        >
-                            {link.label !== "&laquo; Previous" && link.label !== "Next &raquo;" ? link.label :
-                                mapLabelToIcon(link.label)}
-                        </motion.button>
-                    </li>
-                ))}
+                {links.map((link, index) => {
+                    const isPrev = link.label === "&laquo; Previous";
+                    const isNext = link.label === "Next &raquo;";
+                    const isActive = link.active && !isPrev && !isNext;
+                    const bg = isActive ? '#1976d2' : 'white';
+                    const color = isActive ? 'white' : '#1976d2';
+                    return (
+                        <li key={index} className={`page-item ${isActive ? 'active' : ''}`}>
+                            <motion.button
+                                style={{
+                                    ...circleButtonStyles,
+                                    backgroundColor: bg,
+                                    color,
+                                    border: '1px solid #e0e0e0'
+                                }}
+                                className="page-link btn-circle"
+                                onClick={() => {
+                                    if (isPrev) {
+                                        handlePageChange(current_page - 1);
+                                    } else if (isNext) {
+                                        handlePageChange(current_page + 1);
+                                    } else {
+                                        handlePageChange(parseInt(link.label));
+                                    }
+                                }}
+                                disabled={!link.url}
+                                whileHover={{ scale: 1.08 }}
+                                whileTap={{ scale: 0.96 }}
+                                aria-label={link.label}
+                            >
+                                {!isPrev && !isNext ? link.label : mapLabelToIcon(link.label)}
+                            </motion.button>
+                        </li>
+                    );
+                })}
                 <li className={`page-item ${!links[links.length - 1].url ? 'disabled' : ''}`}>
                     <button
-                        style={circleButtonStyles}
+                        style={{
+                            ...circleButtonStyles,
+                            backgroundColor: 'white',
+                            color: '#1976d2',
+                            border: '1px solid #e0e0e0'
+                        }}
                         className="page-link"
                         onClick={() => handlePageChange(last_page)}
                         disabled={!links[links.length - 1].url}

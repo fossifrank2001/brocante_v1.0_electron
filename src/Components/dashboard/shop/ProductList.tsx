@@ -14,14 +14,22 @@ interface IProductTransformed{
 
 interface ProductListProps{
     products: IProductTransformed[] | IProduct[];
+    showFilters?: boolean;
 }
 
-const ProductList: React.FC<ProductListProps> = ({products}) => {
+const ProductList: React.FC<ProductListProps> = ({products, showFilters = true}) => {
+    // When filters are shown: 4 per row on lg+ => col-lg-3
+    // When filters are hidden: 6 per row on lg+ => col-lg-2
+    const columnClass = showFilters
+        ? 'col-6 col-md-4 col-lg-3 col-xxl-3'
+        : 'col-6 col-md-4 col-lg-2 col-xxl-2';
+
     return (
-        <div className="row px-2">
+        <div className="row g-3 px-2">
             {products.map((product: any, index) => (
                 <ProductCard
                     key={index}
+                    columnClass={columnClass}
                     id={product.id}
                     imageUrl={"thumbnail" in product ? product.thumbnail?.path : null}
                     name={product.name}

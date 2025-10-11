@@ -1,8 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ICategory } from "Data/Interfaces/Category.ts";
 import { ISubCategory } from "Data/Interfaces/Supply.ts";
 import ProductAPI from "Data/Api/Product.ts";
 import UtilMethods from 'Data/Utilities/UtilMethods';
+import { 
+    Box, 
+    Typography, 
+    Accordion, 
+    AccordionSummary, 
+    AccordionDetails,
+    FormControlLabel,
+    Checkbox,
+    Radio,
+    RadioGroup,
+    Button,
+    Divider,
+    Badge,
+    IconButton
+} from '@mui/material';
+import { 
+    ExpandMore, 
+    Category as CategoryIcon, 
+    AttachMoney, 
+    Inventory,
+    FilterAlt,
+    Close
+} from '@mui/icons-material';
 
 interface ShopFiltersProps {
     categories: ICategory[];
@@ -13,6 +36,7 @@ interface ShopFiltersProps {
     onStatusChange: (priceRange: string) => void;
     selectedStatus: string;
     onResetFilters: () => void;
+    onClose?: () => void;
 }
 
 const ShopFilters: React.FC<ShopFiltersProps> = ({
@@ -23,8 +47,10 @@ const ShopFilters: React.FC<ShopFiltersProps> = ({
      onPriceChange,
      onStatusChange,
      selectedStatus,
-     onResetFilters
+     onResetFilters,
+     onClose
  }) => {
+    const [expandedCategory, setExpandedCategory] = useState<number | false>(categories.length > 0 ? categories[0].id : false);
 
     const handleSubCategorySelect = (subCategory: ISubCategory) => {
         const isSelected = selectedSubCategories.some(sc => sc.id === subCategory.id);
@@ -43,123 +69,177 @@ const ShopFilters: React.FC<ShopFiltersProps> = ({
         onStatusChange(_status)
     }
 
-    // Function to randomly select an icon for each category
-    const getRandomIcon = (randomIndex : number) => {
-        const icons = ['ti ti-layout-bottombar-inactive', 'ti ti-shovel-pitchforks',
-            'ti ti-car-turbine', 'ti ti-solar-electricity'
-        ];
-        return icons[randomIndex];
+    const handleCategoryExpand = (categoryId: number) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+        setExpandedCategory(isExpanded ? categoryId : false);
     };
 
+    const getCategorySelectedCount = (category: ICategory) => {
+        return category.sub_categories.filter(sc => 
+            selectedSubCategories.some(selected => selected.id === sc.id)
+        ).length;
+    };
+
+    const priceRanges = [
+        { value: '', label: 'Tous les prix' },
+        { value: '0_500', label: '0 - 500 FCFA' },
+        { value: '500_2500', label: '500 - 2,500 FCFA' },
+        { value: 'over_2500', label: 'Plus de 2,500 FCFA' }
+    ];
+
+    const statuses = [
+        { value: '', label: 'Tous' },
+        { value: ProductAPI.STOCK, label: 'En stock' },
+        { value: ProductAPI.OUT_OF_STOCK, label: 'Rupture de stock' }
+    ];
+
     return (
-        <div className="card shop-filters flex-shrink-0 border-end d-none d-lg-block" style={{
-            height: 'calc(100vh - 74px)',
-            position: 'fixed'
+        <Box sx={{ 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column',
+            backgroundColor: 'white'
         }}>
-            <div className="wrapper-filter-section" style={{
-                height: '88%',
-                backgroundColor: 'white',
-                overflowY: 'auto'
+            {/* Header */}
+            <Box sx={{ 
+                p: 2, 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                borderBottom: '1px solid #e0e0e0'
             }}>
-                <div className="by-categories border-bottom rounded-0">
-                    <h6 className="my-3 mx-4 d-flex align-items-center">
-                        <i className="ti ti-category"></i>
-                        <span className="ms-1 fw-semibold">Filter by Category</span>
-                    </h6>
-                    <ul className="list-group pt-2 border-bottom rounded-0" style={{maxHeight: '400px', overflowY: 'auto'}}>
-                        {categories.map((category, index) => (
-                            <li key={category.id} className="list-group-item border-0 p-0 mx-4 mb-2">
-                                <div
-                                    className="d-flex align-items-center gap-2 px-3 py-2 rounded-1 bg-light cursor-pointer">
-                                    <i className={`${getRandomIcon(index)} fs-5 text-primary`}></i>
-                                    <span className="text-dark">{category.label}</span>
-                                </div>
-                                {category.sub_categories.map(subCategory => (
-                                    <div key={subCategory.id} className="form-check ms-4 mt-2 mb-1">
-                                        <input
-                                            className="form-check-input"
-                                            type="checkbox"
-                                            id={`subCategory-${subCategory.id}`}
-                                            checked={selectedSubCategories.some(sc => sc.id === subCategory.id)}
-                                            onChange={() => handleSubCategorySelect(subCategory)}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <FilterAlt color="primary" />
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        Filtres
+                    </Typography>
+                </Box>
+                {onClose && (
+                    <IconButton onClick={onClose} size="small">
+                        <Close />
+                    </IconButton>
+                )}
+            </Box>
+
+            {/* Filtres scrollables */}
+            <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
+                {/* Catégories */}
+                <Box sx={{ mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <CategoryIcon color="primary" fontSize="small" />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                            Catégories
+                        </Typography>
+                    </Box>
+                    {categories.map((category) => {
+                        const selectedCount = getCategorySelectedCount(category);
+                        return (
+                            <Accordion 
+                                key={category.id}
+                                expanded={expandedCategory === category.id}
+                                onChange={handleCategoryExpand(category.id)}
+                                sx={{ 
+                                    mb: 1,
+                                    '&:before': { display: 'none' },
+                                    boxShadow: 'none',
+                                    border: '1px solid #e0e0e0',
+                                    borderRadius: '8px !important'
+                                }}
+                            >
+                                <AccordionSummary
+                                    expandIcon={<ExpandMore />}
+                                    sx={{
+                                        '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.04)' },
+                                        borderRadius: '8px'
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                                        <Typography sx={{ flex: 1 }}>{category.label}</Typography>
+                                        {selectedCount > 0 && (
+                                            <Badge badgeContent={selectedCount} color="primary" />
+                                        )}
+                                    </Box>
+                                </AccordionSummary>
+                                <AccordionDetails sx={{ pt: 0 }}>
+                                    {category.sub_categories.map(subCategory => (
+                                        <FormControlLabel
+                                            key={subCategory.id}
+                                            control={
+                                                <Checkbox
+                                                    checked={selectedSubCategories.some(sc => sc.id === subCategory.id)}
+                                                    onChange={() => handleSubCategorySelect(subCategory)}
+                                                    size="small"
+                                                />
+                                            }
+                                            label={<Typography variant="body2">{subCategory.label}</Typography>}
+                                            sx={{ display: 'flex', ml: 0, mb: 0.5 }}
                                         />
-                                        <label className="form-check-label ms-2" htmlFor={`subCategory-${subCategory.id}`}>
-                                            {subCategory.label}
-                                        </label>
-                                    </div>
-                                ))}
-                            </li>
+                                    ))}
+                                </AccordionDetails>
+                            </Accordion>
+                        );
+                    })}
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
+                {/* Statut */}
+                <Box sx={{ mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <Inventory color="primary" fontSize="small" />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                            Statut
+                        </Typography>
+                    </Box>
+                    <RadioGroup value={selectedStatus} onChange={(e) => handleStatusSelect(e.target.value)}>
+                        {statuses.map(status => (
+                            <FormControlLabel
+                                key={status.value}
+                                value={status.value}
+                                control={<Radio size="small" />}
+                                label={<Typography variant="body2">{status.label}</Typography>}
+                                sx={{ ml: 0 }}
+                            />
                         ))}
-                    </ul>
-                </div>
-                <div className="by-status border-bottom rounded-0">
-                    <h6 className="mt-4 mb-3 mx-4 fw-semibold">
-                        <i className="ti ti-car-turbine"></i>
-                        <span className="ms-1 fw-semibold">By Status</span>
-                    </h6>
-                    <div className="pb-4 px-4">
-                        {['', ProductAPI.STOCK, ProductAPI.OUT_OF_STOCK].map(status => (
-                            <div key={status} className="form-check py-2 mb-0">
-                                <input
-                                    className="form-check-input p-2"
-                                    type="radio"
-                                    name="statusRadios"
-                                    id={status || 'status-all'}
-                                    value={selectedStatus}
-                                    checked={selectedStatus === status}
-                                    onChange={() => handleStatusSelect(status)}
-                                />
-                                <label className="form-check-label d-flex align-items-center ps-2"
-                                       htmlFor={status || 'status-all'}>
-                                    {status ?
-                                        UtilMethods.capitalizeFirstLetter(status) :
-                                        'All'
-                                    }
-                                </label>
-                            </div>
+                    </RadioGroup>
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
+                {/* Prix */}
+                <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <AttachMoney color="primary" fontSize="small" />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                            Prix
+                        </Typography>
+                    </Box>
+                    <RadioGroup value={selectedPriceRange} onChange={(e) => handlePriceSelect(e.target.value)}>
+                        {priceRanges.map(range => (
+                            <FormControlLabel
+                                key={range.value}
+                                value={range.value}
+                                control={<Radio size="small" />}
+                                label={<Typography variant="body2">{range.label}</Typography>}
+                                sx={{ ml: 0 }}
+                            />
                         ))}
-                    </div>
-                </div>
-                <div className="by-pricing border-bottom rounded-0">
-                    <h6 className="mt-4 mb-3 mx-4 fw-semibold">
-                        <i className="ti ti-discount-check"></i>
-                        <span className="ms-1 fw-semibold">By Pricing</span>
-                    </h6>
-                    <div className="pb-4 px-4">
-                        {['', '0_500', '500_2500', 'over_2500'].map(priceRange => (
-                            <div key={priceRange} className="form-check py-2 mb-0">
-                                <input
-                                    className="form-check-input p-2"
-                                    type="radio"
-                                    name="priceRadios"
-                                    id={priceRange || 'all'}
-                                    value={priceRange}
-                                    checked={selectedPriceRange === priceRange}
-                                    onChange={() => handlePriceSelect(priceRange)}
-                                />
-                                <label className="form-check-label d-flex align-items-center ps-2" htmlFor={priceRange || 'all'}>
-                                    {priceRange ?
-                                        priceRange.replace('_', '-') :
-                                        'All'
-                                    }
-                                </label>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-            <div className="p-4" style={{
-                backgroundColor: 'white',
-            }}>
-                <button
+                    </RadioGroup>
+                </Box>
+            </Box>
+
+            {/* Footer avec bouton reset */}
+            <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
+                <Button
                     onClick={onResetFilters}
-                    className="btn btn-primary w-100 d-flex align-items-center justify-content-center"
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<FilterAlt />}
+                    sx={{ borderRadius: 2 }}
                 >
-                    <i className='ti ti-refresh'></i>
-                    <span className='ms-2'>Reset Filters</span>
-                </button>
-            </div>
-        </div>
+                    Réinitialiser les filtres
+                </Button>
+            </Box>
+        </Box>
     );
 };
 

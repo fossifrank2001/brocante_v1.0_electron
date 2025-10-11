@@ -9,7 +9,8 @@ import CategoryAPI from "@/Data/Api/Category";
 import LoaderFilter from "@/Components/loaders/LoaderFilter";
 import LoaderArticle from "@/Components/loaders/LoaderArticle";
 import { IPaginationData } from 'Interfaces';
-import { Alert, AlertTitle, Typography } from '@mui/material';
+import { Alert, AlertTitle, Typography, Box, IconButton, Drawer, Chip, Badge } from '@mui/material';
+import { FilterList, Refresh, Close } from '@mui/icons-material';
 
 const ShopComponent: React.FC<{searchTerm: string, onResetFilter: () => void}> = ({searchTerm, onResetFilter}) => {
     const [products, setProducts] = useState<IProduct[]>([]);
@@ -22,6 +23,7 @@ const ShopComponent: React.FC<{searchTerm: string, onResetFilter: () => void}> =
     const [loadingProducts, setLoadingProducts] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [perPage, setPerPage] = useState<number>(10);
+    const [showFilters, setShowFilters] = useState<boolean>(true);
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
@@ -103,6 +105,18 @@ const ShopComponent: React.FC<{searchTerm: string, onResetFilter: () => void}> =
         onResetFilter();
     };
 
+    const toggleFilters = () => {
+        setShowFilters(!showFilters);
+    };
+
+    const getActiveFiltersCount = () => {
+        let count = 0;
+        if (selectedSubCategories.length > 0) count++;
+        if (priceRange) count++;
+        if (_status) count++;
+        return count;
+    };
+
     const handleRefreshFilters = async () => {
         await getCategories();
     };
@@ -112,10 +126,111 @@ const ShopComponent: React.FC<{searchTerm: string, onResetFilter: () => void}> =
     };
 
     return (
-        <div className="" style={{width: '90%', margin: 'auto'}}>
-            <div className="position-relative overflow-hidden">
-                <div className="shop-part d-flex w-100" style={{height:'fit-content!important'}}>
-                    {loadingFilter ? <LoaderFilter /> : (
+        <Box sx={{ width: '100%', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+            {/* Header avec boutons et filtres actifs */}
+            <Box sx={{ 
+                p: 2, 
+                backgroundColor: 'white', 
+                borderBottom: '1px solid #e0e0e0',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 2
+            }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <IconButton 
+                        onClick={toggleFilters}
+                        color="primary"
+                        sx={{ 
+                            backgroundColor: showFilters ? 'primary.main' : 'transparent',
+                            color: showFilters ? 'white' : 'primary.main',
+                            '&:hover': {
+                                backgroundColor: showFilters ? 'primary.dark' : 'rgba(25, 118, 210, 0.04)'
+                            }
+                        }}
+                    >
+                        <Badge badgeContent={getActiveFiltersCount()} color="error">
+                            <FilterList />
+                        </Badge>
+                    </IconButton>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {products.length} produit{products.length > 1 ? 's' : ''}
+                    </Typography>
+                    {getActiveFiltersCount() > 0 && (
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {selectedSubCategories.length > 0 && (
+                                <Chip 
+                                    label={`${selectedSubCategories.length} catégorie(s)`} 
+                                    size="small" 
+                                    onDelete={() => setSelectedSubCategories([])}
+                                    color="primary"
+                                    variant="outlined"
+                                />
+                            )}
+                            {priceRange && (
+                                <Chip 
+                                    label={`Prix: ${priceRange.replace('_', '-')}`} 
+                                    size="small" 
+                                    onDelete={() => setPriceRange('')}
+                                    color="primary"
+                                    variant="outlined"
+                                />
+                            )}
+                            {_status && (
+                                <Chip 
+                                    label={`Statut: ${_status}`} 
+                                    size="small" 
+                                    onDelete={() => setStatus('')}
+                                    color="primary"
+                                    variant="outlined"
+                                />
+                            )}
+                        </Box>
+                    )}
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <IconButton
+                        onClick={handleRefreshFilters}
+                        disabled={loadingFilter}
+                        color="primary"
+                        title="Rafraîchir les filtres"
+                    >
+                        <Refresh />
+                    </IconButton>
+                    <IconButton
+                        onClick={handleRefreshProducts}
+                        disabled={loadingProducts}
+                        color="primary"
+                        title="Rafraîchir les produits"
+                    >
+                        <Refresh />
+                    </IconButton>
+                </Box>
+            </Box>
+
+            {/* Contenu principal */}
+            <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                {/* Drawer pour les filtres */}
+                <Drawer
+                    variant="persistent"
+                    anchor="left"
+                    open={showFilters}
+                    sx={{
+                        width: showFilters ? 320 : 0,
+                        flexShrink: 0,
+                        '& .MuiDrawer-paper': {
+                            width: 320,
+                            boxSizing: 'border-box',
+                            position: 'relative',
+                            height: '100%',
+                            borderRight: '1px solid #e0e0e0'
+                        },
+                    }}
+                >
+                    {loadingFilter ? (
+                        <LoaderFilter />
+                    ) : (
                         <ShopFilters
                             categories={categories}
                             selectedSubCategories={selectedSubCategories}
@@ -125,67 +240,54 @@ const ShopComponent: React.FC<{searchTerm: string, onResetFilter: () => void}> =
                             onResetFilters={handleResetFilters}
                             onStatusChange={handleStatusChange}
                             selectedStatus={_status}
+                            onClose={toggleFilters}
                         />
                     )}
-                    <div className="card-body pb-0 pt-2" style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        backgroundColor: "rgba(208,208,208,0.28)",
-                        marginLeft:"300px",
-                        height:"100vh"
-                    }}>
-                        <div className="d-flex justify-content-between mb-3 px-2">
-                            <button
-                                onClick={handleRefreshFilters}
-                                disabled={loadingFilter}
-                                className="btn btn-primary d-flex align-items-center justify-content-center"
-                            >
-                                <i className="ti ti-refresh"></i>
-                                <span className='ms-2'>Refresh Filters</span>
-                            </button>
-                            <button
-                                onClick={handleRefreshProducts}
-                                disabled={loadingFilter}
-                                className="btn btn-primary d-flex align-items-center justify-content-center"
-                            >
-                                <i className="ti ti-refresh"></i>
-                                <span className='ms-2'>Refresh Products</span>
-                            </button>
-                        </div>
-                        {error && (
-                            <Alert severity="error" style={{width: '95%', margin: 'auto'}}>
-                                <AlertTitle>Error</AlertTitle>
-                                {error}
-                            </Alert>
-                        )}
-                        {loadingProducts ? (
-                            <div className='row px-2'>
-                                {Array.from({length: 8}).map((_, index) => <LoaderArticle key={index}/>)}
-                            </div>
-                        ) : products.length > 0 ? (
-                            <div>
-                                <ProductList products={products}/>
-                            </div>
-                        ) : (
-                            <Alert severity="warning" style={{width: '95%', margin: '10px auto'}}>
-                                <AlertTitle>No Products Found.</AlertTitle>
-                                <Typography>
-                                    No products match your current filters. Try adjusting your search or filter criteria.
-                                </Typography>
-                            </Alert>
-                        )}
-                        {paginationData && (
+                </Drawer>
+
+                {/* Zone des produits */}
+                <Box sx={{ 
+                    flex: 1, 
+                    backgroundColor: '#f5f7fa',
+                    overflowY: 'auto',
+                    p: 3,
+                    transition: 'margin 0.3s ease'
+                }}>
+                    {error && (
+                        <Alert severity="error" sx={{ mb: 3 }}>
+                            <AlertTitle>Erreur</AlertTitle>
+                            {error}
+                        </Alert>
+                    )}
+                    {loadingProducts ? (
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 3 }}>
+                            {Array.from({length: 8}).map((_, index) => <LoaderArticle key={index}/>)}
+                        </Box>
+                    ) : products.length > 0 ? (
+                        <Box>
+                            <ProductList products={products} showFilters={showFilters}/>
+                        </Box>
+                    ) : (
+                        <Alert severity="warning" sx={{ mt: 3 }}>
+                            <AlertTitle>Aucun produit trouvé</AlertTitle>
+                            <Typography>
+                                Aucun produit ne correspond à vos critères. Essayez d'ajuster vos filtres.
+                            </Typography>
+                        </Alert>
+                    )}
+                    {paginationData && (
+                        <Box sx={{ mt: 3 }}>
                             <PaginationComponent
                                 paginationData={paginationData}
                                 onPageChange={handlePageChange}
                                 onPerPageChange={handlePerPageChange}
                                 perPage={perPage}
                             />
-                        )}
-                    </div>
-                </div>
-            </div>
-        </div>
+                        </Box>
+                    )}
+                </Box>
+            </Box>
+        </Box>
     );
 };
 

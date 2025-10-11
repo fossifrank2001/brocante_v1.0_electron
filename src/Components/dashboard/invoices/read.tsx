@@ -510,7 +510,7 @@ const ReadInvoice = () => {
                                                                 Vente {debt.sale_id}:
                                                             </Typography>
                                                             <Typography sx={{ color: '#1976d2', fontWeight: 'bold' }}>
-                                                                {debt.amount_covered.toFixed(2)} FCFA
+                                                                {UtilMethods.formatNumber(debt.amount_covered.toFixed(2))}
                                                             </Typography>
                                                         </Box>
                                                         {debt.paid_with && (

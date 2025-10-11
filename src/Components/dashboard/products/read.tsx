@@ -93,7 +93,7 @@ const ReadProduct = () => {
                                         value={record.name}
                                         second={{
                                             label: "Price",
-                                            value: <span className="fw-bold">{record.price} <small>FCFA</small></span>
+                                            value: <span className="fw-bold">{UtilMethods.formatNumber(record.price)} </span>
                                         }}
                                     />
                                     <InfoItem

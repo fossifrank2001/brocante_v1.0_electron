@@ -179,7 +179,7 @@ export default function IndexProduct() {
                 size: 150,
                 Cell: ({ cell }) => {
                     const value = cell.getValue<number>();
-                    return <span>{value} <span className='fw-bolder' style={{ fontSize: '10px' }}> FCFA</span></span>
+                    return <span>{value} </span>
                 },
             },
             {

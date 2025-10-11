@@ -55,6 +55,10 @@ export interface IProductDetail{
 export interface IProduct{
     id: number;
     name: string;
+    manufacturer_reference?: string;
+    internal_reference: string;
+    barcode?: string;
+    qrcode_data?: string;
     price: number;
     stock_quantity: number;
     description: string;

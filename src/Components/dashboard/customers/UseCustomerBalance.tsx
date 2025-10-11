@@ -14,6 +14,7 @@ import {
 import InvoiceAPI, { IUseCustomerBalanceResponse } from '@/Data/Api/Invoice';
 import Toast from '@/Data/Utilities/Toast';
 import { IPerson } from '@/Data/Interfaces/Person';
+import UtilMethods from "Data/Utilities/UtilMethods.ts";
 
 interface UseCustomerBalanceProps {
     customer: IPerson;
@@ -94,7 +95,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                 Téléphone: {customer.phone}
                             </Typography>
                             <Typography variant="h6" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
-                                Solde disponible: {customer.company_balance?.toFixed(2) || '0.00'} FCFA
+                                Solde disponible: {customer.company_balance?.toFixed(2) || '0.00'}
                             </Typography>
                         </Box>
 
@@ -130,7 +131,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                         >
                                             <Typography>Vente {sellCode}</Typography>
                                             <Typography sx={{ fontWeight: 'bold', color: '#ed6c02' }}>
-                                                {parseFloat(amount).toFixed(2)} FCFA
+                                                {parseFloat(amount).toFixed(2)}
                                             </Typography>
                                         </Box>
                                     ))}
@@ -144,7 +145,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                     }}>
                                         <Typography sx={{ fontWeight: 'bold' }}>Total des dettes:</Typography>
                                         <Typography sx={{ fontWeight: 'bold', color: '#d32f2f', fontSize: '1.1rem' }}>
-                                            {totalDebts.toFixed(2)} FCFA
+                                            {UtilMethods.formatNumber(totalDebts.toFixed(2))}
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -158,7 +159,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                                 ✅ Le solde client couvre toutes les dettes
                                             </Typography>
                                             <Typography variant="body2">
-                                                Solde restant après paiement: {(customer.company_balance - totalDebts).toFixed(2)} FCFA
+                                                Solde restant après paiement: {UtilMethods.formatNumber((customer.company_balance - totalDebts).toFixed(2))}
                                             </Typography>
                                         </>
                                     ) : (
@@ -167,10 +168,10 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                                 ⚠️ Le solde client couvre partiellement les dettes
                                             </Typography>
                                             <Typography variant="body2">
-                                                Montant qui sera utilisé: {customer.company_balance.toFixed(2)} FCFA
+                                                Montant qui sera utilisé: {UtilMethods.formatNumber(customer.company_balance.toFixed(2))}
                                             </Typography>
                                             <Typography variant="body2">
-                                                Dettes restantes après: {(totalDebts - customer.company_balance).toFixed(2)} FCFA
+                                                Dettes restantes après: {UtilMethods.formatNumber((totalDebts - customer.company_balance).toFixed(2))}
                                             </Typography>
                                         </>
                                     )}
@@ -205,19 +206,19 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                             <Typography>Solde précédent:</Typography>
                                             <Typography sx={{ fontWeight: 'bold' }}>
-                                                {result.customer.previous_balance.toFixed(2)} FCFA
+                                                {UtilMethods.formatNumber(result.customer.previous_balance.toFixed(2))}
                                             </Typography>
                                         </Box>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                             <Typography>Montant utilisé:</Typography>
                                             <Typography sx={{ fontWeight: 'bold', color: '#d32f2f' }}>
-                                                -{result.customer.balance_used.toFixed(2)} FCFA
+                                                -{UtilMethods.formatNumber(result.customer.balance_used.toFixed(2))}
                                             </Typography>
                                         </Box>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1, borderTop: '1px solid #bbdefb' }}>
                                             <Typography sx={{ fontWeight: 'bold' }}>Nouveau solde:</Typography>
                                             <Typography sx={{ fontWeight: 'bold', color: '#1976d2', fontSize: '1.1rem' }}>
-                                                {result.customer.new_balance.toFixed(2)} FCFA
+                                                {UtilMethods.formatNumber(result.customer.new_balance.toFixed(2))}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -252,7 +253,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                                     </Typography>
                                                 </Box>
                                                 <Typography sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                                                    {debt.amount_covered.toFixed(2)} FCFA
+                                                    {UtilMethods.formatNumber(debt.amount_covered.toFixed(2))}
                                                 </Typography>
                                             </Box>
                                         ))}
@@ -280,7 +281,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                             >
                                                 <Typography>Vente {debt.sale_id}</Typography>
                                                 <Typography sx={{ fontWeight: 'bold', color: '#ed6c02' }}>
-                                                    {debt.remaining_amount.toFixed(2)} FCFA
+                                                    {UtilMethods.formatNumber(debt.remaining_amount.toFixed(2))}
                                                 </Typography>
                                             </Box>
                                         ))}

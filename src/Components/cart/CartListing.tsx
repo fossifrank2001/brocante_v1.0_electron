@@ -177,7 +177,7 @@ const CartListing: React.FC<{
                                                 TOTAL À PAYER
                                             </Typography>
                                             <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                                                {UtilMethods.formatNumber(cart.totalPrice)} <span style={{ fontSize: '0.7rem' }}>FCFA</span>
+                                                {UtilMethods.formatNumber(cart.totalPrice)}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -220,7 +220,7 @@ const SummaryRow = ({ label, value }: { label: string; value: number }) => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
             <Typography variant="body1">{label}</Typography>
             <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {UtilMethods.formatNumber(value)} FCFA
+                {UtilMethods.formatNumber(value)}
             </Typography>
         </Box>
     );

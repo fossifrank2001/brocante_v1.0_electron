@@ -64,6 +64,12 @@ const ProductInfo: React.FC<IProductInfoProps> = ({categoryRecord}) => {
                     Basic Product Information
                 </h6>
                 <div className="row g-4">
+                    <div className="col-12">
+                        <div className="alert alert-info d-flex align-items-center" style={{ borderRadius: '8px' }}>
+                            <i className="ti ti-info-circle me-2"></i>
+                            <small>La référence interne est unique et sera utilisée pour générer le QR code du produit</small>
+                        </div>
+                    </div>
                     <div className="col-md-6">
                         <div className="form-group">
                             <label htmlFor="name">
@@ -90,7 +96,74 @@ const ProductInfo: React.FC<IProductInfoProps> = ({categoryRecord}) => {
                         </div>
                     </div>
 
-                    <div className="col-md-3">
+                    <div className="col-md-6">
+                        <div className="form-group">
+                            <label htmlFor="internal_reference">
+                                <i className="ti ti-barcode"></i>
+                                Référence Interne (SKU)
+                                <span className="text-danger ms-1">*</span>
+                            </label>
+                            <Tooltip title="Référence unique pour identifier le produit" arrow placement="top">
+                                <input
+                                    id="internal_reference"
+                                    name="internal_reference"
+                                    type="text"
+                                    className="form-control"
+                                    onChange={handleChange}
+                                    value={values.internal_reference || ''}
+                                    placeholder="ex: PROD-2024-001"
+                                />
+                            </Tooltip>
+                            {touched.internal_reference && errors.internal_reference && (
+                                <div className="error-feedback">
+                                    <i className="ti ti-alert-circle"></i>
+                                    <span>{errors.internal_reference}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="col-md-6">
+                        <div className="form-group">
+                            <label htmlFor="manufacturer_reference">
+                                <i className="ti ti-building-factory"></i>
+                                Référence Fabricant
+                            </label>
+                            <Tooltip title="Référence du fabricant (optionnel)" arrow placement="top">
+                                <input
+                                    id="manufacturer_reference"
+                                    name="manufacturer_reference"
+                                    type="text"
+                                    className="form-control"
+                                    onChange={handleChange}
+                                    value={values.manufacturer_reference || ''}
+                                    placeholder="ex: MFR-XYZ-123"
+                                />
+                            </Tooltip>
+                        </div>
+                    </div>
+
+                    <div className="col-md-6">
+                        <div className="form-group">
+                            <label htmlFor="barcode">
+                                <i className="ti ti-scan"></i>
+                                Code-barres (EAN/UPC)
+                            </label>
+                            <Tooltip title="Code-barres du produit si disponible" arrow placement="top">
+                                <input
+                                    id="barcode"
+                                    name="barcode"
+                                    type="text"
+                                    className="form-control"
+                                    onChange={handleChange}
+                                    value={values.barcode || ''}
+                                    placeholder="ex: 3760123456789"
+                                />
+                            </Tooltip>
+                        </div>
+                    </div>
+
+                    <div className="col-md-2">
                         <div className="form-group">
                             <label htmlFor="stock_quantity">
                                 <i className="ti ti-box"></i>
@@ -117,7 +190,7 @@ const ProductInfo: React.FC<IProductInfoProps> = ({categoryRecord}) => {
                         </div>
                     </div>
 
-                    <div className="col-md-3">
+                    <div className="col-md-2">
                         <div className="form-group">
                             <label htmlFor="price">
                                 <i className="ti ti-currency-euro"></i>

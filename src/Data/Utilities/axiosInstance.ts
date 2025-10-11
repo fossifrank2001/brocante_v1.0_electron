@@ -3,7 +3,7 @@ import Toast from 'Data/Utilities/Toast';
 import ApiError from 'Data/Utilities/ApiError';
 import constants from 'Data/Utilities/constants';
 import store from 'Data/Objects/store';
-import {redirectToLogin} from '@/Data/Slices/NavigationSlice';
+import {redirectToLogin, setLastPageBeforeLogin} from '@/Data/Slices/NavigationSlice';
 import {Pages} from "Data/Objects/state.ts";
 
 export interface IApiResponseBase<T = unknown> {
@@ -61,12 +61,16 @@ instance.interceptors.response.use(
             const message = _response.data?.message || 'An error occurred.';
 
             if (status === 401) { 
-                const currentPage = store.getState()?.navigaton?.currentPage;
+                // Lire la page courante avec compatibilité ('navigation' ou 'navigaton')
+                const stateAny: any = store.getState();
+                const currentPage = stateAny?.navigation?.currentPage ?? stateAny?.navigaton?.currentPage;
+                // Mémoriser la page précédente pour restauration post-login
                 if (currentPage && currentPage !== Pages.LOGIN) {
-                    localStorage.setItem('lastVisitedPage', currentPage);
+                    store.dispatch(setLastPageBeforeLogin({ page: currentPage }));
                 }
+                // Rediriger vers la page de connexion sans toucher à d'autres états
                 store.dispatch(redirectToLogin());
-                Toast.error("Session has expired. Redirection to login  page.", 2000, 'top-right');
+                Toast.error("Session expired. Redirecting to login...", 2000, 'top-right');
             } else {
                 Toast.error(message, 2000, 'top-right');
             }

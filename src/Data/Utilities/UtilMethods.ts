@@ -224,10 +224,12 @@ export default class UtilMethods {
         return store.getState()?.user.authUser.id === user_id
     }
 
-    static formatNumber(value: number)
+    static formatNumber(value: never)
     {
-        if (value === undefined || value == null || isNaN(<number>value)) {
+        if (value === undefined || value == null) {
             return 'N/A';
+        }else if (isNaN(value)){
+            value = parseFloat(value as string)
         }
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
