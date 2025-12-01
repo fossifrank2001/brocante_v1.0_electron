@@ -17,6 +17,23 @@ import { IApiResponseBase } from 'Data/Utilities/axiosInstance';
 import UtilMethods from "Data/Utilities/UtilMethods";
 import { ICartState } from "Data/Slices/dashboard/seller/cartSlice.ts";
 
+interface DebtItem {
+    sell_code: string;
+    debt_amount: number;
+    amount_recovered: number;
+    remaining?: number;
+    fully_paid: boolean;
+}
+
+interface RecoveryResult {
+    fully_paid_count: number;
+    debts_count: number;
+    total_recovered: number;
+    debts_recovered: DebtItem[];
+    new_company_balance: number;
+    remaining_debts: number;
+}
+
 interface CheckoutProcessProps {
     persons: IPerson[];
     paymentModes: string[];
@@ -26,7 +43,7 @@ interface CheckoutProcessProps {
     onHandleSearchCustomer: (qPerson: string) => void;
     onAddPerson: (person: IPerson) => void;
     formik: FormikProps<FormValues>;
-    cart: ICartState | never;
+    cart: ICartState;
     onRefreshPersons: () => void;
 }
 
@@ -57,7 +74,7 @@ export default function CheckoutProcess({
     const [useCompanyBalance, setUseCompanyBalance] = useState(false);
     const [isRecoveringDebts, setIsRecoveringDebts] = useState(false);
     const [showRecoveryModal, setShowRecoveryModal] = useState(false);
-    const [recoveryResult, setRecoveryResult] = useState<any>(null);
+    const [recoveryResult, setRecoveryResult] = useState<RecoveryResult | null>(null);
 
     // Calculer le prix après application du company_balance
     const companyBalance = selectedPerson?.company_balance || 0;
@@ -66,6 +83,7 @@ export default function CheckoutProcess({
 
     useEffect(() => {
         formik.setFieldValue('summarize.shippingPrice', 0);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleOpenDialog = () => setOpen(true);
@@ -219,7 +237,7 @@ export default function CheckoutProcess({
                                         <Alert severity="warning" icon={<Warning />} sx={{ borderRadius: 2 }}>
                                             <AlertTitle sx={{ fontWeight: 'bold' }}>⚠️ Dettes Impayées</AlertTitle>
                                             <Box sx={{ maxHeight: '150px', overflowY: 'auto', mt: 2 }}>
-                                                {Object.entries(customerDebts).map(([sellCode, amount]: [string, any]) => (
+                                                {Object.entries(customerDebts).map(([sellCode, amount]) => (
                                                     <Box
                                                         key={sellCode}
                                                         sx={{
@@ -233,7 +251,7 @@ export default function CheckoutProcess({
                                                     >
                                                         <Typography variant="body2">Vente {sellCode}</Typography>
                                                         <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#d32f2f' }}>
-                                                            {UtilMethods.formatNumber(parseFloat(amount))}
+                                                            {UtilMethods.formatNumber(amount)}
                                                         </Typography>
                                                     </Box>
                                                 ))}
@@ -314,9 +332,9 @@ export default function CheckoutProcess({
                                 }}
                                 renderOption={(props, option) => {
                                     const balance = option.company_balance || 0;
-                                    const remainingBalance = option.remaining_balance ? JSON.parse(option.remaining_balance) : {};
+                                    const remainingBalance: Record<string, string> = option.remaining_balance ? JSON.parse(option.remaining_balance) : {};
                                     const hasDebts = Object.keys(remainingBalance).length > 0;
-                                    const totalDebt = Object.values(remainingBalance).reduce((sum: number, amount: any) => sum + parseFloat(amount), 0);
+                                    const totalDebt = Object.values(remainingBalance).reduce((sum: number, amount: string) => sum + parseFloat(amount), 0);
 
                                     return (
                                         <Box component="li" {...props} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start !important', py: 1.5 }}>
@@ -366,9 +384,12 @@ export default function CheckoutProcess({
                                         onPersonChange(value);
                                         await formik.setFieldValue('person', value);
 
-                                        const debts = value.remaining_balance ? JSON.parse(value.remaining_balance) : {};
-                                        setCustomerDebts(debts);
-                                        const total = Object.values(debts).reduce((sum: number, amount: any) => sum + parseFloat(amount), 0);
+                                        const debts: Record<string, string> = value.remaining_balance ? JSON.parse(value.remaining_balance) : {};
+                                        const debtsAsNumbers: Record<string, number> = Object.fromEntries(
+                                            Object.entries(debts).map(([key, val]) => [key, parseFloat(val)])
+                                        );
+                                        setCustomerDebts(debtsAsNumbers);
+                                        const total = Object.values(debtsAsNumbers).reduce((sum: number, amount: number) => sum + amount, 0);
                                         setTotalDebts(total);
                                     } else {
                                         setSelectedPerson(null);
@@ -635,7 +656,7 @@ export default function CheckoutProcess({
 
                             <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>Détails du recouvrement:</Typography>
                             <Box sx={{ maxHeight: '300px', overflowY: 'auto' }}>
-                                {recoveryResult.debts_recovered.map((debt: any, index: number) => (
+                                {recoveryResult.debts_recovered.map((debt: DebtItem, index: number) => (
                                     <Card key={index} sx={{ mb: 2, borderLeft: debt.fully_paid ? '4px solid #2e7d32' : '4px solid #ff9800' }}>
                                         <CardContent>
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>

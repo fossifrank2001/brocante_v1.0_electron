@@ -40,8 +40,13 @@ export interface IInvoice {
     updated_at?: string;
     payment_details?: IPaymentDetails;
     debt_coverage?: IDebtCoverageInfo;
+    customer?: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        company_balance: number;
+    };
 }
-
 
 export interface IInvoiceTableData extends IInvoice {
     actions: ReactNode;

@@ -3,7 +3,7 @@ import Toast from "Data/Utilities/Toast.ts";
 import UtilMethods from "Data/Utilities/UtilMethods.ts";
 import Auth from "Data/Api/Auth.ts";
 import {useAppDispatch} from "@/hooks";
-import {loginSuccess} from "Data/Slices/auth/userSlice.ts";
+import {loginSuccess, logoutAsync} from "Data/Slices/auth/userSlice.ts";
 
 const LockScreen = () => {
     const [isLocked, setIsLocked] = useState(false);
@@ -11,7 +11,7 @@ const LockScreen = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [lastActivity, setLastActivity] = useState(Date.now());
-    const TIMEOUT_DURATION = .5 * 60 * 1000;
+    const TIMEOUT_DURATION = 15 * 60 * 1000; // 15min
     const dispatch = useAppDispatch()
 
     const handleUserActivity = () => {
@@ -64,6 +64,20 @@ const LockScreen = () => {
             }
         } catch (e) {
             console.log(e.message)
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleReconnect = async () => {
+        try {
+            setIsLoading(true);
+            
+            await dispatch(logoutAsync() as any);
+            setIsLocked(false);
+            setPassword('');
+        } catch (e) {
+            console.error(e);
         } finally {
             setIsLoading(false);
         }
@@ -128,24 +142,36 @@ const LockScreen = () => {
                                         </span>
                                     </div>
                                 </div>
-                                <button
-                                    type="submit"
-                                    className="btn btn-primary w-100 py-2 position-relative"
-                                    style={{ borderRadius: '6px' }}
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? (
-                                        <>
-                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                            Unlocking...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className="ti ti-unlock me-2"></i>
-                                            Unlock
-                                        </>
-                                    )}
-                                </button>
+                                <div className="d-flex flex-row-reverse gap-2">
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary w-100 py-2"
+                                        style={{ borderRadius: '6px' }}
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                Unlocking...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <i className="ti ti-unlock me-2"></i>
+                                                Unlock
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-secondary w-100 py-2"
+                                        style={{ borderRadius: '6px' }}
+                                        disabled={isLoading}
+                                        onClick={handleReconnect}
+                                    >
+                                        <i className="ti ti-logout me-2"></i>
+                                        Reconnect
+                                    </button>
+                                </div>
                             </form>
                         </div>
                     </div>

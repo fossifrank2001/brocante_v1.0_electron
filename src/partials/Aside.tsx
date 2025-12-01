@@ -8,7 +8,7 @@ import { setActivePage } from '@/Data/Slices/NavigationSlice'
 import { motion } from 'framer-motion'
 import Logo from '@/Components/common/Logo'
 
-const iconOfMenus = {
+const iconOfMenus: Record<string, string> = {
     DASHBOARD: 'ti ti-layout-dashboard',
     ADMINISTRATION: 'ti ti-dots',
     ACCOUNT: 'ti ti-article',
@@ -22,8 +22,15 @@ const iconOfMenus = {
     BILL: 'ti ti-receipt',
     SELL: 'ti ti-wallet',
     CUSTOMER: 'ti ti-users',
-    SUPPLIER: 'ti ti-users-plus',
+    SUPPLIER: 'ti ti-user-plus',
     INVOICE: 'ti ti-file-invoice',
+    NOTIFICATION: 'ti ti-bell',
+    PROFILE: 'ti ti-user-circle',
+    USER_ACCESS_PAGE: 'ti ti-shield-lock',
+}
+
+const getMenuIcon = (code: string): string => {
+    return iconOfMenus[code] || 'ti ti-circle-dot';
 }
 
 export default function Aside({ role = null }) {
@@ -36,6 +43,7 @@ export default function Aside({ role = null }) {
     const asideRef = useRef(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [openParentId, setOpenParentId] = useState<number | null>(null)
 
     const handleLogout = async () => {
         try {
@@ -56,7 +64,6 @@ export default function Aside({ role = null }) {
             const access = authUser?.accesses ? authUser?.accesses.find(access => access.id === auth_access_id) : null
             console.log('ROLE ASIDE FUNCTION ::: ', role)
             
-            // Vérification defensive pour éviter l'erreur si access ou role est undefined
             if (access && access.role && access.role.id) {
                 await dispatch(loadMenuByRoleAsync(access.role.id))
             } else {
@@ -75,54 +82,105 @@ export default function Aside({ role = null }) {
         console.log('ROLE ASIDE USEEFFECT ::: ', role)
     }, [getMenus, role])
 
-    const displayMenus = menus?.map((item) => {
-        const isCurrentPage = item.code === currentPage
-
-        if (item.parent_id === null && item.url !== '#') {
-            return (
-                <li className="sidebar-item" key={item.id}>
-                    <motion.div
-                        whileTap={{ scale: 0.9 }}
-                        className={`sidebar-link ${isCurrentPage && 'bg-primary text-white'}`}
-                        onClick={() => {
-                            context.togglePageLoading(true)
-                            dispatch(setActivePage({ page: item.code }))
-                        }}
-                    >
-                        <span>
-                            <i className={`${iconOfMenus[item.code]}`}></i>
-                        </span>
-                        <span className="hide-menu" style={{ userSelect: "none" }}>{UtilMethods.capitalizeFirstLetter(item.label)}</span>
-                    </motion.div>
-                </li>
-            )
-        } else if (item.parent_id === null && item.url === '#') {
-            return (
-                <li className="nav-small-cap mt-1 text text-primary-emphasis" key={item.id}>
-                    <i className={`${iconOfMenus[item.code]} nav-small-cap-icon fs-4`}></i>
-                    <span className="hide-menu" style={{ userSelect: "none" }}>{item.label.toUpperCase()}</span>
-                </li>
-            )
-        } else {
-            return (
-                <li className="sidebar-item ms-2" key={item.id}>
-                    <motion.div
-                        whileTap={{ scale: 0.9 }}
-                        className={`sidebar-link ${isCurrentPage && 'bg-primary text-white'}`}
-                        onClick={() => {
-                            context.togglePageLoading(true)
-                            dispatch(setActivePage({ page: item.code }))
-                        }}
-                    >
-                        <span>
-                            <i className={iconOfMenus[item.code]}></i>
-                        </span>
-                        <span className="hide-menu" style={{ userSelect: "none" }}>{UtilMethods.capitalizeFirstLetter(String(item.label))}</span>
-                    </motion.div>
-                </li>
-            )
+    // Ouvrir automatiquement le parent du menu actif (si la page courante est un enfant)
+    useEffect(() => {
+        if (!menus || menus.length === 0) return
+        const active = menus.find((m: any) => m.code === currentPage)
+        if (active && active.parent_id) {
+            setOpenParentId(active.parent_id)
         }
-    })
+    }, [menus, currentPage])
+
+    const handleToggleParent = (parentId: number) => {
+        setOpenParentId(prev => (prev === parentId ? null : parentId))
+    }
+
+    const renderMenus = () => {
+        if (!menus || menus.length === 0) return null
+
+        const parents = menus.filter((m) => m.parent_id === null)
+        const childrenByParent = menus.reduce((acc: Record<number, any[]>, m: any) => {
+            if (m.parent_id !== null) {
+                acc[m.parent_id] = acc[m.parent_id] || []
+                acc[m.parent_id].push(m)
+            }
+            return acc
+        }, {})
+
+        return parents.map((parent: any) => {
+            const children = childrenByParent[parent.id] || []
+            const hasChildren = children.length > 0
+            const isOpen = openParentId === parent.id
+            const isCurrentPage = parent.code === currentPage
+            const isAnyChildActive = hasChildren && children.some((c: any) => c.code === currentPage)
+
+            return (
+                <li className="sidebar-item" key={parent.id}>
+                    <motion.div
+                        whileTap={{ scale: 0.98 }}
+                        className={`sidebar-link d-flex align-items-center justify-content-between ${
+                            isCurrentPage && !hasChildren
+                                ? 'bg-primary text-white'
+                                : isAnyChildActive
+                                    ? 'bg-primary-subtle'
+                                    : ''
+                        }`}
+                        onClick={() => {
+                            if (hasChildren) {
+                                handleToggleParent(parent.id)
+                            } else if (parent.url && parent.url !== '#') {
+                                context.togglePageLoading(true)
+                                dispatch(setActivePage({ page: parent.code }))
+                            }
+                        }}
+                        aria-expanded={isOpen}
+                        aria-controls={`submenu-${parent.id}`}
+                        role="button"
+                    >
+                        <span className="d-flex align-items-center gap-2">
+                            <i className={getMenuIcon(parent.code)}></i>
+                            <span className="hide-menu" style={{ userSelect: 'none' }}>{UtilMethods.capitalizeFirstLetter(String(parent.label))}</span>
+                        </span>
+                        {hasChildren && (
+                            <i className={`ti ${isOpen ? 'ti-chevron-up' : 'ti-chevron-down'}`}></i>
+                        )}
+                    </motion.div>
+
+                    {hasChildren && (
+                        <motion.ul
+                            id={`submenu-${parent.id}`}
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="list-unstyled ms-3 overflow-hidden"
+                            style={{ marginTop: isOpen ? 8 : 0 }}
+                        >
+                            {children.map((child: any) => {
+                                const isChildActive = child.code === currentPage
+                                return (
+                                    <li className="sidebar-item" key={child.id}>
+                                        <motion.div
+                                            whileTap={{ scale: 0.98 }}
+                                            className={`sidebar-link ${isChildActive ? 'bg-primary text-white' : ''}`}
+                                            onClick={() => {
+                                                context.togglePageLoading(true)
+                                                dispatch(setActivePage({ page: child.code }))
+                                            }}
+                                        >
+                                            <span>
+                                                <i className={getMenuIcon(child.code)}></i>
+                                            </span>
+                                            <span className="hide-menu" style={{ userSelect: 'none' }}>{UtilMethods.capitalizeFirstLetter(String(child.label))}</span>
+                                        </motion.div>
+                                    </li>
+                                )
+                            })}
+                        </motion.ul>
+                    )}
+                </li>
+            )
+        })
+    }
 
     const handleRemoveSideBar = () => {
         const element: HTMLElement = asideRef.current
@@ -186,7 +244,7 @@ export default function Aside({ role = null }) {
                                 </div>
                             </li>
                         ) : menus && menus.length > 0 ? (
-                            displayMenus
+                            renderMenus()
                         ) : (
                             <li className="sidebar-item">
                                 <div className="sidebar-link d-flex flex-column gap-3">

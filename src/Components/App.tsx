@@ -4,7 +4,7 @@ import '@/assets/css/styles.min.css';
 
 import { Pages } from 'Data/Objects/state'
 import React, { useEffect, useState } from 'react';
-import { setActivePage } from 'Data/Slices/NavigationSlice';
+import { setActivePage, redirectToLogin } from 'Data/Slices/NavigationSlice';
 import CustomAlert from './CustomAlert';
 import HomePage from "@/pages/Home/HomePage";
 import CartPage from "@/pages/Home/cart/CartPage.tsx";
@@ -59,7 +59,7 @@ export const handleRedirectToDashboard = async (access_id: number | string, disp
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
   const { token, authUser } = useAppSelector((state) => state.user);
-  const { currentPage } = useAppSelector((state) => state.navigaton);
+  const { currentPage, lastPageBeforeLogin } = useAppSelector((state) => state.navigaton);
   const [openDetailModal, setOpenDetailModal] = useState(false);
   const [isOk] = useState(false);
   const [isAuth, setIsAuth] = useState(false)
@@ -104,12 +104,22 @@ const App: React.FC = () => {
       if (token && authUser) {
         setIsAuth(true)
         if (currentPage === Pages.LOGIN) {
-          if (authUser.accesses.length > 1) {
+          // Si une page était mémorisée avant le 401, y retourner directement
+          if (lastPageBeforeLogin && lastPageBeforeLogin !== Pages.LOGIN) {
+            console.log('Restoring last page before login:', lastPageBeforeLogin);
+            dispatch(setActivePage({ page: lastPageBeforeLogin }));
+            dispatch({ type: 'navigation/resetLastPageBeforeLogin' });
+          } 
+          // Sinon, comportement par défaut selon le nombre d'accès
+          else if (authUser.accesses.length > 1) {
             dispatch(setActivePage({ page: Pages.USER_ACCESS_PAGE }));
           } else if (authUser.accesses.length === 1) {
             await handleRedirectToDashboard(authUser.accesses[0].id, dispatch);
           }
         }
+      } else if (!token && currentPage !== Pages.LOGIN && currentPage !== Pages.ONBOARDING && currentPage !== Pages.HOME) {
+        // Si pas de token et qu'on est sur une page protégée, rediriger vers login
+        dispatch(redirectToLogin());
       }
     })()
   }, [token, authUser, currentPage, dispatch]);
@@ -143,9 +153,13 @@ const App: React.FC = () => {
 
 }
 
+  // Pages où le LockScreen ne doit PAS apparaître
+  const publicPages = [Pages.HOME, Pages.LOGIN, Pages.FORGOT_PAGE, Pages.RESET_PAGE, Pages.ONBOARDING];
+  const shouldShowLockScreen = isAuth && !publicPages.includes(currentPage);
+
   return (
       <AppContextProvider>
-        {isAuth && <LockScreen/>}
+        {shouldShowLockScreen && <LockScreen/>}
         {renderMainContent()}
 
         {isOk && <CustomAlert

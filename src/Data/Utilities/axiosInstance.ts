@@ -5,6 +5,9 @@ import constants from 'Data/Utilities/constants';
 import store from 'Data/Objects/store';
 import {redirectToLogin, setLastPageBeforeLogin} from '@/Data/Slices/NavigationSlice';
 import {Pages} from "Data/Objects/state.ts";
+import {clearUserCredential} from '@/Data/Slices/auth/userSlice';
+
+let isHandlingAuthRedirect = false;
 
 export interface IApiResponseBase<T = unknown> {
     message: string;
@@ -17,13 +20,9 @@ export interface IApiResponsePaginated<T = unknown> extends IApiResponseBase<{
     per_page: number;
 }> {}
 
-export type IApiResponse<T = unknown> =
-  | IApiResponseBase<T>
-  | IApiResponsePaginated<T>;
+export type IApiResponse<T = unknown> = | IApiResponseBase<T> | IApiResponsePaginated<T>;
 
-export type InferApiResponse<T> = T extends Array<infer U>
-  ? IApiResponsePaginated<U>
-  : IApiResponseBase<T>;
+export type InferApiResponse<T> = T extends Array<infer U>? IApiResponsePaginated<U> : IApiResponseBase<T>;
 
 const instance = axios.create({
     baseURL: constants.BASE_URL,
@@ -61,16 +60,26 @@ instance.interceptors.response.use(
             const message = _response.data?.message || 'An error occurred.';
 
             if (status === 401) { 
-                // Lire la page courante avec compatibilité ('navigation' ou 'navigaton')
+                if (isHandlingAuthRedirect) {
+                    return Promise.reject(new ApiError(status, message, error.response.data as any));
+                }
+                isHandlingAuthRedirect = true;
                 const stateAny: any = store.getState();
                 const currentPage = stateAny?.navigation?.currentPage ?? stateAny?.navigaton?.currentPage;
-                // Mémoriser la page précédente pour restauration post-login
-                if (currentPage && currentPage !== Pages.LOGIN) {
+                
+                // Mémoriser la page précédente SEULEMENT si c'est une page protégée (pas LOGIN, USER_ACCESS_PAGE)
+                const excludedPages = [Pages.LOGIN, Pages.USER_ACCESS_PAGE, Pages.FORGOT_PAGE, Pages.RESET_PAGE, Pages.ONBOARDING];
+                if (currentPage && !excludedPages.includes(currentPage)) {
                     store.dispatch(setLastPageBeforeLogin({ page: currentPage }));
+                    localStorage.setItem('lastVisitedPage', currentPage);
                 }
-                // Rediriger vers la page de connexion sans toucher à d'autres états
+                
+                store.dispatch(clearUserCredential());
+                
                 store.dispatch(redirectToLogin());
-                Toast.error("Session expired. Redirecting to login...", 2000, 'top-right');
+                Toast.error("Session expired. Please log in again.", 3000, 'top-right');
+
+                setTimeout(() => { isHandlingAuthRedirect = false; }, 1000);
             } else {
                 Toast.error(message, 2000, 'top-right');
             }

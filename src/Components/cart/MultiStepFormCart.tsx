@@ -50,7 +50,6 @@ interface IMultiStepFormCartProps {
 }
 
 const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
-    // Load saved step from localStorage
     const loadSavedStep = () => {
         try {
             const savedStep = localStorage.getItem(CART_STEP_KEY);
@@ -356,7 +355,6 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
                 )}
             </Formik>
             
-            {/* Modal de Recouvrement des Dettes */}
             {pendingSubmission && pendingSubmission.person && (
                 <DebtRecoveryModal
                     open={openDebtModal}
@@ -383,25 +381,20 @@ const treatedDataFunc = (_data: FormValues, useCompanyBalance = false, useSurplu
     
     const totalWithShipping = _data.summarize.totalPrice + _data.summarize.shippingPrice;
     
-    // Calcul du montant réellement payé selon le type de transaction
     let actualAmountPaid = 0;
     
     switch(_data.transactionType) {
         case 'total':
-            // TOTAL: Le caissier saisit le montant reçu (peut être > total)
             actualAmountPaid = _data.amount_paid;
             break;
         case 'advance':
-            // ADVANCE: Le montant de l'avance (toujours < total)
             actualAmountPaid = _data.advanceAmount;
             break;
         case 'loan':
-            // LOAN: Rien payé maintenant
             actualAmountPaid = 0;
             break;
     }
     
-    // Calcul de la dette sur cette vente
     const remainingBalance = Math.max(0, totalWithShipping - actualAmountPaid);
     
     const formattedData = {

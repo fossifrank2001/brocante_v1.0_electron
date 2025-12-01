@@ -17,7 +17,12 @@ import {
     Collapse,
     FormControl,
     InputLabel,
-    FormHelperText
+    FormHelperText,
+    Checkbox,
+    FormControlLabel,
+    Paper,
+    Divider,
+    Chip
 } from '@mui/material';
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
@@ -55,13 +60,16 @@ interface IPaymentResponse {
     };
 }
 
+const MIN_PAYMENT = 25; // Aligné avec backend InvoiceController::MIN_PAYMENT_AMOUNT
+
 const paymentValidationSchema = Yup.object().shape({
     amount: Yup.number()
         .required('Le montant est requis')
-        .min(0.01, 'Le montant doit être supérieur à 0')
+        .min(0, 'Le montant ne peut pas être négatif')
         .max(1000000, 'Le montant est trop élevé'),
     paymentMethod: Yup.string()
-        .required('Le mode de paiement est requis')
+        .required('Le mode de paiement est requis'),
+    useCompanyBalance: Yup.boolean()
 });
 
 const ReadInvoice = () => {
@@ -79,6 +87,8 @@ const ReadInvoice = () => {
     const [paymentFeedback, setPaymentFeedback] = useState({ message: '', type: '', show: false });
     const [paymentResponse, setPaymentResponse] = useState<IPaymentResponse | null>(null);
     const [showResponseModal, setShowResponseModal] = useState(false);
+    const [calculatedAmountToPay, setCalculatedAmountToPay] = useState(0);
+    const [isApplyingBalance, setIsApplyingBalance] = useState(false);
 
     const fetchRecord = useCallback(async () => {
         setInProgress(true);
@@ -97,42 +107,132 @@ const ReadInvoice = () => {
         fetchRecord();
     }, [fetchRecord, reloadRecord]);
 
-    const handlePayment = async (amount: number, paymentMethod: string) => {
-        setInProgressTwo(true);
+    // Le calcul du montant à payer est déplacé après l'initialisation de formik pour éviter l'erreur de référence.
+
+    const handleApplyCompanyBalance = async () => {
+        if (!record?.customer?.id) {
+            Toast.error('Client introuvable');
+            return;
+        }
+
+        setIsApplyingBalance(true);
         try {
-            const response = await InvoiceAPI.pay(id, {
-                amount,
-                payment_method: paymentMethod
+            const response = await InvoiceAPI.useCustomerBalance({
+                customer_id: record.customer.id
             });
             
+            Toast.success('Solde client appliqué avec succès');
+            setReloadRecord(prev => !prev);
+            
+            if (response.data.balance_usage) {
+                const balanceUsage = response.data.balance_usage;
+                let message = `Solde utilisé: ${balanceUsage.balance_used.toFixed(2)} €\n`;
+                message += `Solde restant: ${balanceUsage.remaining_balance.toFixed(2)} €\n\n`;
+                
+                if (balanceUsage.covered_debts.length > 0) {
+                    message += 'Dettes couvertes:\n';
+                    balanceUsage.covered_debts.forEach(debt => {
+                        message += `  - Vente ${debt.sale_id}: ${debt.amount_covered.toFixed(2)} €\n`;
+                    });
+                }
+                
+                setPaymentFeedback({ message, type: 'success', show: true });
+            }
+        } catch (error: any) {
+            Toast.error(error?.response?.data?.message || 'Erreur lors de l\'application du solde');
+        } finally {
+            setIsApplyingBalance(false);
+        }
+    };
+
+    const handlePayment = async (amount: number, paymentMethod: string, useCompanyBalance: boolean) => {
+        setInProgressTwo(true);
+        try {
+            // Validation côté client si montant > 0
+            if (amount > 0 && amount < MIN_PAYMENT) {
+                setPaymentFeedback({
+                    message: `Le montant minimum de paiement est de ${MIN_PAYMENT}.`,
+                    type: 'error',
+                    show: true
+                });
+                return;
+            }
+            
+            if (!paymentMethod && amount > 0) {
+                setPaymentFeedback({
+                    message: 'Veuillez choisir un mode de paiement.',
+                    type: 'error',
+                    show: true
+                });
+                return;
+            }
+
+            const response = await InvoiceAPI.pay(id, {
+                amount,
+                payment_method: paymentMethod,
+                use_company_balance: useCompanyBalance
+            });
+            
+            // Vérifier le succès
+            if (!response?.success) {
+                const msg = response?.message || 'Le paiement a échoué.';
+                setPaymentFeedback({ message: msg, type: 'error', show: true });
+                return;
+            }
+
             const data: any = response.data;
             setPaymentResponse(data);
             setShowResponseModal(true);
-            
-            // Update current invoice with the new data
             setRecord(data.current_sell);
             
-            // Afficher le message de succès
-            Toast.success(response.message);
+            Toast.success(response.message || 'Paiement effectué avec succès');
             
-            // Close payment modal and reset payment amount
             setOpenModal(false);
-            
-            // Refresh the component
             setReloadRecord(prev => !prev);
         } catch (error: any) {
-            Toast.error(error?.response?.data?.message || 'Erreur lors du paiement');
+            // Construire un message d'erreur plus utile si le backend renvoie message vide
+            const resp = error?.response?.data;
+            let msg = resp?.message as string | undefined;
+            if (!msg || msg.trim() === '') {
+                // Essayer d'extraire les erreurs de validation Laravel
+                const validation = resp?.data;
+                if (validation && typeof validation === 'object') {
+                    const parts: string[] = [];
+                    Object.entries(validation).forEach(([field, messages]) => {
+                        if (Array.isArray(messages)) {
+                            parts.push(`${field}: ${messages.join(', ')}`);
+                        } else if (typeof messages === 'string') {
+                            parts.push(`${field}: ${messages}`);
+                        }
+                    });
+                    msg = parts.join('\n');
+                }
+            }
+            if (!msg || msg.trim() === '') {
+                msg = 'Le paiement a échoué. Veuillez vérifier le montant (minimum 25) et le mode de paiement.';
+            }
+            setPaymentFeedback({ message: msg, type: 'error', show: true });
+            Toast.error(msg);
         } finally {
             setInProgressTwo(false);
         }
     };
 
     const handleOpenModal = () => {
+        formik.resetForm({
+            values: {
+                amount: record?.remaining_balance || 0,
+                paymentMethod: '',
+                useCompanyBalance: false
+            }
+        });
+        setCalculatedAmountToPay(record?.remaining_balance || 0);
         setOpenModal(true);
     };
 
     const handleCloseModal = () => {
         setOpenModal(false);
+        formik.resetForm();
     };
 
     const handleCloseResponseModal = () => {
@@ -176,13 +276,33 @@ const ReadInvoice = () => {
     const formik = useFormik({
         initialValues: {
             amount: 0,
-            paymentMethod: ''
+            paymentMethod: '',
+            useCompanyBalance: false
         },
         validationSchema: paymentValidationSchema,
         onSubmit: async (values) => {
-            await handlePayment(values.amount, values.paymentMethod);
+            await handlePayment(values.amount, values.paymentMethod, values.useCompanyBalance);
         },
     });
+
+    // Calculer le montant à payer selon l'utilisation du company_balance
+    useEffect(() => {
+        if (record && formik.values.useCompanyBalance && record.customer?.company_balance) {
+            const remainingAfterBalance = Math.max(0, record.remaining_balance - record.customer.company_balance);
+            setCalculatedAmountToPay(remainingAfterBalance);
+            formik.setFieldValue('amount', remainingAfterBalance, false);
+        } else if (record) {
+            setCalculatedAmountToPay(record.remaining_balance);
+            if (!formik.values.useCompanyBalance) {
+                formik.setFieldValue('amount', record.remaining_balance, false);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [record, formik.values.useCompanyBalance]);
+
+    const companyBalance = record?.customer?.company_balance || 0;
+    const hasCompanyBalance = companyBalance > 0;
+    const remainingBalance = record?.remaining_balance || 0;
 
     return (
         <div className="container">
@@ -216,10 +336,27 @@ const ReadInvoice = () => {
                         variant="contained"
                         color="primary"
                         onClick={handleOpenModal}
+                        disabled={remainingBalance <= 0}
                     >
                         <i className='ti ti-receipt me-2'></i>
-                        <span>Pay</span>
+                        <span>Payer</span>
                     </Button>
+                    {hasCompanyBalance && remainingBalance > 0 && (
+                        <Button
+                            className='d-flex align-items-center'
+                            variant="outlined"
+                            color="success"
+                            onClick={handleApplyCompanyBalance}
+                            disabled={isApplyingBalance}
+                        >
+                            {isApplyingBalance ? (
+                                <CircularProgress size={20} sx={{ mr: 1 }} />
+                            ) : (
+                                <i className='ti ti-wallet me-2'></i>
+                            )}
+                            <span>Utiliser Solde Client ({UtilMethods.formatNumber(companyBalance)})</span>
+                        </Button>
+                    )}
                 </div>
             </div>
                 <Collapse in={paymentFeedback.show}>
@@ -281,6 +418,41 @@ const ReadInvoice = () => {
                     </div>
                 </div>
 
+                {/* Section Client et Solde */}
+                {record?.customer && (
+                    <div className='card mt-2'>
+                        <div className='card-body'>
+                            <Typography variant="h6" gutterBottom>Informations Client</Typography>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                <InfoItem
+                                    label="Client"
+                                    value={`${record.customer.first_name} ${record.customer.last_name}`}
+                                    second={{
+                                        label: 'ID Client',
+                                        value: `#${record.customer.id}`,
+                                    }}
+                                />
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ minWidth: 200 }}>
+                                        Solde Client (Crédit):
+                                    </Typography>
+                                    <Chip 
+                                        label={UtilMethods.formatNumber(companyBalance)}
+                                        color={companyBalance > 0 ? 'success' : 'default'}
+                                        icon={<i className='ti ti-wallet'></i>}
+                                        sx={{ fontWeight: 'bold', fontSize: '1rem' }}
+                                    />
+                                    {companyBalance > 0 && (
+                                        <Alert severity="info" sx={{ py: 0, flex: 1 }}>
+                                            Ce montant peut être utilisé pour réduire la facture actuelle
+                                        </Alert>
+                                    )}
+                                </Box>
+                            </Box>
+                        </div>
+                    </div>
+                )}
+
                 <div className='card mt-2'>
                     <div className='card-body'>
                         <Grid container spacing={2}>
@@ -313,16 +485,93 @@ const ReadInvoice = () => {
                 </div>
             </div>
 
-            <Dialog open={openModal} onClose={handleCloseModal}>
-                <DialogTitle>Paiement</DialogTitle>
+            <Dialog open={openModal} onClose={handleCloseModal} maxWidth="sm" fullWidth>
+                <DialogTitle>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <i className='ti ti-receipt'></i>
+                        <span>Paiement de la Facture</span>
+                    </Box>
+                </DialogTitle>
                 <DialogContent>
                     <form onSubmit={formik.handleSubmit}>
+                        {/* Affichage du solde client disponible */}
+                        {hasCompanyBalance && (
+                            <Paper 
+                                elevation={2} 
+                                sx={{ 
+                                    p: 2, 
+                                    mb: 3, 
+                                    bgcolor: '#f0f7ff',
+                                    border: '1px solid #2196f3'
+                                }}
+                            >
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                                    <i className='ti ti-wallet' style={{ fontSize: '24px', color: '#2196f3' }}></i>
+                                    <Box sx={{ flex: 1 }}>
+                                        <Typography variant="subtitle2" color="primary" fontWeight="bold">
+                                            Solde Client Disponible
+                                        </Typography>
+                                        <Typography variant="h6" color="primary">
+                                            {UtilMethods.formatNumber(companyBalance)}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                                
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={formik.values.useCompanyBalance}
+                                            onChange={formik.handleChange}
+                                            name="useCompanyBalance"
+                                            color="primary"
+                                        />
+                                    }
+                                    label="Utiliser le solde client pour réduire le montant à payer"
+                                />
+                                
+                                {formik.values.useCompanyBalance && (
+                                    <Alert severity="success" sx={{ mt: 2 }}>
+                                        Le solde client sera appliqué automatiquement avant le paiement
+                                    </Alert>
+                                )}
+                            </Paper>
+                        )}
+
+                        {/* Résumé du calcul */}
+                        <Paper elevation={1} sx={{ p: 2, mb: 3, bgcolor: '#f5f5f5' }}>
+                            <Typography variant="subtitle2" gutterBottom>
+                                Calcul du Montant à Payer
+                            </Typography>
+                            <Divider sx={{ my: 1 }} />
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                <Typography>Solde restant:</Typography>
+                                <Typography fontWeight="bold">{UtilMethods.formatNumber(remainingBalance)}</Typography>
+                            </Box>
+                            {formik.values.useCompanyBalance && companyBalance > 0 && (
+                                <>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, color: 'success.main' }}>
+                                        <Typography>- Solde client utilisé:</Typography>
+                                        <Typography fontWeight="bold">
+                                            - {UtilMethods.formatNumber(Math.min(companyBalance, remainingBalance))}
+                                        </Typography>
+                                    </Box>
+                                    <Divider sx={{ my: 1 }} />
+                                </>
+                            )}
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                                <Typography variant="h6" color="primary">Montant à payer:</Typography>
+                                <Typography variant="h6" color="primary" fontWeight="bold">
+                                    {UtilMethods.formatNumber(calculatedAmountToPay)}
+                                </Typography>
+                            </Box>
+                        </Paper>
+
                         <TextField
                             autoFocus
                             margin="dense"
                             id="amount"
                             name="amount"
-                            label="Montant"
+                            label="Montant du paiement"
                             type="number"
                             fullWidth
                             variant="outlined"
@@ -330,13 +579,20 @@ const ReadInvoice = () => {
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
                             error={formik.touched.amount && Boolean(formik.errors.amount)}
-                            helperText={formik.touched.amount && formik.errors.amount}
+                            helperText={
+                                formik.touched.amount && formik.errors.amount 
+                                    ? formik.errors.amount 
+                                    : calculatedAmountToPay === 0 
+                                        ? 'La facture sera entièrement payée avec le solde client'
+                                        : 'Vous pouvez payer plus pour couvrir d\'autres dettes'
+                            }
                             InputProps={{
                                 inputProps: { 
                                     step: "0.01",
                                     min: "0"
                                 }
                             }}
+                            disabled={formik.values.useCompanyBalance && calculatedAmountToPay === 0}
                         />
                         <FormControl 
                             fullWidth 
@@ -350,6 +606,7 @@ const ReadInvoice = () => {
                                 value={formik.values.paymentMethod}
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
+                                disabled={formik.values.useCompanyBalance && calculatedAmountToPay === 0}
                             >
                                 <MenuItem value="Cash">Cash</MenuItem>
                                 <MenuItem value="Orange Money">Orange Money</MenuItem>
@@ -367,10 +624,14 @@ const ReadInvoice = () => {
                         type="submit"
                         variant="contained" 
                         color="primary"
-                        disabled={!formik.isValid || !formik.dirty || inProgressTwo}
+                        disabled={
+                            inProgressTwo || 
+                            (!formik.values.useCompanyBalance && (!formik.isValid || !formik.dirty)) ||
+                            (formik.values.useCompanyBalance && calculatedAmountToPay > 0 && !formik.values.paymentMethod)
+                        }
                         onClick={() => formik.handleSubmit()}
                     >
-                        {inProgressTwo ? 'Traitement...' : 'Payer'}
+                        {inProgressTwo ? 'Traitement...' : 'Confirmer le Paiement'}
                     </Button>
                 </DialogActions>
             </Dialog>
