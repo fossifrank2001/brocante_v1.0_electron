@@ -1,4 +1,4 @@
-import {IPerson} from "Data/Interfaces/Person.ts";
+import { IPerson } from "Data/Interfaces/Person.ts";
 import { ReactNode } from 'react';
 
 export interface ISellPayload {
@@ -7,7 +7,7 @@ export interface ISellPayload {
     amount_paid: number;
     remaining_balance?: number;
     date_to_pay?: string;
-    person_id: string | number;
+    person_id?: string | number | null;
     payment: TPayment;
     tax: number;
     shipping_price: number;
@@ -19,13 +19,13 @@ export interface ISellPayload {
 
 export type TTransactionType = 'total' | 'advance' | 'loan';
 export type TPayment = 'Cash' | 'Orange Money' | 'MTN Money';
-export type TSellStatus = 'pending' | 'partially_paid' | 'paid' | 'canceled' ;
+export type TSellStatus = 'pending' | 'partially_paid' | 'paid' | 'canceled';
 
 export interface Item {
-    product_id: number ;
-    price: number ;
-    quantity: number ;
-    total_unit: number ;
+    product_id: number;
+    price: number;
+    quantity: number;
+    total_unit: number;
 }
 
 
@@ -34,14 +34,14 @@ export interface ISell {
     user_id: number;
     person_id: number;
     sell_code: string | number;
-    cancel_reason ?: string;
+    cancel_reason?: string;
     transaction_type: TTransactionType;
     total_amount: number;
-    status:  TSellStatus;
+    status: TSellStatus;
     created_at?: string;
     updated_at?: string;
-    payments?: never[]|null;
-    person ?: null | Partial<IPerson>
+    payments?: never[] | null;
+    person?: null | Partial<IPerson>
 }
 
 export interface ISellTableData extends Omit<ISell, 'person_id'> {

@@ -25,6 +25,7 @@ export enum Pages{
     CUSTOMER = "CUSTOMER",
     SUPPLIER = "SUPPLIER",
     INVOICE = "INVOICE",
+    ACTIVITY_LOGS = "ACTIVITY_LOGS",
     ONBOARDING = "ONBOARDING",
     PROFILE = "PROFILE"
 }
@@ -58,19 +59,12 @@ export class UserState{
 }
 
 export class NavigationState{
-    currentPage : Pages
-    id?: number| null
-    param?: {
-        type ?: string
-        number ?: string
-    } | null
-    type ?: string
-    number ?: string
-    search?: {
-        type ?: string
-        value ?: string
-    } | null
-    lastPageBeforeLogin ?: never | undefined | Pages
+    currentPage : Pages|undefined
+    id : number|null|undefined
+    param : any
+    search : any
+    lastPageBeforeLogin?: Pages;
+    savedStateBeforeLogin?: any;
 }
 
 export class UserAuthorizationState{

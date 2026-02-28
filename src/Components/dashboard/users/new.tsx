@@ -1,18 +1,40 @@
 import { useState } from 'react';
 import { useFormik } from 'formik';
-import { TextField, Tooltip } from '@mui/material';
+import * as Yup from 'yup';
+import {
+    TextField,
+    Card,
+    CardContent,
+    Button,
+    Box,
+    Typography,
+    Grid,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    CircularProgress,
+    InputAdornment,
+    FormHelperText
+} from '@mui/material';
+import {
+    ArrowBack,
+    Person,
+    Mail,
+    Phone,
+    Wc,
+    Save
+} from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import Breadcrumd from '@/Components/Breadcrumd';
 import { useAppDispatch } from '@/hooks';
 import { useAppContext } from '@/contexts/appContext';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
-import { IUsersPayload } from '@/Data/Interfaces/Users';
 import UserAPI from "Data/Api/Users";
-import { IUser } from 'Interfaces';
-import '@/styles/forms.scss';
+import Toast from '@/Data/Utilities/Toast';
 
-interface FormValues extends Partial<IUser> {
+interface FormValues {
     last_name: string;
     first_name: string;
     email: string;
@@ -20,259 +42,190 @@ interface FormValues extends Partial<IUser> {
     gender: string;
 }
 
-const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            duration: 0.3,
-            ease: "easeOut"
-        }
-    }
-};
+const validationSchema = Yup.object({
+    last_name: Yup.string()
+        .required('Le nom est requis')
+        .max(50, 'Maximum 50 caractères'),
+    first_name: Yup.string()
+        .max(50, 'Maximum 50 caractères'),
+    email: Yup.string()
+        .email('Email invalide')
+        .required("L'email est requis"),
+    phone: Yup.string()
+        .required('Le téléphone est requis')
+        .matches(/^6[0-9]{8}$/i, 'Format de téléphone invalide (ex: 690000000)'),
+    gender: Yup.string()
+        .required('Le genre est requis'),
+});
 
 const NewUser = () => {
     const [isLoading, setIsLoading] = useState(false);
     const dispatch = useAppDispatch();
     const context = useAppContext();
 
-    const initialValues: FormValues = {
-        last_name: '',
-        first_name: '',
-        email: '',
-        phone: '',
-        gender: ''
-    };
-
-    const handleSubmit = async (values: IUsersPayload) => {
-        setIsLoading(true);
+    const handleSubmit = async (values: FormValues) => {
         try {
+            setIsLoading(true);
             await UserAPI.create(values);
             context.togglePageLoading(true);
+            Toast.success('Compte créé avec succès');
             dispatch(setActivePage({ page: Pages.ACCOUNT }));
-        } catch (e) {
-            console.error(e.message);
+        } catch (error: any) {
+            console.error('Failed to create user:', error);
+            Toast.error(error?.message || "Échec de la création du compte");
         } finally {
             setIsLoading(false);
         }
     };
 
-    const formik = useFormik({
-        initialValues,
-        onSubmit: handleSubmit,
-        validate: (values: FormValues) => {
-            const errors: Partial<FormValues> = {};
-            if (!values.last_name) {
-                errors.last_name = 'Last name field is required.';
-            }
-
-            if (!values.phone) {
-                errors.phone = 'Phone field is required.';
-            } else if (!/^6[0-9]{8}$/i.test(values.phone)) {
-                errors.phone = 'Invalid phone number format (e.g. 612345678)';
-            }
-
-            if (values.email && !(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(values.email))) {
-                errors.email = 'Invalid email address format';
-            }
-            
-            if (!values.gender) {
-                errors.gender = 'Gender field is required.';
-            }
-
-            return errors;
+    const formik = useFormik<FormValues>({
+        initialValues: {
+            last_name: '',
+            first_name: '',
+            email: '',
+            phone: '',
+            gender: ''
         },
+        validationSchema,
+        onSubmit: handleSubmit,
     });
 
     return (
-        <motion.div 
-            className="container form-container"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-        >
-            <Breadcrumd parent="Users" />
-            <div className="form-card">
-                <div className="card-title">
-                    <button 
-                        className="btn btn-secondary"
-                        onClick={() => dispatch(setActivePage({ page: Pages.ACCOUNT }))}
-                    >
-                        <i className="ti ti-arrow-left"></i>
-                        Back
-                    </button>
-                </div>
+        <Box>
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                <Breadcrumd parent="Administration" url={Pages.ACCOUNT} />
 
-                <form onSubmit={formik.handleSubmit}>
-                    <div className="row g-4">
-                        <div className="col-md-6">
-                            <label className="py-2" htmlFor="last_name">
-                                <i className="ti ti-user"></i>
-                                Last Name
-                                <span className="required-star">*</span>
-                            </label>
-                            <Tooltip title="Enter user's last name" arrow placement="top">
-                                <div>
-                                    <TextField
-                                        fullWidth
-                                        id="last_name"
-                                        name="last_name"
+                <Grid container spacing={4} justifyContent="center">
+                    <Grid item xs={12}>
+                        <Card sx={{
+                            borderRadius: '24px',
+                            border: '1px solid rgba(255, 255, 255, 0.4)',
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            backdropFilter: 'blur(16px)',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
+                            p: 2
+                        }}>
+                            <CardContent sx={{ p: 4 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, justifyContent: 'space-between' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Box>
+                                            <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                                                Nouveau Compte
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                    <Button
                                         variant="outlined"
-                                        size="small"
-                                        value={formik.values.last_name}
-                                        onChange={formik.handleChange}
-                                        onBlur={formik.handleBlur}
-                                        error={formik.touched.last_name && Boolean(formik.errors.last_name)}
-                                        placeholder="Enter last name"
-                                        className="form-control"
-                                    />
-                                    {formik.touched.last_name && formik.errors.last_name && (
-                                        <div className="error-feedback">
-                                            <i className="ti ti-alert-circle"></i>
-                                            <span>{formik.errors.last_name}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </Tooltip>
-                        </div>
-
-                        <div className="col-md-6">
-                            <label className="py-2" htmlFor="first_name">
-                                <i className="ti ti-user"></i>
-                                First Name
-                            </label>
-                            <Tooltip title="Enter user's first name" arrow placement="top">
-                                <div>
-                                    <TextField
-                                        fullWidth
-                                        id="first_name"
-                                        name="first_name"
-                                        variant="outlined"
-                                        size="small"
-                                        value={formik.values.first_name}
-                                        onChange={formik.handleChange}
-                                        placeholder="Enter first name"
-                                        className="form-control"
-                                    />
-                                </div>
-                            </Tooltip>
-                        </div>
-
-                        <div className="col-md-6">
-                            <label className="py-2" htmlFor="email">
-                                <i className="ti ti-mail"></i>
-                                Email
-                            </label>
-                            <Tooltip title="Enter user's email address" arrow placement="top">
-                                <div>
-                                    <TextField
-                                        fullWidth
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        variant="outlined"
-                                        size="small"
-                                        value={formik.values.email}
-                                        onChange={formik.handleChange}
-                                        onBlur={formik.handleBlur}
-                                        error={formik.touched.email && Boolean(formik.errors.email)}
-                                        placeholder="Enter email address"
-                                        className="form-control"
-                                    />
-                                    {formik.touched.email && formik.errors.email && (
-                                        <div className="error-feedback">
-                                            <i className="ti ti-alert-circle"></i>
-                                            <span>{formik.errors.email}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </Tooltip>
-                        </div>
-
-                        <div className="col-md-3">
-                            <label className="py-2" htmlFor="phone">
-                                <i className="ti ti-phone"></i>
-                                Phone
-                                <span className="required-star">*</span>
-                            </label>
-                            <Tooltip title="Enter user's phone number (format: 612345678)" arrow placement="top">
-                                <div>
-                                    <TextField
-                                        fullWidth
-                                        id="phone"
-                                        name="phone"
-                                        variant="outlined"
-                                        size="small"
-                                        value={formik.values.phone}
-                                        onChange={formik.handleChange}
-                                        onBlur={formik.handleBlur}
-                                        error={formik.touched.phone && Boolean(formik.errors.phone)}
-                                        placeholder="612345678"
-                                        className="form-control"
-                                    />
-                                    {formik.touched.phone && formik.errors.phone && (
-                                        <div className="error-feedback">
-                                            <i className="ti ti-alert-circle"></i>
-                                            <span>{formik.errors.phone}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </Tooltip>
-                        </div>
-
-                        <div className="col-md-3">
-                            <label className="py-2" htmlFor="gender">
-                                <i className="ti ti-gender-bigender"></i>
-                                Gender
-                                <span className="required-star">*</span>
-                            </label>
-                            <Tooltip title="Select user's gender" arrow placement="top">
-                                <div>
-                                    <select
-                                        className={`form-select ${formik.touched.gender && formik.errors.gender ? 'is-invalid' : ''}`}
-                                        id="gender"
-                                        name="gender"
-                                        value={formik.values.gender}
-                                        onChange={formik.handleChange}
-                                        onBlur={formik.handleBlur}
+                                        startIcon={<ArrowBack />}
+                                        onClick={() => dispatch(setActivePage({ page: Pages.ACCOUNT }))}
+                                        sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
                                     >
-                                        <option value="">Select gender</option>
-                                        <option value="male">Male</option>
-                                        <option value="female">Female</option>
-                                    </select>
-                                    {formik.touched.gender && formik.errors.gender && (
-                                        <div className="error-feedback">
-                                            <i className="ti ti-alert-circle"></i>
-                                            <span>{formik.errors.gender}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </Tooltip>
-                        </div>
-                    </div>
+                                        Retour
+                                    </Button>
+                                </Box>
 
-                    <div className="form-actions">
-                        <button
-                            type="submit"
-                            className="btn btn-primary"
-                            disabled={isLoading || !formik.isValid || !formik.dirty}
-                        >
-                            <i className="ti ti-device-floppy"></i>
-                            {isLoading ? 'Creating...' : 'Create User'}
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-secondary"
-                            onClick={() => dispatch(setActivePage({ page: Pages.ACCOUNT }))}
-                        >
-                            <i className="ti ti-x"></i>
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </motion.div>
+                                <form onSubmit={formik.handleSubmit}>
+                                    <Grid container spacing={3.5}>
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                fullWidth
+                                                label="Nom de famille"
+                                                {...formik.getFieldProps('last_name')}
+                                                error={formik.touched.last_name && Boolean(formik.errors.last_name)}
+                                                helperText={formik.touched.last_name && formik.errors.last_name}
+                                                InputProps={{
+                                                    sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 700, '& fieldset': { borderColor: '#e2e8f0' } },
+                                                    startAdornment: <InputAdornment position="start"><Person sx={{ color: '#94a3b8' }} /></InputAdornment>
+                                                }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                fullWidth
+                                                label="Prénom(s)"
+                                                {...formik.getFieldProps('first_name')}
+                                                error={formik.touched.first_name && Boolean(formik.errors.first_name)}
+                                                helperText={formik.touched.first_name && formik.errors.first_name}
+                                                InputProps={{
+                                                    sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } },
+                                                    startAdornment: <InputAdornment position="start"><Person sx={{ color: '#94a3b8', opacity: 0.5 }} /></InputAdornment>
+                                                }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={4}>
+                                            <FormControl fullWidth error={formik.touched.gender && Boolean(formik.errors.gender)}>
+                                                <InputLabel id="gender-label">Genre</InputLabel>
+                                                <Select
+                                                    labelId="gender-label"
+                                                    label="Genre"
+                                                    {...formik.getFieldProps('gender')}
+                                                    sx={{ borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }}
+                                                    startAdornment={<InputAdornment position="start"><Wc sx={{ color: '#94a3b8', mr: 1 }} /></InputAdornment>}
+                                                >
+                                                    <MenuItem value="male">Masculin</MenuItem>
+                                                    <MenuItem value="female">Féminin</MenuItem>
+                                                </Select>
+                                                {formik.touched.gender && formik.errors.gender && (
+                                                    <FormHelperText>{formik.errors.gender}</FormHelperText>
+                                                )}
+                                            </FormControl>
+                                        </Grid>
+
+                                        <Grid item xs={12} md={4}>
+                                            <TextField
+                                                fullWidth
+                                                label="Adresse Email"
+                                                type="email"
+                                                {...formik.getFieldProps('email')}
+                                                error={formik.touched.email && Boolean(formik.errors.email)}
+                                                helperText={formik.touched.email && formik.errors.email}
+                                                InputProps={{
+                                                    sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } },
+                                                    startAdornment: <InputAdornment position="start"><Mail sx={{ color: '#94a3b8' }} /></InputAdornment>
+                                                }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={4}>
+                                            <TextField
+                                                fullWidth
+                                                label="Téléphone"
+                                                {...formik.getFieldProps('phone')}
+                                                error={formik.touched.phone && Boolean(formik.errors.phone)}
+                                                helperText={formik.touched.phone && formik.errors.phone}
+                                                InputProps={{
+                                                    sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } },
+                                                    startAdornment: <InputAdornment position="start"><Phone sx={{ color: '#94a3b8' }} /></InputAdornment>
+                                                }}
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                </form>
+                                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 4 }}>
+                                    <Button
+                                        variant="contained"
+                                        startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <Save />}
+                                        onClick={() => formik.handleSubmit()}
+                                        disabled={isLoading || !formik.isValid || !formik.dirty}
+                                        sx={{
+                                            borderRadius: '15px',
+                                            textTransform: 'none',
+                                            fontWeight: 800,
+                                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                            boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.3)',
+                                            '&:hover': {
+                                                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                                            }
+                                        }}
+                                    >
+                                        Créer le Compte
+                                    </Button>
+                                </Box>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                </Grid>
+            </motion.div>
+        </Box>
     );
 };
 

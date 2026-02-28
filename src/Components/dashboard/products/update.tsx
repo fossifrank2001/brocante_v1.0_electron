@@ -1,22 +1,19 @@
 import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import MultiStepForm from "Components/dashboard/products/formSteps";
-import Breadcrumd from "Components/Breadcrumd.tsx";
+import Breadcrumd from "@/Components/Breadcrumd";
 import { motion } from "framer-motion";
-import { setActivePage } from "Data/Slices/NavigationSlice.ts";
-import { Pages } from "Data/Objects/state.ts";
+import { setActivePage } from "@/Data/Slices/NavigationSlice";
+import { Pages } from "@/Data/Objects/state";
 import { useAppDispatch, useAppSelector } from "@/hooks";
-import { useAppContext } from "@/contexts/appContext.tsx";
-import { IProduct } from "Data/Interfaces/Supply.ts";
-import ProductAPI from "Data/Api/Product.ts";
-import { LoadingAnimation } from "Components/LoadingAnimation.tsx";
-import ThumbnailDropzone from "Components/ThumbnailDropzone.tsx";
-import {IImage} from "Data/Interfaces/Image.ts";
-import constants from "Data/Utilities/constants.ts";
-
-const buttonVariants = {
-    hover: { scale: 1.05 },
-    tap: { scale: 0.95 },
-};
+import { useAppContext } from "@/contexts/appContext";
+import { IProduct } from "Data/Interfaces/Supply";
+import ProductAPI from "Data/Api/Product";
+import ThumbnailDropzone from "Components/ThumbnailDropzone";
+import { IImage } from "Data/Interfaces/Image";
+import constants from "Data/Utilities/constants";
+import Toast from '@/Data/Utilities/Toast';
+import { Box, Card, CardContent, Button, Typography, Grid, CircularProgress, Paper, Fade } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, AutoAwesome } from '@mui/icons-material';
 
 const ProductUpdate: React.FC = () => {
     const { currentPage, id } = useAppSelector((state) => state.navigaton);
@@ -24,6 +21,7 @@ const ProductUpdate: React.FC = () => {
     const context = useAppContext();
     const [record, setRecord] = useState<IProduct | null>(null);
     const [image, setImage] = useState<IImage | null>(null);
+    const [isDataLoading, setIsDataLoading] = useState(true);
 
     useLayoutEffect(() => {
         context.togglePageLoading();
@@ -31,16 +29,21 @@ const ProductUpdate: React.FC = () => {
 
     const handleUploadSuccess = (uploadedImagePath: IImage) => {
         setImage(uploadedImagePath);
+        Toast.success("Image mise à jour avec succès");
     };
 
     const getRecord = useCallback(
         async () => {
             try {
+                setIsDataLoading(true);
                 const { data: __product } = await ProductAPI.show(id);
                 setRecord(__product);
                 setImage(__product.thumbnail);
             } catch (e) {
                 console.error(e);
+                Toast.error("Impossible de récupérer les données de l'article");
+            } finally {
+                setIsDataLoading(false);
             }
         },
         [id],
@@ -50,48 +53,99 @@ const ProductUpdate: React.FC = () => {
         getRecord();
     }, [getRecord]);
 
+    if (isDataLoading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+                <Fade in={true}>
+                    <Box sx={{ textAlign: 'center' }}>
+                        <CircularProgress size={60} thickness={4} sx={{ color: '#6366f1', mb: 2 }} />
+                        <Typography variant="body1" sx={{ color: '#64748b', fontWeight: 600 }}>
+                            Chargement de l'article...
+                        </Typography>
+                    </Box>
+                </Fade>
+            </Box>
+        );
+    }
+
     return (
-        <div className="container">
-            <Breadcrumd parent="Articles" url={currentPage} _child={id} />
-            <div className='card mb-0'>
-                <div className='card-header'>
-                    <motion.button
-                        className='btn d-flex align-items-center btn-outline-dark'
-                        onClick={() => {
-                            dispatch(setActivePage({ page: Pages.ARTICLE }));
-                        }}
-                        variants={buttonVariants}
-                        whileHover="hover"
-                        whileTap="tap"
-                    >
-                        <i className='ti ti-arrow-left'></i>
-                        <span className='ms-1'>BACK</span>
-                    </motion.button>
-                </div>
-                <div className='card-body mt-1 pt-1'>
-                    {record ? (
-                        <div className="row row-gap-2">
-                            <div className="col-8 ps-3 ">
-                                <MultiStepForm record={record} id={id} />
-                            </div>
-                            <div className='col-4'>
-                                <ThumbnailDropzone
-                                    onUploadSuccess={handleUploadSuccess}
-                                    existingImageUrl={image ? `${constants.URL}/${image.path}` : null}
-                                    existingImageId={image ? image.id : null}
-                                    imageable={{
-                                        imageable_id: record.id,
-                                        imageable_type: 'Product'
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    ) : (
-                        <LoadingAnimation />
-                    )}
-                </div>
-            </div>
-        </div>
+        <Box>
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                <Breadcrumd parent="Articles" url={Pages.ARTICLE} _child={id} />
+
+                <Grid container spacing={4} justifyContent="center">
+                    <Grid item xs={12}>
+                        <Card sx={{
+                            borderRadius: '24px',
+                            border: '1px solid rgba(255, 255, 255, 0.4)',
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            backdropFilter: 'blur(16px)',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
+                            p: 2
+                        }}>
+                            <CardContent sx={{ p: 4 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, justifyContent: 'space-between' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Box>
+                                            <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                                                Modifier l'Article
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<ArrowBackIcon />}
+                                        onClick={() => dispatch(setActivePage({ page: Pages.ARTICLE }))}
+                                        sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
+                                    >
+                                        Retour
+                                    </Button>
+                                </Box>
+
+                                {record && (
+                                    <Grid container spacing={5}>
+                                        <Grid item xs={12} lg={8}>
+                                            <MultiStepForm record={record} id={id} />
+                                        </Grid>
+                                        <Grid item xs={12} lg={4}>
+                                            <Paper elevation={0} sx={{
+                                                p: 4,
+                                                borderRadius: '24px',
+                                                backgroundColor: 'rgba(248, 250, 252, 0.6)',
+                                                border: '1px solid rgba(226, 232, 240, 0.8)',
+                                                textAlign: 'center',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                height: '100%'
+                                            }}>
+                                                <ThumbnailDropzone
+                                                    onUploadSuccess={handleUploadSuccess}
+                                                    existingImageUrl={image ? `${constants.URL}/${image.path}` : null}
+                                                    existingImageId={image ? image.id : null}
+                                                    imageable={{
+                                                        imageable_id: record.id,
+                                                        imageable_type: 'Product'
+                                                    }}
+                                                />
+
+                                                <Box sx={{ mt: 4, pt: 4, borderTop: '1px solid rgba(226, 232, 240, 0.8)', width: '100%' }}>
+                                                    <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                                                        <AutoAwesome sx={{ fontSize: 14 }} />
+                                                        Aperçu de l'image de couverture
+                                                    </Typography>
+                                                </Box>
+                                            </Paper>
+                                        </Grid>
+                                    </Grid>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                </Grid>
+            </motion.div>
+        </Box>
     );
 };
 

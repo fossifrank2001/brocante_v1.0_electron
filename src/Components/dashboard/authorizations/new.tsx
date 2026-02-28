@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFormik } from 'formik';
-import { Autocomplete, TextField, Tooltip } from '@mui/material';
+import { Autocomplete, TextField, Tooltip, Box, Grid, Card, CardContent, Typography, Button, CircularProgress } from '@mui/material';
 import { motion } from 'framer-motion';
 import Breadcrumd from '@/Components/Breadcrumd';
 import { IMenu, IRole } from '@/Data/Interfaces';
@@ -14,23 +14,11 @@ import AuthorizationAPI from '@/Data/Api/Authorizations';
 import MenuAPI from '@/Data/Api/Menu';
 import Multiselect from "multiselect-react-dropdown";
 import Toast from '@/Data/Utilities/Toast';
-import '@/styles/forms.scss';
+import { ArrowBack, Menu as MenuIcon, Shield, Lock, Save } from '@mui/icons-material';
 
 interface FormValues {
     role: number | string;
 }
-
-const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            duration: 0.3,
-            ease: "easeOut"
-        }
-    }
-};
 
 const NewAuthorization = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -114,43 +102,53 @@ const NewAuthorization = () => {
         validate: (values: FormValues) => {
             const errors: Partial<FormValues> = {};
             if (!values.role) {
-                errors.role = 'Role field is required.';
+                errors.role = 'Le champ rôle est requis.';
             }
             return errors;
         },
     });
 
     return (
-        <motion.div 
-            className="container form-container"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-        >
-            <Breadcrumd parent="Authorizations" />
-            <div className="form-card">
-                <div className="card-title">
-                    <button 
-                        className="btn btn-secondary"
-                        onClick={() => dispatch(setActivePage({ page: Pages.HABILITATION }))}
-                    >
-                        <i className="ti ti-arrow-left"></i>
-                        Back
-                    </button>
-                </div>
+        <Box>
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                <Breadcrumd parent="Administration" url={Pages.HABILITATION} />
 
-                <form onSubmit={formik.handleSubmit}>
-                    <div className="row g-4">
-                        <div className="col-md-6">
-                            <div className="form-group">
-                                <label htmlFor="menu">
-                                    <i className="ti ti-menu-2"></i>
-                                    Menu
-                                    <span className="required-star">*</span>
-                                </label>
-                                <Tooltip title="Select a menu" arrow placement="top">
-                                    <div>
-                                        {menus ? (
+                <Grid container spacing={4} justifyContent="center">
+                    <Grid item xs={12}>
+                        <Card sx={{
+                            borderRadius: '24px',
+                            border: '1px solid rgba(255, 255, 255, 0.4)',
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            backdropFilter: 'blur(16px)',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
+                            p: 2
+                        }}>
+                            <CardContent sx={{ p: 4 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, justifyContent: 'space-between' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Box>
+                                            <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                                                Nouvelle Authorisation
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<ArrowBack />}
+                                        onClick={() => dispatch(setActivePage({ page: Pages.HABILITATION }))}
+                                        sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
+                                    >
+                                        Retour
+                                    </Button>
+                                </Box>
+
+                                <form onSubmit={formik.handleSubmit}>
+                                    <Grid container spacing={3.5}>
+                                        <Grid item xs={12} md={6}>
+                                            <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <MenuIcon sx={{ color: '#94a3b8', fontSize: 20 }} />
+                                                <Typography sx={{ fontWeight: 700, color: '#475569' }}>Menu <span style={{ color: '#ef4444' }}>*</span></Typography>
+                                            </Box>
                                             <Autocomplete
                                                 disablePortal
                                                 id="menu"
@@ -161,150 +159,120 @@ const NewAuthorization = () => {
                                                 value={menu}
                                                 isOptionEqualToValue={(option, value) => option.id === value.id}
                                                 getOptionLabel={(val: IMenu) => val.label || ''}
-                                                options={menus}
+                                                options={menus || []}
                                                 onChange={(_, item) => setMenu(item)}
                                                 renderInput={(params) => (
                                                     <TextField
                                                         {...params}
                                                         error={!menu}
-                                                        size="small"
-                                                        className="form-control"
-                                                        placeholder="Search menu..."
+                                                        placeholder="Chercher un menu..."
+                                                        InputProps={{
+                                                            ...params.InputProps,
+                                                            sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }
+                                                        }}
                                                     />
                                                 )}
                                             />
-                                        ) : (
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                disabled
-                                                placeholder="Loading menus..."
-                                            />
-                                        )}
-                                        {!menu && (
-                                            <div className="error-feedback">
-                                                <i className="ti ti-alert-circle"></i>
-                                                <span>Menu field is required.</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </Tooltip>
-                            </div>
-                        </div>
+                                            {!menu && (
+                                                <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 600, mt: 0.5, display: 'block' }}>
+                                                    Le menu est requis.
+                                                </Typography>
+                                            )}
+                                        </Grid>
 
-                        <div className="col-md-6">
-                            <div className="form-group">
-                                <label htmlFor="role">
-                                    <i className="ti ti-shield"></i>
-                                    Role
-                                    <span className="required-star">*</span>
-                                </label>
-                                <Tooltip title="Select a role" arrow placement="top">
-                                    <div>
-                                        {roles ? (
+                                        <Grid item xs={12} md={6}>
+                                            <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <Shield sx={{ color: '#94a3b8', fontSize: 20 }} />
+                                                <Typography sx={{ fontWeight: 700, color: '#475569' }}>Rôle <span style={{ color: '#ef4444' }}>*</span></Typography>
+                                            </Box>
                                             <select
                                                 className="form-select"
                                                 id="role"
                                                 name="role"
                                                 onChange={formik.handleChange}
                                                 value={formik.values.role}
+                                                style={{
+                                                    borderRadius: '16px',
+                                                    padding: '14px 20px',
+                                                    background: '#f8fafc',
+                                                    border: '1px solid #e2e8f0',
+                                                    fontWeight: 600,
+                                                    color: '#1e293b',
+                                                    width: '100%'
+                                                }}
                                             >
-                                                <option value="">Select Role</option>
-                                                {roles.map(role => (
+                                                <option value="">Sélectionner un rôle</option>
+                                                {roles && roles.map(role => (
                                                     <option key={role.id} value={role.id}>
                                                         {role.label}
                                                     </option>
                                                 ))}
                                             </select>
-                                        ) : (
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                disabled
-                                                placeholder="Loading roles..."
-                                            />
-                                        )}
-                                        {formik.touched.role && formik.errors.role && (
-                                            <div className="error-feedback">
-                                                <i className="ti ti-alert-circle"></i>
-                                                <span>{formik.errors.role}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </Tooltip>
-                            </div>
-                        </div>
+                                            {formik.touched.role && formik.errors.role && (
+                                                <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 600, mt: 0.5, display: 'block' }}>
+                                                    {formik.errors.role}
+                                                </Typography>
+                                            )}
+                                        </Grid>
 
-                        <div className="col-md-12">
-                            <div className="form-group">
-                                <label htmlFor="permissions">
-                                    <i className="ti ti-lock"></i>
-                                    Permissions
-                                    <span className="required-star">*</span>
-                                </label>
-                                <Tooltip title="Select permissions" arrow placement="top">
-                                    <div>
-                                        {permissions ? (
-                                            <>
-                                                <Multiselect
-                                                    options={permissions}
-                                                    selectedValues={_permissions}
-                                                    onSelect={(e) => set_Permissions(e)}
-                                                    onRemove={(e) => set_Permissions(e)}
-                                                    displayValue="label"
-                                                    showCheckbox
-                                                    placeholder="Select permissions"
-                                                    style={{
-                                                        chips: { background: '#4318FF' },
-                                                        searchBox: { 
-                                                            border: '1px solid #e2e8f0',
-                                                            borderRadius: '8px',
-                                                            padding: '8px'
-                                                        }
-                                                    }}
-                                                />
-                                                {(!_permissions || _permissions.length <= 0) && (
-                                                    <div className="error-feedback">
-                                                        <i className="ti ti-alert-circle"></i>
-                                                        <span>Select at least one permission.</span>
-                                                    </div>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                disabled
-                                                placeholder="Loading permissions..."
+                                        <Grid item xs={12}>
+                                            <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <Lock sx={{ color: '#94a3b8', fontSize: 20 }} />
+                                                <Typography sx={{ fontWeight: 700, color: '#475569' }}>Permissions <span style={{ color: '#ef4444' }}>*</span></Typography>
+                                            </Box>
+                                            <Multiselect
+                                                options={permissions || []}
+                                                selectedValues={_permissions}
+                                                onSelect={(e) => set_Permissions(e)}
+                                                onRemove={(e) => set_Permissions(e)}
+                                                displayValue="label"
+                                                showCheckbox
+                                                placeholder="Sélectionner des permissions"
+                                                style={{
+                                                    chips: { background: '#6366f1' },
+                                                    searchBox: {
+                                                        border: '1px solid #e2e8f0',
+                                                        borderRadius: '16px',
+                                                        padding: '14px 20px',
+                                                        background: '#f8fafc',
+                                                        fontWeight: 600,
+                                                    }
+                                                }}
                                             />
-                                        )}
-                                    </div>
-                                </Tooltip>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="form-actions">
-                        <button
-                            type="submit"
-                            className="btn btn-primary"
-                            disabled={isLoading || !menu || !_permissions || _permissions.length <= 0}
-                        >
-                            <i className="ti ti-device-floppy"></i>
-                            {isLoading ? 'Saving...' : 'Save Authorization'}
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-secondary"
-                            onClick={() => dispatch(setActivePage({ page: Pages.HABILITATION }))}
-                        >
-                            <i className="ti ti-x"></i>
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </motion.div>
+                                            {(!_permissions || _permissions.length <= 0) && (
+                                                <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 600, mt: 0.5, display: 'block' }}>
+                                                    Sélectionner au moins une permission.
+                                                </Typography>
+                                            )}
+                                        </Grid>
+                                    </Grid>
+                                </form>
+                                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 4 }}>
+                                    <Button
+                                        variant="contained"
+                                        startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <Save />}
+                                        onClick={() => formik.handleSubmit()}
+                                        disabled={isLoading || !menu || !_permissions || _permissions.length <= 0 || !formik.values.role}
+                                        sx={{
+                                            borderRadius: '15px',
+                                            textTransform: 'none',
+                                            fontWeight: 800,
+                                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                            boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.3)',
+                                            '&:hover': {
+                                                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                                            }
+                                        }}
+                                    >
+                                        Enregistrer
+                                    </Button>
+                                </Box>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                </Grid>
+            </motion.div>
+        </Box>
     );
 };
 

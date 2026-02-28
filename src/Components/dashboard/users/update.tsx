@@ -1,21 +1,46 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { useFormik } from 'formik';
-import { Skeleton, TextField, Tooltip } from '@mui/material';
+import * as Yup from 'yup';
+import {
+    TextField,
+    Card,
+    CardContent,
+    Button,
+    Box,
+    Typography,
+    Grid,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    Paper,
+    CircularProgress,
+    InputAdornment,
+    FormHelperText
+} from '@mui/material';
+import {
+    ArrowBack,
+    Person,
+    Wc,
+    Mail,
+    Phone,
+    Save,
+    AutoAwesome
+} from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import Breadcrumd from '@/Components/Breadcrumd';
 import UserAPI from '@/Data/Api/Users';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
-import { IUsersPayload } from '@/Data/Interfaces/Users';
 import { useAppContext } from '@/contexts/appContext';
 import { IUser } from 'Interfaces';
 import ThumbnailDropzone from "Components/ThumbnailDropzone.tsx";
 import constants from "Data/Utilities/constants.ts";
 import { IImage } from "Data/Interfaces/Image.ts";
-import '@/styles/forms.scss';
+import Toast from '@/Data/Utilities/Toast';
 
-interface FormValues extends Partial<IUser> {
+interface FormValues {
     last_name: string;
     first_name: string;
     email: string;
@@ -23,33 +48,30 @@ interface FormValues extends Partial<IUser> {
     gender: string;
 }
 
-const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            duration: 0.3,
-            ease: "easeOut"
-        }
-    }
-};
+const validationSchema = Yup.object({
+    last_name: Yup.string()
+        .required('Le nom est requis')
+        .max(50, 'Maximum 50 caractères'),
+    first_name: Yup.string()
+        .max(50, 'Maximum 50 caractères'),
+    email: Yup.string()
+        .email('Email invalide')
+        .required("L'email est requis"),
+    phone: Yup.string()
+        .required('Le téléphone est requis')
+        .matches(/^6[0-9]{8}$/i, 'Format de téléphone invalide (ex: 690000000)'),
+    gender: Yup.string()
+        .required('Le genre est requis'),
+});
 
 const UpdateUser = () => {
-    const { currentPage, id } = useAppSelector((state) => state.navigaton);
+    const { id } = useAppSelector((state) => state.navigaton);
     const [isLoading, setIsLoading] = useState(false);
-    const [initialValues, setInitialValues] = useState<FormValues>({
-        last_name: '',
-        first_name: '',
-        email: '',
-        phone: '',
-        gender: ''
-    });
-    const dispatch = useAppDispatch();
-    const context = useAppContext();
     const [isDataLoading, setIsDataLoading] = useState(true);
     const [record, setRecord] = useState<IUser | null>(null);
     const [image, setImage] = useState<IImage | null>(null);
+    const dispatch = useAppDispatch();
+    const context = useAppContext();
 
     useLayoutEffect(() => {
         context.togglePageLoading();
@@ -57,6 +79,7 @@ const UpdateUser = () => {
 
     const handleUploadSuccess = (uploadedImagePath: IImage) => {
         setImage(uploadedImagePath);
+        Toast.success('Photo de profil mise à jour');
     };
 
     useEffect(() => {
@@ -66,15 +89,9 @@ const UpdateUser = () => {
                 const { data: response } = await UserAPI.show(id);
                 setRecord(response);
                 setImage(response.thumbnail);
-                setInitialValues({
-                    last_name: response.last_name,
-                    first_name: response.first_name,
-                    email: response.email,
-                    phone: response.phone,
-                    gender: response.gender,
-                });
             } catch (error) {
                 console.error("Failed to fetch user", error);
+                Toast.error("Impossible de charger les données de l'utilisateur");
             } finally {
                 setIsDataLoading(false);
             }
@@ -85,282 +102,215 @@ const UpdateUser = () => {
         }
     }, [id]);
 
-    const handleSubmit = async (values: IUsersPayload) => {
-        setIsLoading(true);
+    const handleSubmit = async (values: FormValues) => {
         try {
+            setIsLoading(true);
             await UserAPI.update(id, values);
             context.togglePageLoading(true);
+            Toast.success('Compte mis à jour avec succès');
             dispatch(setActivePage({ page: Pages.ACCOUNT }));
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to update user", error);
+            Toast.error(error?.message || "Échec de la mise à jour");
         } finally {
             setIsLoading(false);
         }
     };
 
-    const formik = useFormik({
-        initialValues,
-        enableReinitialize: true,
-        onSubmit: handleSubmit,
-        validate: (values: FormValues) => {
-            const errors: Partial<FormValues> = {};
-            if (!values.last_name) {
-                errors.last_name = 'Last name field is required.';
-            }
-
-            if (!values.phone) {
-                errors.phone = 'Phone field is required.';
-            } else if (!/^6[0-9]{8}$/i.test(values.phone)) {
-                errors.phone = 'Invalid phone number format (e.g. 612345678)';
-            }
-
-            if (values.email && !(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(values.email))) {
-                errors.email = 'Invalid email address format';
-            }
-
-            if (!values.gender) {
-                errors.gender = 'Gender field is required.';
-            }
-
-            return errors;
+    const formik = useFormik<FormValues>({
+        initialValues: {
+            last_name: record?.last_name || '',
+            first_name: record?.first_name || '',
+            email: record?.email || '',
+            phone: record?.phone || '',
+            gender: record?.gender || ''
         },
+        enableReinitialize: true,
+        validationSchema,
+        onSubmit: handleSubmit,
     });
 
     if (isDataLoading) {
         return (
-            <motion.div 
-                className="container form-container"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-            >
-                <Breadcrumd parent="Users" url={currentPage} _child={id} />
-                <div className="form-card">
-                    <div className="card-body">
-                        <div className="row g-4">
-                            {[...Array(5)].map((_, index) => (
-                                <div key={index} className="col-md-6">
-                                    <Skeleton variant="text" width={100} height={20} className="mb-2" />
-                                    <Skeleton variant="rectangular" height={40} />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </motion.div>
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+                <CircularProgress color="primary" />
+            </Box>
         );
     }
 
     return (
-        <motion.div 
-            className="container form-container"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-        >
-            <Breadcrumd parent="Users" url={currentPage} _child={id} />
-            <div className="form-card">
-                <div className="card-title">
-                    <button 
-                        className="btn btn-secondary"
-                        onClick={() => dispatch(setActivePage({ page: Pages.ACCOUNT }))}
-                    >
-                        <i className="ti ti-arrow-left"></i>
-                        Back
-                    </button>
-                </div>
+        <Box>
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                <Breadcrumd parent="Administration" url={Pages.ACCOUNT} _child={id} />
 
-                <div className="row g-4">
-                    <div className="col-md-8">
-                        <form onSubmit={formik.handleSubmit}>
-                            <div className="row g-4">
-                                <div className="col-md-6">
-                                    <label className="py-2" htmlFor="last_name">
-                                        <i className="ti ti-user"></i>
-                                        Last Name
-                                        <span className="required-star">*</span>
-                                    </label>
-                                    <Tooltip title="Enter user's last name" arrow placement="top">
-                                        <div>
-                                            <TextField
-                                                fullWidth
-                                                id="last_name"
-                                                name="last_name"
-                                                variant="outlined"
-                                                size="small"
-                                                value={formik.values.last_name}
-                                                onChange={formik.handleChange}
-                                                onBlur={formik.handleBlur}
-                                                error={formik.touched.last_name && Boolean(formik.errors.last_name)}
-                                                placeholder="Enter last name"
-                                                className="form-control"
-                                            />
-                                            {formik.touched.last_name && formik.errors.last_name && (
-                                                <div className="error-feedback">
-                                                    <i className="ti ti-alert-circle"></i>
-                                                    <span>{formik.errors.last_name}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </Tooltip>
-                                </div>
+                <Grid container spacing={4} justifyContent="center">
+                    <Grid item xs={12}>
+                        <Card sx={{
+                            borderRadius: '24px',
+                            border: '1px solid rgba(255, 255, 255, 0.4)',
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            backdropFilter: 'blur(16px)',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
+                            p: 2
+                        }}>
+                            <CardContent sx={{ p: 4 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, justifyContent: 'space-between' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Box>
+                                            <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                                                Modifier le Compte
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<ArrowBack />}
+                                        onClick={() => dispatch(setActivePage({ page: Pages.ACCOUNT }))}
+                                        sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
+                                    >
+                                        Retour
+                                    </Button>
+                                </Box>
 
-                                <div className="col-md-6">
-                                    <label className="py-2" htmlFor="first_name">
-                                        <i className="ti ti-user"></i>
-                                        First Name
-                                    </label>
-                                    <Tooltip title="Enter user's first name" arrow placement="top">
-                                        <div>
-                                            <TextField
-                                                fullWidth
-                                                id="first_name"
-                                                name="first_name"
-                                                variant="outlined"
-                                                size="small"
-                                                value={formik.values.first_name}
-                                                onChange={formik.handleChange}
-                                                placeholder="Enter first name"
-                                                className="form-control"
-                                            />
-                                        </div>
-                                    </Tooltip>
-                                </div>
+                                <Grid container spacing={5}>
+                                    {/* Left Column: Form */}
+                                    <Grid item xs={12} lg={8}>
+                                        <form onSubmit={formik.handleSubmit}>
+                                            <Grid container spacing={3.5}>
+                                                <Grid item xs={12} md={6}>
+                                                    <TextField
+                                                        fullWidth
+                                                        label="Nom"
+                                                        {...formik.getFieldProps('last_name')}
+                                                        error={formik.touched.last_name && Boolean(formik.errors.last_name)}
+                                                        helperText={formik.touched.last_name && formik.errors.last_name}
+                                                        InputProps={{
+                                                            sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 700, '& fieldset': { borderColor: '#e2e8f0' } },
+                                                            startAdornment: <InputAdornment position="start"><Person sx={{ color: '#94a3b8' }} /></InputAdornment>
+                                                        }}
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} md={6}>
+                                                    <TextField
+                                                        fullWidth
+                                                        label="Prénom"
+                                                        {...formik.getFieldProps('first_name')}
+                                                        error={formik.touched.first_name && Boolean(formik.errors.first_name)}
+                                                        helperText={formik.touched.first_name && formik.errors.first_name}
+                                                        InputProps={{
+                                                            sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } },
+                                                            startAdornment: <InputAdornment position="start"><Person sx={{ color: '#94a3b8', opacity: 0.5 }} /></InputAdornment>
+                                                        }}
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} md={4}>
+                                                    <FormControl fullWidth error={formik.touched.gender && Boolean(formik.errors.gender)}>
+                                                        <InputLabel id="gender-label">Genre</InputLabel>
+                                                        <Select
+                                                            labelId="gender-label"
+                                                            label="Genre"
+                                                            {...formik.getFieldProps('gender')}
+                                                            sx={{ borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }}
+                                                            startAdornment={<InputAdornment position="start"><Wc sx={{ color: '#94a3b8', mr: 1 }} /></InputAdornment>}
+                                                        >
+                                                            <MenuItem value="male">Masculin</MenuItem>
+                                                            <MenuItem value="female">Féminin</MenuItem>
+                                                        </Select>
+                                                        {formik.touched.gender && formik.errors.gender && (
+                                                            <FormHelperText>{formik.errors.gender}</FormHelperText>
+                                                        )}
+                                                    </FormControl>
+                                                </Grid>
 
-                                <div className="col-md-6">
-                                    <label className="py-2" htmlFor="email">
-                                        <i className="ti ti-mail"></i>
-                                        Email
-                                    </label>
-                                    <Tooltip title="Enter user's email address" arrow placement="top">
-                                        <div>
-                                            <TextField
-                                                fullWidth
-                                                id="email"
-                                                name="email"
-                                                type="email"
-                                                variant="outlined"
-                                                size="small"
-                                                value={formik.values.email}
-                                                onChange={formik.handleChange}
-                                                onBlur={formik.handleBlur}
-                                                error={formik.touched.email && Boolean(formik.errors.email)}
-                                                placeholder="Enter email address"
-                                                className="form-control"
-                                            />
-                                            {formik.touched.email && formik.errors.email && (
-                                                <div className="error-feedback">
-                                                    <i className="ti ti-alert-circle"></i>
-                                                    <span>{formik.errors.email}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </Tooltip>
-                                </div>
-
-                                <div className="col-md-3">
-                                    <label className="py-2" htmlFor="phone">
-                                        <i className="ti ti-phone"></i>
-                                        Phone
-                                        <span className="required-star">*</span>
-                                    </label>
-                                    <Tooltip title="Enter user's phone number (format: 612345678)" arrow placement="top">
-                                        <div>
-                                            <TextField
-                                                fullWidth
-                                                id="phone"
-                                                name="phone"
-                                                variant="outlined"
-                                                size="small"
-                                                value={formik.values.phone}
-                                                onChange={formik.handleChange}
-                                                onBlur={formik.handleBlur}
-                                                error={formik.touched.phone && Boolean(formik.errors.phone)}
-                                                placeholder="612345678"
-                                                className="form-control"
-                                            />
-                                            {formik.touched.phone && formik.errors.phone && (
-                                                <div className="error-feedback">
-                                                    <i className="ti ti-alert-circle"></i>
-                                                    <span>{formik.errors.phone}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </Tooltip>
-                                </div>
-
-                                <div className="col-md-3">
-                                    <label className="py-2" htmlFor="gender">
-                                        <i className="ti ti-gender-bigender"></i>
-                                        Gender
-                                        <span className="required-star">*</span>
-                                    </label>
-                                    <Tooltip title="Select user's gender" arrow placement="top">
-                                        <div>
-                                            <select
-                                                className={`form-select ${formik.touched.gender && formik.errors.gender ? 'is-invalid' : ''}`}
-                                                id="gender"
-                                                name="gender"
-                                                value={formik.values.gender}
-                                                onChange={formik.handleChange}
-                                                onBlur={formik.handleBlur}
+                                                <Grid item xs={12} md={8}>
+                                                    <TextField
+                                                        fullWidth
+                                                        label="Email"
+                                                        {...formik.getFieldProps('email')}
+                                                        error={formik.touched.email && Boolean(formik.errors.email)}
+                                                        helperText={formik.touched.email && formik.errors.email}
+                                                        InputProps={{
+                                                            sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } },
+                                                            startAdornment: <InputAdornment position="start"><Mail sx={{ color: '#94a3b8' }} /></InputAdornment>
+                                                        }}
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} md={12}>
+                                                    <TextField
+                                                        fullWidth
+                                                        label="Téléphone"
+                                                        {...formik.getFieldProps('phone')}
+                                                        error={formik.touched.phone && Boolean(formik.errors.phone)}
+                                                        helperText={formik.touched.phone && formik.errors.phone}
+                                                        InputProps={{
+                                                            sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } },
+                                                            startAdornment: <InputAdornment position="start"><Phone sx={{ color: '#94a3b8' }} /></InputAdornment>
+                                                        }}
+                                                    />
+                                                </Grid>
+                                            </Grid>
+                                        </form>
+                                        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 4 }}>
+                                            <Button
+                                                variant="contained"
+                                                startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <Save />}
+                                                onClick={() => formik.handleSubmit()}
+                                                disabled={isLoading || !formik.isValid || !formik.dirty}
+                                                sx={{
+                                                    borderRadius: '15px',
+                                                    textTransform: 'none',
+                                                    fontWeight: 800,
+                                                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                                    boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)',
+                                                    '&:hover': {
+                                                        background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                                                    }
+                                                }}
                                             >
-                                                <option value="">Select gender</option>
-                                                <option value="male">Male</option>
-                                                <option value="female">Female</option>
-                                            </select>
-                                            {formik.touched.gender && formik.errors.gender && (
-                                                <div className="error-feedback">
-                                                    <i className="ti ti-alert-circle"></i>
-                                                    <span>{formik.errors.gender}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </Tooltip>
-                                </div>
-                            </div>
+                                                Mettre à jour le Compte
+                                            </Button>
+                                        </Box>
+                                    </Grid>
 
-                            <div className="form-actions">
-                                <button
-                                    type="submit"
-                                    className="btn btn-primary"
-                                    disabled={isLoading || !formik.isValid || !formik.dirty}
-                                >
-                                    <i className="ti ti-device-floppy"></i>
-                                    {isLoading ? 'Updating...' : 'Update User'}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={() => dispatch(setActivePage({ page: Pages.ACCOUNT }))}
-                                >
-                                    <i className="ti ti-x"></i>
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                                    {/* Right Column: Profile Picture */}
+                                    <Grid item xs={12} lg={4}>
+                                        <Paper elevation={0} sx={{
+                                            p: 4,
+                                            borderRadius: '24px',
+                                            backgroundColor: 'rgba(248, 250, 252, 0.6)',
+                                            border: '1px solid rgba(226, 232, 240, 0.8)',
+                                            textAlign: 'center',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            height: '100%'
+                                        }}>
+                                            <ThumbnailDropzone
+                                                onUploadSuccess={handleUploadSuccess}
+                                                existingImageUrl={image ? `${constants.URL}/${image.path}` : null}
+                                                existingImageId={image ? image.id : null}
+                                                imageable={{
+                                                    imageable_id: record?.id,
+                                                    imageable_type: 'User'
+                                                }}
+                                            />
 
-                    <div className="col-md-4">
-                        <div className="form-group">
-                            <label>
-                                <i className="ti ti-photo"></i>
-                                Profile Picture
-                            </label>
-                            <ThumbnailDropzone
-                                onUploadSuccess={handleUploadSuccess}
-                                existingImageUrl={image ? `${constants.URL}/${image.path}` : null}
-                                existingImageId={image ? image.id : null}
-                                imageable={{
-                                    imageable_id: record.id,
-                                    imageable_type: 'User'
-                                }}
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </motion.div>
+                                            <Box sx={{ mt: 4, pt: 4, borderTop: '1px solid rgba(226, 232, 240, 0.8)', width: '100%' }}>
+                                                <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                                                    <AutoAwesome sx={{ fontSize: 14 }} />
+                                                    Utilisez une photo nette
+                                                </Typography>
+                                            </Box>
+                                        </Paper>
+                                    </Grid>
+                                </Grid>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                </Grid>
+            </motion.div>
+        </Box>
     );
 };
 

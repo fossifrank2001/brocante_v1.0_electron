@@ -9,10 +9,10 @@ import CategoryAPI from "@/Data/Api/Category";
 import LoaderFilter from "@/Components/loaders/LoaderFilter";
 import LoaderArticle from "@/Components/loaders/LoaderArticle";
 import { IPaginationData } from 'Interfaces';
-import { Alert, AlertTitle, Typography, Box, IconButton, Drawer, Chip, Badge } from '@mui/material';
-import { FilterList, Refresh, Close } from '@mui/icons-material';
+import { Alert, AlertTitle, Typography, Box, IconButton, Drawer, Chip, Badge, Tooltip } from '@mui/material';
+import { FilterList, Refresh, ViewModule, ViewList } from '@mui/icons-material';
 
-const ShopComponent: React.FC<{searchTerm: string, onResetFilter: () => void}> = ({searchTerm, onResetFilter}) => {
+const ShopComponent: React.FC<{ searchTerm: string, onResetFilter: () => void }> = ({ searchTerm, onResetFilter }) => {
     const [products, setProducts] = useState<IProduct[]>([]);
     const [paginationData, setPaginationData] = useState<IPaginationData | null>(null);
     const [categories, setCategories] = useState<ICategory[]>([]);
@@ -24,6 +24,7 @@ const ShopComponent: React.FC<{searchTerm: string, onResetFilter: () => void}> =
     const [error, setError] = useState<string | null>(null);
     const [perPage, setPerPage] = useState<number>(10);
     const [showFilters, setShowFilters] = useState<boolean>(true);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
@@ -117,95 +118,126 @@ const ShopComponent: React.FC<{searchTerm: string, onResetFilter: () => void}> =
         return count;
     };
 
-    const handleRefreshFilters = async () => {
-        await getCategories();
-    };
-
     const handleRefreshProducts = async () => {
         await getProducts();
     };
 
     return (
-        <Box sx={{ width: '100%', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-            {/* Header avec boutons et filtres actifs */}
-            <Box sx={{ 
-                p: 2, 
-                backgroundColor: 'white', 
-                borderBottom: '1px solid #e0e0e0',
+        <Box sx={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--body-bg)' }}>
+            {/* Toolbar */}
+            <Box sx={{
+                px: 3, py: 2,
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(8px)',
+                borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 flexWrap: 'wrap',
-                gap: 2
+                gap: 2,
+                position: 'sticky',
+                top: 0,
+                zIndex: 900
             }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <IconButton 
-                        onClick={toggleFilters}
-                        color="primary"
-                        sx={{ 
-                            backgroundColor: showFilters ? 'primary.main' : 'transparent',
-                            color: showFilters ? 'white' : 'primary.main',
-                            '&:hover': {
-                                backgroundColor: showFilters ? 'primary.dark' : 'rgba(25, 118, 210, 0.04)'
-                            }
-                        }}
-                    >
-                        <Badge badgeContent={getActiveFiltersCount()} color="error">
-                            <FilterList />
-                        </Badge>
-                    </IconButton>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        {products.length} produit{products.length > 1 ? 's' : ''}
+                    <Tooltip title={showFilters ? 'Masquer les filtres' : 'Afficher les filtres'}>
+                        <IconButton
+                            onClick={toggleFilters}
+                            size="medium"
+                            sx={{
+                                bgcolor: showFilters ? 'rgba(79, 70, 229, 0.1)' : 'transparent',
+                                color: showFilters ? '#4f46e5' : '#64748b',
+                                border: '1px solid',
+                                borderColor: showFilters ? 'rgba(79, 70, 229, 0.2)' : 'rgba(0,0,0,0.05)',
+                                '&:hover': { bgcolor: 'rgba(79, 70, 229, 0.15)' }
+                            }}
+                        >
+                            <Badge badgeContent={getActiveFiltersCount()} color="error">
+                                <FilterList />
+                            </Badge>
+                        </IconButton>
+                    </Tooltip>
+
+                    <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>
+                        {products.length} <span style={{ color: '#64748b', fontWeight: 500 }}>produits trouvés</span>
                     </Typography>
-                    {getActiveFiltersCount() > 0 && (
-                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                            {selectedSubCategories.length > 0 && (
-                                <Chip 
-                                    label={`${selectedSubCategories.length} catégorie(s)`} 
-                                    size="small" 
-                                    onDelete={() => setSelectedSubCategories([])}
-                                    color="primary"
-                                    variant="outlined"
-                                />
-                            )}
-                            {priceRange && (
-                                <Chip 
-                                    label={`Prix: ${priceRange.replace('_', '-')}`} 
-                                    size="small" 
-                                    onDelete={() => setPriceRange('')}
-                                    color="primary"
-                                    variant="outlined"
-                                />
-                            )}
-                            {_status && (
-                                <Chip 
-                                    label={`Statut: ${_status}`} 
-                                    size="small" 
-                                    onDelete={() => setStatus('')}
-                                    color="primary"
-                                    variant="outlined"
-                                />
-                            )}
-                        </Box>
-                    )}
+
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {selectedSubCategories.length > 0 && (
+                            <Chip
+                                label={`${selectedSubCategories.length} Catégories`}
+                                size="small"
+                                variant="outlined"
+                                onDelete={() => setSelectedSubCategories([])}
+                                sx={{ borderRadius: '8px', fontWeight: 600, color: '#4f46e5', borderColor: 'rgba(79, 70, 229, 0.3)' }}
+                            />
+                        )}
+                        {priceRange && (
+                            <Chip
+                                label={`Prix: ${priceRange.replace('_', '-')}`}
+                                size="small"
+                                variant="outlined"
+                                onDelete={() => setPriceRange('')}
+                                sx={{ borderRadius: '8px', fontWeight: 600, color: '#0891b2', borderColor: 'rgba(8, 145, 178, 0.3)' }}
+                            />
+                        )}
+                        {_status && (
+                            <Chip
+                                label={`Statut: ${_status}`}
+                                size="small"
+                                variant="outlined"
+                                onDelete={() => setStatus('')}
+                                sx={{ borderRadius: '8px', fontWeight: 600, color: '#059669', borderColor: 'rgba(5, 150, 105, 0.3)' }}
+                            />
+                        )}
+                    </Box>
                 </Box>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                    <IconButton
-                        onClick={handleRefreshFilters}
-                        disabled={loadingFilter}
-                        color="primary"
-                        title="Rafraîchir les filtres"
-                    >
-                        <Refresh />
-                    </IconButton>
-                    <IconButton
-                        onClick={handleRefreshProducts}
-                        disabled={loadingProducts}
-                        color="primary"
-                        title="Rafraîchir les produits"
-                    >
-                        <Refresh />
-                    </IconButton>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Tooltip title="Rafraîchir les produits">
+                        <IconButton
+                            size="small"
+                            onClick={handleRefreshProducts}
+                            disabled={loadingProducts}
+                            sx={{ border: '1px solid rgba(0,0,0,0.05)' }}
+                        >
+                            <Refresh fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                    <Box sx={{
+                        display: 'flex',
+                        backgroundColor: 'rgba(0,0,0,0.03)',
+                        p: 0.5,
+                        borderRadius: '10px',
+                        border: '1px solid rgba(0,0,0,0.02)'
+                    }}>
+                        <IconButton
+                            size="small"
+                            onClick={() => setViewMode('grid')}
+                            sx={{
+                                borderRadius: '8px',
+                                bgcolor: viewMode === 'grid' ? 'white' : 'transparent',
+                                color: viewMode === 'grid' ? '#4f46e5' : '#64748b',
+                                boxShadow: viewMode === 'grid' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                                '&:hover': { bgcolor: viewMode === 'grid' ? 'white' : 'rgba(0,0,0,0.05)' }
+                            }}
+                        >
+                            <ViewModule fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                            size="small"
+                            onClick={() => setViewMode('list')}
+                            sx={{
+                                borderRadius: '8px',
+                                bgcolor: viewMode === 'list' ? 'white' : 'transparent',
+                                color: viewMode === 'list' ? '#4f46e5' : '#64748b',
+                                boxShadow: viewMode === 'list' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                                '&:hover': { bgcolor: viewMode === 'list' ? 'white' : 'rgba(0,0,0,0.05)' }
+                            }}
+                        >
+                            <ViewList fontSize="small" />
+                        </IconButton>
+                    </Box>
                 </Box>
             </Box>
 
@@ -219,12 +251,15 @@ const ShopComponent: React.FC<{searchTerm: string, onResetFilter: () => void}> =
                     sx={{
                         width: showFilters ? 320 : 0,
                         flexShrink: 0,
+                        transition: 'width 0.3s ease',
                         '& .MuiDrawer-paper': {
                             width: 320,
                             boxSizing: 'border-box',
                             position: 'relative',
                             height: '100%',
-                            borderRight: '1px solid #e0e0e0'
+                            borderRight: '1px solid rgba(0,0,0,0.05)',
+                            backgroundColor: '#fff',
+                            boxShadow: '4px 0 12px rgba(0,0,0,0.02)'
                         },
                     }}
                 >
@@ -245,38 +280,31 @@ const ShopComponent: React.FC<{searchTerm: string, onResetFilter: () => void}> =
                     )}
                 </Drawer>
 
-                {/* Zone des produits */}
-                <Box sx={{ 
-                    flex: 1, 
-                    backgroundColor: '#f5f7fa',
-                    overflowY: 'auto',
-                    p: 3,
-                    transition: 'margin 0.3s ease'
-                }}>
+                {/* Products Area */}
+                <Box sx={{ flex: 1, overflowY: 'auto', p: 3 }}>
                     {error && (
-                        <Alert severity="error" sx={{ mb: 3 }}>
-                            <AlertTitle>Erreur</AlertTitle>
+                        <Alert severity="error" sx={{ mb: 3, borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                            <AlertTitle sx={{ fontWeight: 700 }}>Erreur</AlertTitle>
                             {error}
                         </Alert>
                     )}
+
                     {loadingProducts ? (
-                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 3 }}>
-                            {Array.from({length: 8}).map((_, index) => <LoaderArticle key={index}/>)}
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 3 }}>
+                            {Array.from({ length: 8 }).map((_, i) => <LoaderArticle key={i} />)}
                         </Box>
                     ) : products.length > 0 ? (
-                        <Box>
-                            <ProductList products={products} showFilters={showFilters}/>
-                        </Box>
+                        <ProductList products={products} showFilters={showFilters} />
                     ) : (
-                        <Alert severity="warning" sx={{ mt: 3 }}>
-                            <AlertTitle>Aucun produit trouvé</AlertTitle>
-                            <Typography>
-                                Aucun produit ne correspond à vos critères. Essayez d'ajuster vos filtres.
-                            </Typography>
-                        </Alert>
+                        <Box sx={{ textAlign: 'center', py: 12, color: '#94a3b8' }}>
+                            <Box sx={{ fontSize: '4rem', mb: 2, opacity: 0.5 }}>🔍</Box>
+                            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, color: '#1e293b' }}>Aucun produit trouvé</Typography>
+                            <Typography variant="body1">Ajustez vos filtres ou essayez une autre recherche.</Typography>
+                        </Box>
                     )}
+
                     {paginationData && (
-                        <Box sx={{ mt: 3 }}>
+                        <Box sx={{ mt: 5, pb: 4 }}>
                             <PaginationComponent
                                 paginationData={paginationData}
                                 onPageChange={handlePageChange}

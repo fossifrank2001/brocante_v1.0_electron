@@ -1,5 +1,5 @@
-import {useCallback, useEffect, useLayoutEffect, useMemo, useState} from 'react'
-import {useAppContext} from "@/contexts/appContext";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useAppContext } from "@/contexts/appContext";
 import constants from "Data/Utilities/constants";
 import Breadcrumd from "Components/Breadcrumd";
 import {
@@ -10,18 +10,20 @@ import {
     MRT_ToggleGlobalFilterButton,
     useMaterialReactTable
 } from "material-react-table";
-import {MRT_Localization_EN} from "material-react-table/locales/en";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
 import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
-import {Box, Dialog, DialogActions, DialogContent, DialogTitle, Link, Stack, Typography} from "@mui/material";
+import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Link, Stack, Typography, Card, CardContent, Button, CircularProgress, Tooltip, IconButton, Zoom } from "@mui/material";
+import { Refresh, FileDownload, Edit, Delete } from '@mui/icons-material';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { IRole, IRoleTableData } from '@/Data/Interfaces';
 import { Pages } from '@/Data/Objects/state';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import CustomAlert from '@/Components/CustomAlert';
 import RoleAPI from '@/Data/Api/Role';
 import Toast from '@/Data/Utilities/Toast';
 import { useFormik } from 'formik';
+import { motion } from 'framer-motion';
 
 interface FormValues {
     label: string;
@@ -50,6 +52,7 @@ export default function IndexRole() {
     const [inProgress, setInProgress] = useState(false);
     const [openUpdateModal, setOpenUpdateModal] = useState(false);
     const dispatch = useAppDispatch()
+    const { authorizations } = useAppSelector(state => state.userAuthorizing)
     const [initialValues, setInitialValues] = useState<FormValues>({
         label: '',
         code: ''
@@ -57,7 +60,7 @@ export default function IndexRole() {
 
     useLayoutEffect(() => {
         context.togglePageLoading();
-        document.title = constants.APP_NAME + ' .:. Roles';
+        document.title = constants.APP_NAME + ' .:. Rôles';
     }, [context]);
 
     const resetScroll = () => {
@@ -104,9 +107,9 @@ export default function IndexRole() {
         (async () => await getRoles())();
     }, [getRoles, isDeleted]);
 
-    const handleRefresh = () => {
+    const handleRefresh = async () => {
         setIsRefetching(true);
-        getRoles();
+        await getRoles();
     };
 
     const tableData: IRoleTableData[] = useMemo(() => {
@@ -114,47 +117,77 @@ export default function IndexRole() {
             ...role,
             actions: (
                 <Stack direction="row" spacing={1}>
-                    <Link
-                        href="#"
-                        onClick={() => {
-                            setRoleId(role.id)
-                            setInitialValues({
-                                label: role?.label || "",
-                                code: role?.code
-                            })
-                            setOpenUpdateModal(true)
-                        }}>
-                        <i color="primary" className="ti ti-pencil"></i>
-                    </Link>
-                    <i
-                        onClick={() => {
-                            setRoleId(role.id)
-                            setOpenDetailModal(true)
-                        }}
-                        className="ti ti-trash cursor-pointer text-danger"
-                    ></i>
+                    <Tooltip title="Modifier le rôle" TransitionComponent={Zoom} arrow>
+                        <IconButton
+                            size="small"
+                            onClick={() => {
+                                setRoleId(role.id)
+                                setInitialValues({
+                                    label: role?.label || "",
+                                    code: role?.code
+                                })
+                                setOpenUpdateModal(true)
+                            }}
+                            sx={{ color: '#6366f1', bgcolor: 'rgba(99, 102, 241, 0.08)', '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.18)', transform: 'translateY(-2px)' }, transition: 'all 0.2s' }}
+                        >
+                            <Edit fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Supprimer le rôle" TransitionComponent={Zoom} arrow>
+                        <IconButton
+                            size="small"
+                            onClick={() => {
+                                setRoleId(role.id)
+                                setOpenDetailModal(true)
+                            }}
+                            sx={{ color: '#ef4444', bgcolor: 'rgba(239, 68, 68, 0.08)', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.18)', transform: 'translateY(-2px)' }, transition: 'all 0.2s' }}
+                        >
+                            <Delete fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
                 </Stack>
             ),
         })) : [];
     }, [roles]);
 
-    const columns : MRT_ColumnDef<IRoleTableData>[] = useMemo(
+    const columns: MRT_ColumnDef<IRoleTableData>[] = useMemo(
         () => [
             {
                 accessorKey: "label",
                 header: "Label",
-                size: 100,
+                size: 200,
                 muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
+                    inputProps: { placeHolder: "filtrer" },
                 }),
+                Cell: ({ cell }) => (
+                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                        {cell.getValue() as string}
+                    </Typography>
+                ),
             },
             {
                 accessorKey: "code",
                 header: "Code",
-                size: 150,
+                size: 200,
                 muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
+                    inputProps: { placeHolder: "filtrer" },
                 }),
+                Cell: ({ cell }) => (
+                    <Box sx={{
+                        display: 'inline-block',
+                        px: 1.5,
+                        py: 0.5,
+                        bgcolor: 'rgba(99, 102, 241, 0.1)',
+                        color: '#6366f1',
+                        border: '1px solid rgba(99, 102, 241, 0.2)',
+                        borderRadius: '8px',
+                        fontWeight: 900,
+                        fontSize: '0.75rem',
+                        fontFamily: 'monospace'
+                    }}>
+                        {cell.getValue() as string}
+                    </Box>
+                ),
             },
             {
                 accessorKey: "actions",
@@ -162,30 +195,66 @@ export default function IndexRole() {
                 size: 150,
                 unexport: true,
                 enableColumnFilter: false,
+                enableSorting: false,
             },
         ],
         [],
     );
 
-    const mrTable : MRT_TableInstance<IRoleTableData> = useMaterialReactTable({
+    const mrTable: MRT_TableInstance<IRoleTableData> = useMaterialReactTable({
         columns,
         data: tableData,
         enableRowSelection: true,
         enableStickyHeader: true,
         initialState: {
             showColumnFilters: true,
-            density: "compact",
+            density: "comfortable",
         },
         manualFiltering: true,
         manualPagination: true,
         manualSorting: true,
-        muiTablePaperProps: { className: "__table-expandable" },
-        muiTableContainerProps: { className: "__table-container" },
+        muiTablePaperProps: {
+            sx: {
+                borderRadius: '32px',
+                border: '1px solid rgba(255, 255, 255, 0.45)',
+                bgcolor: 'rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.08)',
+                overflow: 'hidden'
+            }
+        },
+        muiTableContainerProps: {
+            className: "__table-container",
+            sx: { maxHeight: '700px' }
+        },
+        muiTableHeadCellProps: {
+            sx: {
+                bgcolor: 'rgba(248, 250, 252, 0.6)',
+                color: '#64748b',
+                fontWeight: 800,
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                py: 3,
+                px: 3
+            }
+        },
+        muiTableBodyRowProps: {
+            sx: {
+                '&:hover': {
+                    bgcolor: 'rgba(99, 102, 241, 0.04) !important',
+                },
+                transition: 'background-color 0.2s'
+            }
+        },
+        muiTableBodyCellProps: {
+            sx: { px: 3, py: 2, borderBottom: '1px solid rgba(226, 232, 240, 0.5)' }
+        },
         localization: MRT_Localization_EN,
         muiToolbarAlertBannerProps: isError
             ? {
                 color: "error",
-                children: "errorLoadingData",
+                children: "Erreur de chargement des données",
             }
             : undefined,
         onColumnFiltersChange: setColumnFilters,
@@ -205,27 +274,60 @@ export default function IndexRole() {
             rowSelection,
         },
         renderTopToolbarCustomActions: () => (
-            <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
-                <button
-                    onClick={handleRefresh}
-                    type='button'
-                    className='btn btn-outline-secondary'
-                    style={{ marginLeft: '12px' }}
-                    disabled={isLoading || isRefetching}
-                >
-                    <i className='ti ti-refresh'></i>
-                    <span className='ms-2'>Refresh</span>
-                </button>
+            <Box sx={{ display: "flex", gap: 2.5, p: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
+                    Gestion des Rôles
+                </Typography>
+
+                <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
+                    <Button
+                        onClick={handleRefresh}
+                        variant="outlined"
+                        startIcon={<Refresh />}
+                        disabled={isLoading || isRefetching}
+                        sx={{
+                            borderRadius: '14px',
+                            textTransform: 'none',
+                            fontWeight: 800,
+                            borderColor: 'rgba(99, 102, 241, 0.2)',
+                            color: '#6366f1',
+                            px: 3,
+                            bgcolor: 'white',
+                            '&:hover': { bgcolor: '#f5f7ff', borderColor: '#6366f1' }
+                        }}
+                    >
+                        Rafraîchir
+                    </Button>
+
+                    {UtilMethods.getHabilitations(authorizations, 'role').canExport && (
+                        <Button
+                            variant="contained"
+                            startIcon={<FileDownload />}
+                            sx={{
+                                borderRadius: '16px',
+                                textTransform: 'none',
+                                fontWeight: 900,
+                                background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                                boxShadow: '0 10px 20px -5px rgba(99, 102, 241, 0.4)',
+                                px: 4,
+                                py: 1.2,
+                                '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 15px 25px -5px rgba(99, 102, 241, 0.5)',
+                                    background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
+                                }
+                            }}
+                        >
+                            Exporter
+                        </Button>
+                    )}
+                </Box>
             </Box>
         ),
         renderToolbarInternalActions: ({ table }) => (
-            <Box>
+            <Box sx={{ display: 'flex', gap: 1, pr: 3, alignItems: 'center' }}>
                 <MRT_ToggleGlobalFilterButton table={table} />
                 <MRT_ToggleFiltersButton table={table} />
-                <button type='button' className='btn'>
-                    <i className='ti ti-cloud-download'></i>
-                </button>
-                <MRT_ToggleDensePaddingButton table={table} />
                 <MRT_ShowHideColumnsButton table={table} />
                 <MRT_ToggleFullScreenButton table={table} />
             </Box>
@@ -236,12 +338,12 @@ export default function IndexRole() {
         try {
             context.togglePageLoading(true)
             setInProgress(true)
-            const {message} = await RoleAPI.delete(roleId)
+            const { message } = await RoleAPI.delete(roleId)
             Toast.success(message)
 
         } catch (error) {
             console.error(error)
-        }finally{
+        } finally {
             setOpenDetailModal(false)
             setIsDeleted(prev => !prev)
             setInProgress(false)
@@ -252,11 +354,11 @@ export default function IndexRole() {
     const handleSubmit = async (values: FormValues) => {
         setInProgress(true);
         try {
-            const {message} = await RoleAPI.update(roleId, values);
+            const { message } = await RoleAPI.update(roleId, values);
             Toast.success(message)
             setIsDeleted(true)
-            dispatch(setActivePage({page: Pages.ROLE}))
-        } catch (error) { console.log(error)} finally {
+            dispatch(setActivePage({ page: Pages.ROLE }))
+        } catch (error) { console.log(error) } finally {
             setInProgress(false);
             setOpenUpdateModal(false)
         }
@@ -270,13 +372,13 @@ export default function IndexRole() {
             const errors: Partial<FormValues> = {};
 
             if (!values.label) {
-                errors.label = 'Label field is required.';
+                errors.label = 'Le champ Label est requis.';
             }
 
             if (!values.code) {
-                errors.code = 'Code field is required.';
-            }else if (!/^[A-Z*]{4,}$/.test(values.code)) {
-                errors.code = 'Invalid code.';
+                errors.code = 'Le champ Code est requis.';
+            } else if (!/^[A-Z*]{4,}$/.test(values.code)) {
+                errors.code = 'Code invalide.';
             }
 
             return errors;
@@ -284,42 +386,58 @@ export default function IndexRole() {
     });
 
     return (
-        <div className="container">
-            <Breadcrumd parent="Roles" />
-            <MaterialReactTable  table={mrTable}/>
-            <CustomAlert
-                openDetailModal={openDetailModal}
-                content={{style: 'ti ti-info-circle text text-danger',
-                    icon: 'Warning',
-                    message: 'Would you like to delete this role?'
-                }}
-                onHandleDelete={handleDelete}
-                onHandleOpenDetail={() => setOpenDetailModal(false)}
-                inProgress= {inProgress}
-            />
+        <Box>
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                <Box sx={{ mb: 4 }}>
+                    <Breadcrumd parent="Rôles" />
+                </Box>
+                <MaterialReactTable table={mrTable} />
 
-            <Dialog
-                open={openUpdateModal}
-                onClose={() => setOpenUpdateModal(false)}
-                aria-labelledby="alert-delete-access"
-                aria-describedby="confirm-delete-access"
-            >
-                <DialogTitle id="alert-dialog-title">
-                    <Stack className='fs-8' direction='row' alignItems="center">
-                        <i className='ti ti-pencil text text-info' style={{marginRight: '12px'}} ></i>
-                        <Typography variant="h5" className='text text-info fw-bolder'>
-                            Update the role
-                        </Typography>
-                    </Stack>
-                </DialogTitle>
-                <form onSubmit={formik.handleSubmit}>
-                    <DialogContent>
-                        <div className="row">
-                            <div className="col-12 mx-auto">
-                                <div className="row gap-10">
-                                    <div className="col-12 mb-3">
-                                        <label htmlFor="label" className="form-label">Label <span className="text-danger">*</span></label>
-                                        <div className="input-group">
+                <CustomAlert
+                    openDetailModal={openDetailModal}
+                    content={{
+                        style: 'ti ti-info-circle text text-danger',
+                        icon: 'Warning',
+                        message: 'Voulez-vous vraiment supprimer ce rôle ?'
+                    }}
+                    onHandleDelete={handleDelete}
+                    onHandleOpenDetail={() => setOpenDetailModal(false)}
+                    inProgress={inProgress}
+                />
+
+                <Dialog
+                    open={openUpdateModal}
+                    onClose={() => setOpenUpdateModal(false)}
+                    aria-labelledby="alert-delete-access"
+                    aria-describedby="confirm-delete-access"
+                    PaperProps={{
+                        sx: {
+                            borderRadius: '32px',
+                            p: 2,
+                            backdropFilter: 'blur(10px)',
+                            background: 'rgba(255, 255, 255, 0.9)',
+                            border: '1px solid rgba(255, 255, 255, 0.8)',
+                            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.1)'
+                        }
+                    }}
+                >
+                    <DialogTitle id="alert-dialog-title" sx={{ pb: 1 }}>
+                        <Stack direction='row' alignItems="center" gap={2}>
+                            <Box sx={{ width: 48, height: 48, borderRadius: '16px', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                                <Edit sx={{ fontSize: 24 }} />
+                            </Box>
+                            <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
+                                Mettre à jour le rôle
+                            </Typography>
+                        </Stack>
+                    </DialogTitle>
+                    <form onSubmit={formik.handleSubmit}>
+                        <DialogContent sx={{ pt: 3 }}>
+                            <div className="row">
+                                <div className="col-12 mx-auto">
+                                    <div className="row gap-4">
+                                        <div className="col-12">
+                                            <label htmlFor="label" className="form-label fw-bold text-secondary mb-2" style={{ fontSize: '0.875rem' }}>Label <span className="text-danger">*</span></label>
                                             <input
                                                 type="text"
                                                 className="form-control"
@@ -328,19 +446,25 @@ export default function IndexRole() {
                                                 onChange={formik.handleChange}
                                                 onBlur={formik.handleBlur}
                                                 value={formik.values.label}
-                                                style={{ ...formik.errors.label && { borderColor: "var(--bs-danger)" } }}
+                                                style={{
+                                                    borderRadius: '16px',
+                                                    padding: '14px 20px',
+                                                    background: '#f8fafc',
+                                                    border: '1px solid #e2e8f0',
+                                                    fontWeight: 600,
+                                                    color: '#1e293b',
+                                                    ...formik.errors.label && { borderColor: "var(--bs-danger)", background: 'rgba(239, 68, 68, 0.05)' }
+                                                }}
                                             />
+                                            {formik.errors.label &&
+                                                <div className='text fs-10 text-danger d-flex align-items-center mt-2'>
+                                                    <i className='ti ti-alert-circle me-1'></i>
+                                                    <span style={{ fontWeight: 600 }}>{formik.errors.label}</span>
+                                                </div>
+                                            }
                                         </div>
-                                        {formik.errors.label &&
-                                            <div className='text fs-10 text-danger d-flex align-items-center'>
-                                                <i className='ti ti-alert-circle me-2'></i>
-                                                <span>{formik.errors.label}</span>
-                                            </div>
-                                        }
-                                    </div>
-                                    <div className="col-12 mb-3">
-                                        <label htmlFor="code" className="form-label">Code <span className="text-danger">*</span></label>
-                                        <div className="input-group">
+                                        <div className="col-12">
+                                            <label htmlFor="code" className="form-label fw-bold text-secondary mb-2" style={{ fontSize: '0.875rem' }}>Code <span className="text-danger">*</span></label>
                                             <input
                                                 type="text"
                                                 className="form-control"
@@ -350,33 +474,60 @@ export default function IndexRole() {
                                                 onChange={formik.handleChange}
                                                 onBlur={formik.handleBlur}
                                                 value={formik.values.code}
-                                                style={{ ...formik.errors.code && { borderColor: "var(--bs-danger)" } }}
+                                                style={{
+                                                    borderRadius: '16px',
+                                                    padding: '14px 20px',
+                                                    background: '#f1f5f9',
+                                                    color: '#64748b',
+                                                    border: '1px dashed #cbd5e1',
+                                                    fontWeight: 800,
+                                                    fontFamily: 'monospace',
+                                                    ...formik.errors.code && { borderColor: "var(--bs-danger)", background: 'rgba(239, 68, 68, 0.05)' }
+                                                }}
                                             />
+                                            {formik.errors.code &&
+                                                <div className='text fs-10 text-danger d-flex align-items-center mt-2'>
+                                                    <i className='ti ti-alert-circle me-1'></i>
+                                                    <span style={{ fontWeight: 600 }}>{formik.errors.code}</span>
+                                                </div>
+                                            }
                                         </div>
-                                        {formik.errors.code &&
-                                            <div className='text fs-10 text-danger d-flex align-items-center'>
-                                                <i className='ti ti-alert-circle me-2'></i>
-                                                <span>{formik.errors.code}</span>
-                                            </div>
-                                        }
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </DialogContent>
-                    <DialogActions style={{display:"flex", justifyContent:"flex-end", alignItems:"center"}}>
-                        <button disabled={inProgress} className='btn btn-light text-dark' onClick={() => setOpenUpdateModal(false)}>
-                            cancel
-                        </button>
-                        {!inProgress ? <button type='submit' className="btn btn-primary rounded-2">UPDATE</button> :
-                            <button className="btn btn-primary rounded-2" type="button" disabled>
-                                <span className="spinner-grow spinner-grow-sm ms-4" role="status" aria-hidden="true"></span>
-                                UPDATE...
-                            </button>
-                        }
-                    </DialogActions>
-                </form>
-            </Dialog>
-        </div>
+                        </DialogContent>
+                        <DialogActions sx={{ px: 3, pb: 2, pt: 3, gap: 2 }}>
+                            <Button
+                                disabled={inProgress}
+                                onClick={() => setOpenUpdateModal(false)}
+                                sx={{ color: '#64748b', fontWeight: 700, borderRadius: '14px', px: 3, py: 1.2, '&:hover': { bgcolor: '#f1f5f9' } }}
+                            >
+                                Annuler
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={inProgress}
+                                sx={{
+                                    background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                                    color: 'white',
+                                    fontWeight: 900,
+                                    borderRadius: '14px',
+                                    px: 4,
+                                    py: 1.2,
+                                    boxShadow: '0 10px 20px -5px rgba(99, 102, 241, 0.4)',
+                                    '&:hover': {
+                                        background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: '0 15px 25px -5px rgba(99, 102, 241, 0.5)'
+                                    }
+                                }}
+                            >
+                                {inProgress ? <CircularProgress size={20} color="inherit" /> : 'Enregistrer'}
+                            </Button>
+                        </DialogActions>
+                    </form>
+                </Dialog>
+            </motion.div>
+        </Box>
     );
 }

@@ -1,7 +1,7 @@
 import Breadcrumd from '@/Components/Breadcrumd';
 import { IMenu, IRole } from '@/Data/Interfaces';
-import {useAppDispatch, useAppSelector} from '@/hooks';
-import { Autocomplete, TextField } from '@mui/material';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { Autocomplete, TextField, Box, Grid, Card, CardContent, Typography, Button, CircularProgress } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react'
 import { useAppContext } from '@/contexts/appContext';
 import { useFormik } from 'formik';
@@ -12,9 +12,9 @@ import { IPermission } from '@/Data/Interfaces/Permission';
 import AuthorizationAPI from '@/Data/Api/Authorizations';
 import MenuAPI from '@/Data/Api/Menu';
 import Toast from '@/Data/Utilities/Toast';
-import {IHabilitation} from "Data/Interfaces/Habilitation.ts";
-
-
+import { IHabilitation } from "Data/Interfaces/Habilitation";
+import { ArrowBack, Menu as MenuIcon, Shield, Lock, Save } from '@mui/icons-material';
+import { motion } from 'framer-motion';
 
 const UpdateAuthorization = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -37,16 +37,16 @@ const UpdateAuthorization = () => {
 
     const context = useAppContext();
 
-    const  getRecord = useCallback(
+    const getRecord = useCallback(
         async () => {
             try {
-                const {data} = await AuthorizationAPI.show(id)
+                const { data } = await AuthorizationAPI.show(id)
                 console.log(data)
                 setRecord(data)
                 setMenu(data.menu)
                 setRole(data.role)
                 setPermission(data.permission)
-            }catch (e) {
+            } catch (e) {
                 console.error(e);
             }
         },
@@ -57,7 +57,6 @@ const UpdateAuthorization = () => {
         getRecord()
     }, [getRecord, id]);
 
-
     useEffect(() => {
         if (record) {
             setMenu(record.menu);
@@ -65,19 +64,19 @@ const UpdateAuthorization = () => {
             setPermission(record.permission);
         }
     }, [record]);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleSubmit = async (_) => {
+
+    const handleSubmit = async () => {
         setIsLoading(true);
         try {
             const datas = {
-                menu: menu.id,
-                role: role.id,
-                permission: permission.id,
+                menu: menu?.id,
+                role: role?.id,
+                permission: permission?.id,
             }
-            const {message} = await AuthorizationAPI.update(id, datas);
+            const { message } = await AuthorizationAPI.update(id, datas);
             Toast.success(message)
             context.togglePageLoading(true)
-            dispatch(setActivePage({page: Pages.HABILITATION}))
+            dispatch(setActivePage({ page: Pages.HABILITATION }))
         } catch (error) {
             console.error(error)
         } finally {
@@ -88,7 +87,7 @@ const UpdateAuthorization = () => {
     const getPermissions = useCallback(async (_qPerm) => {
         try {
             setPermissions([])
-            const {data: permissions_} = await AuthorizationAPI.permissions(_qPerm)
+            const { data: permissions_ } = await AuthorizationAPI.permissions(_qPerm)
             setPermissions(permissions_.data)
         } catch (error) {
             console.error(error)
@@ -98,10 +97,9 @@ const UpdateAuthorization = () => {
         getPermissions(qPermission)
     }, [qPermission, getPermissions])
 
-    //--------------------------------------------
     const getRoles = useCallback(async (_qRole) => {
         try {
-            const {data: _roles} = await RoleAPI.index(_qRole)
+            const { data: _roles } = await RoleAPI.index(_qRole)
             setRoles(_roles.data)
         } catch (error) {
             console.error(error)
@@ -111,11 +109,10 @@ const UpdateAuthorization = () => {
         getRoles(qRole)
     }, [qRole, getRoles])
 
-    //--------------------------------------------
     const getMenus = useCallback(async (_qMenu) => {
         try {
-            const {data: _roles} = await MenuAPI.menus(_qMenu)
-            setMenus(_roles.data)
+            const { data: _menus } = await MenuAPI.menus(_qMenu)
+            setMenus(_menus.data)
         } catch (error) {
             console.error(error)
         }
@@ -132,217 +129,187 @@ const UpdateAuthorization = () => {
         },
         enableReinitialize: true,
         onSubmit: handleSubmit,
-        validate: () =>{},
+        validate: () => { },
     });
 
     return (
-        <div className="container">
-            <Breadcrumd parent="Authorizations" url={currentPage} _child={id} />
-            <div className='card'>
-                <div className='card-header'>
-                    <button className='btn d-flex align-items-center btn-outline-dark' onClick={() => {
-                        dispatch(setActivePage({page: Pages.HABILITATION}))
-                    }}>
-                        <i className='ti ti-arrow-left'></i>
-                        <span className='ms-1'>BACK</span>
-                    </button>
-                </div>
-                {record ? <div className='card-body'>
-                    <form onSubmit={formik.handleSubmit}>
-                        <div className="row">
-                            <div className="col-10 mx-auto">
-                                <div className="row gap-10">
-                                    <div className="col-6 mb-3">
-                                        <label htmlFor="menu" className="form-label">Menu <span
-                                            className="text-danger">*</span></label>
-                                        {menus ? <Autocomplete
-                                                disablePortal
-                                                id="menu"
-                                                onInputChange={(_, newInputValue) => {
-                                                    setqPermission(newInputValue)
-                                                    setqMenu(newInputValue)
-                                                }}
-                                                defaultValue={menu}
-                                                value={menu ?? menu}
-                                                isOptionEqualToValue={(option, value) => option.id === value.id}
-                                                getOptionLabel={(val: IMenu) => `${val.label || ''}`}
-                                                options={menus ?? []}
-                                                onChange={(_, item) => {
-                                                    setMenu(item)
-                                                }}
-                                                renderInput={params => (
-                                                    <>
-                                                        <div className="input-group">
-                                                            <TextField
-                                                                {...params}
-                                                                type="text"
-                                                                className="form-select"
-                                                                id="menu"
-                                                                name='menu'
-                                                                size='small'
-                                                                style={{
-                                                                    borderRadius: '8px!important',
-                                                                }}
-                                                                error={!menu}
-                                                            />
-                                                        </div>
-                                                        {!menu &&
-                                                            <div
-                                                                className='text fs-10 text-danger d-flex align-items-center'>
-                                                                <i className='ti ti-alert-circle me-2'></i>
-                                                                <span>Menu field is required.</span>
-                                                            </div>
-                                                        }
-                                                    </>
-                                                )}
-                                            /> :
-                                            <div className="input-group">
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    id="menu"
-                                                    name='menu'
-                                                    disabled
-                                                />
-                                            </div>
+        <Box>
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                <Breadcrumd parent="Administration" url={Pages.HABILITATION} _child={id} />
 
-                                        }
-                                    </div>
-                                    <div className="col-6 mb-3">
-                                        <label htmlFor="menu" className="form-label">Role <span
-                                            className="text-danger">*</span></label>
-                                        {roles ? <>
+                <Grid container spacing={4} justifyContent="center">
+                    <Grid item xs={12}>
+                        <Card sx={{
+                            borderRadius: '24px',
+                            border: '1px solid rgba(255, 255, 255, 0.4)',
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            backdropFilter: 'blur(16px)',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
+                            p: 2
+                        }}>
+                            <CardContent sx={{ p: 4 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, justifyContent: 'space-between' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Box>
+                                            <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                                                Mettre à jour l'Authorisation
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<ArrowBack />}
+                                        onClick={() => dispatch(setActivePage({ page: Pages.HABILITATION }))}
+                                        sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
+                                    >
+                                        Retour
+                                    </Button>
+                                </Box>
+
+                                {record ? (
+                                    <form onSubmit={formik.handleSubmit}>
+                                        <Grid container spacing={3.5}>
+                                            <Grid item xs={12} md={6}>
+                                                <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <MenuIcon sx={{ color: '#94a3b8', fontSize: 20 }} />
+                                                    <Typography sx={{ fontWeight: 700, color: '#475569' }}>Menu <span style={{ color: '#ef4444' }}>*</span></Typography>
+                                                </Box>
                                                 <Autocomplete
                                                     disablePortal
                                                     id="menu"
                                                     onInputChange={(_, newInputValue) => {
+                                                        setqPermission(newInputValue)
+                                                        setqMenu(newInputValue)
+                                                    }}
+                                                    value={menu}
+                                                    isOptionEqualToValue={(option, value) => option.id === value?.id}
+                                                    getOptionLabel={(val: IMenu) => `${val.label || ''}`}
+                                                    options={menus || []}
+                                                    onChange={(_, item) => setMenu(item)}
+                                                    renderInput={params => (
+                                                        <TextField
+                                                            {...params}
+                                                            error={!menu}
+                                                            placeholder="Chercher un menu..."
+                                                            InputProps={{
+                                                                ...params.InputProps,
+                                                                sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }
+                                                            }}
+                                                        />
+                                                    )}
+                                                />
+                                                {!menu && (
+                                                    <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 600, mt: 0.5, display: 'block' }}>
+                                                        Le menu est requis.
+                                                    </Typography>
+                                                )}
+                                            </Grid>
+
+                                            <Grid item xs={12} md={6}>
+                                                <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <Shield sx={{ color: '#94a3b8', fontSize: 20 }} />
+                                                    <Typography sx={{ fontWeight: 700, color: '#475569' }}>Rôle <span style={{ color: '#ef4444' }}>*</span></Typography>
+                                                </Box>
+                                                <Autocomplete
+                                                    disablePortal
+                                                    id="role"
+                                                    onInputChange={(_, newInputValue) => {
                                                         setqRole(newInputValue)
                                                         setqMenu(newInputValue)
                                                     }}
-                                                    defaultValue={role}
                                                     value={role}
-                                                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                                                    isOptionEqualToValue={(option, value) => option.id === value?.id}
                                                     getOptionLabel={(val: IRole) => `${val.label || ''}`}
-                                                    options={roles ?? []}
-                                                    onChange={(_, item) => {
-                                                        setRole(item)
-                                                    }}
+                                                    options={roles || []}
+                                                    onChange={(_, item) => setRole(item)}
                                                     renderInput={params => (
-                                                        <>
-                                                            <div className="input-group">
-                                                                <TextField
-                                                                    {...params}
-                                                                    type="text"
-                                                                    className="form-select"
-                                                                    id="role"
-                                                                    name='role'
-                                                                    size='small'
-                                                                    style={{
-                                                                        borderRadius: '8px!important',
-                                                                    }}
-                                                                    error={!role}
-                                                                />
-                                                            </div>
-                                                            {!role &&
-                                                                <div
-                                                                    className='text fs-10 text-danger d-flex align-items-center'>
-                                                                    <i className='ti ti-alert-circle me-2'></i>
-                                                                    <span>Role field is required.</span>
-                                                                </div>
-                                                            }
-                                                        </>
+                                                        <TextField
+                                                            {...params}
+                                                            error={!role}
+                                                            placeholder="Sélectionner un rôle"
+                                                            InputProps={{
+                                                                ...params.InputProps,
+                                                                sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }
+                                                            }}
+                                                        />
                                                     )}
                                                 />
-                                            </> :
-                                            <div className="input-group">
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    id="role"
-                                                    name='role'
-                                                    disabled
-                                                />
-                                            </div>
-
-                                        }
-                                    </div>
-                                    <div className="col-6 mb-3">
-                                        <label htmlFor="menu" className="form-label">Permission <span
-                                            className="text-danger">*</span></label>
-                                        {permissions ? <Autocomplete
-                                                disablePortal
-                                                id="menu"
-                                                onInputChange={(_, newInputValue) => {
-                                                    setqPermission(newInputValue)
-                                                    setqMenu(newInputValue)
-                                                }}
-                                                defaultValue={permission}
-                                                value={permission ?? permission}
-                                                isOptionEqualToValue={(option, value) => option.id === value.id}
-                                                getOptionLabel={(val: IPermission) => `${val.label || ''}`}
-                                                options={permissions ?? []}
-                                                onChange={(_, item) => {
-                                                    setPermission(item)
-                                                }}
-                                                renderInput={params => (
-                                                    <>
-                                                        <div className="input-group">
-                                                            <TextField
-                                                                {...params}
-                                                                type="text"
-                                                                className="form-select"
-                                                                id="permission"
-                                                                name='permission'
-                                                                size='small'
-                                                                style={{
-                                                                    borderRadius: '8px!important',
-                                                                }}
-                                                                error={!permission}
-                                                            />
-                                                        </div>
-                                                        {!permission &&
-                                                            <div
-                                                                className='text fs-10 text-danger d-flex align-items-center'>
-                                                                <i className='ti ti-alert-circle me-2'></i>
-                                                                <span>Permission field is required.</span>
-                                                            </div>
-                                                        }
-                                                    </>
+                                                {!role && (
+                                                    <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 600, mt: 0.5, display: 'block' }}>
+                                                        Le rôle est requis.
+                                                    </Typography>
                                                 )}
-                                            /> :
-                                            <div className="input-group">
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    id="last_name"
-                                                    name='last_name'
-                                                    disabled
+                                            </Grid>
+
+                                            <Grid item xs={12} md={6}>
+                                                <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <Lock sx={{ color: '#94a3b8', fontSize: 20 }} />
+                                                    <Typography sx={{ fontWeight: 700, color: '#475569' }}>Permission <span style={{ color: '#ef4444' }}>*</span></Typography>
+                                                </Box>
+                                                <Autocomplete
+                                                    disablePortal
+                                                    id="permission"
+                                                    onInputChange={(_, newInputValue) => {
+                                                        setqPermission(newInputValue)
+                                                        setqMenu(newInputValue)
+                                                    }}
+                                                    value={permission}
+                                                    isOptionEqualToValue={(option, value) => option.id === value?.id}
+                                                    getOptionLabel={(val: IPermission) => `${val.label || ''}`}
+                                                    options={permissions || []}
+                                                    onChange={(_, item) => setPermission(item)}
+                                                    renderInput={params => (
+                                                        <TextField
+                                                            {...params}
+                                                            error={!permission}
+                                                            placeholder="Sélectionner une permission"
+                                                            InputProps={{
+                                                                ...params.InputProps,
+                                                                sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }
+                                                            }}
+                                                        />
+                                                    )}
                                                 />
-                                            </div>
+                                                {!permission && (
+                                                    <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 600, mt: 0.5, display: 'block' }}>
+                                                        La permission est requise.
+                                                    </Typography>
+                                                )}
+                                            </Grid>
+                                        </Grid>
 
-                                        }
-                                    </div>
-                                </div>
-                                {!isLoading ? <button type='submit'
-                                                      className="btn btn-primary ms-auto py-8 fs-4 mb-4 rounded-2">UPDATE
-                                        </button> :
-                                    <button className="btn btn-primary ms-auto py-8 fs-4 mb-4 rounded-2" type="button"
-                                            disabled>
-                                        <span className="spinner-grow spinner-grow-sm ms-4" role="status"
-                                              aria-hidden="true"></span>
-                                        UPDATE...
-                                    </button>
-                                }
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                    :
-                    <div>Loading...</div>
-                }
-            </div>
-        </div>
-
+                                        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 4 }}>
+                                            <Button
+                                                variant="contained"
+                                                startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <Save />}
+                                                onClick={() => handleSubmit()}
+                                                disabled={isLoading || !menu || !role || !permission}
+                                                sx={{
+                                                    borderRadius: '15px',
+                                                    textTransform: 'none',
+                                                    fontWeight: 800,
+                                                    background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                                                    boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3)',
+                                                    '&:hover': {
+                                                        background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
+                                                    }
+                                                }}
+                                            >
+                                                Mettre à jour
+                                            </Button>
+                                        </Box>
+                                    </form>
+                                ) : (
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                                        <CircularProgress />
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                </Grid>
+            </motion.div>
+        </Box>
     )
 }
 

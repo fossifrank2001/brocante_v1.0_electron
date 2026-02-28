@@ -1,6 +1,14 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Pages, NavigationState } from 'Data/Objects/state';
 
+// Interface pour sauvegarder l'état complet de la page
+export interface ISavedPageState {
+    page: Pages;
+    id?: number | null;
+    param?: any | null;
+    search?: any | null;
+}
+
 // État par défaut
 const initialState: NavigationState = {
     currentPage: localStorage.getItem('hasSeenOnboarding') && Boolean(localStorage.getItem('hasSeenOnboarding')) ? Pages.HOME : Pages.ONBOARDING,
@@ -8,6 +16,7 @@ const initialState: NavigationState = {
     param: null,
     search: null,
     lastPageBeforeLogin: undefined,
+    savedStateBeforeLogin: undefined,
 };
 
 export interface IPageHandler{
@@ -16,10 +25,12 @@ export interface IPageHandler{
     param?: {
         type ?: string
         number ?: string
+        [key: string]: any
     } | null,
     search?: {
         type ?: string
         value ?: string
+        [key: string]: any
     }
 }
 
@@ -47,11 +58,13 @@ const navigationSlice = createSlice({
                 state.currentPage = Pages.ONBOARDING;
             }
         },
-        setLastPageBeforeLogin(state, action: PayloadAction<{ page: Pages }>) {
+        setLastPageBeforeLogin(state, action: PayloadAction<ISavedPageState>) {
             state.lastPageBeforeLogin = action.payload.page;
+            state.savedStateBeforeLogin = action.payload;
         },
         resetLastPageBeforeLogin(state) {
             state.lastPageBeforeLogin = undefined;
+            state.savedStateBeforeLogin = undefined;
         },
     }
 });

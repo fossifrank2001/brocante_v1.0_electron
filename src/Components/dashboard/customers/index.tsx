@@ -1,18 +1,33 @@
-import {useCallback, useEffect, useLayoutEffect, useMemo, useState} from 'react'
-import {useAppContext} from "@/contexts/appContext";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useAppContext } from "@/contexts/appContext";
 import constants from "Data/Utilities/constants";
 import Breadcrumd from "Components/Breadcrumd";
 import {
-    MaterialReactTable, MRT_ColumnDef,
-    MRT_ShowHideColumnsButton, MRT_TableInstance,
-    MRT_ToggleDensePaddingButton,
-    MRT_ToggleFiltersButton, MRT_ToggleFullScreenButton,
+    MaterialReactTable,
+    MRT_ColumnDef,
+    MRT_ShowHideColumnsButton,
+    MRT_ToggleFiltersButton,
+    MRT_ToggleFullScreenButton,
     MRT_ToggleGlobalFilterButton,
     useMaterialReactTable
 } from "material-react-table";
-import {MRT_Localization_EN} from "material-react-table/locales/en";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
 import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
-import {Box, Link, Stack, Tooltip, IconButton, Chip} from "@mui/material";
+import {
+    Box, Stack, Tooltip, IconButton, Chip, Typography, Button,
+    Zoom
+} from "@mui/material";
+import {
+    Refresh,
+    FileDownload,
+    Wallet,
+    Edit,
+    Delete,
+    TrendingDown,
+    AccountBalanceWallet,
+    Add,
+    Person
+} from '@mui/icons-material';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { useAppSelector } from '@/hooks';
 import Toast from '@/Data/Utilities/Toast';
@@ -20,6 +35,7 @@ import CustomAlert from '@/Components/CustomAlert';
 import CustomerAPI from "Data/Api/Customer.ts";
 import { IPerson, IPersonTableData } from 'Interfaces';
 import UseCustomerBalance from './UseCustomerBalance';
+import { motion } from 'framer-motion';
 
 export default function IndexCustomer() {
     const context = useAppContext();
@@ -32,11 +48,11 @@ export default function IndexCustomer() {
     const [openDetailModal, setOpenDetailModal] = useState(false);
     const [customerId, setCustomerId] = useState<number | null>(null);
     const [openBalanceModal, setOpenBalanceModal] = useState(false);
+    const [openFormModal, setOpenFormModal] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState<IPerson | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [inProgress, setInProgress] = useState(false);
     const [isDeleted, setIsDeleted] = useState(false);
-    const [, setReady] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [columnFilters, setColumnFilters] = useState([]);
@@ -44,7 +60,7 @@ export default function IndexCustomer() {
     const [sorting, setSorting] = useState([]);
     const [rowSelection, setRowSelection] = useState({});
     const [customers, setCustomers] = useState<IPerson[] | null>(null);
-    const {authorizations} = useAppSelector(state => state.userAuthorizing)
+    const { authorizations } = useAppSelector(state => state.userAuthorizing)
 
     useLayoutEffect(() => {
         context.togglePageLoading();
@@ -85,14 +101,13 @@ export default function IndexCustomer() {
             } finally {
                 setIsLoading(false);
                 setIsRefetching(false);
-                setReady(true);
             }
         },
         [columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting],
     );
 
     useEffect(() => {
-        (async () => await getCustomers())()
+        getCustomers()
     }, [getCustomers, isDeleted]);
 
     const handleRefresh = () => {
@@ -104,11 +119,11 @@ export default function IndexCustomer() {
         try {
             context.togglePageLoading(true)
             setInProgress(true)
-            const {message} = await CustomerAPI.delete(customerId)
+            const { message } = await CustomerAPI.delete(customerId!)
             Toast.success(message)
         } catch (error) {
             console.error(error)
-        }finally{
+        } finally {
             setOpenDetailModal(false)
             setIsDeleted(true)
             context.togglePageLoading(false)
@@ -121,145 +136,174 @@ export default function IndexCustomer() {
         setOpenBalanceModal(true);
     };
 
-    const handleCloseBalanceModal = () => {
+    const handleOpenFormModal = (customer: IPerson | null = null) => {
+        setSelectedCustomer(customer);
+        setOpenFormModal(true);
+    };
+
+    const handleCloseModels = () => {
         setOpenBalanceModal(false);
+        setOpenFormModal(false);
         setSelectedCustomer(null);
     };
 
-    const handleBalanceSuccess = () => {
+    const handleSuccess = () => {
         handleRefresh();
     };
 
-    const tableData : IPersonTableData[] = useMemo(() => {
+    const tableData: IPersonTableData[] = useMemo(() => {
         return customers ? customers.map((person) => ({
             ...person,
             actions: (
-                <Stack direction="row" spacing={1}>
-                    <Tooltip title="Utiliser le solde client">
+                <Stack direction="row" spacing={0.5}>
+                    <Tooltip title="Utiliser le solde" arrow TransitionComponent={Zoom}>
                         <IconButton
                             size="small"
                             onClick={() => handleOpenBalanceModal(person)}
                             disabled={!person.company_balance || person.company_balance === 0}
                             sx={{
-                                color: person.company_balance && person.company_balance > 0 ? '#2e7d32' : '#ccc'
+                                color: person.company_balance && person.company_balance > 0 ? '#10b981' : '#cbd5e1',
+                                bgcolor: person.company_balance && person.company_balance > 0 ? 'rgba(16, 185, 129, 0.05)' : 'transparent',
+                                '&:hover': { bgcolor: 'rgba(16, 185, 129, 0.1)' }
                             }}
                         >
-                            <i className="ti ti-wallet"></i>
+                            <Wallet sx={{ fontSize: '18px' }} />
                         </IconButton>
                     </Tooltip>
-                    <Link
-                        href="#"
-                        onClick={() => {
-                            context.togglePageLoading(true);
-                        }}>
-                        <i color="primary" className="ti ti-pencil"></i>
-                    </Link>
-                    <i
-                        onClick={() => {
-                            setCustomerId(person.id)
-                            setOpenDetailModal(true)
-                        }}
-                        className="ti ti-trash cursor-pointer text-danger"
-                    ></i>
+                    <Tooltip title="Modifier" arrow TransitionComponent={Zoom}>
+                        <IconButton
+                            size="small"
+                            onClick={() => handleOpenFormModal(person)}
+                            sx={{ color: '#6366f1', bgcolor: 'rgba(99, 102, 241, 0.05)', '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.12)' } }}
+                        >
+                            <Edit sx={{ fontSize: '18px' }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Supprimer" arrow TransitionComponent={Zoom}>
+                        <IconButton
+                            size="small"
+                            onClick={() => {
+                                setCustomerId(person.id!)
+                                setOpenDetailModal(true)
+                            }}
+                            sx={{ color: '#ef4444', bgcolor: 'rgba(239, 68, 68, 0.05)', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.12)' } }}
+                        >
+                            <Delete sx={{ fontSize: '18px' }} />
+                        </IconButton>
+                    </Tooltip>
                 </Stack>
             ),
         })) : [];
-    }, [customers]);
+    }, [customers, context]);
 
-    const columns : MRT_ColumnDef<IPerson>[] = useMemo(
+    const columns: MRT_ColumnDef<IPerson>[] = useMemo(
         () => [
             {
                 accessorKey: "lastname",
-                header: "Last Name",
-                size: 100,
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
-                }),
-            },
-            {
-                accessorKey: "firstname",
-                header: "First Name",
-                size: 100,
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
-                }),
+                header: "Client",
+                size: 200,
+                Cell: ({ row }) => (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box sx={{
+                            p: 1,
+                            borderRadius: '10px',
+                            bgcolor: 'rgba(99, 102, 241, 0.05)',
+                            color: '#6366f1'
+                        }}>
+                            <Person sx={{ fontSize: 18 }} />
+                        </Box>
+                        <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b' }}>
+                                {row.original.lastname}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#64748b' }}>
+                                {row.original.firstname}
+                            </Typography>
+                        </Box>
+                    </Box>
+                ),
             },
             {
                 accessorKey: "phone",
-                header: "Phone",
+                header: "Téléphone",
                 size: 150,
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
-                }),
+                Cell: ({ cell }) => (
+                    <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500 }}>
+                        {cell.getValue() as string || 'N/A'}
+                    </Typography>
+                ),
             },
             {
                 accessorKey: "company_balance",
-                header: "Company Balance",
-                size: 150,
-                Cell: ({ cell, row }) => {
+                header: "Solde Disponible",
+                size: 180,
+                Cell: ({ cell }) => {
                     const value = cell.getValue() as number;
                     const hasBalance = value && value > 0;
                     return (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <span style={{ 
-                                fontWeight: hasBalance ? 'bold' : 'normal',
-                                color: hasBalance ? '#2e7d32' : 'inherit'
-                            }}>
-                                {value ? UtilMethods.formatNumber(value) : '0'}
-                            </span>
-                            {hasBalance && (
-                                <Chip 
-                                    label="💰" 
-                                    size="small" 
-                                    sx={{ 
-                                        height: 20,
-                                        backgroundColor: '#e8f5e9',
-                                        color: '#2e7d32'
-                                    }}
-                                />
-                            )}
-                        </Box>
+                        <Chip
+                            icon={<AccountBalanceWallet sx={{ fontSize: '14px !important' }} />}
+                            label={UtilMethods.formatNumber(value || 0)}
+                            size="small"
+                            sx={{
+                                fontWeight: 800,
+                                bgcolor: hasBalance ? 'rgba(16, 185, 129, 0.1)' : 'rgba(100, 116, 139, 0.05)',
+                                color: hasBalance ? '#10b981' : '#64748b',
+                                border: `1px solid ${hasBalance ? 'rgba(16, 185, 129, 0.2)' : 'rgba(100, 116, 139, 0.1)'}`,
+                                borderRadius: '10px',
+                                fontSize: '0.7rem'
+                            }}
+                        />
                     );
                 },
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
-                }),
             },
             {
                 accessorKey: "remaining_balance",
-                header: "Remaining Balance",
-                size: 150,
+                header: "Dettes Totales",
+                size: 180,
                 Cell: ({ cell }) => {
-                    const data = cell.getValue() as string;
-                    let value: unknown = 0;
+                    const data = cell.getValue() as any;
+                    let value = 0;
 
                     try {
-                        const remaining = JSON.parse(data);
+                        const remaining = typeof data === 'string' ? JSON.parse(data) : data;
                         if (remaining && typeof remaining === 'object' && !Array.isArray(remaining)) {
-                            value = Object.values(remaining).reduce((acc: number, curr: number) => acc + Number(curr) , 0);
+                            value = Object.values(remaining).reduce((acc: number, curr: any) => acc + Number(curr), 0) as number;
                         }
                     } catch (error) {
                         console.error('Error parsing JSON:', error);
                     }
 
-                    return value ? UtilMethods.formatNumber(value as number) : null;
+                    const hasDebts = value > 0;
+                    return (
+                        <Chip
+                            icon={<TrendingDown sx={{ fontSize: '14px !important' }} />}
+                            label={UtilMethods.formatNumber(value)}
+                            size="small"
+                            sx={{
+                                fontWeight: 800,
+                                bgcolor: hasDebts ? 'rgba(239, 68, 68, 0.1)' : 'rgba(100, 116, 139, 0.05)',
+                                color: hasDebts ? '#ef4444' : '#64748b',
+                                border: `1px solid ${hasDebts ? 'rgba(239, 68, 68, 0.2)' : 'rgba(100, 116, 139, 0.1)'}`,
+                                borderRadius: '10px',
+                                fontSize: '0.7rem'
+                            }}
+                        />
+                    );
                 },
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
-                }),
             },
             {
                 accessorKey: "actions",
                 header: "Actions",
                 size: 150,
-                unexport: true,
                 enableColumnFilter: false,
-            },
+                enableSorting: false,
+            }
         ],
         [],
     );
 
-    const mrTable : MRT_TableInstance<IPerson>  = useMaterialReactTable({
+    const mrTable = useMaterialReactTable({
         columns: columns,
         data: tableData,
         enableRowSelection: true,
@@ -271,15 +315,40 @@ export default function IndexCustomer() {
         manualFiltering: true,
         manualPagination: true,
         manualSorting: true,
-        muiTablePaperProps: { className: "__table-expandable" },
-        muiTableContainerProps: { className: "__table-container" },
-        localization: MRT_Localization_EN,
-        muiToolbarAlertBannerProps: isError
-            ? {
-                color: "error",
-                children: "errorLoadingData",
+        muiTablePaperProps: {
+            sx: {
+                borderRadius: '24px',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                bgcolor: 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: 'blur(16px)',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.05)',
+                overflow: 'hidden'
             }
-            : undefined,
+        },
+        muiTableContainerProps: {
+            className: "__table-container",
+            sx: { maxHeight: '600px' }
+        },
+        muiTableHeadCellProps: {
+            sx: {
+                bgcolor: 'rgba(248, 250, 252, 0.5)',
+                color: '#64748b',
+                fontWeight: 800,
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                py: 2
+            }
+        },
+        muiTableBodyRowProps: {
+            sx: {
+                '&:hover': {
+                    bgcolor: 'rgba(99, 102, 241, 0.03) !important',
+                    transition: 'all 0.2s'
+                }
+            }
+        },
+        localization: MRT_Localization_EN,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
         onPaginationChange: setPagination,
@@ -297,28 +366,66 @@ export default function IndexCustomer() {
             rowSelection,
         },
         renderTopToolbarCustomActions: () => (
-            <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
-                <button
+            <Box sx={{ display: "flex", gap: 2, p: 2, alignItems: 'center' }}>
+                <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b', mr: 2, display: { xs: 'none', md: 'block' } }}>
+                    Gestion Clients
+                </Typography>
+                <Button
                     onClick={handleRefresh}
-                    type='button'
-                    className='btn btn-outline-secondary'
-                    style={{ marginLeft: '12px' }}
+                    variant="outlined"
+                    startIcon={<Refresh />}
                     disabled={isLoading || isRefetching}
+                    sx={{
+                        borderRadius: '12px',
+                        textTransform: 'none',
+                        fontWeight: 700,
+                        borderColor: '#e2e8f0',
+                        color: '#64748b',
+                        px: 3,
+                        '&:hover': { bgcolor: '#f8fafc', borderColor: '#cbd5e1' }
+                    }}
                 >
-                    <i className='ti ti-refresh'></i>
-                    <span className='ms-2'>Refresh</span>
-                </button>
-                {UtilMethods.getHabilitations(authorizations, 'customer').canExport && <button type='button' className='btn btn-outline-primary' style={{ marginLeft: '12px' }}>
-                    <i className='ti ti-file-export'></i>
-                    <span className='ms-2'>EXPORT ALL</span>
-                </button>}
+                    Actualiser
+                </Button>
+                {UtilMethods.getHabilitations(authorizations, 'customer').canCreate && (
+                    <Button
+                        onClick={() => handleOpenFormModal()}
+                        variant="contained"
+                        startIcon={<Add />}
+                        sx={{
+                            borderRadius: '12px',
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                            boxShadow: '0 8px 16px -4px rgba(99, 102, 241, 0.3)',
+                            px: 3,
+                            '&:hover': { transform: 'translateY(-1px)', boxShadow: '0 12px 20px -4px rgba(99, 102, 241, 0.4)' }
+                        }}
+                    >
+                        Nouveau Client
+                    </Button>
+                )}
+                {UtilMethods.getHabilitations(authorizations, 'customer').canExport && (
+                    <Button
+                        variant="text"
+                        startIcon={<FileDownload />}
+                        sx={{
+                            borderRadius: '12px',
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            color: '#64748b',
+                            '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.05)', color: '#6366f1' }
+                        }}
+                    >
+                        Exporter
+                    </Button>
+                )}
             </Box>
         ),
         renderToolbarInternalActions: ({ table }) => (
-            <Box>
+            <Box sx={{ display: 'flex', gap: 0.5, pr: 2 }}>
                 <MRT_ToggleGlobalFilterButton table={table} />
                 <MRT_ToggleFiltersButton table={table} />
-                <MRT_ToggleDensePaddingButton table={table} />
                 <MRT_ShowHideColumnsButton table={table} />
                 <MRT_ToggleFullScreenButton table={table} />
             </Box>
@@ -326,27 +433,32 @@ export default function IndexCustomer() {
     });
 
     return (
-        <div className="container">
-            <Breadcrumd parent="Users" />
-            <MaterialReactTable table={mrTable} />
+        <Box>
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                <Breadcrumd parent="Administration" />
+                <MaterialReactTable table={mrTable} />
+            </motion.div>
+
             <CustomAlert
                 openDetailModal={openDetailModal}
-                content={{style: 'ti ti-info-circle text text-danger',
+                content={{
+                    style: 'ti ti-info-circle text text-danger',
                     icon: 'Warning',
-                    message: 'Would you like to delete this customer?'
+                    message: 'Voulez-vous vraiment supprimer ce client ?'
                 }}
                 onHandleDelete={handleDelete}
                 onHandleOpenDetail={() => setOpenDetailModal(false)}
-                inProgress = {inProgress}
+                inProgress={inProgress}
             />
-            {selectedCustomer && (
+
+            {selectedCustomer && openBalanceModal && (
                 <UseCustomerBalance
                     customer={selectedCustomer}
                     open={openBalanceModal}
-                    onClose={handleCloseBalanceModal}
-                    onSuccess={handleBalanceSuccess}
+                    onClose={handleCloseModels}
+                    onSuccess={handleSuccess}
                 />
             )}
-        </div>
+        </Box>
     );
 }

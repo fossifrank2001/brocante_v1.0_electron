@@ -37,6 +37,7 @@ import ReadInvoicePage from "@/pages/dashboard/invoices/InvoiceDetail.tsx";
 import ProfileComponent from "@/Components/profile/ProfileComponent";
 import {setCurrentRole} from "Data/Slices/MenuRoleSlice.ts";
 import ComingSoon from "Components/ComingSoon.tsx";
+import ActivityLogsViewer from "@/Components/admin/ActivityLogsViewer";
 
 const renderContent = (currentPage, id, param) => {
   switch (currentPage) {
@@ -84,6 +85,8 @@ const renderContent = (currentPage, id, param) => {
       if (!id && !param) return <IndexInvoice />;
       if (param.sub_page === 'READ') return <ReadInvoicePage />;
       return null;
+    case Pages.ACTIVITY_LOGS:
+      return <ActivityLogsViewer />;
     case Pages.DASHBOARD:
       return <Dashboard />;
     default:
@@ -114,7 +117,7 @@ const Layout: React.FC = () => {
               dispatch(setCurrentRole(_role?.code));
               setRole(_role)
             }} />
-            <div className="container-fluid" >
+            <div className="container" style={{minHeight: '100vh', paddingTop: '75px', position: 'relative'}}>
               {renderContent(currentPage, id, param)}
               <Footer />
             </div>

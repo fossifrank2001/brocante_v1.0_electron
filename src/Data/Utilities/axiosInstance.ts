@@ -10,6 +10,7 @@ import {clearUserCredential} from '@/Data/Slices/auth/userSlice';
 let isHandlingAuthRedirect = false;
 
 export interface IApiResponseBase<T = unknown> {
+    success?: boolean;
     message: string;
     data: T;
 }
@@ -67,10 +68,19 @@ instance.interceptors.response.use(
                 const stateAny: any = store.getState();
                 const currentPage = stateAny?.navigation?.currentPage ?? stateAny?.navigaton?.currentPage;
                 
-                // Mémoriser la page précédente SEULEMENT si c'est une page protégée (pas LOGIN, USER_ACCESS_PAGE)
+                // Mémoriser l'état complet de la page précédente SEULEMENT si c'est une page protégée (pas LOGIN, USER_ACCESS_PAGE)
                 const excludedPages = [Pages.LOGIN, Pages.USER_ACCESS_PAGE, Pages.FORGOT_PAGE, Pages.RESET_PAGE, Pages.ONBOARDING];
                 if (currentPage && !excludedPages.includes(currentPage)) {
-                    store.dispatch(setLastPageBeforeLogin({ page: currentPage }));
+                    const navState = stateAny?.navigation ?? stateAny?.navigaton;
+                    const savedState = {
+                        page: currentPage,
+                        id: navState?.id,
+                        param: navState?.param,
+                        search: navState?.search
+                    };
+                    store.dispatch(setLastPageBeforeLogin(savedState));
+                    localStorage.setItem('savedStateBeforeLogin', JSON.stringify(savedState));
+                    // Keep old storage for compatibility if needed
                     localStorage.setItem('lastVisitedPage', currentPage);
                 }
                 

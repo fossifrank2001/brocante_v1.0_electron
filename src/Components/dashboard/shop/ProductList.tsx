@@ -25,11 +25,11 @@ const ProductList: React.FC<ProductListProps> = ({products, showFilters = true})
         : 'col-6 col-md-4 col-lg-2 col-xxl-2';
 
     return (
-        <div className="row g-3 px-2">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 3 }}> 
             {products.map((product: any, index) => (
                 <ProductCard
                     key={index}
-                    columnClass={columnClass}
+                    columnClass=''
                     id={product.id}
                     imageUrl={"thumbnail" in product ? product.thumbnail?.path : null}
                     name={product.name}

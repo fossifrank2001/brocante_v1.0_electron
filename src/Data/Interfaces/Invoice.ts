@@ -1,4 +1,4 @@
-import {ReactNode} from "react";
+import { ReactNode } from "react";
 
 export interface IDebtCoverage {
     sale_id: string;
@@ -24,6 +24,15 @@ export interface IDebtCoverageInfo {
     amount_to_balance: number;
 }
 
+export interface IPayment {
+    id: number;
+    invoice_number: string;
+    amount: number;
+    payment_method: string;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface IInvoice {
     id: number;
     sell_code: string;
@@ -35,7 +44,7 @@ export interface IInvoice {
     remaining_balance: number;
     date_to_pay: string;
     sell_id: number;
-    payments: Array<never>;
+    payments: IPayment[];
     created_at?: string;
     updated_at?: string;
     payment_details?: IPaymentDetails;

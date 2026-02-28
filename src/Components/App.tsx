@@ -39,16 +39,37 @@ export const handleRedirectToDashboard = async (access_id: number | string, disp
   try {
 
     const { loadAuthorizationAsync } = await import('Data/Slices/auth/authorizationSlice');
-    await dispatch(loadAuthorizationAsync({access_id}));
-    const lastVisitedPage = localStorage.getItem('lastVisitedPage');
+    await dispatch(loadAuthorizationAsync({ access_id }));
 
+    // Vérifier si un état complet a été sauvegardé
+    const savedStateStr = localStorage.getItem('savedStateBeforeLogin');
+    if (savedStateStr) {
+      try {
+        const savedState = JSON.parse(savedStateStr);
+        localStorage.removeItem('savedStateBeforeLogin');
+        localStorage.removeItem('lastVisitedPage');
+
+        dispatch(setActivePage({
+          page: savedState.page,
+          id: savedState.id,
+          param: savedState.param,
+          search: savedState.search
+        }));
+        return;
+      } catch (error) {
+        console.error('Error parsing saved navigation state:', error);
+      }
+    }
+
+    // Fallback à l'ancienne méthode
+    const lastVisitedPage = localStorage.getItem('lastVisitedPage');
     console.log('Last visited Page ::: APP', lastVisitedPage)
     if (lastVisitedPage) {
-      dispatch(setActivePage({ page: lastVisitedPage }));
+      dispatch(setActivePage({ page: lastVisitedPage as any }));
+      localStorage.removeItem('lastVisitedPage');
     } else {
-      dispatch(setActivePage({page: Pages.DASHBOARD}));
+      dispatch(setActivePage({ page: Pages.DASHBOARD }));
     }
-    localStorage.removeItem('lastVisitedPage');
   } catch (e) {
     console.error(e)
   } finally {
@@ -109,7 +130,7 @@ const App: React.FC = () => {
             console.log('Restoring last page before login:', lastPageBeforeLogin);
             dispatch(setActivePage({ page: lastPageBeforeLogin }));
             dispatch({ type: 'navigation/resetLastPageBeforeLogin' });
-          } 
+          }
           // Sinon, comportement par défaut selon le nombre d'accès
           else if (authUser.accesses.length > 1) {
             dispatch(setActivePage({ page: Pages.USER_ACCESS_PAGE }));
@@ -143,39 +164,39 @@ const App: React.FC = () => {
       default:
         return <Layout />
     }
-  };  
+  };
 
   const handleRedirectToResetPage = async () => {
     setOpenDetailModal(false)
     dispatch(setActivePage({
-        page: Pages.FORGOT_PAGE
+      page: Pages.FORGOT_PAGE
     }))
 
-}
+  }
 
   // Pages où le LockScreen ne doit PAS apparaître
   const publicPages = [Pages.HOME, Pages.LOGIN, Pages.FORGOT_PAGE, Pages.RESET_PAGE, Pages.ONBOARDING];
   const shouldShowLockScreen = isAuth && !publicPages.includes(currentPage);
 
   return (
-      <AppContextProvider>
-        {shouldShowLockScreen && <LockScreen/>}
-        {renderMainContent()}
+    <AppContextProvider>
+      {shouldShowLockScreen && <LockScreen />}
+      {renderMainContent()}
 
-        {isOk && <CustomAlert
-            openDetailModal={openDetailModal}
-            content={{
-              style: 'ti ti-info-circle text text-info',
-              icon: 'Info',
-              message: 'This is your first connexion so you should change your generated password for more security.'
-            }}
-            onHandleDelete={handleRedirectToResetPage}
-            onHandleOpenDetail={() => setOpenDetailModal(false)}
-            inProgress={false}
-            successMessageButton="ok"
-            iconClasseBtn="info"
-        />}
-      </AppContextProvider>
+      {isOk && <CustomAlert
+        openDetailModal={openDetailModal}
+        content={{
+          style: 'ti ti-info-circle text text-info',
+          icon: 'Info',
+          message: 'This is your first connexion so you should change your generated password for more security.'
+        }}
+        onHandleDelete={handleRedirectToResetPage}
+        onHandleOpenDetail={() => setOpenDetailModal(false)}
+        inProgress={false}
+        successMessageButton="ok"
+        iconClasseBtn="info"
+      />}
+    </AppContextProvider>
   );
 }
 

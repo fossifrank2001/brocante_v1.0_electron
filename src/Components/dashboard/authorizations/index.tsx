@@ -1,5 +1,5 @@
-import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState} from 'react'
-import {useAppContext} from "@/contexts/appContext";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useAppContext } from "@/contexts/appContext";
 import constants from "Data/Utilities/constants";
 import Breadcrumd from "Components/Breadcrumd";
 import {
@@ -10,9 +10,10 @@ import {
     MRT_ToggleGlobalFilterButton,
     useMaterialReactTable
 } from "material-react-table";
-import {MRT_Localization_EN} from "material-react-table/locales/en";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
 import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
-import {Box, Link, Stack} from "@mui/material";
+import { Box, Typography, Button, Tooltip, IconButton, Zoom, Stack, Chip } from "@mui/material";
+import { Refresh, Add, Edit, Delete, FileDownload } from '@mui/icons-material';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
@@ -23,6 +24,7 @@ import { IHabilitation, IHabilitationTableData } from '@/Data/Interfaces/Habilit
 import { IRole } from '@/Data/Interfaces';
 import RoleAPI from '@/Data/Api/Role';
 import AuthorizationAPI from '@/Data/Api/Authorizations';
+import { motion } from 'framer-motion';
 
 const IndexAuthorization = () => {
     const context = useAppContext();
@@ -46,12 +48,12 @@ const IndexAuthorization = () => {
     const [rowSelection, setRowSelection] = useState({});
     const [habilitations, setHabilitations] = useState<IHabilitation[] | null>(null);
     const dispatch = useAppDispatch()
-    const {authorizations} = useAppSelector(state => state.userAuthorizing)
+    const { authorizations } = useAppSelector(state => state.userAuthorizing)
     const [roles, setRoles] = useState<IRole[] | null>([]);
 
     useLayoutEffect(() => {
         context.togglePageLoading();
-        document.title = constants.APP_NAME + ' .:. Authorizations';
+        document.title = constants.APP_NAME + ' .:. Authorisations';
     }, [context]);
 
     const resetScroll = () => {
@@ -64,7 +66,7 @@ const IndexAuthorization = () => {
 
     useEffect(() => {
         (async () => {
-            const {data: _roles} = await RoleAPI.index();
+            const { data: _roles } = await RoleAPI.index();
             setRoles(_roles.data)
         })()
     }, [])
@@ -102,7 +104,7 @@ const IndexAuthorization = () => {
     );
 
     useEffect(() => {
-        (async () => await getAccesses() )();
+        (async () => await getAccesses())();
     }, [getAccesses, isDeleted]);
 
     const handleRefresh = () => {
@@ -110,7 +112,7 @@ const IndexAuthorization = () => {
         getAccesses();
     };
 
-    const tableData:IHabilitationTableData[] = useMemo(() => {
+    const tableData: IHabilitationTableData[] = useMemo(() => {
         return habilitations ? habilitations.map((habilitation) => ({
             id: habilitation.id,
             role: habilitation?.role?.label,
@@ -118,95 +120,155 @@ const IndexAuthorization = () => {
             permission: habilitation?.permission?.label,
             actions: (
                 <Stack direction="row" spacing={1}>
-                    <Link
-                        href="#"
-                        onClick={() => {
-                            context.togglePageLoading(true);
-                            dispatch(setActivePage({
-                                page: Pages.HABILITATION,
-                                id: habilitation.id,
-                                param: {
-                                    sub_page: 'UPDATE'
-                                }
-                            }))
-                        }}>
-                        <i color="primary" className="ti ti-pencil"></i>
-                    </Link>
-                    <i
-                        onClick={() => {
-                            setHabilitationId(habilitation.id)
-                            setOpenDetailModal(true)
-                        }}
-                        className="ti ti-trash cursor-pointer text-danger"
-                    ></i>
+                    <Tooltip title="Modifier" TransitionComponent={Zoom} arrow>
+                        <IconButton
+                            size="small"
+                            onClick={() => {
+                                context.togglePageLoading(true);
+                                dispatch(setActivePage({
+                                    page: Pages.HABILITATION,
+                                    id: habilitation.id,
+                                    param: { sub_page: 'UPDATE' }
+                                }));
+                            }}
+                            sx={{ color: '#6366f1', bgcolor: 'rgba(99, 102, 241, 0.08)', '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.18)', transform: 'translateY(-2px)' }, transition: 'all 0.2s' }}
+                        >
+                            <Edit fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Supprimer" TransitionComponent={Zoom} arrow>
+                        <IconButton
+                            size="small"
+                            onClick={() => {
+                                setHabilitationId(habilitation.id)
+                                setOpenDetailModal(true)
+                            }}
+                            sx={{ color: '#ef4444', bgcolor: 'rgba(239, 68, 68, 0.08)', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.18)', transform: 'translateY(-2px)' }, transition: 'all 0.2s' }}
+                        >
+                            <Delete fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
                 </Stack>
             ),
         })) : [];
-    }, [habilitations]);
+    }, [habilitations, context, dispatch]);
 
-    const columns : MRT_ColumnDef<IHabilitationTableData>[] = useMemo(
+    const columns: MRT_ColumnDef<IHabilitationTableData>[] = useMemo(
         () => [
             {
                 accessorKey: "menu",
                 header: "Menu",
-                size: 100,
+                size: 150,
                 muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
+                    inputProps: { placeHolder: "filtrer" },
                 }),
+                Cell: ({ cell }) => (
+                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                        {cell.getValue() as string}
+                    </Typography>
+                ),
             },
             {
                 accessorKey: "role",
-                header: "Role",
+                header: "Rôle",
                 size: 150,
                 muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
+                    inputProps: { placeHolder: "filtrer" },
                 }),
                 filterVariant: "select",
                 filterSelectOptions: roles?.map(role => ({
                     label: UtilMethods.capitalizeFirstLetter(role?.label || ''),
                     value: role?.code
                 })),
+                Cell: ({ cell }) => (
+                    <Chip
+                        label={cell.getValue() as string}
+                        size="small"
+                        sx={{
+                            fontWeight: 700,
+                            bgcolor: 'rgba(99, 102, 241, 0.1)',
+                            color: '#6366f1',
+                            borderRadius: '8px'
+                        }}
+                    />
+                ),
             },
             {
                 accessorKey: "permission",
                 header: "Permission",
                 size: 150,
                 muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
+                    inputProps: { placeHolder: "filtrer" },
                 }),
+                Cell: ({ cell }) => (
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#475569' }}>
+                        {cell.getValue() as string}
+                    </Typography>
+                ),
             },
             {
                 accessorKey: "actions",
                 header: "Actions",
-                size: 150,
+                size: 100,
                 unexport: true,
                 enableColumnFilter: false,
+                enableSorting: false,
             },
         ],
         [roles],
     );
 
-    const mrTable : MRT_TableInstance<IHabilitationTableData>  = useMaterialReactTable({
+    const mrTable: MRT_TableInstance<IHabilitationTableData> = useMaterialReactTable({
         columns: columns,
         data: tableData,
         enableRowSelection: true,
         enableStickyHeader: true,
         initialState: {
             showColumnFilters: true,
-            density: "compact",
+            density: "comfortable",
         },
         manualFiltering: true,
         manualPagination: true,
         manualSorting: true,
-        muiTablePaperProps: { className: "__table-expandable" },
-        muiTableContainerProps: { className: "__table-container" },
-        localization: MRT_Localization_EN,
-        muiToolbarAlertBannerProps: isError
-            ? {
-                color: "error",
-                children: "errorLoadingData",
+        muiTablePaperProps: {
+            sx: {
+                borderRadius: '32px',
+                border: '1px solid rgba(255, 255, 255, 0.45)',
+                bgcolor: 'rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.08)',
+                overflow: 'hidden'
             }
-            : undefined,
+        },
+        muiTableContainerProps: {
+            className: "__table-container",
+            sx: { maxHeight: '700px' }
+        },
+        muiTableHeadCellProps: {
+            sx: {
+                bgcolor: 'rgba(248, 250, 252, 0.6)',
+                color: '#64748b',
+                fontWeight: 800,
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                py: 3,
+                px: 3
+            }
+        },
+        muiTableBodyRowProps: {
+            sx: {
+                '&:hover': {
+                    bgcolor: 'rgba(99, 102, 241, 0.04) !important',
+                },
+                transition: 'background-color 0.2s'
+            }
+        },
+        muiTableBodyCellProps: {
+            sx: { px: 3, py: 2, borderBottom: '1px solid rgba(226, 232, 240, 0.5)' }
+        },
+        localization: MRT_Localization_EN,
+        muiToolbarAlertBannerProps: isError ? { color: "error", children: "Erreur lors du chargement des données" } : undefined,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
         onPaginationChange: setPagination,
@@ -224,42 +286,78 @@ const IndexAuthorization = () => {
             rowSelection,
         },
         renderTopToolbarCustomActions: () => (
-            <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
-                <button
-                    onClick={handleRefresh}
-                    type='button'
-                    className='btn btn-outline-secondary'
-                    style={{ marginLeft: '12px' }}
-                    disabled={isLoading || isRefetching}
-                >
-                    <i className='ti ti-refresh'></i>
-                    <span className='ms-2'>Refresh</span>
-                </button>
-                {UtilMethods.isAdmin() && <button onClick={() => {
-                    context.togglePageLoading(true)
-                    dispatch(setActivePage({
-                        page: Pages.HABILITATION,
-                        param: {
-                            sub_page: "CREATE"
-                        }
-                    }))
-                }} type='button' className='btn btn-primary' style={{ marginLeft: '12px' }}>
-                    <i className='ti ti-plus'></i>
-                    <span className='ms-2'>ADD</span>
-                </button>}
-                {UtilMethods.getHabilitations(authorizations, 'authorization').canExport && <button type='button' className='btn btn-outline-primary' style={{ marginLeft: '12px' }}>
-                    <i className='ti ti-file-export'></i>
-                    <span className='ms-2'>EXPORT ALL</span>
-                </button>}
+            <Box sx={{ display: "flex", gap: 2.5, p: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
+                    Authorisations
+                </Typography>
+
+                <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
+                    <Button
+                        onClick={handleRefresh}
+                        variant="outlined"
+                        startIcon={<Refresh />}
+                        disabled={isLoading || isRefetching}
+                        sx={{
+                            borderRadius: '14px',
+                            textTransform: 'none',
+                            fontWeight: 800,
+                            borderColor: 'rgba(99, 102, 241, 0.2)',
+                            color: '#6366f1',
+                            px: 3,
+                            bgcolor: 'white',
+                            '&:hover': { bgcolor: '#f5f7ff', borderColor: '#6366f1' }
+                        }}
+                    >
+                        Rafraîchir
+                    </Button>
+
+                    {UtilMethods.isAdmin() && (
+                        <Button
+                            onClick={() => {
+                                context.togglePageLoading(true);
+                                dispatch(setActivePage({
+                                    page: Pages.HABILITATION,
+                                    param: { sub_page: "CREATE" }
+                                }));
+                            }}
+                            variant="contained"
+                            startIcon={<Add />}
+                            sx={{
+                                borderRadius: '16px',
+                                textTransform: 'none',
+                                fontWeight: 900,
+                                background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                                boxShadow: '0 10px 20px -5px rgba(99, 102, 241, 0.4)',
+                                px: 4,
+                                py: 1.2,
+                                '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 15px 25px -5px rgba(99, 102, 241, 0.5)',
+                                    background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
+                                }
+                            }}
+                        >
+                            Nouvelle Authorisation
+                        </Button>
+                    )}
+                </Box>
             </Box>
         ),
         renderToolbarInternalActions: ({ table }) => (
-            <Box>
+            <Box sx={{ display: 'flex', gap: 1, pr: 3, alignItems: 'center' }}>
                 <MRT_ToggleGlobalFilterButton table={table} />
                 <MRT_ToggleFiltersButton table={table} />
-                <MRT_ToggleDensePaddingButton table={table} />
                 <MRT_ShowHideColumnsButton table={table} />
                 <MRT_ToggleFullScreenButton table={table} />
+                {UtilMethods.getHabilitations(authorizations, 'authorization').canExport && (
+                    <Tooltip title="Exporter la liste" arrow TransitionComponent={Zoom}>
+                        <IconButton
+                            sx={{ color: '#64748b', '&:hover': { color: '#6366f1', bgcolor: 'rgba(99, 102, 241, 0.05)' } }}
+                        >
+                            <FileDownload />
+                        </IconButton>
+                    </Tooltip>
+                )}
             </Box>
         ),
     });
@@ -268,12 +366,12 @@ const IndexAuthorization = () => {
         try {
             context.togglePageLoading(true)
             setInProgress(true)
-            const {message} = await AuthorizationAPI.delete(habilitationId)
+            const { message } = await AuthorizationAPI.delete(habilitationId)
             Toast.success(message)
 
         } catch (error) {
             console.error(error)
-        }finally{
+        } finally {
             setOpenDetailModal(false)
             setIsDeleted(prev => !prev)
             setInProgress(false)
@@ -282,22 +380,27 @@ const IndexAuthorization = () => {
     }
 
     return (
-        <div className="container">
-            <Breadcrumd parent="Authorizations" />
-            <MaterialReactTable
-                table={mrTable}
-            />
+        <Box>
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                <Box sx={{ mb: 4 }}>
+                    <Breadcrumd parent="Administration" />
+                </Box>
+
+                <MaterialReactTable table={mrTable} />
+            </motion.div>
+
             <CustomAlert
                 openDetailModal={openDetailModal}
-                content={{style: 'ti ti-info-circle text text-danger',
-                    icon: 'Warning',
-                    message: 'Would you like to delete this Authorization?'
+                content={{
+                    style: 'ti ti-info-circle text text-danger',
+                    icon: 'Suppression d\'autorisation',
+                    message: 'Voulez-vous vraiment supprimer cette autorisation ?'
                 }}
                 onHandleDelete={handleDelete}
                 onHandleOpenDetail={() => setOpenDetailModal(false)}
-                inProgress= {inProgress}
+                inProgress={inProgress}
             />
-        </div>
+        </Box>
     );
 }
 

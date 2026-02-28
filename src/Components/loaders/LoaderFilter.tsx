@@ -1,78 +1,96 @@
-import "../../assets/css/skeletons/article.less"
+import { Box, Divider, Skeleton } from '@mui/material';
+import { AttachMoney, Category, FilterAlt, Inventory } from '@mui/icons-material';
 
 const LoaderFilter = () => {
     return (
-        <div className="card shop-filters flex-shrink-0 border-end d-none d-lg-block" style={{
-            height: 'calc(100vh - 74px)',
-            position: 'fixed'
-        }}>
-            <div className="wrapper-filter-section" style={{
-                height: '88%',
-                backgroundColor: 'white',
-                overflowY: 'auto'
-            }}>
-                {/* Categories Section */}
-                <div className="by-categories border-bottom rounded-0">
-                    <h6 className="my-3 mx-4 d-flex align-items-center">
-                        <i className="ti ti-category text-skeleton"></i>
-                        <span className="ms-1 fw-semibold skeleton-text" style={{width: '120px'}}></span>
-                    </h6>
-                    <ul className="list-group pt-2 border-bottom rounded-0" style={{maxHeight: '400px', overflowY: 'auto'}}>
-                        {Array.from({ length: 4 }).map((_, index) => (
-                            <li key={index} className="list-group-item border-0 p-0 mx-4 mb-2">
-                                <div className="d-flex align-items-center gap-2 px-3 py-2 rounded-1 bg-light">
-                                    <i className="fs-5 text-skeleton"></i>
-                                    <span className="skeleton-text" style={{width: '100px'}}></span>
-                                </div>
-                                {Array.from({ length: 3 }).map((_, subIndex) => (
-                                    <div key={subIndex} className="form-check ms-4 mt-2 mb-1">
-                                        <div className="skeleton-checkbox"></div>
-                                        <span className="ms-2 skeleton-text" style={{width: '80px'}}></span>
-                                    </div>
-                                ))}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
+        <Box
+            sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                backgroundColor: 'white'
+            }}
+        >
+            {/* Header */}
+            <Box
+                sx={{
+                    p: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    borderBottom: '1px solid #e0e0e0'
+                }}
+            >
+                <FilterAlt color="primary" fontSize="small" />
+                <Skeleton variant="text" width={90} height={24} />
+            </Box>
 
-                {/* Status Section */}
-                <div className="by-status border-bottom rounded-0">
-                    <h6 className="mt-4 mb-3 mx-4 d-flex align-items-center">
-                        <i className="ti ti-car-turbine text-skeleton"></i>
-                        <span className="ms-1 fw-semibold skeleton-text" style={{width: '80px'}}></span>
-                    </h6>
-                    <div className="pb-4 px-4">
-                        {Array.from({ length: 3 }).map((_, index) => (
-                            <div key={index} className="form-check mb-2">
-                                <div className="skeleton-radio"></div>
-                                <span className="ms-2 skeleton-text" style={{width: '90px'}}></span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+            <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
+                {/* Categories */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    <Category color="primary" fontSize="small" />
+                    <Skeleton variant="text" width={110} height={20} />
+                </Box>
 
-                {/* Price Range Section */}
-                <div className="by-pricing border-bottom rounded-0">
-                    <h6 className="mt-4 mb-3 mx-4 d-flex align-items-center">
-                        <i className="ti ti-currency-euro text-skeleton"></i>
-                        <span className="ms-1 fw-semibold skeleton-text" style={{width: '100px'}}></span>
-                    </h6>
-                    <div className="pb-4 px-4">
-                        {Array.from({ length: 4 }).map((_, index) => (
-                            <div key={index} className="form-check mb-2">
-                                <div className="skeleton-radio"></div>
-                                <span className="ms-2 skeleton-text" style={{width: '110px'}}></span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <Box
+                        key={i}
+                        sx={{
+                            border: '1px solid #e0e0e0',
+                            borderRadius: 1.5,
+                            mb: 1.25,
+                            overflow: 'hidden'
+                        }}
+                    >
+                        <Box sx={{ px: 1.25, py: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Skeleton variant="text" width={160} height={18} />
+                            <Skeleton variant="circular" width={18} height={18} />
+                        </Box>
+                        <Box sx={{ px: 1.25, pb: 1.25 }}>
+                            {Array.from({ length: 2 }).map((_, j) => (
+                                <Box key={j} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
+                                    <Skeleton variant="rounded" width={16} height={16} />
+                                    <Skeleton variant="text" width={120} height={16} />
+                                </Box>
+                            ))}
+                        </Box>
+                    </Box>
+                ))}
 
-            {/* Reset Button */}
-            <div className="p-4 mt-auto" style={{backgroundColor: 'white'}}>
-                <div className="skeleton-button w-100"></div>
-            </div>
-        </div>
+                <Divider sx={{ my: 2 }} />
+
+                {/* Status */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    <Inventory color="primary" fontSize="small" />
+                    <Skeleton variant="text" width={70} height={20} />
+                </Box>
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
+                        <Skeleton variant="circular" width={16} height={16} />
+                        <Skeleton variant="text" width={140} height={16} />
+                    </Box>
+                ))}
+
+                <Divider sx={{ my: 2 }} />
+
+                {/* Price */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    <AttachMoney color="primary" fontSize="small" />
+                    <Skeleton variant="text" width={45} height={20} />
+                </Box>
+                {Array.from({ length: 4 }).map((_, i) => (
+                    <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
+                        <Skeleton variant="circular" width={16} height={16} />
+                        <Skeleton variant="text" width={180} height={16} />
+                    </Box>
+                ))}
+            </Box>
+
+            {/* Footer */}
+            <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
+                <Skeleton variant="rounded" height={36} />
+            </Box>
+        </Box>
     );
 };
 

@@ -10,7 +10,30 @@ import { useAppContext } from '@/contexts/appContext';
 import CategoryAPI from '@/Data/Api/Category';
 import { ICategoryPayload, ICategory } from '@/Data/Interfaces/Category';
 import { IApiResponseBase } from '@/Data/Utilities/axiosInstance';
-import '@/Styles/forms.scss';
+import {
+    Box,
+    Card,
+    CardContent,
+    TextField,
+    Button,
+    IconButton,
+    Typography,
+    Chip,
+    Alert,
+    Stack,
+    CircularProgress,
+    Fade,
+    Grid,
+    InputAdornment
+} from '@mui/material';
+import {
+    Add as AddIcon,
+    Delete as DeleteIcon,
+    Save as SaveIcon,
+    ArrowBack as ArrowBackIcon,
+    Category as CategoryIcon,
+    Description as DescriptionIcon
+} from '@mui/icons-material';
 
 interface SubCategory {
     label: string;
@@ -25,21 +48,21 @@ interface CategoryFormValues extends ICategoryPayload {
 
 const validationSchema = Yup.object({
     label: Yup.string()
-        .required('Category name is required')
-        .max(50, 'Maximum 50 characters'),
+        .required('Le nom de la catégorie est requis')
+        .max(50, 'Maximum 50 caractères'),
     description: Yup.string()
-        .max(300, 'Maximum 300 characters'),
+        .max(300, 'Maximum 300 caractères'),
     sub_categories: Yup.array()
         .of(
             Yup.object({
                 label: Yup.string()
-                    .required('Sub-category name is required')
-                    .max(50, 'Maximum 50 characters'),
+                    .required('Le nom de la sous-catégorie est requis')
+                    .max(50, 'Maximum 50 caractères'),
                 description: Yup.string()
-                    .max(300, 'Maximum 300 characters'),
+                    .max(300, 'Maximum 300 caractères'),
             })
         )
-        .min(1, 'At least one sub-category is required'),
+        .min(1, 'Au moins une sous-catégorie est requise'),
 });
 
 const UpdateCategory = () => {
@@ -47,7 +70,9 @@ const UpdateCategory = () => {
     const context = useAppContext();
     const { id } = useAppSelector((state) => state.navigaton);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [category, setCategory] = useState<CategoryFormValues | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const fetchCategory = async () => {
@@ -62,8 +87,9 @@ const UpdateCategory = () => {
                         description: sub.description
                     }))
                 });
-            } catch (error) {
-                console.error('Failed to fetch category:', error);
+            } catch (err) {
+                console.error('Failed to fetch category:', err);
+                setError('Impossible de récupérer les données de la catégorie');
             } finally {
                 setIsLoading(false);
             }
@@ -76,15 +102,18 @@ const UpdateCategory = () => {
 
     const handleSubmit = async (values: CategoryFormValues) => {
         try {
-            setIsLoading(true);
+            setIsSubmitting(true);
             await CategoryAPI.update(id, values);
             context.togglePageLoading(true);
             dispatch(setActivePage({ page: Pages.CATEGORY }));
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to update category:', error);
-            formik.setErrors(error.response.data); // Set errors from API response
+            setError('Échec de la mise à jour de la catégorie');
+            if (error.response?.data) {
+                formik.setErrors(error.response.data);
+            }
         } finally {
-            setIsLoading(false);
+            setIsSubmitting(false);
         }
     };
 
@@ -99,232 +128,213 @@ const UpdateCategory = () => {
         enableReinitialize: true,
     });
 
-    if (!category) {
+    if (isLoading || !category) {
         return (
-            <div className="container">
-                <div className="card">
-                    <div className="card-body text-center py-5">
-                        <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
-                        <p className="mt-3 text-muted">Loading category data...</p>
-                    </div>
-                </div>
-            </div>
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+                <Fade in={true}>
+                    <Box sx={{ textAlign: 'center' }}>
+                        <CircularProgress size={60} thickness={4} sx={{ color: '#6366f1', mb: 2 }} />
+                        <Typography variant="body1" sx={{ color: '#64748b', fontWeight: 600 }}>
+                            Chargement de la catégorie...
+                        </Typography>
+                    </Box>
+                </Fade>
+            </Box>
         );
     }
 
     return (
-        <div className="container">
-            <Breadcrumd parent="Categories" url={Pages.CATEGORY} />
-            
-            <div className="card">
-                <div className="card-header d-flex justify-content-between align-items-center">
-                    <h5 className="mb-0">Update Category</h5>
-                    <button 
-                        className="btn btn-outline-secondary btn-sm"
-                        onClick={() => dispatch(setActivePage({ page: Pages.CATEGORY }))}
-                    >
-                        <i className="ti ti-arrow-left me-1"></i>
-                        Back
-                    </button>
-                </div>
+        <Box>
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                <Breadcrumd parent="Administration" url={Pages.CATEGORY} _child={id} />
 
-                <div className="card-body">
-                    <form onSubmit={formik.handleSubmit}>
-                        <div className="row">
-                            <div className="col-md-6">
-                                <div className="form-group mb-3">
-                                    <label className="form-label">
-                                        Category Name
-                                        <span className="text-danger ms-1">*</span>
-                                    </label>
-                                    <div className="input-group">
-                                        <span className="input-group-text">
-                                            <i className="ti ti-tag"></i>
-                                        </span>
-                                        <input
-                                            type="text"
-                                            className={`form-control ${formik.touched.label && formik.errors.label ? 'is-invalid' : ''}`}
-                                            placeholder="e.g. Electronics"
-                                            {...formik.getFieldProps('label')}
-                                        />
-                                    </div>
-                                    {formik.touched.label && formik.errors.label && (
-                                        <div className="invalid-feedback d-block">
-                                            <i className="ti ti-alert-circle me-1"></i>
-                                            {formik.errors.label}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                <Grid container spacing={4} justifyContent="center">
+                    <Grid item xs={12}>
+                        <Card sx={{
+                            borderRadius: '24px',
+                            border: '1px solid rgba(255, 255, 255, 0.4)',
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            backdropFilter: 'blur(16px)',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
+                            p: 2
+                        }}>
+                            <CardContent sx={{ p: 4 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, justifyContent: 'space-between' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Box>
+                                            <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                                                Modifier Catégorie
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<ArrowBackIcon />}
+                                        onClick={() => dispatch(setActivePage({ page: Pages.CATEGORY }))}
+                                        sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
+                                    >
+                                        Retour
+                                    </Button>
+                                </Box>
 
-                            <div className="col-md-6">
-                                <div className="form-group mb-3">
-                                    <label className="form-label">Description</label>
-                                    <div className="input-group">
-                                        <span className="input-group-text">
-                                            <i className="ti ti-notes"></i>
-                                        </span>
-                                        <input
-                                            type="text"
-                                            className={`form-control ${formik.touched.description && formik.errors.description ? 'is-invalid' : ''}`}
-                                            placeholder="Category description"
-                                            {...formik.getFieldProps('description')}
-                                        />
-                                    </div>
-                                    {formik.touched.description && formik.errors.description && (
-                                        <div className="invalid-feedback d-block">
-                                            <i className="ti ti-alert-circle me-1"></i>
-                                            {formik.errors.description}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+                                <form onSubmit={formik.handleSubmit}>
+                                    <Grid container spacing={4}>
+                                        <Grid item xs={12} md={5}>
+                                            <TextField
+                                                fullWidth
+                                                label="Nom de la catégorie"
+                                                placeholder="ex: Électronique"
+                                                {...formik.getFieldProps('label')}
+                                                error={formik.touched.label && Boolean(formik.errors.label)}
+                                                helperText={formik.touched.label && formik.errors.label}
+                                                InputProps={{
+                                                    sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 700, '& fieldset': { borderColor: '#e2e8f0' } },
+                                                    startAdornment: <InputAdornment position="start"><CategoryIcon sx={{ color: '#6366f1' }} /></InputAdornment>
+                                                }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={7}>
+                                            <TextField
+                                                fullWidth
+                                                label="Description globale"
+                                                placeholder="Brève description de ce que contient cette catégorie..."
+                                                {...formik.getFieldProps('description')}
+                                                error={formik.touched.description && Boolean(formik.errors.description)}
+                                                helperText={formik.touched.description && formik.errors.description}
+                                                InputProps={{
+                                                    sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 500, '& fieldset': { borderColor: '#e2e8f0' } },
+                                                    startAdornment: <InputAdornment position="start"><DescriptionIcon sx={{ color: '#94a3b8' }} /></InputAdornment>
+                                                }}
+                                            />
+                                        </Grid>
 
-                        <div className="mt-4 mb-3">
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                                <h6 className="mb-0">
-                                    <i className="ti ti-list me-2"></i>
-                                    Sub-Categories
-                                </h6>
-                                <button
-                                    type="button"
-                                    className="btn btn-primary btn-sm"
-                                    onClick={() => formik.setFieldValue('sub_categories', [
-                                        ...formik.values.sub_categories,
-                                        { label: '', description: '' }
-                                    ])}
-                                >
-                                    <i className="ti ti-plus me-1"></i>
-                                    Add
-                                </button>
-                            </div>
+                                        <Grid item xs={12}>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, mt: 2 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                                                        Sous-catégories
+                                                    </Typography>
+                                                    <Chip
+                                                        label={`${formik.values.sub_categories.length} item(s)`}
+                                                        size="small"
+                                                        sx={{ fontWeight: 700, bgcolor: '#6366f1', color: 'white', borderRadius: '8px' }}
+                                                    />
+                                                </Box>
+                                                <Button
+                                                    variant="outlined"
+                                                    startIcon={<AddIcon />}
+                                                    onClick={() => formik.setFieldValue('sub_categories', [
+                                                        ...formik.values.sub_categories,
+                                                        { label: '', description: '' }
+                                                    ])}
+                                                    sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, color: '#6366f1', borderColor: 'rgba(99, 102, 241, 0.4)' }}
+                                                >
+                                                    Ajouter
+                                                </Button>
+                                            </Box>
 
-                            <div className="sub-categories-container">
-                                <AnimatePresence>
-                                    {formik.values.sub_categories.map((_, index) => (
-                                        <motion.div
-                                            key={index}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -20 }}
-                                            transition={{ duration: 0.2 }}
-                                            className="card sub-category-card mb-3"
-                                        >
-                                            <div className="card-body">
-                                                <div className="d-flex justify-content-between align-items-start mb-3">
-                                                    <h6 className="mb-0">Sub-category #{index + 1}</h6>
-                                                    {formik.values.sub_categories.length > 1 && (
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-outline-danger btn-sm"
-                                                            onClick={() => {
-                                                                const newSubCategories = formik.values.sub_categories.filter((_, i) => i !== index);
-                                                                formik.setFieldValue('sub_categories', newSubCategories);
-                                                            }}
+                                            <Stack spacing={2}>
+                                                <AnimatePresence mode="popLayout">
+                                                    {formik.values.sub_categories.map((_, index) => (
+                                                        <motion.div
+                                                            key={index}
+                                                            initial={{ opacity: 0, scale: 0.95 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
+                                                            exit={{ opacity: 0, scale: 0.95 }}
+                                                            transition={{ duration: 0.2 }}
                                                         >
-                                                            <i className="ti ti-trash"></i>
-                                                        </button>
-                                                    )}
-                                                </div>
+                                                            <Box sx={{
+                                                                p: 3,
+                                                                borderRadius: '16px',
+                                                                border: '1px solid #e2e8f0',
+                                                                bgcolor: '#f8fafc',
+                                                                position: 'relative'
+                                                            }}>
+                                                                {formik.values.sub_categories.length > 1 && (
+                                                                    <IconButton
+                                                                        size="small"
+                                                                        onClick={() => {
+                                                                            const newSubCategories = formik.values.sub_categories.filter((_, i) => i !== index);
+                                                                            formik.setFieldValue('sub_categories', newSubCategories);
+                                                                        }}
+                                                                        sx={{ position: 'absolute', top: 8, right: 8, color: '#ef4444', bgcolor: 'rgba(239, 68, 68, 0.1)', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.2)' } }}
+                                                                    >
+                                                                        <DeleteIcon fontSize="small" />
+                                                                    </IconButton>
+                                                                )}
+                                                                <Grid container spacing={3} sx={{ mt: 0 }}>
+                                                                    <Grid item xs={12} md={5}>
+                                                                        <TextField
+                                                                            fullWidth
+                                                                            label={`Nom de la sous-catégorie ${index + 1}`}
+                                                                            placeholder="ex: Smartphones"
+                                                                            {...formik.getFieldProps(`sub_categories.${index}.label`)}
+                                                                            error={formik.touched.sub_categories?.[index]?.label && Boolean((formik.errors.sub_categories?.[index] as any)?.label)}
+                                                                            helperText={formik.touched.sub_categories?.[index]?.label && (formik.errors.sub_categories?.[index] as any)?.label}
+                                                                            InputProps={{
+                                                                                sx: { borderRadius: '12px', bgcolor: 'white', '& fieldset': { borderColor: '#cbd5e1' } }
+                                                                            }}
+                                                                            size="small"
+                                                                        />
+                                                                    </Grid>
+                                                                    <Grid item xs={12} md={7}>
+                                                                        <TextField
+                                                                            fullWidth
+                                                                            label="Description spécifique"
+                                                                            placeholder="Qu'est-ce qui caractérise cette sous-catégorie ?"
+                                                                            {...formik.getFieldProps(`sub_categories.${index}.description`)}
+                                                                            error={formik.touched.sub_categories?.[index]?.description && Boolean((formik.errors.sub_categories?.[index] as any)?.description)}
+                                                                            helperText={formik.touched.sub_categories?.[index]?.description && (formik.errors.sub_categories?.[index] as any)?.description}
+                                                                            InputProps={{
+                                                                                sx: { borderRadius: '12px', bgcolor: 'white', '& fieldset': { borderColor: '#cbd5e1' } }
+                                                                            }}
+                                                                            size="small"
+                                                                        />
+                                                                    </Grid>
+                                                                </Grid>
+                                                            </Box>
+                                                        </motion.div>
+                                                    ))}
+                                                </AnimatePresence>
+                                            </Stack>
+                                        </Grid>
+                                    </Grid>
 
-                                                <div className="row g-3">
-                                                    <div className="col-md-6">
-                                                        <div className="form-group">
-                                                            <label className="form-label">
-                                                                Name
-                                                                <span className="text-danger ms-1">*</span>
-                                                            </label>
-                                                            <div className="input-group">
-                                                                <span className="input-group-text">
-                                                                    <i className="ti ti-tag"></i>
-                                                                </span>
-                                                                <input
-                                                                    type="text"
-                                                                    className={`form-control ${
-                                                                        formik.touched.sub_categories?.[index]?.label && 
-                                                                        (formik.errors.sub_categories?.[index] as SubCategory)?.label ? 'is-invalid' : ''
-                                                                    }`}
-                                                                    placeholder="e.g. Smartphones"
-                                                                    {...formik.getFieldProps(`sub_categories.${index}.label`)}
-                                                                />
-                                                            </div>
-                                                            {formik.touched.sub_categories?.[index]?.label && 
-                                                             (formik.errors.sub_categories?.[index] as SubCategory)?.label && (
-                                                                <div className="invalid-feedback d-block">
-                                                                    <i className="ti ti-alert-circle me-1"></i>
-                                                                    {(formik.errors.sub_categories?.[index] as SubCategory)?.label}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
+                                    {error && (
+                                        <Fade in={true}>
+                                            <Alert severity="error" sx={{ mt: 4, borderRadius: '12px', fontWeight: 600 }}>
+                                                {error}
+                                            </Alert>
+                                        </Fade>
+                                    )}
 
-                                                    <div className="col-md-6">
-                                                        <div className="form-group">
-                                                            <label className="form-label">Description</label>
-                                                            <div className="input-group">
-                                                                <span className="input-group-text">
-                                                                    <i className="ti ti-notes"></i>
-                                                                </span>
-                                                                <input
-                                                                    type="text"
-                                                                    className={`form-control ${
-                                                                        formik.touched.sub_categories?.[index]?.description && 
-                                                                        (formik.errors.sub_categories?.[index] as SubCategory)?.description ? 'is-invalid' : ''
-                                                                    }`}
-                                                                    placeholder="Sub-category description"
-                                                                    {...formik.getFieldProps(`sub_categories.${index}.description`)}
-                                                                />
-                                                            </div>
-                                                            {formik.touched.sub_categories?.[index]?.description && 
-                                                             (formik.errors.sub_categories?.[index] as SubCategory)?.description && (
-                                                                <div className="invalid-feedback d-block">
-                                                                    <i className="ti ti-alert-circle me-1"></i>
-                                                                    {(formik.errors.sub_categories?.[index] as SubCategory)?.description}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    ))}
-                                </AnimatePresence>
-                            </div>
-                        </div>
-
-                        <div className="card-footer bg-transparent border-0 d-flex justify-content-end gap-2">
-                            <button
-                                type="button"
-                                className="btn btn-light"
-                                onClick={() => dispatch(setActivePage({ page: Pages.CATEGORY }))}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                className="btn btn-primary d-flex align-items-center"
-                                disabled={isLoading || !formik.isValid || !formik.dirty}
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                        Updating...
-                                    </>
-                                ) : (
-                                    <>
-                                        <i className="ti ti-device-floppy me-2"></i>
-                                        Update Category
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+                                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 4 }}>
+                                        <Button
+                                            variant="contained"
+                                            startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+                                            onClick={() => formik.handleSubmit()}
+                                            disabled={isSubmitting || !formik.isValid || !formik.dirty}
+                                            sx={{
+                                                borderRadius: '15px',
+                                                textTransform: 'none',
+                                                fontWeight: 800,
+                                                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                                boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)',
+                                                '&:hover': {
+                                                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                                                }
+                                            }}
+                                        >
+                                            Mettre à jour la Catégorie
+                                        </Button>
+                                    </Box>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                </Grid>
+            </motion.div>
+        </Box>
     );
 };
 

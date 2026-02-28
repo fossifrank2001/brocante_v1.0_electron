@@ -224,17 +224,19 @@ export default class UtilMethods {
         return store.getState()?.user.authUser.id === user_id
     }
 
-    static formatNumber(value: never)
+    static formatNumber(value: number | string)
     {
         if (value === undefined || value == null) {
             return 'N/A';
-        }else if (isNaN(value)){
-            value = parseFloat(value as string)
+        }
+        const num: number = typeof value === 'string' ? parseFloat(value) : value;
+        if (isNaN(num)) {
+            return 'N/A';
         }
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'XAF',
-        }).format(value);
+        }).format(num);
     }
     
 }

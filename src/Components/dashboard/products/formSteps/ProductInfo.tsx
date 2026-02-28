@@ -3,32 +3,21 @@ import { useFormikContext } from 'formik';
 import { Multiselect } from 'multiselect-react-dropdown';
 import { ICategory, SubCategory } from 'Data/Interfaces/Category';
 import CategoryAPI from 'Data/Api/Category';
-import { IProductPayload } from 'Interfaces';
+import { IProductPayload } from 'Data/Interfaces/Product';
 import { motion } from 'framer-motion';
-import { Tooltip } from '@mui/material';
+import { TextField, MenuItem, Select, FormControl, InputLabel, Box, Grid, Alert, AlertTitle, InputAdornment, Typography } from '@mui/material';
+import { TbShoppingBag, TbBarcode, TbTag, TbBuildingFactory2, TbScan, TbBox, TbCurrencyEuro, TbCategory, TbTags, TbFileDescription } from 'react-icons/tb';
 import './ProductInfo.scss';
 
-interface IProductInfoProps{
+interface IProductInfoProps {
     categoryRecord?: ICategory | null
 }
 
-const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            duration: 0.3,
-            ease: "easeOut"
-        }
-    }
-};
-
-const ProductInfo: React.FC<IProductInfoProps> = ({categoryRecord}) => {
+const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
     const [categories, setCategories] = useState<ICategory[] | null>(null);
     const [category, setCategory] = useState<ICategory | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const { values, handleChange, setFieldValue, touched, errors } = useFormikContext<IProductPayload>();
+    const { values, handleChange, setFieldValue, touched, errors, handleBlur } = useFormikContext<IProductPayload>();
 
     const getCategories = useCallback(async () => {
         try {
@@ -36,8 +25,8 @@ const ProductInfo: React.FC<IProductInfoProps> = ({categoryRecord}) => {
             const { data: _categories } = await CategoryAPI.index();
             setCategories(_categories.data);
 
-            if (categoryRecord){
-                const selectedCategory = _categories.data?.find(category => category.id === categoryRecord?.id) || null;
+            if (categoryRecord) {
+                const selectedCategory = _categories.data?.find(cat => cat.id === categoryRecord?.id) || null;
                 setCategory(selectedCategory);
             }
         } catch (e) {
@@ -52,268 +41,243 @@ const ProductInfo: React.FC<IProductInfoProps> = ({categoryRecord}) => {
     }, [getCategories, categoryRecord]);
 
     return (
-        <motion.div 
-            className="product-info"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-        >
-            <div className="info-card">
-                <h6 className="card-title">
-                    <i className="ti ti-shopping-cart"></i>
-                    Basic Product Information
-                </h6>
-                <div className="row g-4">
-                    <div className="col-12">
-                        <div className="alert alert-info d-flex align-items-center" style={{ borderRadius: '8px' }}>
-                            <i className="ti ti-info-circle me-2"></i>
-                            <small>La référence interne est unique et sera utilisée pour générer le QR code du produit</small>
-                        </div>
-                    </div>
-                    <div className="col-md-6">
-                        <div className="form-group">
-                            <label htmlFor="name">
-                                <i className="ti ti-tag"></i>
-                                Product Name
-                            </label>
-                            <Tooltip title="Enter the name of your product" arrow placement="top">
-                                <input
-                                    id="name"
-                                    name="name"
-                                    type="text"
-                                    className="form-control"
-                                    onChange={handleChange}
-                                    value={values.name}
-                                    placeholder="e.g., Vintage Leather Chair"
-                                />
-                            </Tooltip>
-                            {touched.name && errors.name && (
-                                <div className="error-feedback">
-                                    <i className="ti ti-alert-circle"></i>
-                                    <span>{errors.name}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+        <Box className="product-info-modern">
+            <Box sx={{ p: 4, borderRadius: '24px', bgcolor: 'rgba(255, 255, 255, 0.4)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.5)', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
+                    <Box sx={{ p: 1.5, borderRadius: '14px', bgcolor: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}>
+                        <TbShoppingBag size={24} />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>Informations Générales</Typography>
+                </Box>
 
-                    <div className="col-md-6">
-                        <div className="form-group">
-                            <label htmlFor="internal_reference">
-                                <i className="ti ti-barcode"></i>
-                                Référence Interne (SKU)
-                                <span className="text-danger ms-1">*</span>
-                            </label>
-                            <Tooltip title="Référence unique pour identifier le produit" arrow placement="top">
-                                <input
-                                    id="internal_reference"
-                                    name="internal_reference"
-                                    type="text"
-                                    className="form-control"
-                                    onChange={handleChange}
-                                    value={values.internal_reference || ''}
-                                    placeholder="ex: PROD-2024-001"
-                                />
-                            </Tooltip>
-                            {touched.internal_reference && errors.internal_reference && (
-                                <div className="error-feedback">
-                                    <i className="ti ti-alert-circle"></i>
-                                    <span>{errors.internal_reference}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                <Alert severity="info" sx={{ mb: 4, borderRadius: '16px', border: '1px solid rgba(3, 169, 244, 0.2)', '& .MuiAlert-icon': { color: '#0288d1' } }}>
+                    <AlertTitle sx={{ fontWeight: 700 }}>Identifiant Unique</AlertTitle>
+                    La référence interne est unique et sera utilisée pour générer le <strong>QR code</strong> du produit.
+                </Alert>
 
-                    <div className="col-md-6">
-                        <div className="form-group">
-                            <label htmlFor="manufacturer_reference">
-                                <i className="ti ti-building-factory"></i>
-                                Référence Fabricant
-                            </label>
-                            <Tooltip title="Référence du fabricant (optionnel)" arrow placement="top">
-                                <input
-                                    id="manufacturer_reference"
-                                    name="manufacturer_reference"
-                                    type="text"
-                                    className="form-control"
-                                    onChange={handleChange}
-                                    value={values.manufacturer_reference || ''}
-                                    placeholder="ex: MFR-XYZ-123"
-                                />
-                            </Tooltip>
-                        </div>
-                    </div>
+                <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="Nom du Produit"
+                            name="name"
+                            value={values.name}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            error={touched.name && Boolean(errors.name)}
+                            helperText={touched.name && errors.name}
+                            placeholder="ex: Chaise Vintage en Cuir"
+                            variant="outlined"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <TbTag size={20} color="#64748b" />
+                                    </InputAdornment>
+                                ),
+                                sx: { borderRadius: '14px', bgcolor: '#fff' }
+                            }}
+                        />
+                    </Grid>
 
-                    <div className="col-md-6">
-                        <div className="form-group">
-                            <label htmlFor="barcode">
-                                <i className="ti ti-scan"></i>
-                                Code-barres (EAN/UPC)
-                            </label>
-                            <Tooltip title="Code-barres du produit si disponible" arrow placement="top">
-                                <input
-                                    id="barcode"
-                                    name="barcode"
-                                    type="text"
-                                    className="form-control"
-                                    onChange={handleChange}
-                                    value={values.barcode || ''}
-                                    placeholder="ex: 3760123456789"
-                                />
-                            </Tooltip>
-                        </div>
-                    </div>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="Référence Interne (SKU)"
+                            name="internal_reference"
+                            value={values.internal_reference}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            error={touched.internal_reference && Boolean(errors.internal_reference)}
+                            helperText={touched.internal_reference && errors.internal_reference}
+                            placeholder="ex: ART-2024-001"
+                            variant="outlined"
+                            required
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <TbBarcode size={20} color="#64748b" />
+                                    </InputAdornment>
+                                ),
+                                sx: { borderRadius: '14px', bgcolor: '#fff' }
+                            }}
+                        />
+                    </Grid>
 
-                    <div className="col-md-2">
-                        <div className="form-group">
-                            <label htmlFor="stock_quantity">
-                                <i className="ti ti-box"></i>
-                                Stock
-                            </label>
-                            <Tooltip title="Enter available quantity" arrow placement="top">
-                                <input
-                                    id="stock_quantity"
-                                    name="stock_quantity"
-                                    type="number"
-                                    className="form-control"
-                                    onChange={handleChange}
-                                    value={values.stock_quantity}
-                                    placeholder="0"
-                                    min="0"
-                                />
-                            </Tooltip>
-                            {touched.stock_quantity && errors.stock_quantity && (
-                                <div className="error-feedback">
-                                    <i className="ti ti-alert-circle"></i>
-                                    <span>{errors.stock_quantity}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="Référence Fabricant"
+                            name="manufacturer_reference"
+                            value={values.manufacturer_reference}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            placeholder="ex: MFR-XYZ-123"
+                            variant="outlined"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <TbBuildingFactory2 size={20} color="#64748b" />
+                                    </InputAdornment>
+                                ),
+                                sx: { borderRadius: '14px', bgcolor: '#fff' }
+                            }}
+                        />
+                    </Grid>
 
-                    <div className="col-md-2">
-                        <div className="form-group">
-                            <label htmlFor="price">
-                                <i className="ti ti-currency-euro"></i>
-                                Price
-                            </label>
-                            <Tooltip title="Enter product price" arrow placement="top">
-                                <input
-                                    id="price"
-                                    name="price"
-                                    type="number"
-                                    className="form-control"
-                                    onChange={handleChange}
-                                    value={values.price}
-                                    placeholder="0.00"
-                                    min="0"
-                                    step="0.01"
-                                />
-                            </Tooltip>
-                            {touched.price && errors.price && (
-                                <div className="error-feedback">
-                                    <i className="ti ti-alert-circle"></i>
-                                    <span>{errors.price}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="Code-barres (EAN/UPC)"
+                            name="barcode"
+                            value={values.barcode}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            placeholder="ex: 3760123456789"
+                            variant="outlined"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <TbScan size={20} color="#64748b" />
+                                    </InputAdornment>
+                                ),
+                                sx: { borderRadius: '14px', bgcolor: '#fff' }
+                            }}
+                        />
+                    </Grid>
 
-                    <div className="col-md-4">
-                        <div className="form-group">
-                            <label htmlFor="category">
-                                <i className="ti ti-category"></i>
-                                Category
-                            </label>
-                            <Tooltip title="Select product category" arrow placement="top">
-                                <select
-                                    className="form-select"
-                                    disabled={isLoading}
-                                    id="category"
-                                    name="category"
-                                    value={values.category || ''}
-                                    onChange={(e) => {
-                                        const selectedCategoryId = e.target.value;
-                                        handleChange(e);
-                                        const selectedCategory = categories?.find(category => String(category.id) === selectedCategoryId) || null;
+                    <Grid item xs={12} md={3}>
+                        <TextField
+                            fullWidth
+                            label="Stock Initial"
+                            name="stock_quantity"
+                            type="number"
+                            value={values.stock_quantity}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            error={touched.stock_quantity && Boolean(errors.stock_quantity)}
+                            helperText={touched.stock_quantity && errors.stock_quantity}
+                            variant="outlined"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <TbBox size={20} color="#64748b" />
+                                    </InputAdornment>
+                                ),
+                                sx: { borderRadius: '14px', bgcolor: '#fff' }
+                            }}
+                        />
+                    </Grid>
 
-                                        if (selectedCategory === null || selectedCategoryId === '') {
-                                            setCategory(null);
-                                            setFieldValue('subcategory_ids', []);
-                                        } else {
-                                            setCategory(selectedCategory);
-                                        }
-                                    }}
-                                >
-                                    <option value="" label="Select a Category" />
-                                    {categories?.map(_category => (
-                                        <option key={_category.id} value={_category.id.toString()} label={_category.label} />
-                                    ))}
-                                </select>
-                            </Tooltip>
-                        </div>
-                    </div>
+                    <Grid item xs={12} md={3}>
+                        <TextField
+                            fullWidth
+                            label="Prix de Vente"
+                            name="price"
+                            type="number"
+                            value={values.price}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            error={touched.price && Boolean(errors.price)}
+                            helperText={touched.price && errors.price}
+                            variant="outlined"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <TbCurrencyEuro size={20} color="#64748b" />
+                                    </InputAdornment>
+                                ),
+                                sx: { borderRadius: '14px', bgcolor: '#fff' }
+                            }}
+                        />
+                    </Grid>
 
-                    <div className="col-md-8">
-                        <div className="form-group">
-                            <label htmlFor="subcategory_ids">
-                                <i className="ti ti-tags"></i>
-                                Sub Categories
-                            </label>
-                            <Tooltip title="Select relevant sub-categories" arrow placement="top">
-                                <div>
-                                    <Multiselect
-                                        options={category?.sub_categories || []}
-                                        selectedValues={values.subcategory_ids}
-                                        onSelect={(selectedList: SubCategory[]) => setFieldValue('subcategory_ids', selectedList)}
-                                        onRemove={(selectedList: SubCategory[]) => setFieldValue('subcategory_ids', selectedList)}
-                                        displayValue="label"
-                                        placeholder="Select sub-categories"
-                                        disable={!category}
-                                        style={{
-                                            chips: { background: '#4318FF' },
-                                            searchBox: { 
-                                                border: '1px solid #e2e8f0',
-                                                borderRadius: '8px',
-                                                padding: '8px'
-                                            }
-                                        }}
-                                    />
-                                </div>
-                            </Tooltip>
+                    <Grid item xs={12} md={6}>
+                        <FormControl fullWidth variant="outlined">
+                            <InputLabel id="category-label">Catégorie</InputLabel>
+                            <Select
+                                labelId="category-label"
+                                label="Catégorie"
+                                name="category"
+                                value={values.category || ''}
+                                onChange={(e) => {
+                                    const selectedCategoryId = e.target.value;
+                                    handleChange(e);
+                                    const selectedCategory = categories?.find(cat => String(cat.id) === selectedCategoryId) || null;
+                                    if (!selectedCategory) {
+                                        setCategory(null);
+                                        setFieldValue('subcategory_ids', []);
+                                    } else {
+                                        setCategory(selectedCategory);
+                                    }
+                                }}
+                                disabled={isLoading}
+                                startAdornment={
+                                    <InputAdornment position="start" sx={{ mr: 1 }}>
+                                        <TbCategory size={20} color="#64748b" />
+                                    </InputAdornment>
+                                }
+                                sx={{ borderRadius: '14px', bgcolor: '#fff' }}
+                            >
+                                <MenuItem value=""><em>Aucune</em></MenuItem>
+                                {categories?.map(cat => (
+                                    <MenuItem key={cat.id} value={String(cat.id)}>{cat.label}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                        <Box sx={{ p: 2, borderRadius: '16px', border: '1px solid #e2e8f0', bgcolor: '#f8fafc' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                                <TbTags size={18} color="#4f46e5" />
+                                <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sous-Catégories</Typography>
+                            </Box>
+                            <Multiselect
+                                options={category?.sub_categories || []}
+                                selectedValues={values.subcategory_ids}
+                                onSelect={(list: SubCategory[]) => setFieldValue('subcategory_ids', list)}
+                                onRemove={(list: SubCategory[]) => setFieldValue('subcategory_ids', list)}
+                                displayValue="label"
+                                placeholder={category ? "Rechercher..." : "Veuillez d'abord choisir une catégorie"}
+                                disable={!category}
+                                style={{
+                                    chips: { background: '#4f46e5', borderRadius: '8px', fontWeight: 600 },
+                                    searchBox: { border: 'none', background: 'transparent', padding: '0' },
+                                    inputField: { color: '#1e293b' }
+                                }}
+                            />
                             {touched.subcategory_ids && errors.subcategory_ids && (
-                                <div className="error-feedback">
-                                    <i className="ti ti-alert-circle"></i>
-                                    <span>
-                                        {Array.isArray(errors.subcategory_ids)
-                                            ? errors.subcategory_ids.map(error => error.label || 'Error').join(', ')
-                                            : errors.subcategory_ids}
-                                    </span>
-                                </div>
+                                <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                                    {typeof errors.subcategory_ids === 'string' ? errors.subcategory_ids : 'Une sélection est requise'}
+                                </Typography>
                             )}
-                        </div>
-                    </div>
+                        </Box>
+                    </Grid>
 
-                    <div className="col-12">
-                        <div className="form-group mb-0">
-                            <label htmlFor="description">
-                                <i className="ti ti-file-description"></i>
-                                Description
-                            </label>
-                            <Tooltip title="Describe your product" arrow placement="top">
-                                <textarea
-                                    id="description"
-                                    name="description"
-                                    className="form-control"
-                                    onChange={handleChange}
-                                    value={values.description}
-                                    placeholder="Enter a detailed description of your product..."
-                                />
-                            </Tooltip>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </motion.div>
+                    <Grid item xs={12}>
+                        <TextField
+                            fullWidth
+                            label="Description"
+                            name="description"
+                            multiline
+                            rows={4}
+                            value={values.description}
+                            onChange={handleChange}
+                            placeholder="Décrivez votre produit en détail..."
+                            variant="outlined"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5 }}>
+                                        <TbFileDescription size={20} color="#64748b" />
+                                    </InputAdornment>
+                                ),
+                                sx: { borderRadius: '14px', bgcolor: '#fff' }
+                            }}
+                        />
+                    </Grid>
+                </Grid>
+            </Box>
+        </Box>
     );
 };
 

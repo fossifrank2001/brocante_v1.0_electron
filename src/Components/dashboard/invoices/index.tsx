@@ -16,12 +16,19 @@ import {
 } from 'material-react-table'
 import { MRT_Localization_EN } from "material-react-table/locales/en"
 import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance'
-import { Box, Link, Stack } from "@mui/material"
+import {
+    Box, Typography, Tooltip, IconButton, Zoom,
+    Button, Chip, Stack
+} from "@mui/material"
+import {
+    Visibility, Download, Refresh, FileDownload,
+    FilePresent, AccessTime, Person
+} from '@mui/icons-material'
 import UtilMethods from '@/Data/Utilities/UtilMethods'
 import { useAppDispatch, useAppSelector } from '@/hooks'
 import { setActivePage } from '@/Data/Slices/NavigationSlice'
 import { Pages } from '@/Data/Objects/state'
-import {IAppContext, IInvoice, IInvoiceTableData} from 'Interfaces'
+import { IAppContext, IInvoice, IInvoiceTableData } from 'Interfaces'
 import dayjs from "dayjs";
 import SellAPI from "Data/Api/Sell.ts";
 import StreamedDocumentAPI from "Data/Api/StreamedDocument.ts";
@@ -48,7 +55,7 @@ export default function IndexInvoice() {
 
     useLayoutEffect(() => {
         context.togglePageLoading()
-        document.title = constants.APP_NAME + ' .:. Invoices'
+        document.title = constants.APP_NAME + ' .:. Factures'
     }, [context])
 
     const resetScroll = () => {
@@ -107,7 +114,6 @@ export default function IndexInvoice() {
             await StreamedDocumentAPI.generate(_type, record.invoice_number);
         } catch (error) {
             console.error('Error downloading document:', error);
-            // Handle error (e.g., show an error message to the user)
         } finally {
             context.togglePageLoading(false);
             setIsRefetching(false)
@@ -118,28 +124,32 @@ export default function IndexInvoice() {
         return records ? records.map((_record) => ({
             ..._record,
             actions: (
-                <Stack direction="row" spacing={1}>
-                    <Link
-                        href="#"
-                        onClick={() => {
-                            context.togglePageLoading(true);
-                            dispatch(setActivePage({
-                                page: Pages.INVOICE,
-                                id: _record.id,
-                                param: {
-                                    sub_page: 'READ'
-                                }
-                            }));
-                        }}
-                    >
-                        <i className="ti ti-eye text-dark"></i>
-                    </Link>
-                    <Link
-                        href="#"
-                        onClick={() => handleDownload(_record.status === 'paid' ? 'receipt' : 'invoice', _record)}
-                    >
-                        <i className={`ti ${_record.status === 'paid' ? 'ti-download' : 'ti-file-invoice'} text-primary`}></i>
-                    </Link>
+                <Stack direction="row" spacing={0.5}>
+                    <Tooltip title="Voir les détails" TransitionComponent={Zoom} arrow>
+                        <IconButton
+                            size="small"
+                            onClick={() => {
+                                context.togglePageLoading(true);
+                                dispatch(setActivePage({
+                                    page: Pages.INVOICE,
+                                    id: _record.id,
+                                    param: { sub_page: 'READ' }
+                                }));
+                            }}
+                            sx={{ color: '#6366f1', bgcolor: 'rgba(99, 102, 241, 0.08)', '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.15)' } }}
+                        >
+                            <Visibility fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title={_record.status === 'paid' ? "Télécharger Reçu" : "Télécharger Facture"} TransitionComponent={Zoom} arrow>
+                        <IconButton
+                            size="small"
+                            onClick={() => handleDownload(_record.status === 'paid' ? 'receipt' : 'invoice', _record)}
+                            sx={{ color: '#ec4899', bgcolor: 'rgba(236, 72, 153, 0.08)', '&:hover': { bgcolor: 'rgba(236, 72, 153, 0.15)' } }}
+                        >
+                            {_record.status === 'paid' ? <Download fontSize="small" /> : <FilePresent fontSize="small" />}
+                        </IconButton>
+                    </Tooltip>
                 </Stack>
             ),
         })) : [];
@@ -148,114 +158,138 @@ export default function IndexInvoice() {
     const columns = useMemo<MRT_ColumnDef<IInvoiceTableData>[]>(
         () => [
             {
+                accessorKey: "invoice_number",
+                header: "N° Facture",
+                size: 140,
+                Cell: ({ cell }) => (
+                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b', letterSpacing: '0.05em' }}>
+                        {cell.getValue() as string}
+                    </Typography>
+                ),
+            },
+            {
+                id: "client",
+                header: "Client",
+                size: 180,
+                Cell: ({ row }) => {
+                    const customer = row.original.customer;
+                    const person = (row.original as any).person;
+                    const client = customer || person;
+
+                    if (!client) return (
+                        <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>
+                            Client Anonyme
+                        </Typography>
+                    );
+
+                    const lastName = client.lastname || client.last_name || "";
+                    const firstName = client.firstname || client.first_name || "";
+
+                    return (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Person sx={{ fontSize: 16, color: '#64748b' }} />
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#334155' }}>
+                                {`${lastName} ${firstName}`.trim() || "N/A"}
+                            </Typography>
+                        </Box>
+                    );
+                },
+            },
+            {
                 accessorKey: "sell_code",
-                header: "Sell Code",
-                size: 100,
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeholder: "filter" },
-                }),
+                header: "Code Vente",
+                size: 120,
+                Cell: ({ cell }) => (
+                    <Chip
+                        label={cell.getValue() as string}
+                        size="small"
+                        sx={{ bgcolor: '#f1f5f9', fontWeight: 700, borderRadius: '8px', color: '#475569' }}
+                    />
+                ),
             },
             {
                 accessorKey: "total_amount",
-                header: "Total Amount",
+                header: "Montant Total",
                 size: 150,
-                Cell: ({ cell }) => {
-                    const value = cell.getValue() as number
-                    return value ? UtilMethods.formatNumber(value) : null
-                },
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeholder: "filter" },
-                }),
-            },
-            {
-                accessorKey: "invoice_date",
-                header: "Invoice Date",
-                size: 150,
+                Cell: ({ cell }) => (
+                    <Typography variant="body2" sx={{ fontWeight: 900, color: '#0f172a' }}>
+                        {UtilMethods.formatNumber(cell.getValue() as number)}
+                    </Typography>
+                ),
             },
             {
                 accessorKey: "amount_paid",
-                header: "Amount paid",
-                size: 150,
-                Cell: ({ cell }) => {
-                    const value = cell.getValue() as number
-                    return value ? UtilMethods.formatNumber(value) : null
-                },
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeholder: "filter" },
-                }),
-            },
-            {
-                accessorKey: "status",
-                header: "Status",
-                size: 150,
-                Cell: ({ cell }) => {
-                    const value = cell.getValue()
-                    const status = typeof value === 'string' ? UtilMethods.getStatus(value) : ''
-                    return <span className={status}>{String(value)}</span>
-                },
-                enableColumnFilter: false,
-                filterVariant: "select",
-                filterSelectOptions: [{
-                    label: 'Unpaid',
-                    value: SellAPI.UNPAID
-                }, {
-                    label: 'Paid',
-                    value: SellAPI.PAID
-                }],
+                header: "Payé",
+                size: 130,
+                Cell: ({ cell }) => (
+                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#10b981' }}>
+                        {UtilMethods.formatNumber(cell.getValue() as number)}
+                    </Typography>
+                ),
             },
             {
                 accessorKey: "remaining_balance",
-                header: "Remaining Balance",
-                size: 150,
+                header: "Reste",
+                size: 130,
                 Cell: ({ cell }) => {
-                    const value = cell.getValue() as number
-                    return value ? UtilMethods.formatNumber(value ?? 0) : null
+                    const value = cell.getValue() as number;
+                    return (
+                        <Typography variant="body2" sx={{ fontWeight: 800, color: value > 0 ? '#ef4444' : '#64748b' }}>
+                            {UtilMethods.formatNumber(value)}
+                        </Typography>
+                    );
                 },
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeholder: "filter" },
-                }),
+            },
+            {
+                accessorKey: "status",
+                header: "Statut",
+                size: 120,
+                Cell: ({ cell }) => {
+                    const value = cell.getValue() as string;
+                    const isPaid = value === SellAPI.PAID;
+                    return (
+                        <Chip
+                            label={isPaid ? 'PAYÉ' : 'IMPAYÉ'}
+                            size="small"
+                            sx={{
+                                fontWeight: 900,
+                                fontSize: '0.65rem',
+                                bgcolor: isPaid ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                                color: isPaid ? '#10b981' : '#f59e0b',
+                                border: `1px solid ${isPaid ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`,
+                                borderRadius: '10px'
+                            }}
+                        />
+                    );
+                },
+                filterVariant: "select",
+                filterSelectOptions: [
+                    { label: 'Impayé', value: SellAPI.UNPAID },
+                    { label: 'Payé', value: SellAPI.PAID }
+                ],
             },
             {
                 accessorKey: "date_to_pay",
-                header: "Date To Pay",
-                size: 150,
+                header: "Échéance",
+                size: 160,
                 Cell: ({ cell }) => {
-                    const value = cell.getValue() as number
-                    return value ? dayjs(value).format("YYYY-MM-DD H:mm:s") : null
-                },
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeholder: "filter" },
-                }),
-            },
-            {
-                accessorKey: "invoice_number",
-                header: "Invoice Number",
-                size: 150,
-            },
-            {
-                accessorKey: "created_at",
-                header: "Created At",
-                size: 150,
-                Cell: ({ cell }) => {
-                    const value = cell.getValue() as number
-                    return value ? dayjs(value).format("YYYY-MM-DD H:mm:s") : null
-                },
-            },
-            {
-                accessorKey: "updated_at",
-                header: "Updated At",
-                size: 150,
-                Cell: ({ cell }) => {
-                    const value = cell.getValue() as number
-                    return value ? dayjs(value).format("YYYY-MM-DD H:mm:s") : null
+                    const value = cell.getValue() as string;
+                    return value ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <AccessTime sx={{ fontSize: 14, color: '#94a3b8' }} />
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: '#64748b' }}>
+                                {dayjs(value).format("DD MMM YYYY")}
+                            </Typography>
+                        </Box>
+                    ) : '-';
                 },
             },
             {
                 accessorKey: "actions",
                 header: "Actions",
-                size: 150,
-                unexport: true,
+                size: 100,
                 enableColumnFilter: false,
+                enableSorting: false,
             },
         ],
         []
@@ -268,20 +302,45 @@ export default function IndexInvoice() {
         enableStickyHeader: true,
         initialState: {
             showColumnFilters: true,
-            density: "compact",
+            density: "comfortable",
         },
         manualFiltering: true,
         manualPagination: true,
         manualSorting: true,
-        muiTablePaperProps: { className: "__table-expandable" },
-        muiTableContainerProps: { className: "__table-container" },
-        localization: MRT_Localization_EN,
-        muiToolbarAlertBannerProps: isError
-            ? {
-                color: "error",
-                children: "Error loading data",
+        muiTablePaperProps: {
+            sx: {
+                borderRadius: '24px',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                bgcolor: 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: 'blur(16px)',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.05)',
+                overflow: 'hidden'
             }
-            : undefined,
+        },
+        muiTableContainerProps: {
+            className: "__table-container",
+            sx: { maxHeight: '600px' }
+        },
+        muiTableHeadCellProps: {
+            sx: {
+                bgcolor: 'rgba(248, 250, 252, 0.5)',
+                color: '#64748b',
+                fontWeight: 800,
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                py: 2
+            }
+        },
+        muiTableBodyRowProps: {
+            sx: {
+                '&:hover': {
+                    bgcolor: 'rgba(99, 102, 241, 0.03) !important',
+                    transition: 'all 0.2s'
+                }
+            }
+        },
+        localization: MRT_Localization_EN,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
         onPaginationChange: setPagination,
@@ -299,27 +358,48 @@ export default function IndexInvoice() {
             rowSelection,
         },
         renderTopToolbarCustomActions: () => (
-            <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
-                <button
+            <Box sx={{ display: "flex", gap: 2, p: 2, alignItems: 'center' }}>
+                <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b', mr: 2 }}>
+                    Gestion des Factures
+                </Typography>
+                <Button
                     onClick={handleRefresh}
-                    type='button'
-                    className='btn btn-outline-secondary'
-                    style={{ marginLeft: '12px' }}
+                    variant="outlined"
+                    startIcon={<Refresh />}
                     disabled={isLoading || isRefetching}
+                    sx={{
+                        borderRadius: '12px',
+                        textTransform: 'none',
+                        fontWeight: 700,
+                        borderColor: '#e2e8f0',
+                        color: '#64748b',
+                        px: 3,
+                        '&:hover': { bgcolor: '#f8fafc', borderColor: '#cbd5e1' }
+                    }}
                 >
-                    <i className='ti ti-refresh'></i>
-                    <span className='ms-2'>Refresh</span>
-                </button>
+                    Actualiser
+                </Button>
                 {UtilMethods.getHabilitations(authorizations, 'invoice').canExport && (
-                    <button type='button' className='btn btn-outline-primary' style={{ marginLeft: '12px' }}>
-                        <i className='ti ti-file-export'></i>
-                        <span className='ms-2'>EXPORT ALL</span>
-                    </button>
+                    <Button
+                        variant="contained"
+                        startIcon={<FileDownload />}
+                        sx={{
+                            borderRadius: '12px',
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                            boxShadow: '0 8px 16px -4px rgba(99, 102, 241, 0.3)',
+                            px: 3,
+                            '&:hover': { transform: 'translateY(-1px)', boxShadow: '0 12px 20px -4px rgba(99, 102, 241, 0.4)' }
+                        }}
+                    >
+                        Exporter
+                    </Button>
                 )}
             </Box>
         ),
         renderToolbarInternalActions: ({ table }) => (
-            <Box>
+            <Box sx={{ display: 'flex', gap: 0.5, pr: 2 }}>
                 <MRT_ToggleGlobalFilterButton table={table} />
                 <MRT_ToggleFiltersButton table={table} />
                 <MRT_ToggleDensePaddingButton table={table} />
@@ -330,9 +410,9 @@ export default function IndexInvoice() {
     })
 
     return (
-        <div className="container">
+        <Box>
             <Breadcrumd parent="Invoices" />
             <MaterialReactTable table={mrTable} />
-        </div>
+        </Box>
     )
 }

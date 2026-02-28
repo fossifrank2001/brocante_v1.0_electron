@@ -27,6 +27,7 @@ const iconOfMenus: Record<string, string> = {
     NOTIFICATION: 'ti ti-bell',
     PROFILE: 'ti ti-user-circle',
     USER_ACCESS_PAGE: 'ti ti-shield-lock',
+    ACTIVITY_LOGS: 'ti ti-activity',
 }
 
 const getMenuIcon = (code: string): string => {
@@ -63,7 +64,7 @@ export default function Aside({ role = null }) {
             console.log('auth_access_id ASIDE FUNCTION ::: ', auth_access_id)
             const access = authUser?.accesses ? authUser?.accesses.find(access => access.id === auth_access_id) : null
             console.log('ROLE ASIDE FUNCTION ::: ', role)
-            
+
             if (access && access.role && access.role.id) {
                 await dispatch(loadMenuByRoleAsync(access.role.id))
             } else {
@@ -118,13 +119,12 @@ export default function Aside({ role = null }) {
                 <li className="sidebar-item" key={parent.id}>
                     <motion.div
                         whileTap={{ scale: 0.98 }}
-                        className={`sidebar-link d-flex align-items-center justify-content-between ${
-                            isCurrentPage && !hasChildren
+                        className={`sidebar-link d-flex align-items-center justify-content-between ${isCurrentPage && !hasChildren
                                 ? 'bg-primary text-white'
                                 : isAnyChildActive
                                     ? 'bg-primary-subtle'
                                     : ''
-                        }`}
+                            }`}
                         onClick={() => {
                             if (hasChildren) {
                                 handleToggleParent(parent.id)
@@ -211,7 +211,7 @@ export default function Aside({ role = null }) {
         <aside id="left-sidebar" ref={asideRef} className="left-sidebar">
             <div>
                 <div className="brand-logo d-flex align-items-center justify-content-between">
-                    <Logo 
+                    <Logo
                         showVersion={true}
                         fontSize="1.25rem"
                         imageSize={30}
@@ -226,21 +226,43 @@ export default function Aside({ role = null }) {
                     maxHeight: 'calc(100vh - 200px)',
                     overflowY: 'auto'
                 }}>
-                    <ul id="sidebarnav" className="pt-3">
+                    {/* Reload button - always visible */}
+                    <div className="d-flex align-items-center justify-content-between px-3 py-2">
+                        <small className="text-muted fw-semibold" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Navigation
+                        </small>
+                        <motion.button
+                            whileTap={{ scale: 0.85 }}
+                            animate={isLoading ? { rotate: 360 } : { rotate: 0 }}
+                            transition={isLoading ? { duration: 1, repeat: Infinity, ease: 'linear' } : { duration: 0.2 }}
+                            onClick={getMenus}
+                            disabled={isLoading}
+                            title="Recharger les menus"
+                            style={{
+                                background: 'none',
+                                border: '1px solid rgba(99,102,241,0.25)',
+                                borderRadius: '8px',
+                                color: '#6366f1',
+                                cursor: 'pointer',
+                                padding: '3px 8px',
+                                fontSize: '0.75rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                opacity: isLoading ? 0.6 : 1,
+                                transition: 'all 0.2s',
+                            }}
+                        >
+                            <i className="ti ti-refresh" style={{ fontSize: '14px' }}></i>
+                        </motion.button>
+                    </div>
+                    <ul id="sidebarnav" className="pt-1">
                         {isLoading ? (
                             <SkeletonLoader />
                         ) : error ? (
                             <li className="sidebar-item">
                                 <div className="sidebar-link">
                                     <span>{error}</span>
-                                    <motion.button
-                                        whileTap={{ scale: 0.9 }}
-                                        className="btn btn-sm btn-primary ms-2"
-                                        onClick={getMenus}
-                                    >
-                                        <i className="ti ti-reload me-1"></i>
-                                        Retry
-                                    </motion.button>
                                 </div>
                             </li>
                         ) : menus && menus.length > 0 ? (
@@ -249,14 +271,6 @@ export default function Aside({ role = null }) {
                             <li className="sidebar-item">
                                 <div className="sidebar-link d-flex flex-column gap-3">
                                     <span>No menus available</span>
-                                    <motion.button
-                                        whileTap={{ scale: 0.9 }}
-                                        className="btn btn-sm btn-primary ms-2"
-                                        onClick={getMenus}
-                                    >
-                                        <i className="ti ti-reload me-1"></i>
-                                        Reload
-                                    </motion.button>
                                 </div>
                             </li>
                         )}

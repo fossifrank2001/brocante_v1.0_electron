@@ -1,18 +1,18 @@
-import {ICategory} from "Data/Interfaces/Category.ts";
+import { ICategory } from "Data/Interfaces/Category.ts";
 import { ReactNode } from 'react';
-import {IImage} from "Data/Interfaces/Image.ts";
+import { IImage } from "Data/Interfaces/Image.ts";
 
-export interface ISupplyPayload{
-    name : string;
-    contact_info : string;
-    products_count: number
+export interface ISupplyPayload {
+    name: string;
+    contact_info: string;
+    products_count?: number
 }
 
-export interface ISupply extends ISupplyPayload{
+export interface ISupply extends ISupplyPayload {
     id?: number
 }
 
-export interface IProductDetail{
+export interface IProductDetail {
     size: string,
     quality_class: string,
     material: string,
@@ -52,7 +52,7 @@ export interface IProductDetail{
 }
 
 
-export interface IProduct{
+export interface IProduct {
     id: number;
     name: string;
     manufacturer_reference?: string;
@@ -70,15 +70,15 @@ export interface IProduct{
     updated_at: string;
 }
 
-export interface ISubCategory{
-    id	:number;
+export interface ISubCategory {
+    id: number;
     label: string;
     description: string
     category_id: number;
     category: ICategory;
 }
 
-export interface IProductTableData extends IProduct{
-    status:string;
+export interface IProductTableData extends IProduct {
+    status: string;
     actions: ReactNode;
 }

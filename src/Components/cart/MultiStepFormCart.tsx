@@ -3,19 +3,20 @@ import { Formik, Form, FormikHelpers, FormikProps } from 'formik';
 import * as Yup from 'yup';
 import { motion, AnimatePresence } from 'framer-motion';
 import "Styles/Product.less";
-import {CartItem, clearCart, ICartState} from "Data/Slices/dashboard/seller/cartSlice.ts";
+import { CartItem, clearCart, ICartState } from "Data/Slices/dashboard/seller/cartSlice.ts";
 import CartListing from "Components/cart/CartListing.tsx";
 import CheckoutProcess from "Components/cart/CheckoutProcess.tsx";
-import {IPerson} from "Data/Interfaces/Person.ts";
+import { IPerson } from "Data/Interfaces/Person.ts";
 import CustomerAPI from "Data/Api/Customer.ts";
 import SellAPI from "Data/Api/Sell.ts";
-import {ISellPayload, TPayment, TTransactionType} from "Data/Interfaces/Sell.ts";
-import {useAppContext} from "@/contexts/appContext.tsx";
-import {useAppDispatch} from "@/hooks";
-import {setActivePage} from "Data/Slices/NavigationSlice.ts";
-import {Pages} from "Data/Objects/state.ts";
+import { ISellPayload, TPayment, TTransactionType } from "Data/Interfaces/Sell.ts";
+import { useAppContext } from "@/contexts/appContext.tsx";
+import { useAppDispatch } from "@/hooks";
+import { setActivePage } from "Data/Slices/NavigationSlice.ts";
+import { Pages } from "Data/Objects/state.ts";
 import DebtRecoveryModal from './DebtRecoveryModal';
 import Toast from "Data/Utilities/Toast";
+import ActivityLogService from '@/Services/ActivityLogService';
 
 // LocalStorage keys
 const CART_STEP_KEY = 'brocante_cart_step';
@@ -64,9 +65,10 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
     const context = useAppContext();
     const dispatch = useAppDispatch();
     const isLastStep = step === steps.length - 1;
+    const activityLogService = ActivityLogService.getInstance();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [paymentModes] = useState<Array<string>>(['Cash', 'Orange Money', 'MTN Money']);
-    const [payment, setPayment] = useState<string>('');
+    const [payment, setPayment] = useState<string>('Cash');
     const [persons, setPersons] = useState<IPerson[]>([]);
     const [qPerson, setqPerson] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -101,7 +103,7 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
 
     const getCustomers = useCallback(async (_qPerson: string) => {
         try {
-            const {data: _customers} = await CustomerAPI.get(_qPerson, true);
+            const { data: _customers } = await CustomerAPI.get(_qPerson, true);
             setPersons(_customers || []);
         } catch (error) {
             console.error(error);
@@ -134,7 +136,12 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
         }),
         Yup.object({
             payment: Yup.string().required('Payment method is required').default('Cash'),
-            person: Yup.object().nullable().required('Person is required'),
+            person: Yup.object().nullable().when('transactionType', (transactionType) => {
+                if (transactionType.includes('advance') || transactionType.includes('loan')) {
+                    return Yup.object().nullable().required('Le client est obligatoire pour les avances et crédits');
+                }
+                return Yup.object().nullable().notRequired();
+            }),
             transactionType: Yup.string()
                 .oneOf(['total', 'advance', 'loan'])
                 .required('Transaction type is required'),
@@ -148,7 +155,7 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
             }),
             date_to_pay: Yup.date()
                 .when('transactionType', (transactionType) => {
-                    if (transactionType.includes('loan') || transactionType.includes('advance') ) {
+                    if (transactionType.includes('loan') || transactionType.includes('advance')) {
                         return Yup.date().min(today, 'The payment date cannot be earlier than today').required('Date to pay is required').nullable();
                     }
                     return Yup.date().notRequired().nullable();
@@ -162,13 +169,21 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
 
     const handleSubmit = async (values: FormValues, actions: FormikHelpers<FormValues>) => {
         if (isLastStep) {
+            const customer = values.person;
+
+            // Si pas de client, soumettre directement (paiement total anonyme)
+            if (!customer) {
+                await submitSell(values, actions);
+                actions.setSubmitting(false);
+                return;
+            }
+
             // Vérifier s'il faut ouvrir le modal de recouvrement
             const excessAmount = values.amount_paid - cart.totalPrice;
-            const customer = values.person;
-            const companyBalance = customer?.company_balance || 0;
-            const remainingBalance = customer?.remaining_balance ? JSON.parse(customer.remaining_balance) : {};
+            const companyBalance = customer.company_balance || 0;
+            const remainingBalance = customer.remaining_balance ? JSON.parse(customer.remaining_balance) : {};
             const hasDebts = Object.keys(remainingBalance).length > 0;
-            
+
             // Ouvrir le modal si : (excédent > 0 OU company_balance > 0) ET le client a des dettes
             if ((excessAmount > 0 || companyBalance > 0) && hasDebts) {
                 setPendingSubmission(values);
@@ -176,7 +191,7 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
                 actions.setSubmitting(false);
                 return;
             }
-            
+
             // Sinon, soumettre directement
             await submitSell(values, actions);
         } else {
@@ -184,7 +199,7 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
         }
         actions.setSubmitting(false);
     };
-    
+
     const submitSell = async (values: FormValues, actions: FormikHelpers<FormValues>, useCompanyBalance = false, useSurplusForDebts = false) => {
         try {
             setIsLoading(true);
@@ -209,30 +224,50 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
             setIsLoading(false);
         }
     };
-    
+
     const handleDebtRecoveryConfirm = async (useCompanyBalance: boolean, useExcess: boolean) => {
         if (!pendingSubmission) return;
-        
+
         try {
             setIsLoading(true);
-            
+
             // TODO: Créer un nouvel endpoint backend qui gère:
             // 1. Création de la vente avec paiement
             // 2. Si useExcess: utiliser l'excédent pour recouvrer les dettes
             // 3. Si useCompanyBalance: utiliser le solde client pour recouvrer les dettes
-            
+
             console.log('Options de recouvrement:', { useCompanyBalance, useExcess });
-            
+
             // Backend gère maintenant company_balance et surplus automatiquement
             const treatedData = treatedDataFunc(pendingSubmission, useCompanyBalance, useExcess);
             const result = await SellAPI.create(treatedData);
-            
-            // Afficher le message si des dettes ont été recouvertes
+
+            // Log de la vente
+            console.log('[MultiStepFormCart] About to log sale:', {
+                sellCode: result.data?.sell_code,
+                customer: pendingSubmission.person,
+                totalPrice: cart.totalPrice
+            });
+            activityLogService.logSale(
+                (result.data?.sell_code?.toString() || 'UNKNOWN'),
+                pendingSubmission.person!,
+                cart.items,
+                cart.totalPrice,
+                pendingSubmission
+            );
+            console.log('[MultiStepFormCart] Sale log called');
+
+            // Log du recouvrement de dettes si applicable
             const responseData = result.data as any;
             if (responseData?.debts_recovered && responseData.debts_recovered.length > 0) {
                 const message = `${responseData.debts_recovered.length} dette(s) recouverte(s) !`;
                 Toast.success(message, 3000, 'top-right');
                 await new Promise(resolve => setTimeout(resolve, 3000));
+
+                // Log du recouvrement
+                const method = useExcess && useCompanyBalance ? 'both' : useExcess ? 'excess' : 'balance';
+                const recoveredAmount = responseData.total_recovered || 0;
+                activityLogService.logDebtRecovery(pendingSubmission.person!, recoveredAmount, method);
             }
 
             dispatch(clearCart());
@@ -354,7 +389,7 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
                     </Form>
                 )}
             </Formik>
-            
+
             {pendingSubmission && pendingSubmission.person && (
                 <DebtRecoveryModal
                     open={openDebtModal}
@@ -376,14 +411,14 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
 export default MultiStepFormCart;
 
 
-const treatedDataFunc = (_data: FormValues, useCompanyBalance = false, useSurplusForDebts = false):ISellPayload => {
+const treatedDataFunc = (_data: FormValues, useCompanyBalance = false, useSurplusForDebts = false): ISellPayload => {
     console.log("Data ::: ", _data)
-    
+
     const totalWithShipping = _data.summarize.totalPrice + _data.summarize.shippingPrice;
-    
+
     let actualAmountPaid = 0;
-    
-    switch(_data.transactionType) {
+
+    switch (_data.transactionType) {
         case 'total':
             actualAmountPaid = _data.amount_paid;
             break;
@@ -394,11 +429,11 @@ const treatedDataFunc = (_data: FormValues, useCompanyBalance = false, useSurplu
             actualAmountPaid = 0;
             break;
     }
-    
+
     const remainingBalance = Math.max(0, totalWithShipping - actualAmountPaid);
-    
+
     const formattedData = {
-        person_id: _data.person.id,
+        person_id: _data.person?.id ?? null,
         payment: _data.payment,
         total_amount: _data.summarize.totalPrice,
         tax: _data.summarize.tax,
@@ -422,6 +457,6 @@ const treatedDataFunc = (_data: FormValues, useCompanyBalance = false, useSurplu
     console.log("Transaction type:", _data.transactionType)
     console.log("Amount paid:", actualAmountPaid)
     console.log("Remaining balance:", remainingBalance)
-    
+
     return formattedData;
 };

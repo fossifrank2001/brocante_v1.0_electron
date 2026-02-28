@@ -8,7 +8,6 @@ import {
     MaterialReactTable,
     MRT_ColumnDef,
     MRT_ShowHideColumnsButton,
-    MRT_ToggleDensePaddingButton,
     MRT_ToggleFiltersButton,
     MRT_ToggleFullScreenButton,
     MRT_ToggleGlobalFilterButton,
@@ -16,7 +15,8 @@ import {
 } from 'material-react-table'
 import { MRT_Localization_EN } from "material-react-table/locales/en"
 import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance'
-import { Autocomplete, Box, Link, Stack, TextField } from "@mui/material"
+import { Autocomplete, Box, Stack, TextField, Typography, Chip, IconButton, Tooltip, Zoom, Button, CircularProgress } from "@mui/material"
+import { Visibility, Edit, Refresh, Add } from '@mui/icons-material'
 import UtilMethods from '@/Data/Utilities/UtilMethods'
 import { useAppDispatch, useAppSelector } from '@/hooks'
 import { setActivePage } from '@/Data/Slices/NavigationSlice'
@@ -51,7 +51,7 @@ export default function IndexSell() {
 
     useLayoutEffect(() => {
         context.togglePageLoading()
-        document.title = constants.APP_NAME + ' .:. Sells'
+        document.title = constants.APP_NAME + ' .:. Ventes'
     }, [context])
 
     const resetScroll = () => {
@@ -97,9 +97,8 @@ export default function IndexSell() {
     const getCustomers = useCallback(async (query: string) => {
         setIsLoadingCustomers(true)
         try {
-            const { data: _customers }:never = await CustomerAPI.get(query)
-            const {data}:IPersonList = _customers
-            console.log("Customer", data)
+            const { data: _customers }: never = await CustomerAPI.get(query)
+            const { data }: IPersonList = _customers
             setCustomers(data)
         } catch (e) {
             console.error("Error while loading customers for sell list:", e)
@@ -126,37 +125,45 @@ export default function IndexSell() {
     const tableData: ISellTableData[] = useMemo(() => {
         return sells ? sells.map((_sell) => ({
             ..._sell,
-            person_id: `${_sell?.person.lastname || ""} ${_sell?.person.firstname || ""}`,
+            person_id: _sell?.person ? `${_sell.person.lastname || ""} ${_sell.person.firstname || ""}` : "Client Anonyme",
             actions: (
                 <Stack direction="row" spacing={1}>
-                    <Link
-                        href="#"
-                        onClick={() => {
-                            context.togglePageLoading(true)
-                            dispatch(setActivePage({
-                                page: Pages.SELL,
-                                id: _sell.id,
-                                param: {
-                                    sub_page: 'READ'
-                                }
-                            }))
-                        }}>
-                        <i color="primary" className="ti ti-eye text-dark"></i>
-                    </Link>
-                    <Link
-                        href="#"
-                        onClick={() => {
-                            context.togglePageLoading(true)
-                            dispatch(setActivePage({
-                                page: Pages.SELL,
-                                id: _sell.id,
-                                param: {
-                                    sub_page: 'UPDATE'
-                                }
-                            }))
-                        }}>
-                        <i color="primary" className="ti ti-pencil"></i>
-                    </Link>
+                    <Tooltip title="Voir Détails" arrow TransitionComponent={Zoom}>
+                        <IconButton
+                            size="small"
+                            onClick={() => {
+                                context.togglePageLoading(true)
+                                dispatch(setActivePage({
+                                    page: Pages.SELL,
+                                    id: _sell.id,
+                                    param: {
+                                        sub_page: 'READ'
+                                    }
+                                }))
+                            }}
+                            sx={{ color: '#4f46e5', bgcolor: 'rgba(79, 70, 229, 0.05)', '&:hover': { bgcolor: 'rgba(79, 70, 229, 0.15)' } }}
+                        >
+                            <Visibility sx={{ fontSize: '18px' }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Modifier" arrow TransitionComponent={Zoom}>
+                        <IconButton
+                            size="small"
+                            onClick={() => {
+                                context.togglePageLoading(true)
+                                dispatch(setActivePage({
+                                    page: Pages.SELL,
+                                    id: _sell.id,
+                                    param: {
+                                        sub_page: 'UPDATE'
+                                    }
+                                }))
+                            }}
+                            sx={{ color: '#f59e0b', bgcolor: 'rgba(245, 158, 11, 0.05)', '&:hover': { bgcolor: 'rgba(245, 158, 11, 0.15)' } }}
+                        >
+                            <Edit sx={{ fontSize: '18px' }} />
+                        </IconButton>
+                    </Tooltip>
                 </Stack>
             ),
         })) : []
@@ -166,28 +173,35 @@ export default function IndexSell() {
         () => [
             {
                 accessorKey: "sell_code",
-                header: "Sell Code",
-                size: 100,
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeholder: "filter" },
-                }),
+                header: "Référence",
+                size: 120,
+                Cell: ({ cell }) => (
+                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                        #{cell.getValue() as string}
+                    </Typography>
+                ),
             },
             {
                 accessorKey: "total_amount",
-                header: "Total Amount",
+                header: "Montant Total",
                 size: 150,
-                Cell: ({ cell }) => {
-                    const value = cell.getValue() as number
-                    return value ? UtilMethods.formatNumber(value) : null
-                },
-                muiFilterTextFieldProps: () => ({
-                    inputProps: { placeholder: "filter" },
-                }),
+                Cell: ({ cell }) => (
+                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                        {UtilMethods.formatNumber(cell.getValue() as number)}
+                    </Typography>
+                ),
             },
             {
                 accessorKey: "transaction_type",
-                header: "Transaction Type",
-                size: 150,
+                header: "Type",
+                size: 130,
+                Cell: ({ cell }) => (
+                    <Chip
+                        label={String(cell.getValue()).toUpperCase()}
+                        size="small"
+                        sx={{ fontWeight: 700, fontSize: '0.65rem' }}
+                    />
+                ),
                 filterVariant: "select",
                 filterSelectOptions: ['Total', 'Advance', 'Loan']?.map(_type => ({
                     label: _type,
@@ -196,17 +210,17 @@ export default function IndexSell() {
             },
             {
                 accessorKey: "person_id",
-                header: "Customer",
-                size: 150,
+                header: "Client",
+                size: 200,
                 Filter: ({ column }) => (
                     <Autocomplete
-                        options={customers}
-                        getOptionLabel={(option: IPerson) => `${option.lastname} ${option.firstname}`}
+                        options={customers || []}
+                        getOptionLabel={(option: IPerson) => option ? `${option.lastname || ""} ${option.firstname || ""}` : ""}
                         renderInput={(params) => (
                             <TextField
                                 {...params}
                                 variant="standard"
-                                placeholder="Filter customers"
+                                placeholder="Filtrer par client"
                                 size="small"
                             />
                         )}
@@ -219,21 +233,31 @@ export default function IndexSell() {
                             getCustomers(newInputValue.trim())
                         }}
                         loading={isLoadingCustomers}
-                        loadingText="Loading..."
-                        noOptionsText="No options"
                     />
                 ),
             },
             {
                 accessorKey: "status",
-                header: "Status",
-                size: 150,
+                header: "Statut",
+                size: 130,
                 Cell: ({ cell }) => {
-                    const value = cell.getValue()
-                    const status = typeof value === 'string' ? UtilMethods.getStatus(value) : ''
-                    return <span className={status}>{String(value)}</span>
+                    const value = String(cell.getValue())
+                    return (
+                        <Chip
+                            label={value.toUpperCase()}
+                            size="small"
+                            sx={{
+                                fontWeight: 800,
+                                fontSize: '0.7rem',
+                                bgcolor: value === 'paid' ? 'rgba(16, 185, 129, 0.1)' :
+                                    value === 'pending' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                color: value === 'paid' ? '#10b981' :
+                                    value === 'pending' ? '#f59e0b' : '#ef4444',
+                                border: 'none'
+                            }}
+                        />
+                    )
                 },
-                enableColumnFilter: false,
                 filterVariant: "select",
                 filterSelectOptions: [{
                     label: 'Pending',
@@ -250,16 +274,9 @@ export default function IndexSell() {
                 }],
             },
             {
-                accessorKey: "cancel_reason",
-                header: "Cancel Reason",
-                size: 150,
-                enableColumnFilter: false,
-            },
-            {
                 accessorKey: "actions",
                 header: "Actions",
-                size: 150,
-                unexport: true,
+                size: 100,
                 enableColumnFilter: false,
             },
         ],
@@ -272,19 +289,46 @@ export default function IndexSell() {
         enableRowSelection: true,
         enableStickyHeader: true,
         initialState: {
-            showColumnFilters: true,
-            density: "compact",
+            showColumnFilters: false,
+            density: "comfortable",
         },
         manualFiltering: true,
         manualPagination: true,
         manualSorting: true,
-        muiTablePaperProps: { className: "__table-expandable" },
-        muiTableContainerProps: { className: "__table-container" },
+        muiTablePaperProps: {
+            sx: {
+                borderRadius: '24px',
+                border: '1px solid rgba(0,0,0,0.05)',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.04)',
+                overflow: 'hidden'
+            }
+        },
+        muiTableContainerProps: {
+            sx: { maxHeight: '600px' }
+        },
+        muiTableHeadCellProps: {
+            sx: {
+                bgcolor: '#f8fafc',
+                color: '#64748b',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                py: 2
+            }
+        },
+        muiTableBodyRowProps: {
+            sx: {
+                '&:hover': {
+                    bgcolor: 'rgba(79, 70, 229, 0.02) !important'
+                }
+            }
+        },
         localization: MRT_Localization_EN,
         muiToolbarAlertBannerProps: isError
             ? {
                 color: "error",
-                children: "Error loading data",
+                children: "Erreur lors du chargement des données",
             }
             : undefined,
         onColumnFiltersChange: setColumnFilters,
@@ -304,44 +348,49 @@ export default function IndexSell() {
             rowSelection,
         },
         renderTopToolbarCustomActions: () => (
-            <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
-                <button
+            <Box sx={{ display: "flex", gap: 2, p: 2, alignItems: 'center' }}>
+                <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b', mr: 2 }}>
+                    Ventes
+                </Typography>
+                <Button
+                    variant="outlined"
                     onClick={handleRefresh}
-                    type='button'
-                    className='btn btn-outline-secondary'
-                    style={{ marginLeft: '12px' }}
+                    startIcon={<Refresh />}
                     disabled={isLoading || isRefetching}
+                    sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
                 >
-                    <i className='ti ti-refresh'></i>
-                    <span className='ms-2'>Refresh</span>
-                </button>
+                    Actualiser
+                </Button>
                 {UtilMethods.getHabilitations(authorizations, 'sell').canCreate && (
-                    <button onClick={() => {
-                        context.togglePageLoading(true)
-                        dispatch(setActivePage({
-                            page: Pages.ACCOUNT,
-                            param: {
-                                sub_page: "CREATE"
-                            }
-                        }))
-                    }} type='button' className='btn btn-primary' style={{ marginLeft: '12px' }}>
-                        <i className='ti ti-plus'></i>
-                        <span className='ms-2'>ADD</span>
-                    </button>
-                )}
-                {UtilMethods.getHabilitations(authorizations, 'sell').canExport && (
-                    <button type='button' className='btn btn-outline-primary' style={{ marginLeft: '12px' }}>
-                        <i className='ti ti-file-export'></i>
-                        <span className='ms-2'>EXPORT ALL</span>
-                    </button>
+                    <Button
+                        variant="contained"
+                        onClick={() => {
+                            context.togglePageLoading(true)
+                            dispatch(setActivePage({
+                                page: Pages.SELL,
+                                param: {
+                                    sub_page: "CREATE"
+                                }
+                            }))
+                        }}
+                        startIcon={<Add />}
+                        sx={{
+                            borderRadius: '12px',
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
+                        }}
+                    >
+                        Nouvelle Vente
+                    </Button>
                 )}
             </Box>
         ),
         renderToolbarInternalActions: ({ table }) => (
-            <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pr: 2 }}>
                 <MRT_ToggleGlobalFilterButton table={table} />
                 <MRT_ToggleFiltersButton table={table} />
-                <MRT_ToggleDensePaddingButton table={table} />
                 <MRT_ShowHideColumnsButton table={table} />
                 <MRT_ToggleFullScreenButton table={table} />
             </Box>
@@ -349,9 +398,11 @@ export default function IndexSell() {
     })
 
     return (
-        <div className="container">
-            <Breadcrumd parent="Sell" />
-            <MaterialReactTable table={mrTable} />
-        </div>
+        <Box>
+            <Breadcrumd parent="Accueil" />
+            <Box sx={{ mt: 2 }}>
+                <MaterialReactTable table={mrTable} />
+            </Box>
+        </Box>
     )
 }

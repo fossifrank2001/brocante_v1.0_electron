@@ -6,8 +6,6 @@ import {
   MaterialReactTable,
   MRT_ColumnDef,
   MRT_ShowHideColumnsButton,
-  MRT_TableInstance,
-  MRT_ToggleDensePaddingButton,
   MRT_ToggleFiltersButton,
   MRT_ToggleFullScreenButton,
   MRT_ToggleGlobalFilterButton,
@@ -15,7 +13,21 @@ import {
 } from "material-react-table";
 import { MRT_Localization_EN } from "material-react-table/locales/en";
 import axiosInstance, { IApiResponsePaginated } from '@/Data/Utilities/axiosInstance';
-import { Box, Link, Stack } from "@mui/material";
+import {
+  Box, Stack, IconButton, Tooltip, Typography, Button,
+  Zoom, Chip
+} from "@mui/material";
+import {
+  Refresh,
+  Add,
+  Edit,
+  Delete,
+  Layers,
+  FileDownload,
+  FolderCopy,
+  FolderOpen
+} from '@mui/icons-material';
+import { motion } from 'framer-motion';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { Pages } from '@/Data/Objects/state';
 import { useAppDispatch, useAppSelector } from '@/hooks';
@@ -36,12 +48,11 @@ export default function IndexCategory() {
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
   const [categoryId, setCategoryId] = useState<number | null>(null);
-  const [, setReady] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
-  const [columnFilters, setColumnFilters] = useState<never[]>([]);
+  const [columnFilters, setColumnFilters] = useState<any[]>([]);
   const [globalFilter, setGlobalFilter] = useState("");
-  const [sorting, setSorting] = useState<never[]>([]);
+  const [sorting, setSorting] = useState<any[]>([]);
   const [rowSelection, setRowSelection] = useState({});
   const [categories, setCategories] = useState<ICategory[] | null>(null);
   const [openDetailModal, setOpenDetailModal] = useState(false);
@@ -87,7 +98,6 @@ export default function IndexCategory() {
     } finally {
       setIsLoading(false);
       setIsRefetching(false);
-      setReady(true);
     }
   }, [columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 
@@ -105,72 +115,167 @@ export default function IndexCategory() {
       ...category,
       sub_category: category?.sub_categories?.length ?? 0,
       actions: (
-          <Stack direction="row" spacing={1}>
-            <Link
-                href="#"
-                onClick={() => dispatch(setActivePage({
+        <Stack direction="row" spacing={1}>
+          <Tooltip title="Modifier" arrow TransitionComponent={Zoom}>
+            <IconButton
+              size="small"
+              onClick={() => {
+                context.togglePageLoading(true);
+                dispatch(setActivePage({
                   page: Pages.CATEGORY,
                   id: category?.id,
-                  param: {
-                    sub_page: 'UPDATE'
-                  }
-                }))}
+                  param: { sub_page: 'UPDATE' }
+                }));
+              }}
+              sx={{ color: '#6366f1', bgcolor: 'rgba(99, 102, 241, 0.08)', '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.18)', transform: 'translateY(-2px)' }, transition: 'all 0.2s' }}
             >
-              <i color="primary" className="ti ti-pencil"></i>
-            </Link>
-            <i
-                onClick={() => {
-                  setCategoryId(category.id)
-                  setOpenDetailModal(true)
-                }}
-                className="ti ti-trash cursor-pointer text-danger"
-            ></i>
-          </Stack>
+              <Edit sx={{ fontSize: '18px' }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Supprimer" arrow TransitionComponent={Zoom}>
+            <IconButton
+              size="small"
+              onClick={() => {
+                setCategoryId(category.id!)
+                setOpenDetailModal(true)
+              }}
+              sx={{ color: '#ef4444', bgcolor: 'rgba(239, 68, 68, 0.08)', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.18)', transform: 'translateY(-2px)' }, transition: 'all 0.2s' }}
+            >
+              <Delete sx={{ fontSize: '18px' }} />
+            </IconButton>
+          </Tooltip>
+        </Stack>
       ),
     })) : [];
-  }, [categories, dispatch]);
+  }, [categories, dispatch, context]);
 
   const columns: MRT_ColumnDef<ICategoryTableData>[] = useMemo(() => [
     {
       accessorKey: "label",
-      header: "Label",
-      size: 100,
+      header: "Structure des Catégories",
+      size: 300,
+      Cell: ({ cell, row }) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
+          <Box sx={{
+            width: 44,
+            height: 44,
+            borderRadius: '14px',
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+            color: '#6366f1',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid rgba(99, 102, 241, 0.2)',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.03)'
+          }}>
+            <FolderOpen sx={{ fontSize: 22 }} />
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b', fontSize: '0.95rem' }}>
+              {cell.getValue() as string}
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
+              ID Catégorie: #{row.original.id}
+            </Typography>
+          </Box>
+        </Box>
+      ),
     },
     {
       accessorKey: "sub_category",
-      header: "Sub Categories",
-      size: 150,
+      header: "Contenu",
+      size: 200,
       enableColumnFilter: false,
+      Cell: ({ cell }) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Chip
+            icon={<Layers sx={{ fontSize: '14px !important' }} />}
+            label={`${cell.getValue() || 0} Sous-catégories`}
+            size="small"
+            sx={{
+              fontWeight: 900,
+              bgcolor: 'rgba(100, 116, 139, 0.08)',
+              color: '#475569',
+              border: '1px solid rgba(100, 116, 139, 0.15)',
+              borderRadius: '8px',
+              fontSize: '0.65rem',
+              px: 0.5,
+              letterSpacing: '0.02em'
+            }}
+          />
+        </Box>
+      ),
+    },
+    {
+      accessorKey: "created_at",
+      header: "Date de création",
+      size: 180,
+      enableColumnFilter: false,
+      Cell: ({ cell }) => (
+        <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b' }}>
+          {new Date(cell.getValue() as string).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+        </Typography>
+      )
     },
     {
       accessorKey: "actions",
       header: "Actions",
       size: 150,
       enableColumnFilter: false,
+      enableSorting: false,
     },
   ], []);
 
-  const mrTable: MRT_TableInstance<ICategoryTableData> = useMaterialReactTable({
+  const mrTable = useMaterialReactTable({
     columns: columns,
     data: tableData,
     enableRowSelection: true,
     enableStickyHeader: true,
     initialState: {
       showColumnFilters: true,
-      density: "compact",
+      density: "comfortable",
     },
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
-    muiTablePaperProps: { className: "__table-expandable" },
-    muiTableContainerProps: { className: "__table-container" },
+    muiTablePaperProps: {
+      sx: {
+        borderRadius: '32px',
+        border: '1px solid rgba(255, 255, 255, 0.45)',
+        bgcolor: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.08)',
+        overflow: 'hidden'
+      }
+    },
+    muiTableContainerProps: {
+      className: "__table-container",
+      sx: { maxHeight: '650px' }
+    },
+    muiTableHeadCellProps: {
+      sx: {
+        bgcolor: 'rgba(248, 250, 252, 0.6)',
+        color: '#64748b',
+        fontWeight: 800,
+        fontSize: '0.75rem',
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        py: 3,
+        px: 3
+      }
+    },
+    muiTableBodyRowProps: {
+      sx: {
+        '&:hover': {
+          bgcolor: 'rgba(99, 102, 241, 0.04) !important',
+        },
+        transition: 'background-color 0.2s'
+      }
+    },
+    muiTableBodyCellProps: {
+      sx: { px: 3, py: 2.5, borderBottom: '1px solid rgba(226, 232, 240, 0.5)' }
+    },
     localization: MRT_Localization_EN,
-    muiToolbarAlertBannerProps: isError
-        ? {
-          color: "error",
-          children: "Error loading data",
-        }
-        : undefined,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     onPaginationChange: setPagination,
@@ -188,47 +293,78 @@ export default function IndexCategory() {
       rowSelection,
     },
     renderTopToolbarCustomActions: () => (
-        <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
-          <button
-              onClick={handleRefresh}
-              type='button'
-              className='btn btn-outline-secondary'
-              style={{ marginLeft: '12px' }}
-              disabled={isLoading || isRefetching}
+      <Box sx={{ display: "flex", gap: 3, p: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
+          Catégories
+        </Typography>
+        <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
+          <Button
+            onClick={handleRefresh}
+            variant="outlined"
+            startIcon={<Refresh />}
+            disabled={isLoading || isRefetching}
+            sx={{
+              borderRadius: '14px',
+              textTransform: 'none',
+              fontWeight: 800,
+              borderColor: 'rgba(99, 102, 241, 0.2)',
+              color: '#6366f1',
+              px: 3,
+              bgcolor: 'white',
+              '&:hover': { bgcolor: '#f5f7ff', borderColor: '#6366f1' }
+            }}
           >
-            <i className='ti ti-refresh'></i>
-            <span className='ms-2'>Refresh</span>
-          </button>
+            Rafraîchir
+          </Button>
+
           {UtilMethods.getHabilitations(authorizations, 'category').canCreate && (
-              <button onClick={() => {
+            <Button
+              onClick={() => {
                 context.togglePageLoading(true)
                 dispatch(setActivePage({
                   page: Pages.CATEGORY,
-                  param: {
-                    sub_page: "CREATE"
-                  }
+                  param: { sub_page: "CREATE" }
                 }))
-              }} type='button' className='btn btn-primary' style={{ marginLeft: '12px' }}>
-                <i className='ti ti-plus'></i>
-                <span className='ms-2'>ADD</span>
-              </button>
-          )}
-          {UtilMethods.getHabilitations(authorizations, 'category').canExport && (
-              <button type='button' className='btn btn-outline-primary' style={{ marginLeft: '12px' }}>
-                <i className='ti ti-file-export'></i>
-                <span className='ms-2'>EXPORT ALL</span>
-              </button>
+              }}
+              variant="contained"
+              startIcon={<Add />}
+              sx={{
+                borderRadius: '16px',
+                textTransform: 'none',
+                fontWeight: 900,
+                background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                boxShadow: '0 10px 20px -5px rgba(99, 102, 241, 0.4)',
+                px: 4,
+                py: 1.2,
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 15px 25px -5px rgba(99, 102, 241, 0.5)',
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
+                }
+              }}
+            >
+              Nouvelle Catégorie
+            </Button>
           )}
         </Box>
+      </Box>
     ),
     renderToolbarInternalActions: ({ table }) => (
-        <Box>
-          <MRT_ToggleGlobalFilterButton table={table} />
-          <MRT_ToggleFiltersButton table={table} />
-          <MRT_ToggleDensePaddingButton table={table} />
-          <MRT_ShowHideColumnsButton table={table} />
-          <MRT_ToggleFullScreenButton table={table} />
-        </Box>
+      <Box sx={{ display: 'flex', gap: 1, pr: 3, alignItems: 'center' }}>
+        <MRT_ToggleGlobalFilterButton table={table} />
+        <MRT_ToggleFiltersButton table={table} />
+        <MRT_ShowHideColumnsButton table={table} />
+        <MRT_ToggleFullScreenButton table={table} />
+        {UtilMethods.getHabilitations(authorizations, 'category').canExport && (
+          <Tooltip title="Exporter les catégories" arrow TransitionComponent={Zoom}>
+            <IconButton
+              sx={{ color: '#64748b', '&:hover': { color: '#6366f1', bgcolor: 'rgba(99, 102, 241, 0.05)' } }}
+            >
+              <FileDownload />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
     ),
   });
 
@@ -241,6 +377,7 @@ export default function IndexCategory() {
       setIsDeleted(prev => !prev)
     } catch (error) {
       console.error(error)
+      Toast.error("Erreur lors de la suppression")
     } finally {
       setOpenDetailModal(false)
       setInProgress(false)
@@ -249,20 +386,25 @@ export default function IndexCategory() {
   }
 
   return (
-      <div className="container">
-        <Breadcrumd parent="Categories" />
+    <Box>
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <Box sx={{ mb: 4 }}>
+          <Breadcrumd parent="Administration" />
+        </Box>
         <MaterialReactTable table={mrTable} />
-        <CustomAlert
-            openDetailModal={openDetailModal}
-            content={{
-              style: 'ti ti-info-circle text text-danger',
-              icon: 'Warning',
-              message: 'Would you like to delete this category?'
-            }}
-            onHandleDelete={handleDelete}
-            onHandleOpenDetail={() => setOpenDetailModal(false)}
-            inProgress={inProgress}
-        />
-      </div>
+      </motion.div>
+
+      <CustomAlert
+        openDetailModal={openDetailModal}
+        content={{
+          style: 'ti ti-info-circle text text-danger',
+          icon: 'Suppression définitive',
+          message: 'Êtes-vous sûr de vouloir supprimer cette catégorie ? Toutes les sous-catégories associées peuvent être impactées.'
+        }}
+        onHandleDelete={handleDelete}
+        onHandleOpenDetail={() => setOpenDetailModal(false)}
+        inProgress={inProgress}
+      />
+    </Box>
   );
 }

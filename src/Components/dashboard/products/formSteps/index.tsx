@@ -2,40 +2,44 @@ import React, { useState } from 'react';
 import { Formik, Form, FormikHelpers, FormikProps } from 'formik';
 import * as Yup from 'yup';
 import { motion, AnimatePresence } from 'framer-motion';
-import ProductInfo from "Components/dashboard/products/formSteps/ProductInfo.tsx";
-import SupplierInfo from "Components/dashboard/products/formSteps/SupplierInfo.tsx";
-import ProductDetails from "Components/dashboard/products/formSteps/ProductDetails.tsx";
+import { Box, Typography, Button, CircularProgress } from '@mui/material';
+import { TbPackage, TbSettings, TbTruck, TbChevronRight, TbChevronLeft, TbCheck } from 'react-icons/tb';
+import ProductInfo from "Components/dashboard/products/formSteps/ProductInfo";
+import SupplierInfo from "Components/dashboard/products/formSteps/SupplierInfo";
+import ProductDetails from "Components/dashboard/products/formSteps/ProductDetails";
 import "Styles/Product.less"
-import {IProductPayload} from "Data/Interfaces/Product.ts";
-import ProductAPI from "Data/Api/Product.ts";
-import {useAppDispatch} from "@/hooks";
-import {setActivePage} from "Data/Slices/NavigationSlice.ts";
-import {Pages} from "Data/Objects/state.ts";
-import {useAppContext} from "@/contexts/appContext.tsx";
-import {IProduct} from "Data/Interfaces/Supply.ts";
+import { IProductPayload } from "Data/Interfaces/Product";
+import ProductAPI from "Data/Api/Product";
+import { useAppDispatch } from "@/hooks";
+import { setActivePage } from "Data/Slices/NavigationSlice";
+import { Pages } from "Data/Objects/state";
+import { useAppContext } from "@/contexts/appContext";
+import { IProduct } from "Data/Interfaces/Supply";
+import Toast from '@/Data/Utilities/Toast';
 
-interface FormValues  extends  IProductPayload{}
+interface FormValues extends IProductPayload { }
 
-const stepVariants = {
-    hidden: { opacity: 0},
-    visible: { opacity: 1},
-    exit: { opacity: 0 },
-};
-
-interface IMultiFormProps{
+interface IMultiFormProps {
     record?: IProduct;
-    id?:number
+    id?: number
 }
 
-const MultiStepForm: React.FC<IMultiFormProps> = ({record, id}) => {
+const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
     const [step, setStep] = useState(0);
-    const steps = ['Product Info', 'Product Details', 'Supplier Info'];
+    const steps = [
+        { label: 'Informations', icon: <TbPackage size={20} /> },
+        { label: 'Spécifications', icon: <TbSettings size={20} /> },
+        { label: 'Fournisseurs', icon: <TbTruck size={20} /> }
+    ];
     const isLastStep = step === steps.length - 1;
     const dispatch = useAppDispatch()
     const context = useAppContext()
 
     const initialValues: FormValues = {
-        name:  record?.name ?? '',
+        name: record?.name ?? '',
+        internal_reference: record?.internal_reference ?? '',
+        manufacturer_reference: record?.manufacturer_reference ?? '',
+        barcode: record?.barcode ?? '',
         description: record?.description ?? '',
         price: record?.price ?? 0,
         stock_quantity: record?.stock_quantity ?? 0,
@@ -88,16 +92,17 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({record, id}) => {
 
     const validationSchema = [
         Yup.object({
-            name: Yup.string().required('Name is required'),
+            name: Yup.string().required('Le nom est requis'),
+            internal_reference: Yup.string().required('La référence interne est requise'),
             description: Yup.string(),
-            price: Yup.number().required('Price is required').positive('Must be positive'),
-            stock_quantity: Yup.number().required('Stock quantity is required').positive('Must be positive'),
+            price: Yup.number().required('Le prix est requis').positive('Doit être positif'),
+            stock_quantity: Yup.number().required('La quantité est requise').positive('Doit être positive'),
             subcategory_ids: Yup.array().of(
                 Yup.object().shape({
                     id: Yup.number().required(),
                     label: Yup.string().required(),
                 })
-            ).min(1, 'At least one sub-categories is required'),
+            ).min(1, 'Au moins une sous-catégorie est requise'),
         }),
         Yup.object({
             product_details: Yup.object({
@@ -109,59 +114,34 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({record, id}) => {
                 model: Yup.string(),
                 weight: Yup.string(),
                 dimensions: Yup.string(),
-                power: Yup.string(),
-                voltage: Yup.string(),
-                capacity: Yup.string(),
-                pressure: Yup.string(),
-                temperature: Yup.string(),
-                usage: Yup.string(),
-                features: Yup.string(),
-                notes: Yup.string(),
-                warranty: Yup.string(),
-                compatibility: Yup.string(),
-                finish: Yup.string(),
-                shape: Yup.string(),
-                style: Yup.string(),
-                pattern: Yup.string(),
-                grade: Yup.string(),
-                texture: Yup.string(),
-                application: Yup.string(),
-                gauge: Yup.string(),
-                diameter: Yup.string(),
-                length: Yup.string(),
-                width: Yup.string(),
-                height: Yup.string(),
-                thickness: Yup.string(),
-                capacity_volume: Yup.string(),
-                capacity_weight: Yup.string(),
-                flow_rate: Yup.string(),
-                voltage_rating: Yup.string(),
-                current_rating: Yup.string(),
             }),
         }),
         Yup.object({
             suppliers: Yup.array().of(
                 Yup.object({
-                    name: Yup.string().required('Name is required'),
-                    contact_info: Yup.string().required('Contact info is required'),
+                    name: Yup.string().required('Le nom du fournisseur est requis'),
+                    contact_info: Yup.string().required('Les infos de contact sont requises'),
                 })
-            ).min(1, 'At least one supplier is required'),
+            ).min(1, 'Au moins un fournisseur est requis'),
         }),
     ];
 
     const handleSubmit = async (values: FormValues, actions: FormikHelpers<FormValues>) => {
         if (isLastStep) {
             try {
-                if(record && id){
-                    await ProductAPI.update(id, values)
-                }else{
+                if (record && id) {
+                    await ProductAPI.update(id, values);
+                    Toast.success('Article mis à jour avec succès');
+                } else {
                     await ProductAPI.create(values);
+                    Toast.success('Article créé avec succès');
                 }
                 actions.resetForm();
                 context.togglePageLoading(true);
                 dispatch(setActivePage({ page: Pages.ARTICLE }));
-            } catch (error) {
+            } catch (error: any) {
                 console.error(error);
+                Toast.error(error?.message || "Échec de l'enregistrement de l'article");
             }
         } else {
             setStep(step + 1);
@@ -170,27 +150,69 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({record, id}) => {
     };
 
     return (
-        <div className="container px-0">
-            <div className="stepper mt-4">
-                <ul className="d-flex justify-content-between">
-                    {steps.map((label, index) => (
-                        <li
-                            key={index}
-                            className={`stepper-item ${index <= step ? 'completed' : ''}`}
-                        >
-                            <motion.div
-                                initial={{opacity: 0, y: -10}}
-                                animate={{opacity: 1, y: 0}}
-                                transition={{duration: 0.5}}
-                                className='d-flex justify-content-center align-items-center'
-                            >
-                                <span className='indice me-1'>{index + 1}</span>
-                                <span className='label'>{label}</span>
-                            </motion.div>
-                        </li>
-                    ))}
-                </ul>
-            </div>
+        <Box sx={{ width: '100%' }}>
+            {/* Header & Stepper */}
+            <Box mb={4}>
+                <Box sx={{ maxWidth: 800, mx: 'auto', px: 2, position: 'relative' }}>
+                    {/* Stepper lines */}
+                    <Box sx={{
+                        position: 'absolute',
+                        top: '24px',
+                        left: '10%',
+                        right: '10%',
+                        height: '2px',
+                        bgcolor: '#e2e8f0',
+                        zIndex: 0
+                    }}>
+                        <motion.div
+                            initial={{ width: '0%' }}
+                            animate={{ width: `${(step / (steps.length - 1)) * 100}%` }}
+                            transition={{ duration: 0.3 }}
+                            style={{ height: '100%', backgroundColor: '#4f46e5' }}
+                        />
+                    </Box>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
+                        {steps.map((s, index) => (
+                            <Box key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <motion.div
+                                    initial={false}
+                                    animate={{
+                                        backgroundColor: index <= step ? '#4f46e5' : '#fff',
+                                        borderColor: index <= step ? '#4f46e5' : '#e2e8f0',
+                                        scale: index === step ? 1.1 : 1,
+                                        color: index <= step ? '#fff' : '#64748b'
+                                    }}
+                                    style={{
+                                        width: '48px',
+                                        height: '48px',
+                                        borderRadius: '16px',
+                                        border: '2px solid',
+                                        cursor: index < step ? 'pointer' : 'default',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        backgroundColor: '#fff',
+                                        boxShadow: index === step ? '0 10px 15px -3px rgba(79, 70, 229, 0.3)' : 'none',
+                                    }}
+                                    onClick={() => index < step && setStep(index)}
+                                >
+                                    {index < step ? <TbCheck size={24} /> : s.icon}
+                                </motion.div>
+                                <Typography variant="caption" sx={{
+                                    mt: 1.5,
+                                    fontWeight: index === step ? 800 : 600,
+                                    color: index <= step ? '#1e293b' : '#94a3b8',
+                                    textAlign: 'center'
+                                }}>
+                                    {s.label}
+                                </Typography>
+                            </Box>
+                        ))}
+                    </Box>
+                </Box>
+            </Box>
+
             <Formik
                 initialValues={initialValues}
                 validationSchema={validationSchema[step]}
@@ -198,49 +220,83 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({record, id}) => {
             >
                 {(formik: FormikProps<FormValues>) => (
                     <Form>
-                        <div className='px-2' style={{maxHeight: 'calc(100vh - 400px)', overflowY: 'auto', overflowX: 'hidden'}}>
+                        <Box sx={{
+                            minHeight: '400px',
+                            maxHeight: 'calc(100vh - 350px)',
+                            overflowY: 'auto',
+                            overflowX: 'hidden',
+                            px: { xs: 1, md: 3 },
+                            pb: 3,
+                            '&::-webkit-scrollbar': { width: '8px' },
+                            '&::-webkit-scrollbar-thumb': { bgcolor: '#e2e8f0', borderRadius: '4px' }
+                        }}>
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={step}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="exit"
-                                    variants={stepVariants}
-                                    transition={{type: 'spring', stiffness: 300, damping: 30}}
-                                    className="mb-1"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.3, ease: 'easeInOut' }}
                                 >
-                                    {step === 0 && <ProductInfo categoryRecord={record ? record.subcategories[0]?.category : null}/>}
-                                    {step === 1 && <ProductDetails/>}
-                                    {step === 2 && <SupplierInfo suppliersRecord={record ? record.suppliers : null}/>}
+                                    {step === 0 && <ProductInfo categoryRecord={record ? record.subcategories[0]?.category : null} />}
+                                    {step === 1 && <ProductDetails />}
+                                    {step === 2 && <SupplierInfo suppliersRecord={record ? record.suppliers : null} />}
                                 </motion.div>
                             </AnimatePresence>
-                        </div>
-                        <div className="row mt-3">
-                            <div className="col-12 mx-auto">
-                                <div className="d-flex justify-content-between">
-                                    {step > 0 && (
-                                        <button
-                                            type="button"
-                                            className="btn btn-secondary"
-                                            onClick={() => setStep(step - 1)}
-                                        >
-                                            Back
-                                        </button>
-                                    )}
-                                    <button
-                                        type="submit"
-                                        className="btn btn-primary"
-                                        disabled={formik.isSubmitting || !formik.isValid}
-                                    >
-                                        {isLastStep ? 'Submit' : 'Next'}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        </Box>
+
+                        <Box sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            mt: 4,
+                            p: 2,
+                            borderRadius: '20px',
+                            backgroundColor: 'rgba(255,255,255,0.7)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(226, 232, 240, 0.8)'
+                        }}>
+                            <Button
+                                onClick={() => setStep(step - 1)}
+                                disabled={step === 0 || formik.isSubmitting}
+                                startIcon={<TbChevronLeft size={20} />}
+                                sx={{
+                                    borderRadius: '12px',
+                                    color: '#64748b',
+                                    fontWeight: 700,
+                                    textTransform: 'none',
+                                    visibility: step === 0 ? 'hidden' : 'visible',
+                                    '&:hover': { bgcolor: 'rgba(241, 245, 249, 0.8)' }
+                                }}
+                            >
+                                Précédent
+                            </Button>
+
+                            <Box sx={{ display: 'flex', gap: 2 }}>
+                                <Button
+                                    type="submit"
+                                    variant="contained"
+                                    disabled={formik.isSubmitting || !formik.isValid}
+                                    endIcon={isLastStep ? <TbCheck size={20} /> : <TbChevronRight size={20} />}
+                                    sx={{
+                                        borderRadius: '14px',
+                                        px: 4,
+                                        py: 1.2,
+                                        fontWeight: 800,
+                                        textTransform: 'none',
+                                        background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
+                                        boxShadow: '0 10px 15px -3px rgba(79, 70, 229, 0.4)',
+                                        '&:hover': { background: 'linear-gradient(135deg, #4338ca 0%, #312e81 100%)' }
+                                    }}
+                                >
+                                    {formik.isSubmitting ? <CircularProgress size={20} color="inherit" /> : isLastStep ? "Enregistrer l'article" : 'Continuer'}
+                                </Button>
+                            </Box>
+                        </Box>
                     </Form>
                 )}
             </Formik>
-        </div>
+        </Box>
     );
 };
 

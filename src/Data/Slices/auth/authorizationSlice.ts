@@ -1,10 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IAccessPayload, IHabilitation } from 'Interfaces';
 import { IApiResponseBase } from 'Data/Utilities/axiosInstance';
-import {Pages, UserAuthorizationState } from "Data/Objects/state";
+import { UserAuthorizationState } from "Data/Objects/state";
 import AuthAPI from 'Data/Api/Auth.ts';
-import store, { AppDispatch } from '@/Data/Objects/store';
-import {IPageHandler, setActivePage} from '../NavigationSlice';
+import { AppDispatch } from '@/Data/Objects/store';
 
 const defaultUserAuthorizationState: UserAuthorizationState = {
     auth_access_id: "",
@@ -35,13 +34,6 @@ const userAuthorizationSlice = createSlice({
 export const loadAuthorizationAsync = (payload: IAccessPayload) => async (dispatch: AppDispatch) =>{
     try {
         const response  = await AuthAPI.access(payload);
-        const lastVisitedPage = localStorage.getItem('lastVisitedPage');
-
-        if (lastVisitedPage) {
-            store.dispatch(setActivePage({ page: lastVisitedPage } as  Partial<IPageHandler>));
-        } else {
-            store.dispatch(setActivePage({page: Pages.DASHBOARD}))
-        }
         dispatch(userAuthorizationSlice.actions.loadAccess(response));
     } catch (error) {
         console.log('Error while loading Authorizations ::: ', error)

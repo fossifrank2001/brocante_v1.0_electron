@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { ICategory } from "Data/Interfaces/Category.ts";
 import { ISubCategory } from "Data/Interfaces/Supply.ts";
 import ProductAPI from "Data/Api/Product.ts";
-import UtilMethods from 'Data/Utilities/UtilMethods';
 import { 
     Box, 
     Typography, 
@@ -52,6 +51,14 @@ const ShopFilters: React.FC<ShopFiltersProps> = ({
  }) => {
     const [expandedCategory, setExpandedCategory] = useState<number | false>(categories.length > 0 ? categories[0].id : false);
 
+    const handleExpandAll = () => {
+        if (categories.length > 0) setExpandedCategory(categories[0].id);
+    };
+
+    const handleCollapseAll = () => {
+        setExpandedCategory(false);
+    };
+
     const handleSubCategorySelect = (subCategory: ISubCategory) => {
         const isSelected = selectedSubCategories.some(sc => sc.id === subCategory.id);
         if (isSelected) {
@@ -61,15 +68,7 @@ const ShopFilters: React.FC<ShopFiltersProps> = ({
         }
     };
 
-    const handlePriceSelect = (priceRange: string) => {
-        onPriceChange(priceRange);
-    };
-
-    const handleStatusSelect = (_status: string) => {
-        onStatusChange(_status)
-    }
-
-    const handleCategoryExpand = (categoryId: number) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+    const handleCategoryExpand = (categoryId: number) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
         setExpandedCategory(isExpanded ? categoryId : false);
     };
 
@@ -78,6 +77,27 @@ const ShopFilters: React.FC<ShopFiltersProps> = ({
             selectedSubCategories.some(selected => selected.id === sc.id)
         ).length;
     };
+
+    const handleSelectAllInCategory = (category: ICategory) => {
+        const subCategories = category.sub_categories as ISubCategory[];
+        const toAdd = subCategories.filter(sc => !selectedSubCategories.some(sel => sel.id === sc.id));
+        if (toAdd.length === 0) return;
+        onSubCategoryChange([...selectedSubCategories, ...toAdd]);
+    };
+
+    const handleUnselectAllInCategory = (category: ICategory) => {
+        const subCategories = category.sub_categories as ISubCategory[];
+        const ids = new Set(subCategories.map(sc => sc.id));
+        onSubCategoryChange(selectedSubCategories.filter(sel => !ids.has(sel.id)));
+    };
+
+    const handlePriceSelect = (priceRange: string) => {
+        onPriceChange(priceRange);
+    };
+
+    const handleStatusSelect = (_status: string) => {
+        onStatusChange(_status)
+    }
 
     const priceRanges = [
         { value: '', label: 'Tous les prix' },
@@ -130,6 +150,14 @@ const ShopFilters: React.FC<ShopFiltersProps> = ({
                             Catégories
                         </Typography>
                     </Box>
+                    <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                        <Button size="small" variant="outlined" onClick={handleExpandAll} sx={{ borderRadius: 2, textTransform: 'none' }}>
+                            Déplier
+                        </Button>
+                        <Button size="small" variant="outlined" onClick={handleCollapseAll} sx={{ borderRadius: 2, textTransform: 'none' }}>
+                            Replier
+                        </Button>
+                    </Box>
                     {categories.map((category) => {
                         const selectedCount = getCategorySelectedCount(category);
                         return (
@@ -160,6 +188,24 @@ const ShopFilters: React.FC<ShopFiltersProps> = ({
                                     </Box>
                                 </AccordionSummary>
                                 <AccordionDetails sx={{ pt: 0 }}>
+                                    <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                                        <Button
+                                            size="small"
+                                            variant="text"
+                                            onClick={() => handleSelectAllInCategory(category)}
+                                            sx={{ textTransform: 'none', px: 0.5 }}
+                                        >
+                                            Tout cocher
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            variant="text"
+                                            onClick={() => handleUnselectAllInCategory(category)}
+                                            sx={{ textTransform: 'none', px: 0.5 }}
+                                        >
+                                            Tout décocher
+                                        </Button>
+                                    </Box>
                                     {category.sub_categories.map(subCategory => (
                                         <FormControlLabel
                                             key={subCategory.id}

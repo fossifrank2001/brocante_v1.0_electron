@@ -1,12 +1,12 @@
 import axiosInstance, { IApiResponse, InferApiResponse } from 'Data/Utilities/axiosInstance';
-import {IPerson} from "Data/Interfaces/Person.ts";
+import { IPerson } from "Data/Interfaces/Person.ts";
 import Toast from "Data/Utilities/Toast.ts";
-import {AxiosRequestConfig} from "axios";
+import { AxiosRequestConfig } from "axios";
 
-class CustomerAPI{
+class CustomerAPI {
 
     // Fetch all customers
-    static async get(_q='', withoutPagination = false): Promise<never> {
+    static async get(_q = '', withoutPagination = false): Promise<never> {
         try {
             const params = {
                 params: {
@@ -24,18 +24,29 @@ class CustomerAPI{
         }
     }
 
-    static async create(payload: IPerson): Promise<InferApiResponse<IPerson>>{
+    static async create(payload: IPerson): Promise<InferApiResponse<IPerson>> {
         try {
             const response = await axiosInstance.post(`/customers`, payload);
             Toast.success(response.data.message)
             return response.data;
         } catch (error) {
-            console.error("Error fetching customer:", error);
+            console.error("Error creating customer:", error);
             throw error;
         }
     }
 
-    static async delete(id: number): Promise<IApiResponse>{
+    static async update(id: number, payload: IPerson): Promise<InferApiResponse<IPerson>> {
+        try {
+            const response = await axiosInstance.put(`/customers/${id}`, payload);
+            Toast.success(response.data.message)
+            return response.data;
+        } catch (error) {
+            console.error("Error updating customer:", error);
+            throw error;
+        }
+    }
+
+    static async delete(id: number): Promise<IApiResponse> {
         try {
             const response = await axiosInstance.delete(`/customers/${id}`);
             Toast.success(response.data.message)
@@ -50,7 +61,7 @@ class CustomerAPI{
      * Recouvrir les dettes d'un client avec son company_balance
      * Les dettes sont traitées du plus petit au plus grand pour maximiser le nombre de dettes payées
      */
-    static async recoverDebts(personId: number): Promise<IApiResponse>{
+    static async recoverDebts(personId: number): Promise<IApiResponse> {
         try {
             const response = await axiosInstance.post(`/customers/${personId}/recover-debts`);
             Toast.success(response.data.message, 3000, 'top-right');

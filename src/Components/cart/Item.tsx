@@ -1,29 +1,18 @@
 import React from 'react';
-import {useAppDispatch} from "@/hooks";
-import {addToCart, CartItem, decreaseQuantity, removeFromCart} from "Data/Slices/dashboard/seller/cartSlice.ts";
-import {Link} from "@mui/material";
+import { useAppDispatch } from "@/hooks";
+import { addToCart, CartItem, decreaseQuantity, removeFromCart } from "Data/Slices/dashboard/seller/cartSlice.ts";
+import { IconButton, Typography, Box, Tooltip, Zoom, Chip } from "@mui/material";
+import { Add, Remove, Delete, Inventory2 } from '@mui/icons-material';
+import { motion } from 'framer-motion';
 import Toast from "Data/Utilities/Toast.ts";
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 
-const circleButtonStyles = {
-    borderRadius: '50%',
-    width: '35px',
-    height: '35px',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    border: 'none',
-    cursor: 'pointer',
-    outline: 'none',
-    transform: 'scale(.75)'
-}
-
-const Item: React.FC<{item : CartItem | never; index: number}> = ({item, index}) => {
+const Item: React.FC<{ item: CartItem | never; index: number }> = ({ item, index }) => {
     const dispatch = useAppDispatch()
 
-    const handleRemoveItemFromCart = () =>{
+    const handleRemoveItemFromCart = () => {
         dispatch(removeFromCart(item?.product.id))
-        Toast.success('Item removed successfully.')
+        Toast.success('Article retiré du panier.')
     }
 
     const handleDecreaseQuantity = () => {
@@ -31,45 +20,128 @@ const Item: React.FC<{item : CartItem | never; index: number}> = ({item, index})
     }
 
     const handleIncreaseQuantity = () => {
-        dispatch(addToCart({...item.product}))
+        dispatch(addToCart({ ...item.product }))
     }
 
-    return (<tr style={(() => {
-        return {
-            backgroundColor: "rgba(208,208,208,0.28)",
-            ...(index % 2 === 0) && {transform: 'scale(.99)'}
-        }
-        })()}>
-        <td>{index + 1}</td>
-        <td>
-            <h5>{item.product.name}</h5>
-            <div className='stock-quanity'>
-                <strong>Stock quantity:</strong>{item?.product?.quantity}
-            </div>
-        </td>
-        <td className='d-flex align-items-center h-100'>
-            <Link
-                className='btn btn-secondary text-decoration-none text-white'
-                style={circleButtonStyles}
-                onClick={handleDecreaseQuantity}
-            ><i className='ti ti-minus'></i></Link>
-            <span className='mx-1'>{item.quantity}</span>
-            {(item?.product?.quantity >= item.quantity) && <Link
-                className='btn btn-secondary text-decoration-none text-white'
-                style={circleButtonStyles}
-                onClick={handleIncreaseQuantity}
-            ><i className='ti ti-plus'></i></Link>}
-        </td>
-        <td>
-            {UtilMethods.formatNumber(item.product.price as number)}
-        </td>
-        <td className='fw-bolder'>
-            {UtilMethods.formatNumber(item.subtotal as number)}
-        </td>
-        <td>
-            <i className='ti ti-trash-off text-danger cursor-pointer' onClick={handleRemoveItemFromCart}></i>
-        </td>
-    </tr>
+    const isLowStock = item?.product?.quantity <= 5;
+
+    return (
+        <motion.tr
+            layout
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3, delay: index * 0.05 }}
+            style={{
+                borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
+                transition: 'background-color 0.2s'
+            }}
+        >
+            <td style={{ padding: '24px 20px', verticalAlign: 'middle' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
+                    <Box sx={{
+                        width: 56,
+                        height: 56,
+                        borderRadius: '16px',
+                        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid rgba(0,0,0,0.05)',
+                        boxShadow: '0 4px 12px -2px rgba(0,0,0,0.05)',
+                        position: 'relative'
+                    }}>
+                        <Typography variant="h6" sx={{ fontWeight: 900, color: '#6366f1' }}>
+                            {item.product.name.charAt(0)}
+                        </Typography>
+                    </Box>
+                    <Box>
+                        <Typography variant="body1" sx={{ fontWeight: 800, color: '#1e293b', mb: 0.5, lineHeight: 1.2 }}>
+                            {item.product.name}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Inventory2 sx={{ fontSize: 14, color: isLowStock ? '#ef4444' : '#64748b' }} />
+                            <Typography variant="caption" sx={{
+                                color: isLowStock ? '#ef4444' : '#64748b',
+                                fontWeight: 700,
+                            }}>
+                                {isLowStock ? `Stock critique: ${item?.product?.quantity}` : `Stock disponible: ${item?.product?.quantity}`}
+                            </Typography>
+                        </Box>
+                    </Box>
+                </Box>
+            </td>
+            <td style={{ padding: '20px', verticalAlign: 'middle' }}>
+                <Box sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    bgcolor: 'rgba(241, 245, 249, 0.8)',
+                    p: 0.75,
+                    borderRadius: '12px',
+                    border: '1px solid rgba(0,0,0,0.03)'
+                }}>
+                    <IconButton
+                        size="small"
+                        onClick={handleDecreaseQuantity}
+                        sx={{
+                            bgcolor: '#fff',
+                            width: 28,
+                            height: 28,
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                            '&:hover': { bgcolor: '#fff', transform: 'scale(1.1)', color: '#ef4444' },
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <Remove fontSize="small" sx={{ fontSize: 16 }} />
+                    </IconButton>
+                    <Typography variant="body1" sx={{ minWidth: 32, textAlign: 'center', fontWeight: 900, color: '#1e293b' }}>
+                        {item.quantity}
+                    </Typography>
+                    <IconButton
+                        size="small"
+                        onClick={handleIncreaseQuantity}
+                        disabled={item?.product?.quantity < item.quantity}
+                        sx={{
+                            bgcolor: '#fff',
+                            width: 28,
+                            height: 28,
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                            '&:hover': { bgcolor: '#fff', transform: 'scale(1.1)', color: '#10b981' },
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <Add fontSize="small" sx={{ fontSize: 16 }} />
+                    </IconButton>
+                </Box>
+            </td>
+            <td style={{ padding: '20px', verticalAlign: 'middle', textAlign: 'right' }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#64748b' }}>
+                    {UtilMethods.formatNumber(item.product.price as never)}
+                </Typography>
+            </td>
+            <td style={{ padding: '20px', verticalAlign: 'middle', textAlign: 'right' }}>
+                <Typography variant="h6" sx={{ fontWeight: 900, color: '#6366f1', letterSpacing: '-0.02em' }}>
+                    {UtilMethods.formatNumber(item.subtotal as never)}
+                </Typography>
+            </td>
+            <td style={{ padding: '20px', verticalAlign: 'middle', textAlign: 'right' }}>
+                <Tooltip title="Retirer" arrow TransitionComponent={Zoom}>
+                    <IconButton
+                        size="small"
+                        onClick={handleRemoveItemFromCart}
+                        sx={{
+                            color: '#94a3b8',
+                            bgcolor: 'rgba(239, 68, 68, 0.02)',
+                            '&:hover': { color: '#ef4444', bgcolor: 'rgba(239, 68, 68, 0.08)', transform: 'rotate(8deg)' },
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <Delete fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+            </td>
+        </motion.tr>
     );
 };
 

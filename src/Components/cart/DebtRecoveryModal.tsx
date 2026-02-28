@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
     Dialog,
-    DialogTitle,
     DialogContent,
     DialogActions,
     Button,
@@ -9,25 +8,23 @@ import {
     Box,
     Alert,
     AlertTitle,
-    Checkbox,
-    FormControlLabel,
     Divider,
     CircularProgress,
-    Paper,
-    Chip,
     Card,
     CardContent,
     Switch,
-    Grid
+    Grid,
+    Chip
 } from '@mui/material';
 import {
     AccountBalance,
-    AttachMoney,
     Warning,
     CheckCircle,
     TrendingDown,
-    Info
+    Info,
+    AttachMoney
 } from '@mui/icons-material';
+import { motion, AnimatePresence } from 'framer-motion';
 import { IPerson } from '@/Data/Interfaces/Person';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 
@@ -53,12 +50,12 @@ const DebtRecoveryModal = ({
     const [useCompanyBalance, setUseCompanyBalance] = useState(true);
     const [useExcess, setUseExcess] = useState(true);
 
-    const remainingBalance = customer.remaining_balance 
-        ? JSON.parse(customer.remaining_balance) 
+    const remainingBalance = customer.remaining_balance
+        ? JSON.parse(customer.remaining_balance)
         : {};
     const hasDebts = Object.keys(remainingBalance).length > 0;
-    const totalDebts = Object.values(remainingBalance).reduce(
-        (sum: number, amount: any) => sum + parseFloat(amount), 
+    const totalDebts: number = Object.values<any>(remainingBalance).reduce(
+        (sum: number, amount: any) => sum + parseFloat(amount as string),
         0
     );
 
@@ -67,7 +64,7 @@ const DebtRecoveryModal = ({
 
     // Calculer ce qui peut être couvert
     const excessCoverage = Math.min(excessAmount, totalDebts);
-    const balanceCoverage = hasCompanyBalance && useCompanyBalance 
+    const balanceCoverage = hasCompanyBalance && useCompanyBalance
         ? Math.min(companyBalance, totalDebts - excessCoverage)
         : 0;
     const totalCoverage = excessCoverage + balanceCoverage;
@@ -78,35 +75,40 @@ const DebtRecoveryModal = ({
     };
 
     return (
-        <Dialog 
-            open={open} 
+        <Dialog
+            open={open}
             onClose={!loading ? onClose : undefined}
             maxWidth="lg"
             fullWidth
             PaperProps={{
                 sx: {
-                    borderRadius: 3,
+                    borderRadius: 2,
                     overflow: 'hidden'
                 }
             }}
         >
-            <Box sx={{ p: 3, borderBottom: (theme) => `1px solid ${theme.palette.divider}`, bgcolor: 'background.paper' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <AccountBalance color="action" sx={{ fontSize: 32 }} />
-                    <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                            Gestion du recouvrement
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            Utilisez l'excédent et le solde client pour réduire les dettes
-                        </Typography>
-                    </Box>
+            {/* Header */}
+            <Box sx={{
+                p: 2,
+                borderBottom: '1px solid #e0e0e0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5
+            }}>
+                <AccountBalance sx={{ fontSize: 28, color: '#1a237e' }} />
+                <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a237e' }}>
+                        Gestion du recouvrement
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Utilisez l'excédent et le solde client pour réduire les dettes
+                    </Typography>
                 </Box>
             </Box>
 
-            <DialogContent sx={{ p: 3, bgcolor: 'background.default' }}>
+            <DialogContent sx={{ p: 2, pt: 1 }}>
                 {!hasDebts ? (
-                    <Alert 
+                    <Alert
                         severity="info"
                         icon={<Info />}
                         sx={{ borderRadius: 2, mt: 2 }}
@@ -117,223 +119,303 @@ const DebtRecoveryModal = ({
                 ) : (
                     <Box>
                         {/* Résumé de la Transaction */}
-                        <Card variant="outlined" sx={{ mb: 3, borderRadius: 2 }}>
-                            <CardContent>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                                    <AttachMoney color="action" />
-                                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                                        Résumé de la Transaction
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                            <Card elevation={0} sx={{ mb: 3, borderRadius: '20px', bgcolor: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                                <CardContent sx={{ p: 3 }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 3, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        💰 Synthèse Financière
                                     </Typography>
-                                </Box>
-                                <Grid container spacing={2}>
-                                    <Grid item xs={12} md={4}>
-                                        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                                            <Typography variant="caption" color="text.secondary">Montant de la vente</Typography>
-                                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                                {UtilMethods.formatNumber(totalAmount)}
-                                            </Typography>
-                                        </Paper>
-                                    </Grid>
-                                    <Grid item xs={12} md={4}>
-                                        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                                            <Typography variant="caption" color="text.secondary">Excédent de paiement</Typography>
-                                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                                +{UtilMethods.formatNumber(excessAmount)}
-                                            </Typography>
-                                        </Paper>
-                                    </Grid>
-                                    {hasCompanyBalance && (
-                                        <Grid item xs={12} md={4}>
-                                            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                                                <Typography variant="caption" color="text.secondary">Solde client</Typography>
-                                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                                    {UtilMethods.formatNumber(companyBalance)}
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12} md={hasCompanyBalance ? 4 : 6}>
+                                            <Box sx={{ bgcolor: 'white', p: 2, borderRadius: '16px', border: '1px solid #f1f5f9', textAlign: 'center' }}>
+                                                <Typography variant="caption" sx={{ fontWeight: 700, color: '#94a3b8' }}>Vente Actuelle</Typography>
+                                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#334155' }}>
+                                                    {UtilMethods.formatNumber(totalAmount)}
                                                 </Typography>
-                                            </Paper>
+                                            </Box>
                                         </Grid>
-                                    )}
-                                </Grid>
-                            </CardContent>
-                        </Card>
+                                        <Grid item xs={12} md={hasCompanyBalance ? 4 : 6}>
+                                            <Box sx={{ bgcolor: 'white', p: 2, borderRadius: '16px', border: '1px solid #f1f5f9', textAlign: 'center' }}>
+                                                <Typography variant="caption" sx={{ fontWeight: 700, color: '#059669' }}>Excédent Reçu</Typography>
+                                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#10b981' }}>
+                                                    +{UtilMethods.formatNumber(excessAmount)}
+                                                </Typography>
+                                            </Box>
+                                        </Grid>
+                                        {hasCompanyBalance && (
+                                            <Grid item xs={12} md={4}>
+                                                <Box sx={{ bgcolor: 'white', p: 2, borderRadius: '16px', border: '1px solid #f1f5f9', textAlign: 'center' }}>
+                                                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#3b82f6' }}>Solde Disponible</Typography>
+                                                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#3b82f6' }}>
+                                                        {UtilMethods.formatNumber(companyBalance)}
+                                                    </Typography>
+                                                </Box>
+                                            </Grid>
+                                        )}
+                                    </Grid>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
 
                         {/* Dettes du Client */}
-                        <Card variant="outlined" sx={{ mb: 3, borderRadius: 2 }}>
-                            <CardContent>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                                    <Warning color="warning" />
-                                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                                        Dettes Impayées du Client
-                                    </Typography>
-                                </Box>
-                                <Paper variant="outlined" sx={{ p: 2, maxHeight: '200px', overflowY: 'auto', borderRadius: 2 }}>
-                                    {Object.entries(remainingBalance).map(([sellCode, amount]: [string, any]) => (
-                                        <Box 
-                                            key={sellCode} 
-                                            sx={{ 
-                                                display: 'flex', 
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                                p: 1,
-                                                mb: 1,
-                                                borderRadius: 1,
-                                                border: (theme) => `1px solid ${theme.palette.divider}`
-                                            }}
-                                        >
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <TrendingDown color="action" sx={{ fontSize: 20 }} />
-                                                <Typography sx={{ fontWeight: 500 }}>Vente {sellCode}</Typography>
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                            <Card elevation={0} sx={{ mb: 3, borderRadius: '20px', border: '1px solid #fee2e2', bgcolor: 'rgba(239, 68, 68, 0.02)' }}>
+                                <CardContent sx={{ p: 3 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                            <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+                                                <Warning fontSize="small" />
                                             </Box>
-                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                {UtilMethods.formatNumber(parseFloat(amount))}
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                Dettes Impayées
                                             </Typography>
                                         </Box>
-                                    ))}
-                                </Paper>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, mt: 2 }}>
-                                    <Typography variant="subtitle2" color="text.secondary">Total des dettes</Typography>
-                                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                        {UtilMethods.formatNumber(totalDebts)}
-                                    </Typography>
-                                </Box>
-                            </CardContent>
-                        </Card>
-
-                        {/* Options de Recouvrement */}
-                        <Card variant="outlined" sx={{ mb: 3, borderRadius: 2 }}>
-                            <CardContent>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                                    ⚙️ Options de Recouvrement
-                                </Typography>
-                                <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <Box sx={{ flex: 1 }}>
-                                            <Typography sx={{ fontWeight: 600 }}>
-                                                💰 Utiliser l'excédent de paiement
-                                            </Typography>
-                                            <Typography variant="caption" color="text.secondary">
-                                                Excédent : {UtilMethods.formatNumber(excessAmount)}
-                                            </Typography>
-                                        </Box>
-                                        <Switch
-                                            checked={useExcess}
-                                            onChange={(e) => setUseExcess(e.target.checked)}
-                                            color="primary"
+                                        <Chip
+                                            label={`${Object.keys(remainingBalance).length} créance(s)`}
+                                            size="small"
+                                            sx={{ bgcolor: '#fee2e2', color: '#991b1b', fontWeight: 700, borderRadius: '8px' }}
                                         />
                                     </Box>
-                                </Paper>
 
-                                {hasCompanyBalance && (
-                                    <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Box sx={{ flex: 1 }}>
-                                                <Typography sx={{ fontWeight: 600 }}>
-                                                    🏦 Utiliser le solde client
-                                                </Typography>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    Solde disponible : {UtilMethods.formatNumber(companyBalance)}
+                                    <Box sx={{ maxHeight: '200px', overflowY: 'auto', pr: 0.5, '&::-webkit-scrollbar': { width: '4px' }, '&::-webkit-scrollbar-thumb': { bgcolor: '#f1f5f9', borderRadius: '4px' } }}>
+                                        {Object.entries(remainingBalance).map(([sellCode, amount]: [string, any]) => (
+                                            <Box
+                                                key={sellCode}
+                                                sx={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    p: 2,
+                                                    mb: 1.5,
+                                                    borderRadius: '12px',
+                                                    bgcolor: 'white',
+                                                    border: '1px solid #f1f5f9',
+                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                                                }}
+                                            >
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                                    <TrendingDown sx={{ fontSize: 18, color: '#94a3b8' }} />
+                                                    <Box>
+                                                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b' }}>Réf. {sellCode}</Typography>
+                                                        <Typography variant="caption" sx={{ color: '#64748b' }}>Vente à crédit</Typography>
+                                                    </Box>
+                                                </Box>
+                                                <Typography variant="body2" sx={{ fontWeight: 800, color: '#ef4444' }}>
+                                                    {UtilMethods.formatNumber(parseFloat(amount))}
                                                 </Typography>
                                             </Box>
-                                            <Switch
-                                                checked={useCompanyBalance}
-                                                onChange={(e) => setUseCompanyBalance(e.target.checked)}
-                                                color="primary"
-                                            />
-                                        </Box>
-                                    </Paper>
-                                )}
-                            </CardContent>
-                        </Card>
+                                        ))}
+                                    </Box>
 
-                        {/* Prévisualisation */}
-                        <Card variant="outlined" sx={{ borderRadius: 2 }}>
-                            <CardContent>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                                    {remainingDebt === 0 ? <CheckCircle color="success" /> : <Warning color="warning" />}
-                                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                                        Prévisualisation du Recouvrement
-                                    </Typography>
-                                </Box>
-                                <Box sx={{ display: 'grid', gap: 1.5 }}>
-                                    {useExcess && excessCoverage > 0 && (
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
-                                            <Typography variant="body2">✅ Excédent utilisé</Typography>
-                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                {UtilMethods.formatNumber(excessCoverage)}
-                                            </Typography>
-                                        </Box>
-                                    )}
-                                    {useCompanyBalance && balanceCoverage > 0 && (
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
-                                            <Typography variant="body2">✅ Solde client utilisé</Typography>
-                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                {UtilMethods.formatNumber(balanceCoverage)}
-                                            </Typography>
-                                        </Box>
-                                    )}
-                                    <Divider sx={{ my: 1 }} />
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1.5 }}>
-                                        <Typography variant="body1" sx={{ fontWeight: 600 }}>Total couvert</Typography>
-                                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                            {UtilMethods.formatNumber(totalCoverage)}
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, pt: 2, borderTop: '1px dashed #f1f5f9' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b' }}>Total de la dette cumulée</Typography>
+                                        <Typography variant="h5" sx={{ fontWeight: 900, color: '#ef4444' }}>
+                                            {UtilMethods.formatNumber(totalDebts)}
                                         </Typography>
                                     </Box>
-                                    {remainingDebt > 0 ? (
-                                        <Alert severity="warning">
-                                            <Typography variant="body2">
-                                                ⚠️ Dettes restantes :
-                                            </Typography>
-                                        </Alert>
-                                    ) : (
-                                        <Alert severity="success">
-                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                🎉 Toutes les dettes seront couvertes !
-                                            </Typography>
-                                        </Alert>
-                                    )}
-                                    {!useExcess && !useCompanyBalance && (
-                                        <Typography variant="body2" sx={{ textAlign: 'center', fontStyle: 'italic', opacity: 0.9 }}>
-                                            L'excédent sera ajouté au solde client.
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+
+                        {/* Options de Recouvrement */}
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                            <Card elevation={0} sx={{ mb: 3, borderRadius: '24px', border: '1px solid #f1f5f9' }}>
+                                <CardContent sx={{ p: 3 }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 3, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        ⚙️ Stratégie de règlement
+                                    </Typography>
+
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                        {excessAmount > 0 && (
+                                            <Box sx={{
+                                                p: 2, borderRadius: '16px', bgcolor: useExcess ? 'rgba(16, 185, 129, 0.04)' : 'transparent',
+                                                border: `1px solid ${useExcess ? 'rgba(16, 185, 129, 0.2)' : '#f1f5f9'}`,
+                                                transition: 'all 0.3s'
+                                            }}>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                        <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                                                            <AttachMoney fontSize="small" />
+                                                        </Box>
+                                                        <Box>
+                                                            <Typography sx={{ fontWeight: 700, color: useExcess ? '#065f46' : '#64748b' }}>Excédent actuel</Typography>
+                                                            <Typography variant="caption" sx={{ fontWeight: 600, color: useExcess ? '#059669' : '#94a3b8' }}>
+                                                                Recouvrer {UtilMethods.formatNumber(excessAmount)} depuis le reçu
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                    <Switch
+                                                        checked={useExcess}
+                                                        onChange={(e) => setUseExcess(e.target.checked)}
+                                                        sx={{
+                                                            '& .MuiSwitch-switchBase.Mui-checked': { color: '#10b981' },
+                                                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: '#10b981' }
+                                                        }}
+                                                    />
+                                                </Box>
+                                            </Box>
+                                        )}
+
+                                        {hasCompanyBalance && (
+                                            <Box sx={{
+                                                p: 2, borderRadius: '16px', bgcolor: useCompanyBalance ? 'rgba(59, 130, 246, 0.04)' : 'transparent',
+                                                border: `1px solid ${useCompanyBalance ? 'rgba(59, 130, 246, 0.2)' : '#f1f5f9'}`,
+                                                transition: 'all 0.3s'
+                                            }}>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                        <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+                                                            <AccountBalance fontSize="small" />
+                                                        </Box>
+                                                        <Box>
+                                                            <Typography sx={{ fontWeight: 700, color: useCompanyBalance ? '#1e40af' : '#64748b' }}>Utiliser le Solde</Typography>
+                                                            <Typography variant="caption" sx={{ fontWeight: 600, color: useCompanyBalance ? '#1d4ed8' : '#94a3b8' }}>
+                                                                Recouvrer {UtilMethods.formatNumber(companyBalance)} depuis le compte client
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                    <Switch
+                                                        checked={useCompanyBalance}
+                                                        onChange={(e) => setUseCompanyBalance(e.target.checked)}
+                                                        sx={{
+                                                            '& .MuiSwitch-switchBase.Mui-checked': { color: '#3b82f6' },
+                                                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: '#3b82f6' }
+                                                        }}
+                                                    />
+                                                </Box>
+                                            </Box>
+                                        )}
+                                    </Box>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+
+                        {/* Prévisualisation */}
+                        <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}>
+                            <Card elevation={0} sx={{
+                                borderRadius: '24px',
+                                border: '1px solid',
+                                borderColor: remainingDebt === 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                                bgcolor: remainingDebt === 0 ? 'rgba(16, 185, 129, 0.02)' : 'rgba(245, 158, 11, 0.02)'
+                            }}>
+                                <CardContent sx={{ p: 3 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                                        {remainingDebt === 0 ?
+                                            <Box sx={{ p: 1, borderRadius: '50%', bgcolor: '#dcfce7', color: '#166534' }}><CheckCircle /></Box> :
+                                            <Box sx={{ p: 1, borderRadius: '50%', bgcolor: '#fef3c7', color: '#92400e' }}><Warning /></Box>
+                                        }
+                                        <Typography variant="h6" sx={{ fontWeight: 800, color: remainingDebt === 0 ? '#065f46' : '#92400e' }}>
+                                            {remainingDebt === 0 ? 'Recouvrement Complet' : 'Dettes Résiduelles'}
                                         </Typography>
-                                    )}
-                                </Box>
-                            </CardContent>
-                        </Card>
+                                    </Box>
+
+                                    <Box sx={{ p: 2.5, borderRadius: '20px', bgcolor: 'white', border: '1px solid rgba(0,0,0,0.05)' }}>
+                                        <Box sx={{ display: 'grid', gap: 2 }}>
+                                            {useExcess && excessCoverage > 0 && (
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b' }}>Règlement par l'excédent</Typography>
+                                                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#10b981' }}>
+                                                        -{UtilMethods.formatNumber(excessCoverage)}
+                                                    </Typography>
+                                                </Box>
+                                            )}
+                                            {useCompanyBalance && balanceCoverage > 0 && (
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b' }}>Règlement par le solde</Typography>
+                                                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#3b82f6' }}>
+                                                        -{UtilMethods.formatNumber(balanceCoverage)}
+                                                    </Typography>
+                                                </Box>
+                                            )}
+                                            <Divider sx={{ borderStyle: 'dashed' }} />
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>Total Recouvré</Typography>
+                                                <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b' }}>
+                                                    {UtilMethods.formatNumber(totalCoverage)}
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                    </Box>
+
+                                    <AnimatePresence mode="wait">
+                                        {remainingDebt > 0 ? (
+                                            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} key="debt">
+                                                <Alert severity="warning" sx={{ mt: 3, borderRadius: '16px', fontWeight: 600 }}>
+                                                    Dette restante après opération : {UtilMethods.formatNumber(remainingDebt)}
+                                                </Alert>
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} key="success">
+                                                <Alert severity="success" sx={{ mt: 3, borderRadius: '16px', fontWeight: 600 }}>
+                                                    Félicitations ! Toutes les dettes sont apurées.
+                                                </Alert>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
                     </Box>
                 )}
             </DialogContent>
 
-            <DialogActions sx={{ p: 3, bgcolor: 'background.default', gap: 2 }}>
-                <Button 
-                    onClick={onClose} 
+            <DialogActions sx={{
+                p: 3,
+                bgcolor: '#f8fafc',
+                borderTop: '1px solid rgba(0,0,0,0.05)',
+                gap: 2
+            }}>
+                <Button
+                    onClick={onClose}
                     disabled={loading}
-                    variant="outlined"
-                    size="large"
-                    sx={{ borderRadius: 2 }}
+                    variant="text"
+                    sx={{
+                        borderRadius: '12px',
+                        textTransform: 'none',
+                        fontWeight: 700,
+                        color: '#64748b',
+                        px: 3
+                    }}
                 >
                     Annuler
                 </Button>
-                {hasDebts && (
+                {hasDebts ? (
                     <Button
                         variant="contained"
                         onClick={handleConfirm}
                         disabled={loading || (!useExcess && !useCompanyBalance)}
                         startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <CheckCircle />}
-                        size="large"
-                        sx={{ borderRadius: 2, px: 4 }}
+                        sx={{
+                            borderRadius: '14px',
+                            textTransform: 'none',
+                            fontWeight: 800,
+                            px: 4,
+                            py: 1.2,
+                            boxShadow: '0 8px 20px rgba(79, 70, 229, 0.25)',
+                            bgcolor: '#4f46e5',
+                            '&:hover': { bgcolor: '#4338ca' }
+                        }}
                     >
                         {loading ? 'Traitement en cours...' : 'Confirmer le Recouvrement'}
                     </Button>
-                )}
-                {!hasDebts && (
+                ) : (
                     <Button
                         variant="contained"
                         onClick={() => onConfirm(false, true)}
                         disabled={loading}
-                        size="large"
                         startIcon={<CheckCircle />}
-                        sx={{ borderRadius: 2, px: 4 }}
+                        sx={{
+                            borderRadius: '14px',
+                            textTransform: 'none',
+                            fontWeight: 800,
+                            px: 4,
+                            py: 1.2,
+                            boxShadow: '0 8px 20px rgba(16, 185, 129, 0.25)',
+                            bgcolor: '#10b981',
+                            '&:hover': { bgcolor: '#059669' }
+                        }}
                     >
-                        Continuer
+                        Valider & Continuer
                     </Button>
                 )}
             </DialogActions>

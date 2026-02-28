@@ -1,59 +1,23 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useFormikContext, FieldArray } from 'formik';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Multiselect } from 'multiselect-react-dropdown';
 import SupplyAPI from "Data/Api/Suppliers.ts";
-import {ISupply} from "Data/Interfaces/Supply.ts";
-import { IProductPayload } from 'Interfaces';
-import { Tooltip } from '@mui/material';
+import { ISupply } from "Data/Interfaces/Supply.ts";
+import { IProductPayload } from 'Data/Interfaces/Product';
+import { Box, Typography, Button, TextField, Card, IconButton, Tooltip, Grid, InputAdornment } from '@mui/material';
+import { TbUsers, TbSearch, TbTrash, TbBuildingStore, TbPhone, TbUserPlus } from 'react-icons/tb';
 import './SupplierInfo.scss';
 
-interface Supplier extends  ISupply{}
-
-const buttonVariants = {
-    hover: { scale: 1.05 },
-    tap: { scale: 0.95 },
-};
-
-const itemVariants = {
-    hidden: { opacity: 0, y: -20 },
-    visible: { 
-        opacity: 1, 
-        y: 0,
-        transition: {
-            type: "spring",
-            stiffness: 300,
-            damping: 30
-        }
-    },
-    exit: { 
-        opacity: 0, 
-        y: 20,
-        transition: {
-            duration: 0.2
-        }
-    },
-};
-
-const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.1
-        }
-    }
-};
+interface Supplier extends ISupply { }
 
 interface ISupplyInfoProps {
     suppliersRecord: ISupply[]
 }
 
-const SupplierInfo: React.FC <ISupplyInfoProps> = ({suppliersRecord}) => {
-    const { values, handleChange, setFieldValue } = useFormikContext<IProductPayload>();
+const SupplierInfo: React.FC<ISupplyInfoProps> = ({ suppliersRecord }) => {
+    const { values, handleChange, setFieldValue, handleBlur } = useFormikContext<IProductPayload>();
     const [loading, setLoading] = useState(false);
-
-    const [_qSupply] = useState('');
     const [suppliers, setSuppliers] = useState<ISupply[] | null>(null);
     const [selectedSuppliers, setSelectedSupplier] = useState<ISupply[] | null>(null);
 
@@ -67,149 +31,181 @@ const SupplierInfo: React.FC <ISupplyInfoProps> = ({suppliersRecord}) => {
         setSelectedSupplier(selectedList);
     };
 
-    const getSuppliers = useCallback(async (_q:string)=>{
+    const getSuppliers = useCallback(async () => {
         try {
-            setLoading(true)
-            const {data: __suppliers} = await SupplyAPI.index();
+            setLoading(true);
+            const { data: __suppliers } = await SupplyAPI.index();
             setSuppliers(__suppliers as ISupply[] | null);
-            if(suppliersRecord){
-                setSelectedSupplier(suppliersRecord)
+            if (suppliersRecord) {
+                setSelectedSupplier(suppliersRecord);
             }
-        }catch (e){
-            console.error('Error adding new supplier: ', e);
-        }finally {
-            setLoading(false)
+        } catch (e) {
+            console.error('Error fetching suppliers: ', e);
+        } finally {
+            setLoading(false);
         }
-    }, [suppliersRecord])
+    }, [suppliersRecord]);
 
     useEffect(() => {
-        getSuppliers(_qSupply)
-    }, [getSuppliers, _qSupply, suppliersRecord]);
+        getSuppliers();
+    }, [getSuppliers, suppliersRecord]);
 
     return (
-        <div className="supplier-info">
-            <div className="card border-0 shadow-sm mb-4">
-                <div className="card-header bg-light border-0">
-                    <h6 className="mb-0 d-flex align-items-center">
-                        <i className="ti ti-users me-2 text-primary"></i>
-                        Supplier Management
-                    </h6>
-                </div>
-                <div className="card-body">
-                    <AnimatePresence>
-                        <FieldArray name="suppliers">
-                            {({ remove, push }) => (
-                                <div>
-                                    <div className="row mb-4">
-                                        <div className="col-md-9">
-                                            <div className="form-group">
-                                                <label className="d-flex align-items-center gap-2 mb-2">
-                                                    <i className="ti ti-search text-primary"></i>
-                                                    Select Existing Suppliers
-                                                </label>
-                                                <Multiselect
-                                                    options={suppliers ?? []}
-                                                    selectedValues={selectedSuppliers ?? []}
-                                                    onSelect={handleSupplierSelect}
-                                                    onRemove={handleSupplierSelect}
-                                                    displayValue="name"
-                                                    loading={loading}
-                                                    placeholder="Search and select suppliers..."
-                                                    style={{
-                                                        chips: { background: '#4318FF' },
-                                                        searchBox: { 
-                                                            border: '1px solid #e2e8f0',
-                                                            borderRadius: '8px',
-                                                            padding: '8px'
-                                                        }
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="col-md-3 d-flex align-items-end">
-                                            <Tooltip title="Add New Supplier" arrow placement="top">
-                                                <motion.button
-                                                    className='btn btn-primary w-100'
-                                                    type="button"
-                                                    onClick={() => push({name: '', contact_info: ''})}
-                                                    variants={buttonVariants}
-                                                    whileHover="hover"
-                                                    whileTap="tap"
-                                                >
-                                                    <i className='ti ti-plus me-2'></i>
-                                                    New Supplier
-                                                </motion.button>
-                                            </Tooltip>
-                                        </div>
-                                    </div>
+        <Box className="supplier-info-modern">
+            <Box sx={{ p: 4, borderRadius: '24px', bgcolor: 'rgba(255, 255, 255, 0.4)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.5)', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
+                    <Box sx={{ p: 1.5, borderRadius: '14px', bgcolor: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}>
+                        <TbUsers size={24} />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>Gestion des Fournisseurs</Typography>
+                </Box>
 
-                                    <motion.div 
-                                        className="row g-3"
-                                        variants={containerVariants}
-                                        initial="hidden"
-                                        animate="visible"
+                <FieldArray name="suppliers">
+                    {({ remove, push }) => (
+                        <Box>
+                            <Grid container spacing={3} sx={{ mb: 4 }}>
+                                <Grid item xs={12} md={8}>
+                                    <Box sx={{ p: 2, borderRadius: '16px', border: '1px solid #e2e8f0', bgcolor: '#fff' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                                            <TbSearch size={18} color="#4f46e5" />
+                                            <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                Fournisseurs Existants
+                                            </Typography>
+                                        </Box>
+                                        <Multiselect
+                                            options={suppliers ?? []}
+                                            selectedValues={selectedSuppliers ?? []}
+                                            onSelect={handleSupplierSelect}
+                                            onRemove={handleSupplierSelect}
+                                            displayValue="name"
+                                            loading={loading}
+                                            placeholder="Rechercher un fournisseur..."
+                                            style={{
+                                                chips: { background: '#4f46e5', borderRadius: '8px', fontWeight: 600 },
+                                                searchBox: { border: 'none', background: 'transparent', padding: '0' },
+                                                inputField: { color: '#1e293b' }
+                                            }}
+                                        />
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'stretch' }}>
+                                    <Button
+                                        fullWidth
+                                        variant="outlined"
+                                        onClick={() => push({ name: '', contact_info: '' })}
+                                        startIcon={<TbUserPlus size={22} />}
+                                        sx={{
+                                            borderRadius: '16px',
+                                            borderStyle: 'dashed',
+                                            borderWidth: '2px',
+                                            fontWeight: 800,
+                                            color: '#4f46e5',
+                                            borderColor: '#cbd5e1',
+                                            textTransform: 'none',
+                                            '&:hover': { borderWidth: '2px', borderColor: '#4f46e5', bgcolor: 'rgba(79, 70, 229, 0.05)' }
+                                        }}
                                     >
-                                        {values.suppliers.map((supplier: Supplier, index: number) => (
-                                            <motion.div
-                                                className='col-md-6 col-lg-4'
-                                                key={index}
-                                                variants={itemVariants}
-                                                layout
-                                            >
-                                                <div className="card h-100 border position-relative supplier-card">
-                                                    <div className="card-body">
-                                                        <Tooltip title="Remove Supplier" arrow placement="top">
-                                                            <button
-                                                                type="button"
+                                        Nouveau Fournisseur
+                                    </Button>
+                                </Grid>
+                            </Grid>
+
+                            <Box sx={{ flexGrow: 1 }}>
+                                <Grid container spacing={3}>
+                                    <AnimatePresence mode="popLayout">
+                                        {(values.suppliers || []).map((supplier: Supplier, index: number) => (
+                                            <Grid item xs={12} md={6} lg={4} key={index}>
+                                                <motion.div
+                                                    layout
+                                                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                    exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
+                                                >
+                                                    <Card sx={{
+                                                        p: 3,
+                                                        borderRadius: '20px',
+                                                        border: '1px solid #e2e8f0',
+                                                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+                                                        position: 'relative',
+                                                        overflow: 'visible',
+                                                        transition: 'all 0.3s ease',
+                                                        '&:hover': {
+                                                            borderColor: '#4f46e5',
+                                                            boxShadow: '0 10px 15px -3px rgba(79, 70, 229, 0.1)',
+                                                            transform: 'translateY(-4px)'
+                                                        }
+                                                    }}>
+                                                        <Tooltip title="Retirer" arrow>
+                                                            <IconButton
+                                                                size="small"
                                                                 onClick={() => remove(index)}
-                                                                className='btn btn-icon btn-sm btn-danger position-absolute top-0 end-0 m-2'
-                                                                style={{ borderRadius: '50%' }}
+                                                                sx={{
+                                                                    position: 'absolute',
+                                                                    top: -12,
+                                                                    right: -12,
+                                                                    bgcolor: '#fff',
+                                                                    color: '#ef4444',
+                                                                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                                                                    border: '1px solid #fee2e2',
+                                                                    '&:hover': { bgcolor: '#ef4444', color: '#fff' }
+                                                                }}
                                                             >
-                                                                <i className='ti ti-x'></i>
-                                                            </button>
+                                                                <TbTrash size={18} />
+                                                            </IconButton>
                                                         </Tooltip>
 
-                                                        <div className="form-group mb-3">
-                                                            <label className="d-flex align-items-center gap-2 text-muted mb-2">
-                                                                <i className="ti ti-building-store text-primary"></i>
-                                                                Supplier Name
-                                                            </label>
-                                                            <input
-                                                                type="text"
+                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                                                            <TextField
+                                                                fullWidth
+                                                                label="Nom du Fournisseur"
                                                                 name={`suppliers[${index}].name`}
-                                                                className="form-control"
-                                                                onChange={handleChange}
                                                                 value={supplier.name}
-                                                                placeholder="Enter supplier name"
-                                                            />
-                                                        </div>
-
-                                                        <div className="form-group">
-                                                            <label className="d-flex align-items-center gap-2 text-muted mb-2">
-                                                                <i className="ti ti-phone text-primary"></i>
-                                                                Contact Info
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                name={`suppliers[${index}].contact_info`}
-                                                                className="form-control"
                                                                 onChange={handleChange}
-                                                                value={supplier.contact_info}
-                                                                placeholder="Enter contact information"
+                                                                onBlur={handleBlur}
+                                                                placeholder="ex: Global Furniture Co."
+                                                                variant="outlined"
+                                                                size="small"
+                                                                InputProps={{
+                                                                    startAdornment: (
+                                                                        <InputAdornment position="start">
+                                                                            <TbBuildingStore size={18} color="#64748b" />
+                                                                        </InputAdornment>
+                                                                    ),
+                                                                    sx: { borderRadius: '12px' }
+                                                                }}
                                                             />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </motion.div>
+                                                            <TextField
+                                                                fullWidth
+                                                                label="Contact Info"
+                                                                name={`suppliers[${index}].contact_info`}
+                                                                value={supplier.contact_info}
+                                                                onChange={handleChange}
+                                                                onBlur={handleBlur}
+                                                                placeholder="Email, téléphone, etc."
+                                                                variant="outlined"
+                                                                size="small"
+                                                                InputProps={{
+                                                                    startAdornment: (
+                                                                        <InputAdornment position="start">
+                                                                            <TbPhone size={18} color="#64748b" />
+                                                                        </InputAdornment>
+                                                                    ),
+                                                                    sx: { borderRadius: '12px' }
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                    </Card>
+                                                </motion.div>
+                                            </Grid>
                                         ))}
-                                    </motion.div>
-                                </div>
-                            )}
-                        </FieldArray>
-                    </AnimatePresence>
-                </div>
-            </div>
-        </div>
+                                    </AnimatePresence>
+                                </Grid>
+                            </Box>
+                        </Box>
+                    )}
+                </FieldArray>
+            </Box>
+        </Box>
     );
 };
 

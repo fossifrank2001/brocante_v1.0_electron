@@ -4,6 +4,7 @@ import {IInvoice} from "Interfaces";
 interface IPayInvoicePayload {
     amount: number;
     payment_method: string;
+    use_company_balance?: boolean;
 }
 
 interface IUseCustomerBalancePayload {

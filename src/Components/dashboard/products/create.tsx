@@ -1,55 +1,65 @@
-import React, {useEffect, useLayoutEffect} from 'react';
+import React, { useLayoutEffect } from 'react';
 import MultiStepForm from "Components/dashboard/products/formSteps";
-import Breadcrumd from "Components/Breadcrumd.tsx";
-import {motion} from "framer-motion";
-import {setActivePage} from "Data/Slices/NavigationSlice.ts";
-import {Pages} from "Data/Objects/state.ts";
-import {useAppDispatch} from "@/hooks";
-import {useAppContext} from "@/contexts/appContext.tsx";
-
-const buttonVariants = {
-    hover: { scale: 1.05 },
-    tap: { scale: 0.95 },
-};
+import Breadcrumd from "@/Components/Breadcrumd";
+import { motion } from "framer-motion";
+import { setActivePage } from "@/Data/Slices/NavigationSlice";
+import { Pages } from "@/Data/Objects/state";
+import { useAppDispatch } from "@/hooks";
+import { useAppContext } from "@/contexts/appContext";
+import { Box, Card, CardContent, Button, Typography, Grid } from '@mui/material';
+import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 
 const ProductCreate: React.FC = () => {
     const dispatch = useAppDispatch();
     const context = useAppContext();
 
-    useEffect(() => {}, []);
-
-
     useLayoutEffect(() => {
         context.togglePageLoading();
-    }, []);
+    }, [context]);
 
     return (
-        <div className="container">
-            <Breadcrumd parent="Articles" />
-            <div className='card mb-0'>
-                <div className='card-header'>
-                    <motion.button
-                        className='btn d-flex align-items-center btn-outline-dark'
-                        onClick={() => {
-                            dispatch(setActivePage({ page: Pages.ARTICLE }));
-                        }}
-                        variants={buttonVariants}
-                        whileHover="hover"
-                        whileTap="tap"
-                    >
-                        <i className='ti ti-arrow-left'></i>
-                        <span className='ms-1'>BACK</span>
-                    </motion.button>
-                </div>
-                <div className='card-body mt-1 pt-1'>
-                    <div className="row row-gap-2">
-                        <div className="col-12 ps-3 ">
-                            <MultiStepForm  />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <Box>
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                <Breadcrumd parent="Articles" url={Pages.ARTICLE} />
+
+                <Grid container spacing={4} justifyContent="center">
+                    <Grid item xs={12}>
+                        <Card sx={{
+                            borderRadius: '24px',
+                            border: '1px solid rgba(255, 255, 255, 0.4)',
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            backdropFilter: 'blur(16px)',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
+                            p: 2
+                        }}>
+                            <CardContent sx={{ p: 4 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, justifyContent: 'space-between' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Box>
+                                            <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                                                Nouvel Article
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<ArrowBackIcon />}
+                                        onClick={() => dispatch(setActivePage({ page: Pages.ARTICLE }))}
+                                        sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
+                                    >
+                                        Retour
+                                    </Button>
+                                </Box>
+
+                                <Box>
+                                    <MultiStepForm />
+                                </Box>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                </Grid>
+            </motion.div>
+        </Box>
     );
 };
 

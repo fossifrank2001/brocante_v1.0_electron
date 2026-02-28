@@ -1,5 +1,5 @@
-import {useCallback, useEffect, useLayoutEffect, useMemo, useState} from 'react'
-import {useAppContext} from "@/contexts/appContext";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useAppContext } from "@/contexts/appContext";
 import constants from "Data/Utilities/constants";
 import Breadcrumd from "Components/Breadcrumd";
 import {
@@ -10,12 +10,13 @@ import {
     MRT_ToggleGlobalFilterButton,
     useMaterialReactTable
 } from "material-react-table";
-import {MRT_Localization_EN} from "material-react-table/locales/en";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
 import axiosInstance from "Data/Utilities/axiosInstance";
-import {Box} from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
+import { Refresh, FileDownload } from '@mui/icons-material';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { IMenu, IMenuList, IMenuTableData } from '@/Data/Interfaces';
-import {useAppSelector} from "@/hooks";
+import { useAppSelector } from "@/hooks";
 
 export default function IndexMenu() {
     const context = useAppContext();
@@ -34,7 +35,7 @@ export default function IndexMenu() {
     const [sorting, setSorting] = useState([]);
     const [rowSelection, setRowSelection] = useState({});
     const [menus, setMenus] = useState<IMenu[] | null>(null);
-    const {authorizations} = useAppSelector(state => state.userAuthorizing)
+    const { authorizations } = useAppSelector(state => state.userAuthorizing)
 
     useLayoutEffect(() => {
         context.togglePageLoading();
@@ -81,9 +82,9 @@ export default function IndexMenu() {
         (async () => await getMenus())()
     }, [getMenus]);
 
-    const handleRefresh = () => {
+    const handleRefresh = async () => {
         setIsRefetching(true);
-        getMenus();
+        await getMenus();
     };
 
     const tableData: IMenuTableData[] = useMemo(() => {
@@ -93,65 +94,131 @@ export default function IndexMenu() {
         })) : [];
     }, [menus]);
 
-    const columns : MRT_ColumnDef<IMenu>[] = useMemo(
+    const columns: MRT_ColumnDef<IMenu>[] = useMemo(
         () => [
             {
                 accessorKey: "label",
-                header: "label",
-                size: 100,
+                header: "Label",
+                size: 150,
                 muiFilterTextFieldProps: () => ({
                     inputProps: { placeHolder: "filter" },
                 }),
+                Cell: ({ cell }) => (
+                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                        {cell.getValue() as string}
+                    </Typography>
+                ),
             },
             {
                 accessorKey: "group",
-                header: "group",
+                header: "Groupe",
                 size: 150,
                 enableColumnFilter: false,
+                Cell: ({ cell }) => (
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b' }}>
+                        {cell.getValue() as string}
+                    </Typography>
+                ),
             },
             {
                 accessorKey: "parent",
-                header: "parent",
+                header: "Parent",
                 size: 150,
-                enableColumnFilter: false
+                enableColumnFilter: false,
+                Cell: ({ cell }) => (
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b' }}>
+                        {cell.getValue() as string || '-'}
+                    </Typography>
+                ),
             },
             {
                 accessorKey: "order",
-                header: "order",
-                size: 150,
+                header: "Ordre",
+                size: 100,
                 enableColumnFilter: false,
+                Cell: ({ cell }) => (
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#3b82f6' }}>
+                        {cell.getValue() as number}
+                    </Typography>
+                ),
             },
             {
                 accessorKey: "code",
-                header: "code",
+                header: "Code",
                 size: 150,
                 muiFilterTextFieldProps: () => ({
                     inputProps: { placeHolder: "filter" },
                 }),
+                Cell: ({ cell }) => (
+                    <Box sx={{
+                        display: 'inline-block',
+                        px: 1.5,
+                        py: 0.5,
+                        bgcolor: 'rgba(99, 102, 241, 0.1)',
+                        color: '#4f46e5',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '0.75rem',
+                        fontFamily: 'monospace'
+                    }}>
+                        {cell.getValue() as string}
+                    </Box>
+                ),
             },
         ],
         [],
     );
 
-    const mrTable : MRT_TableInstance<IMenu> = useMaterialReactTable({
+    const mrTable: MRT_TableInstance<IMenu> = useMaterialReactTable({
         columns,
         data: tableData,
         enableRowSelection: true,
         enableStickyHeader: true,
         initialState: {
             showColumnFilters: true,
-            density: "compact",
+            density: "comfortable",
         },
         manualFiltering: true,
         manualPagination: true,
         manualSorting: true,
-        muiTablePaperProps: { className: "__table-expandable" },
-        muiTableContainerProps: { className: "__table-container" },
+        muiTablePaperProps: {
+            sx: {
+                borderRadius: '24px',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                bgcolor: 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: 'blur(16px)',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.05)',
+                overflow: 'hidden'
+            }
+        },
+        muiTableContainerProps: {
+            className: "__table-container",
+            sx: { maxHeight: '600px' }
+        },
+        muiTableHeadCellProps: {
+            sx: {
+                bgcolor: 'rgba(248, 250, 252, 0.5)',
+                color: '#64748b',
+                fontWeight: 800,
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                py: 2
+            }
+        },
+        muiTableBodyRowProps: {
+            sx: {
+                '&:hover': {
+                    bgcolor: 'rgba(99, 102, 241, 0.03) !important',
+                    transition: 'all 0.2s'
+                }
+            }
+        },
         localization: MRT_Localization_EN,
         muiToolbarAlertBannerProps: isError
             ? {
                 color: "error",
-                children: "errorLoadingData",
+                children: "Erreur lors du chargement des données",
             }
             : undefined,
         onColumnFiltersChange: setColumnFilters,
@@ -171,25 +238,48 @@ export default function IndexMenu() {
             rowSelection,
         },
         renderTopToolbarCustomActions: () => (
-            <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
-                <button
+            <Box sx={{ display: "flex", gap: 2, p: 2, alignItems: 'center' }}>
+                <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
+                    Menus
+                </Typography>
+                <Button
                     onClick={handleRefresh}
-                    type='button'
-                    className='btn btn-outline-secondary'
-                    style={{ marginLeft: '12px' }}
+                    variant="outlined"
+                    startIcon={<Refresh />}
                     disabled={isLoading || isRefetching}
+                    sx={{
+                        borderRadius: '12px',
+                        textTransform: 'none',
+                        fontWeight: 700,
+                        borderColor: '#e2e8f0',
+                        color: '#64748b',
+                        px: 3,
+                        '&:hover': { bgcolor: '#f8fafc', borderColor: '#cbd5e1' }
+                    }}
                 >
-                    <i className='ti ti-refresh'></i>
-                    <span className='ms-2'>Refresh</span>
-                </button>
-                {UtilMethods.getHabilitations(authorizations, 'articles').canExport && <button type='button' className='btn btn-outline-primary' style={{ marginLeft: '12px' }}>
-                    <i className='ti ti-file-export'></i>
-                    <span className='ms-2'>EXPORT ALL</span>
-                </button>}
+                    Actualiser
+                </Button>
+                {UtilMethods.getHabilitations(authorizations, 'articles').canExport && (
+                    <Button
+                        variant="contained"
+                        startIcon={<FileDownload />}
+                        sx={{
+                            borderRadius: '12px',
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                            boxShadow: '0 8px 16px -4px rgba(99, 102, 241, 0.3)',
+                            px: 3,
+                            '&:hover': { transform: 'translateY(-1px)', boxShadow: '0 12px 20px -4px rgba(99, 102, 241, 0.4)' }
+                        }}
+                    >
+                        Exporter
+                    </Button>
+                )}
             </Box>
         ),
         renderToolbarInternalActions: ({ table }) => (
-            <Box>
+            <Box sx={{ display: 'flex', gap: 0.5, pr: 2 }}>
                 <MRT_ToggleGlobalFilterButton table={table} />
                 <MRT_ToggleFiltersButton table={table} />
                 <MRT_ToggleDensePaddingButton table={table} />
@@ -200,9 +290,9 @@ export default function IndexMenu() {
     });
 
     return (
-        <div className="container">
+        <Box>
             <Breadcrumd parent="Menus" />
             <MaterialReactTable table={mrTable} />
-        </div>
+        </Box>
     );
 }

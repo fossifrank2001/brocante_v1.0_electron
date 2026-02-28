@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [
     react(),
     tsconfigPaths(),
-    electron({ 
+    electron({
       main: {
         entry: 'electron/main.ts',
       },
@@ -21,6 +21,14 @@ export default defineConfig({
         : {},
     }),
   ],
+  css: {
+    preprocessorOptions: {
+      sass: {
+        api: 'modern-compiler',
+        silenceDeprecations: ['legacy-js-api'],
+      },
+    }
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

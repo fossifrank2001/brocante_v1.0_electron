@@ -13,17 +13,45 @@ import {
     Skeleton,
     Grid,
     Card,
-    CardContent
+    CardContent,
+    Typography,
+    Avatar,
+    alpha
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { motion } from 'framer-motion';
-import {useAppSelector} from "@/hooks";
-import {AccountStats, SaleStats, ProductStats} from "Data/Interfaces/dashboard.ts";
+import { useAppSelector } from "@/hooks";
+import { AccountStats, SaleStats, ProductStats } from "Data/Interfaces/dashboard.ts";
 import UtilMethods from "Data/Utilities/UtilMethods.ts";
-import {SalesStats} from "Components/dashboard/SalesStats.tsx";
-import {AccountsStats} from "Components/dashboard/AccountsStats.tsx";
-import {ProductsStats} from "Components/dashboard/ProductsStats";
-import {Dashboard as DasboardAPI} from "Data/Api/Dashboard.ts";
+import { SalesStats } from "Components/dashboard/SalesStats.tsx";
+import { AccountsStats } from "Components/dashboard/AccountsStats.tsx";
+import { ProductsStats } from "Components/dashboard/ProductsStats";
+import { Dashboard as DasboardAPI } from "Data/Api/Dashboard.ts";
+import { TrendingUp, AccountBalance, Inventory } from '@mui/icons-material';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const glassContainerStyle = {
+    borderRadius: '24px',
+    border: '1px solid rgba(255, 255, 255, 0.45)',
+    bgcolor: 'rgba(255, 255, 255, 0.8)',
+    backdropFilter: 'blur(20px) saturate(180%)',
+    boxShadow: '0 25px 50px -12px rgba(0,0,0,0.08)',
+    overflow: 'hidden',
+    position: 'relative',
+    zIndex: 1
+};
+
+const glassCardStyle = {
+    borderRadius: '24px',
+    border: '1px solid rgba(255, 255, 255, 0.4)',
+    background: 'rgba(255, 255, 255, 0.8)',
+    backdropFilter: 'blur(16px)',
+    boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
+    transition: 'all 0.3s ease-in-out',
+    '&:hover': {
+        boxShadow: '0 25px 50px rgba(0,0,0,0.08)',
+        transform: 'translateY(-4px)'
+    }
+};
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -40,11 +68,20 @@ function TabPanel(props: TabPanelProps) {
             hidden={value !== index}
             {...other}
         >
-            {value === index && (
-                <Box sx={{ p: 3 }}>
-                    {children}
-                </Box>
-            )}
+            <AnimatePresence mode="wait">
+                {value === index && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <Box sx={{ p: { xs: 2, md: 4 } }}>
+                            {children}
+                        </Box>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
@@ -59,7 +96,7 @@ export const DashboardIndicator: React.FC = () => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const { authUser: user } = useAppSelector(state => state.user);
-    const {active_role} = useAppSelector(state => state.menus_role)
+    const { active_role } = useAppSelector(state => state.menus_role)
 
     const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
         setTabValue(newValue);
@@ -84,7 +121,7 @@ export const DashboardIndicator: React.FC = () => {
                 setAccountStats(accountResponse.data as AccountStats);
             }
         } catch (err) {
-            setError('Failed to load dashboard data. Please try again later.');
+            setError('Échec du chargement des données. Veuillez réessayer.');
             console.error('Dashboard error:', err);
         } finally {
             setLoading(false);
@@ -109,38 +146,38 @@ export const DashboardIndicator: React.FC = () => {
 
     if (loading) {
         return (
-            <Container maxWidth="lg">
-                <Paper sx={{ width: '100%', mb: 2, p: 2 }}>
+            <Container >
+                <Paper sx={{ ...glassContainerStyle, width: '100%', mb: 2, p: 4, background: 'rgba(255, 255, 255, 0.5)' }} elevation={0}>
                     {/* Tabs Skeleton */}
-                    <Box sx={{ mb: 3 }}>
-                        <Skeleton variant="rectangular" width={200} height={40} />
+                    <Box sx={{ mb: 4 }}>
+                        <Skeleton variant="rectangular" width={300} height={48} sx={{ borderRadius: '14px' }} />
                     </Box>
 
                     {/* Stats Cards Skeletons */}
-                    <Grid container spacing={3}>
+                    <Grid container spacing={4}>
                         <Grid item xs={12} md={4}>
-                            <Card>
-                                <CardContent>
-                                    <Skeleton variant="text" width="60%" height={30} />
-                                    <Skeleton variant="rectangular" height={60} sx={{ my: 2 }} />
+                            <Card sx={{ ...glassCardStyle }}>
+                                <CardContent sx={{ p: 4 }}>
+                                    <Skeleton variant="text" width="60%" height={30} sx={{ mb: 2 }} />
+                                    <Skeleton variant="rectangular" height={80} sx={{ borderRadius: '16px', mb: 2 }} />
                                     <Skeleton variant="text" width="40%" />
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} md={4}>
-                            <Card>
-                                <CardContent>
-                                    <Skeleton variant="text" width="60%" height={30} />
-                                    <Skeleton variant="rectangular" height={60} sx={{ my: 2 }} />
+                            <Card sx={{ ...glassCardStyle }}>
+                                <CardContent sx={{ p: 4 }}>
+                                    <Skeleton variant="text" width="60%" height={30} sx={{ mb: 2 }} />
+                                    <Skeleton variant="rectangular" height={80} sx={{ borderRadius: '16px', mb: 2 }} />
                                     <Skeleton variant="text" width="40%" />
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} md={4}>
-                            <Card>
-                                <CardContent>
-                                    <Skeleton variant="text" width="60%" height={30} />
-                                    <Skeleton variant="rectangular" height={60} sx={{ my: 2 }} />
+                            <Card sx={{ ...glassCardStyle }}>
+                                <CardContent sx={{ p: 4 }}>
+                                    <Skeleton variant="text" width="60%" height={30} sx={{ mb: 2 }} />
+                                    <Skeleton variant="rectangular" height={80} sx={{ borderRadius: '16px', mb: 2 }} />
                                     <Skeleton variant="text" width="40%" />
                                 </CardContent>
                             </Card>
@@ -154,106 +191,203 @@ export const DashboardIndicator: React.FC = () => {
     if (error) {
         return (
             <Container>
-                <Alert severity="error">{error}</Alert>
+                <Alert severity="error" sx={{ mt: 4, borderRadius: '16px' }}>{error}</Alert>
             </Container>
         );
     }
 
-    return (
-        <Box sx={{ position: 'relative', width: '100%' }}>
-            <Box 
-                sx={{ 
-                    position: 'absolute', 
-                    top: 16, 
-                    right: 16, 
-                    zIndex: 1000 
+    return <Box sx={{ position: 'relative' }}>
+        <Tooltip title="Rafraîchir" arrow>
+            <IconButton
+                onClick={handleRefresh}
+                disabled={loading}
+                sx={{
+                    position: 'absolute',
+                    top: 24,
+                    right: 24,
+                    zIndex: 10,
+                    bgcolor: 'rgba(255, 255, 255, 0.9)',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                    py: 1.5,
+                    border: '1px solid rgba(226, 232, 240, 0.8)',
+                    '&:hover': {
+                        bgcolor: '#f8fafc',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 6px 16px rgba(0,0,0,0.1)'
+                    },
+                    transition: 'all 0.2s'
                 }}
             >
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                    <Tooltip title="Refresh Data">
-                        <IconButton 
-                            onClick={handleRefresh}
+                <RefreshIcon color="primary" />
+            </IconButton>
+        </Tooltip>
+
+        <Box >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                <Paper elevation={0} sx={{ ...glassContainerStyle }}>
+                    {/* Background decorations for tabs area */}
+                    <Box sx={{ position: 'absolute', top: '-10%', left: '-5%', width: '30%', height: '30%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, rgba(255,255,255,0) 70%)', filter: 'blur(40px)', zIndex: 0 }} />
+
+                    {/* Tabs */}
+                    <Box sx={{
+                        borderBottom: '1px solid rgba(226, 232, 240, 0.6)',
+                        px: { xs: 2, md: 4 },
+                        pt: 3,
+                        pb: 1,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: 2,
+                        position: 'relative',
+                        zIndex: 1,
+                        background: 'linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%)'
+                    }}>
+                        <Tabs
+                            value={tabValue}
+                            onChange={handleTabChange}
                             sx={{
-                                bgcolor: 'background.paper',
-                                boxShadow: 2,
-                                '&:hover': {
-                                    bgcolor: 'background.paper',
+                                minHeight: 48,
+                                '& .MuiTabs-indicator': {
+                                    height: 3,
+                                    borderRadius: '3px 3px 0 0',
+                                    background: 'linear-gradient(90deg, #6366f1 0%, #a855f7 100%)'
                                 }
                             }}
-                            color="primary"
-                            disabled={loading}
                         >
-                            <RefreshIcon />
-                        </IconButton>
-                    </Tooltip>
-                </motion.div>
-            </Box>
-
-            <Container maxWidth="lg">
-                <Paper sx={{ width: '100%', mb: 2 }}>
-                    <Box sx={{ borderBottom: 1, borderColor: 'divider', p: 2 }}>
-                        <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                            <Tabs
-                                value={tabValue}
-                                onChange={handleTabChange}
-                                indicatorColor="primary"
-                                textColor="primary"
-                            >
-                                <Tab label="Sales" />
-                                {UtilMethods.isAdmin() && <Tab label="Accounts" />}
-                                <Tab label="Products" />
-                            </Tabs>
-                            
-                            {tabValue === 0 && (
-                                <Stack direction="row" spacing={2} alignItems="center">
-                                    <TextField
-                                        type="date"
-                                        label="Start Date"
-                                        value={startDate}
-                                        onChange={(e) => handleDateChange('start', e.target.value)}
-                                        InputLabelProps={{ shrink: true }}
-                                        size="small"
-                                    />
-                                    <TextField
-                                        type="date"
-                                        label="End Date"
-                                        value={endDate}
-                                        onChange={(e) => handleDateChange('end', e.target.value)}
-                                        InputLabelProps={{ shrink: true }}
-                                        size="small"
-                                    />
-                                </Stack>
+                            <Tab
+                                icon={<TrendingUp />}
+                                label="Ventes"
+                                iconPosition="start"
+                                sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 700,
+                                    fontSize: '1rem',
+                                    color: '#64748b',
+                                    '&.Mui-selected': { color: '#6366f1' },
+                                    minHeight: 48,
+                                    px: 3
+                                }}
+                            />
+                            {UtilMethods.isAdmin() && (
+                                <Tab
+                                    icon={<AccountBalance />}
+                                    label="Comptes"
+                                    iconPosition="start"
+                                    sx={{
+                                        textTransform: 'none',
+                                        fontWeight: 700,
+                                        fontSize: '1rem',
+                                        color: '#64748b',
+                                        '&.Mui-selected': { color: '#6366f1' },
+                                        minHeight: 48,
+                                        px: 3
+                                    }}
+                                />
                             )}
-                        </Stack>
+                            <Tab
+                                icon={<Inventory />}
+                                label="Produits"
+                                iconPosition="start"
+                                sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 700,
+                                    fontSize: '1rem',
+                                    color: '#64748b',
+                                    '&.Mui-selected': { color: '#6366f1' },
+                                    minHeight: 48,
+                                    px: 3
+                                }}
+                            />
+                        </Tabs>
+
+                        {tabValue === 0 && (
+                            <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
+                                <TextField
+                                    type="date"
+                                    label="Date de début"
+                                    value={startDate}
+                                    onChange={(e) => handleDateChange('start', e.target.value)}
+                                    InputLabelProps={{ shrink: true }}
+                                    size="small"
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '12px',
+                                            bgcolor: 'rgba(255, 255, 255, 0.6)',
+                                            fontWeight: 600,
+                                            color: '#334155',
+                                            '& fieldset': { borderColor: 'rgba(226, 232, 240, 0.8)' },
+                                            '&:hover fieldset': { borderColor: '#94a3b8' },
+                                            '&.Mui-focused fieldset': { borderColor: '#6366f1' },
+                                        }
+                                    }}
+                                />
+                                <TextField
+                                    type="date"
+                                    label="Date de fin"
+                                    value={endDate}
+                                    onChange={(e) => handleDateChange('end', e.target.value)}
+                                    InputLabelProps={{ shrink: true }}
+                                    size="small"
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '12px',
+                                            bgcolor: 'rgba(255, 255, 255, 0.6)',
+                                            fontWeight: 600,
+                                            color: '#334155',
+                                            '& fieldset': { borderColor: 'rgba(226, 232, 240, 0.8)' },
+                                            '&:hover fieldset': { borderColor: '#94a3b8' },
+                                            '&.Mui-focused fieldset': { borderColor: '#6366f1' },
+                                        }
+                                    }}
+                                />
+                            </Stack>
+                        )}
                     </Box>
 
-                    <TabPanel value={tabValue} index={0}>
-                        {loading ? (
-                            <Skeleton variant="rectangular" height={200} />
-                        ) : salesStats && (
-                            <SalesStats stats={salesStats} />
-                        )}
-                    </TabPanel>
-
-                    {UtilMethods.isAdmin() && (
-                        <TabPanel value={tabValue} index={1}>
+                    {/* Tab Content */}
+                    <Box sx={{ position: 'relative', zIndex: 1, minHeight: 400 }}>
+                        <TabPanel value={tabValue} index={0}>
                             {loading ? (
-                                <Skeleton variant="rectangular" height={200} />
-                            ) : accountStats && (
-                                <AccountsStats stats={accountStats} />
+                                <Grid container spacing={4}>
+                                    {[1, 2, 3].map((item) => (
+                                        <Grid item xs={12} md={4} key={item}>
+                                            <Card sx={{ ...glassCardStyle }}>
+                                                <CardContent sx={{ p: 4 }}>
+                                                    <Skeleton variant="text" width="60%" height={30} />
+                                                    <Skeleton variant="rectangular" height={80} sx={{ my: 2, borderRadius: '16px' }} />
+                                                    <Skeleton variant="text" width="40%" />
+                                                </CardContent>
+                                            </Card>
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            ) : salesStats && (
+                                <SalesStats stats={salesStats} />
                             )}
                         </TabPanel>
-                    )}
 
-                    <TabPanel value={tabValue} index={UtilMethods.isAdmin() ? 2 : 1}>
-                        {loading ? (
-                            <Skeleton variant="rectangular" height={200} />
-                        ) : productStats && (
-                            <ProductsStats stats={productStats} />
+                        {UtilMethods.isAdmin() && (
+                            <TabPanel value={tabValue} index={1}>
+                                {loading ? (
+                                    <Skeleton variant="rectangular" height={300} sx={{ borderRadius: '24px' }} />
+                                ) : accountStats && (
+                                    <AccountsStats stats={accountStats} />
+                                )}
+                            </TabPanel>
                         )}
-                    </TabPanel>
+
+                        <TabPanel value={tabValue} index={UtilMethods.isAdmin() ? 2 : 1}>
+                            {loading ? (
+                                <Skeleton variant="rectangular" height={300} sx={{ borderRadius: '24px' }} />
+                            ) : productStats && (
+                                <ProductsStats stats={productStats} />
+                            )}
+                        </TabPanel>
+                    </Box>
                 </Paper>
-            </Container>
+            </motion.div>
         </Box>
-    );
+    </Box>
 };
