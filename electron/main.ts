@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, MenuItemConstructorOptions } from 'electron';
+import { app, BrowserWindow, Menu, MenuItemConstructorOptions, ipcMain } from 'electron';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import installExtension, { REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } from 'electron-devtools-installer';
@@ -41,15 +41,15 @@ function createWindow() {
 
   if (VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(VITE_DEV_SERVER_URL);
-    
+
     // Gérer les erreurs de connexion au serveur Vite
     let reloadAttempts = 0;
     const maxReloadAttempts = 30; // 30 tentatives max (60 secondes)
     let reloadInterval: NodeJS.Timeout | null = null;
-    
+
     const startReloadPolling = () => {
       if (reloadInterval) return;
-      
+
       reloadInterval = setInterval(() => {
         if (reloadAttempts >= maxReloadAttempts) {
           console.log('Max reload attempts reached, stopping polling');
@@ -57,10 +57,10 @@ function createWindow() {
           reloadInterval = null;
           return;
         }
-        
+
         reloadAttempts++;
         console.log(`Checking if Vite server is back... (attempt ${reloadAttempts}/${maxReloadAttempts})`);
-        
+
         // Vérifier si le serveur est de retour
         fetch(VITE_DEV_SERVER_URL)
           .then(() => {
@@ -75,17 +75,17 @@ function createWindow() {
           });
       }, 2000); // Vérifier toutes les 2 secondes
     };
-    
+
     mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
       console.log(`Failed to load URL: ${validatedURL}, Error: ${errorDescription} (${errorCode})`);
-      
+
       // Si c'est une erreur de connexion, commencer le polling
       if (errorCode === -28 || errorCode === -106 || errorCode === -102 || errorCode === -137 || errorCode === -300) {
         console.log('Connection error detected, starting reload polling...');
         startReloadPolling();
       }
     });
-    
+
     // Forcer le rechargement quand le serveur est prêt
     mainWindow.webContents.on('dom-ready', () => {
       console.log('DOM ready - Vite connection established');
@@ -182,7 +182,64 @@ app.whenReady().then(async () => {
   createWindow();
 });
 
+// ─── IPC Handlers for Thermal Printing ───
+ipcMain.handle('get-printers', async () => {
+  try {
+    if (!mainWindow) throw new Error('Main window not available');
+    const printers = await mainWindow.webContents.getPrintersAsync();
+    return { success: true, printers };
+  } catch (error: any) {
+    console.error('Error getting printers:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('print-thermal', async (_event, { printerName }: { printerName: string }) => {
+  try {
+    if (!mainWindow) throw new Error('Main window not available');
+    
+    // Print silently using the specified printer
+    await mainWindow.webContents.print(
+      {
+        silent: true,
+        printBackground: false,
+        deviceName: printerName,
+      },
+      (success, failureReason) => {
+        if (!success) {
+          console.error('Print failed:', failureReason);
+        }
+      }
+    );
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error printing:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('print-thermal-raw', async (_event, { printerName, escposData }: { printerName: string; escposData: Uint8Array }) => {
+  try {
+    // For raw ESC/POS printing, we'll use a different approach
+    // This requires platform-specific implementations or node-printer library
+    console.log(`Raw print request for printer: ${printerName}`);
+    console.log(`ESC/POS data length: ${escposData.length} bytes`);
+    
+    // Note: Full ESC/POS support requires additional native modules
+    // For now, return success with a message
+    return { 
+      success: true, 
+      message: 'Raw ESC/POS printing requires additional setup. Use HTML print method for now.' 
+    };
+  } catch (error: any) {
+    console.error('Error with raw printing:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 // Cleanup to prevent memory leaks
 app.on('before-quit', () => {
   mainWindow?.removeAllListeners();
+  ipcMain.removeAllListeners();
 });

@@ -1,6 +1,7 @@
 import { ICategory } from "Data/Interfaces/Category.ts";
 import { ReactNode } from 'react';
 import { IImage } from "Data/Interfaces/Image.ts";
+import { IUnit } from "Data/Interfaces/Unit.ts";
 
 export interface ISupplyPayload {
     name: string;
@@ -66,6 +67,9 @@ export interface IProduct {
     details: IProductDetail;
     suppliers: ISupplyPayload[]
     subcategories: ISubCategory[]
+    unit_id?: number | null;
+    unit?: IUnit | null;
+    price_per_unit?: number | null;
     created_at: string;
     updated_at: string;
 }

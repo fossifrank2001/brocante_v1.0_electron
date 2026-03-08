@@ -28,6 +28,8 @@ import {
     Download, Close, CreditCard, PointOfSale,
     Event, TrendingUp, AttachMoney, Wallet
 } from '@mui/icons-material';
+import { CurrencyExchange } from '@mui/icons-material';
+import RefundModal from '@/Components/refund/RefundModal';
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
 import InvoiceAPI from 'Data/Api/Invoice.ts';
@@ -108,6 +110,7 @@ const ReadSell = () => {
     const [paymentResponse, setPaymentResponse] = useState<IPaymentResponse | null>(null);
     const [showResponseModal, setShowResponseModal] = useState(false);
     const [calculatedAmountToPay, setCalculatedAmountToPay] = useState(0);
+    const [showRefundModal, setShowRefundModal] = useState(false);
 
     const fetchRecord = useCallback(async () => {
         setIsLoading(true);
@@ -377,7 +380,7 @@ const ReadSell = () => {
                                                         <Typography sx={{ fontWeight: 700, color: '#065f46' }}>Solde disponible</Typography>
                                                     </Box>
                                                     <Typography sx={{ fontWeight: 900, color: '#10b981' }}>
-                                                        {UtilMethods.formatNumber(companyBalance)}
+                                                        {UtilMethods.formatNumber(companyBalance ?? 0)}
                                                     </Typography>
                                                 </Paper>
                                             )}
@@ -455,10 +458,10 @@ const ReadSell = () => {
                                                         <Chip label={`x${item.quantity}`} size="small" sx={{ fontWeight: 700, bgcolor: '#f1f5f9' }} />
                                                     </td>
                                                     <td className="px-4 py-3 text-end">
-                                                        <Typography variant="body2" sx={{ color: '#64748b' }}>{UtilMethods.formatNumber(item.price)}</Typography>
+                                                        <Typography variant="body2" sx={{ color: '#64748b' }}>{UtilMethods.formatNumber(item?.price ?? 0)}</Typography>
                                                     </td>
                                                     <td className="px-4 py-3 text-end">
-                                                        <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>{UtilMethods.formatNumber(item.price * item.quantity)}</Typography>
+                                                        <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>{UtilMethods.formatNumber((item?.price ?? 0) * (item?.quantity ?? 0))}</Typography>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -471,17 +474,17 @@ const ReadSell = () => {
                                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                                         <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>Sous-total</Typography>
-                                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{UtilMethods.formatNumber(record.total_amount)}</Typography>
+                                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{UtilMethods.formatNumber(record?.total_amount ?? 0)}</Typography>
                                                     </Box>
                                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                                         <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 600 }}>Montant payé</Typography>
-                                                        <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 700 }}>{UtilMethods.formatNumber(record.paid_amount)}</Typography>
+                                                        <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 700 }}>{UtilMethods.formatNumber(record?.paid_amount ?? 0)}</Typography>
                                                     </Box>
                                                     <Divider sx={{ my: 1 }} />
                                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                         <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>Reste</Typography>
-                                                        <Typography variant="h6" sx={{ fontWeight: 900, color: record.remaining_balance > 0 ? '#ef4444' : '#10b981' }}>
-                                                            {UtilMethods.formatNumber(record.remaining_balance)}
+                                                        <Typography variant="h6" sx={{ fontWeight: 900, color: record?.remaining_balance > 0 ? '#ef4444' : '#10b981' }}>
+                                                            {UtilMethods.formatNumber(record?.remaining_balance ?? 0)}
                                                         </Typography>
                                                     </Box>
                                                 </Box>
@@ -500,6 +503,15 @@ const ReadSell = () => {
                                             sx={{ borderRadius: '14px', textTransform: 'none', fontWeight: 700, px: 3 }}
                                         >
                                             Annuler la Vente
+                                        </Button>
+                                        <Button
+                                            variant="outlined"
+                                            color="warning"
+                                            startIcon={<CurrencyExchange />}
+                                            onClick={() => setShowRefundModal(true)}
+                                            sx={{ borderRadius: '14px', textTransform: 'none', fontWeight: 700, px: 3 }}
+                                        >
+                                            Rembourser
                                         </Button>
                                         {record.remaining_balance > 0 && (
                                             <Button
@@ -592,7 +604,7 @@ const ReadSell = () => {
                                                             }}
                                                         />
                                                         <Typography variant="h6" sx={{ fontWeight: 900, color: '#10b981', fontSize: '1rem' }}>
-                                                            {UtilMethods.formatNumber(payment.amount)}
+                                                            {UtilMethods.formatNumber(payment?.amount ?? 0)}
                                                         </Typography>
                                                     </div>
                                                 </div>
@@ -682,7 +694,7 @@ const ReadSell = () => {
                                             Solde Client
                                         </Typography>
                                         <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b' }}>
-                                            {UtilMethods.formatNumber(companyBalance)}
+                                            {UtilMethods.formatNumber(companyBalance ?? 0)}
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -708,19 +720,19 @@ const ReadSell = () => {
                         <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: '#f8fafc', borderRadius: '20px', border: '1px solid #f1f5f9' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
                                 <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>Reste à payer:</Typography>
-                                <Typography variant="body1" sx={{ fontWeight: 800 }}>{UtilMethods.formatNumber(record.remaining_balance)}</Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 800 }}>{UtilMethods.formatNumber(record?.remaining_balance ?? 0)}</Typography>
                             </Box>
                             {formik.values.useCompanyBalance && (
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, color: '#10b981' }}>
                                     <Typography variant="body2" sx={{ fontWeight: 600 }}>Déduction solde:</Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 800 }}>-{UtilMethods.formatNumber(Math.min(companyBalance, record.remaining_balance))}</Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 800 }}>-{UtilMethods.formatNumber(Math.min(companyBalance ?? 0, record?.remaining_balance ?? 0))}</Typography>
                                 </Box>
                             )}
                             <Divider sx={{ my: 2, borderStyle: 'dashed' }} />
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <Typography variant="h6" sx={{ fontWeight: 800 }}>À verser:</Typography>
                                 <Typography variant="h5" sx={{ fontWeight: 900, color: '#4f46e5' }}>
-                                    {UtilMethods.formatNumber(calculatedAmountToPay)}
+                                    {UtilMethods.formatNumber(calculatedAmountToPay ?? 0)}
                                 </Typography>
                             </Box>
                         </Paper>
@@ -852,14 +864,14 @@ const ReadSell = () => {
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                                             <Typography sx={{ color: '#64748b', fontWeight: 600 }}>Montant versé:</Typography>
                                             <Typography variant="h6" sx={{ fontWeight: 900, color: '#10b981' }}>
-                                                {UtilMethods.formatNumber(paymentResponse.payment_details.amount_paid)}
+                                                {UtilMethods.formatNumber(paymentResponse?.payment_details?.amount_paid ?? 0)}
                                             </Typography>
                                         </Box>
-                                        {paymentResponse.payment_details.excess_amount > 0 && (
+                                        {paymentResponse?.payment_details?.excess_amount > 0 && (
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1.5, bgcolor: 'white', borderRadius: '12px', border: '1px dashed #f59e0b' }}>
                                                 <Typography sx={{ color: '#f59e0b', fontWeight: 700 }}>Excédent généré:</Typography>
                                                 <Typography sx={{ color: '#f59e0b', fontWeight: 900 }}>
-                                                    {UtilMethods.formatNumber(paymentResponse.payment_details.excess_amount)}
+                                                    {UtilMethods.formatNumber(paymentResponse?.payment_details?.excess_amount ?? 0)}
                                                 </Typography>
                                             </Box>
                                         )}
@@ -1026,6 +1038,14 @@ const ReadSell = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Refund Modal */}
+            <RefundModal
+                open={showRefundModal}
+                onClose={() => setShowRefundModal(false)}
+                sell={record as any}
+                onRefundCreated={fetchRecord}
+            />
         </div>
     );
 };

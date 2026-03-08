@@ -28,6 +28,7 @@ const iconOfMenus: Record<string, string> = {
     PROFILE: 'ti ti-user-circle',
     USER_ACCESS_PAGE: 'ti ti-shield-lock',
     ACTIVITY_LOGS: 'ti ti-activity',
+    POS_EXPRESS: 'ti ti-cash-register',
 }
 
 const getMenuIcon = (code: string): string => {
@@ -120,10 +121,10 @@ export default function Aside({ role = null }) {
                     <motion.div
                         whileTap={{ scale: 0.98 }}
                         className={`sidebar-link d-flex align-items-center justify-content-between ${isCurrentPage && !hasChildren
-                                ? 'bg-primary text-white'
-                                : isAnyChildActive
-                                    ? 'bg-primary-subtle'
-                                    : ''
+                            ? 'bg-primary text-white'
+                            : isAnyChildActive
+                                ? 'bg-primary-subtle'
+                                : ''
                             }`}
                         onClick={() => {
                             if (hasChildren) {

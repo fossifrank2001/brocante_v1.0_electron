@@ -10,6 +10,7 @@ import {AnimatePresence, motion} from 'framer-motion';
 import "Styles/Navbar.less"
 import {setActivePage} from "Data/Slices/NavigationSlice.ts";
 import {Pages} from "Data/Objects/state.ts";
+import CashSessionBar from '@/Components/dashboard/pos/CashSessionBar';
 
 interface INavBarPropsInterface{
     onHandleChangeRole: (role?: IRole) => void
@@ -289,6 +290,9 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
                         </AnimatePresence>
                     </li>
                 </ul>
+                <div className="d-flex align-items-center mx-auto">
+                    <CashSessionBar />
+                </div>
                 <div className="navbar-collapse justify-content-end px-0" id="navbarNav">
                     <ul className="navbar-nav flex-row ms-auto align-items-center justify-content-end">
                         <li className="nav-item nav-icon-hover-bg rounded-circle">

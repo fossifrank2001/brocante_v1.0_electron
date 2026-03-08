@@ -8,6 +8,9 @@ import success_congratulation from "../../assets/images/products/success_congrat
 import { setActivePage } from "Data/Slices/NavigationSlice";
 import { Pages } from "Data/Objects/state";
 import StreamedDocumentAPI from "Data/Api/StreamedDocument.ts";
+import PrintDialog from "@/Components/dashboard/pos/PrintDialog";
+import SellAPI from "@/Data/Api/Sell";
+import { ISellWithDetails } from "@/Services/ReceiptTemplate";
 
 /**
  * @returns {JSX.Element}
@@ -17,11 +20,26 @@ function SuccessSellPage(): JSX.Element {
     const dispatch = useAppDispatch();
     const navigation = useAppSelector(state => state.navigaton);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [printDialogOpen, setPrintDialogOpen] = useState(false);
+    const [sellData, setSellData] = useState<ISellWithDetails | null>(null);
 
     useLayoutEffect(() => {
         document.title = constants.APP_NAME + " .:. Success Sell";
         context.togglePageLoading(false);
+        // Load sell data for printing
+        if (navigation.param?.number) {
+            loadSellData(navigation.param.number);
+        }
     }, []);
+
+    const loadSellData = async (sellCode: string | number) => {
+        try {
+            const { data } = await SellAPI.show(sellCode as unknown as number);
+            setSellData(data as unknown as ISellWithDetails);
+        } catch (error) {
+            console.error('Failed to load sell data:', error);
+        }
+    };
 
     const handleDownloadPDF = async () => {
         try {
@@ -116,32 +134,46 @@ function SuccessSellPage(): JSX.Element {
                                 <span>Back to shop</span>
                             </motion.button>
                             {navigation.param && (
-                                <motion.button
-                                    className='btn py-3 px-5 btn-secondary d-flex align-items-center'
-                                    onClick={handleDownloadPDF}
-                                    disabled={isDownloading}
-                                    variants={buttonVariants}
-                                    whileHover="hover"
-                                    whileTap="tap"
-                                >
-                                    {isDownloading ? (
-                                        <motion.i
-                                            className='ti ti-loader me-2'
-                                            animate={{ rotate: 360 }}
-                                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                        ></motion.i>
-                                    ) : (
-                                        <i className='ti ti-file-text me-2'></i>
-                                    )}
-                                    <span>
-                                        {navigation.param?.type === 'total' ? 'Download receipt' : 'Download invoice'}
-                                    </span>
-                                </motion.button>
+                                <>
+                                    <motion.button
+                                        className='btn py-3 px-5 btn-success d-flex align-items-center'
+                                        onClick={() => setPrintDialogOpen(true)}
+                                        disabled={!sellData}
+                                        variants={buttonVariants}
+                                        whileHover="hover"
+                                        whileTap="tap"
+                                    >
+                                        <i className='ti ti-printer me-2'></i>
+                                        <span>Imprimer ticket</span>
+                                    </motion.button>
+                                    <motion.button
+                                        className='btn py-3 px-5 btn-secondary d-flex align-items-center'
+                                        onClick={handleDownloadPDF}
+                                        disabled={isDownloading}
+                                        variants={buttonVariants}
+                                        whileHover="hover"
+                                        whileTap="tap"
+                                    >
+                                        {isDownloading ? (
+                                            <motion.i
+                                                className='ti ti-loader me-2'
+                                                animate={{ rotate: 360 }}
+                                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                            ></motion.i>
+                                        ) : (
+                                            <i className='ti ti-file-text me-2'></i>
+                                        )}
+                                        <span>
+                                            {navigation.param?.type === 'total' ? 'Download receipt' : 'Download invoice'}
+                                        </span>
+                                    </motion.button>
+                                </>
                             )}
                         </motion.div>
                     </div>
                 </div>
             </motion.div>
+            <PrintDialog open={printDialogOpen} onClose={() => setPrintDialogOpen(false)} sellData={sellData} />
         </>
     );
 }

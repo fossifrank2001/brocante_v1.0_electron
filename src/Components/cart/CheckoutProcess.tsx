@@ -150,7 +150,7 @@ export default function CheckoutProcess({
                                                 {useCompanyBalance && companyBalanceToUse > 0 ? 'Montant Final' : 'Total à payer'}
                                             </Typography>
                                             <Typography variant="h3" sx={{ fontWeight: 800, color: '#1e293b' }}>
-                                                {UtilMethods.formatNumber(useCompanyBalance ? priceAfterBalance : cart.totalPrice)}
+                                                {UtilMethods.formatNumber(useCompanyBalance ? (priceAfterBalance ?? 0) : (cart?.totalPrice ?? 0))}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -158,10 +158,10 @@ export default function CheckoutProcess({
                                     {useCompanyBalance && companyBalanceToUse > 0 && (
                                         <Box sx={{ textAlign: 'right' }}>
                                             <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '1rem', display: 'block' }}>
-                                                {UtilMethods.formatNumber(cart.totalPrice)}
+                                                {UtilMethods.formatNumber(cart?.totalPrice ?? 0)}
                                             </Typography>
                                             <Chip
-                                                label={`Solde utilisé: -${UtilMethods.formatNumber(companyBalanceToUse)}`}
+                                                label={`Solde utilisé: -${UtilMethods.formatNumber(companyBalanceToUse ?? 0)}`}
                                                 size="small"
                                                 sx={{ bgcolor: '#dcfce7', color: '#166534', fontWeight: 700, borderRadius: '8px', mt: 1 }}
                                             />
@@ -238,13 +238,13 @@ export default function CheckoutProcess({
                                     disabled={isRefreshing}
                                     fullWidth
                                     getOptionLabel={(option) => {
-                                        const b = option.company_balance || 0;
-                                        return `${option.firstname} ${option.lastname}${b > 0 ? ` (+${UtilMethods.formatNumber(b)})` : ''}`;
+                                        const b = option?.company_balance || 0;
+                                        return `${option?.firstname ?? ''} ${option?.lastname ?? ''}${b > 0 ? ` (+${UtilMethods.formatNumber(b)})` : ''}`;
                                     }}
                                     renderOption={(props, option) => {
-                                        const balance = option.company_balance || 0;
-                                        const debts: Record<string, string> = option.remaining_balance ? JSON.parse(option.remaining_balance) : {};
-                                        const totalDebt = Object.values(debts).reduce((s, v) => s + parseFloat(v), 0);
+                                        const balance = option?.company_balance || 0;
+                                        const debts: Record<string, string> = option?.remaining_balance ? JSON.parse(option.remaining_balance) : {};
+                                        const totalDebt = Object.values(debts).reduce((s, v) => s + (parseFloat(v) || 0), 0);
                                         return (
                                             <Box component="li" {...props} sx={{ flexDirection: 'column', alignItems: 'flex-start !important', py: 1.5, px: 2 }}>
                                                 <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
@@ -329,7 +329,7 @@ export default function CheckoutProcess({
                                                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#065f46' }}>Portefeuille Client (Solde Entreprise)</Typography>
                                                 </Box>
                                                 <Typography variant="h6" sx={{ fontWeight: 800, color: '#059669' }}>
-                                                    {UtilMethods.formatNumber(companyBalance)}
+                                                    {UtilMethods.formatNumber(companyBalance ?? 0)}
                                                 </Typography>
                                             </Box>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 2 }}>
@@ -371,13 +371,13 @@ export default function CheckoutProcess({
                                         >
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                                                 <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#991b1b' }}>Dettes impayées détectées</Typography>
-                                                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#991b1b' }}>{UtilMethods.formatNumber(totalDebts)}</Typography>
+                                                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#991b1b' }}>{UtilMethods.formatNumber(totalDebts ?? 0)}</Typography>
                                             </Box>
                                             <Box sx={{ pl: 0.5 }}>
                                                 {Object.entries(customerDebts).map(([code, amt]) => (
                                                     <Box key={code} sx={{ display: 'flex', justifyContent: 'space-between', opacity: 0.8 }}>
                                                         <Typography variant="caption" sx={{ fontWeight: 500 }}>Vente ref. {code}</Typography>
-                                                        <Typography variant="caption" sx={{ fontWeight: 700 }}>{UtilMethods.formatNumber(amt)}</Typography>
+                                                        <Typography variant="caption" sx={{ fontWeight: 700 }}>{UtilMethods.formatNumber(Number(amt) || 0)}</Typography>
                                                     </Box>
                                                 ))}
                                             </Box>
@@ -555,7 +555,7 @@ export default function CheckoutProcess({
                                                             </Typography>
                                                         </Box>
                                                         <Typography variant="body2" sx={{ fontWeight: 900, color: '#059669', fontSize: '1rem' }}>
-                                                            {UtilMethods.formatNumber(formik.values.amount_paid)}
+                                                            {UtilMethods.formatNumber(formik?.values?.amount_paid ?? 0)}
                                                         </Typography>
                                                     </Box>
                                                 </motion.div>
@@ -588,7 +588,7 @@ export default function CheckoutProcess({
                                                     <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(14, 165, 233, 0.05)', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', border: '1px solid rgba(14, 165, 233, 0.2)' }}>
                                                         <Typography variant="body2" sx={{ fontWeight: 600, color: '#0369a1' }}>Reste à payer (Dette)</Typography>
                                                         <Typography variant="body2" sx={{ fontWeight: 800, color: '#0284c7' }}>
-                                                            {UtilMethods.formatNumber(priceAfterBalance - formik.values.advanceAmount)}
+                                                            {UtilMethods.formatNumber((priceAfterBalance ?? 0) - (formik?.values?.advanceAmount ?? 0))}
                                                         </Typography>
                                                     </Box>
                                                 </motion.div>
@@ -600,7 +600,7 @@ export default function CheckoutProcess({
                                         <Grid item xs={12}>
                                             <Alert severity="info" sx={{ borderRadius: '16px', bgcolor: 'rgba(14, 165, 233, 0.05)', border: '1px solid rgba(14, 165, 233, 0.2)' }}>
                                                 <Typography variant="body2" sx={{ color: '#0369a1' }}>
-                                                    La totalité du montant (<strong>{UtilMethods.formatNumber(priceAfterBalance)}</strong>) sera enregistrée comme une dette à recouvrer.
+                                                    La totalité du montant (<strong>{UtilMethods.formatNumber(priceAfterBalance ?? 0)}</strong>) sera enregistrée comme une dette à recouvrer.
                                                 </Typography>
                                             </Alert>
                                         </Grid>

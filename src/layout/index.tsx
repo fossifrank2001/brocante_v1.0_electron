@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Box } from '@mui/material';
 import PageLoadingIndicator from "Components/PageLoadingIndicator";
 import Navbar from "@/partials/Navbar";
 import Aside from "@/partials/Aside";
@@ -6,7 +7,7 @@ import Footer from "@/partials/Footer";
 import { useAppContext } from "@/contexts/appContext";
 import { IRole } from '@/Data/Interfaces';
 import { Pages } from '@/Data/Objects/state';
-import {useAppDispatch, useAppSelector} from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import Dashboard from '@/pages/dashboard/Dashboard';
 import IndexMenu from '@/Components/dashboard/menus';
 import IndexUser from '@/Components/dashboard/users';
@@ -35,9 +36,11 @@ import IndexSupply from "Components/dashboard/suppliers";
 import IndexInvoice from "Components/dashboard/invoices";
 import ReadInvoicePage from "@/pages/dashboard/invoices/InvoiceDetail.tsx";
 import ProfileComponent from "@/Components/profile/ProfileComponent";
-import {setCurrentRole} from "Data/Slices/MenuRoleSlice.ts";
+import { setCurrentRole } from "Data/Slices/MenuRoleSlice.ts";
 import ComingSoon from "Components/ComingSoon.tsx";
 import ActivityLogsViewer from "@/Components/admin/ActivityLogsViewer";
+import PosExpress from "@/Components/dashboard/pos/PosExpress";
+import SuccessSellPage from "@/pages/Home/SuccessSellPage";
 
 const renderContent = (currentPage, id, param) => {
   switch (currentPage) {
@@ -87,6 +90,10 @@ const renderContent = (currentPage, id, param) => {
       return null;
     case Pages.ACTIVITY_LOGS:
       return <ActivityLogsViewer />;
+    case Pages.POS_EXPRESS:
+      return <PosExpress />;
+    case Pages.SUCCESS_ORDER:
+      return <SuccessSellPage />;
     case Pages.DASHBOARD:
       return <Dashboard />;
     default:
@@ -106,24 +113,30 @@ const Layout: React.FC = () => {
   } = useAppSelector((state) => state.navigaton);
 
   return (
-      <>
-        <PageLoadingIndicator visible={pageLoading} />
-        <div className="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6"
-             data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed"
-             >
-          <Aside role={roleId} />
-          <div className="body-wrapper" style={{backgroundColor: "rgba(208,208,208,0.5)"}}>
-            <Navbar onHandleChangeRole={(_role) => {
-              dispatch(setCurrentRole(_role?.code));
-              setRole(_role)
-            }} />
-            <div className="container" style={{minHeight: '100vh', paddingTop: '75px', position: 'relative'}}>
+    <>
+      <PageLoadingIndicator visible={pageLoading} />
+      <div className="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6"
+        data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed"
+      >
+        <Aside role={roleId} />
+        <div className="body-wrapper" style={{ backgroundColor: "rgba(208,208,208,0.5)" }}>
+          <Navbar onHandleChangeRole={(_role) => {
+            dispatch(setCurrentRole(_role?.code));
+            setRole(_role)
+          }} />
+          {currentPage === Pages.POS_EXPRESS ? (
+            <Box sx={{ display: 'flex', height: 'calc(100vh - 60px)', width: 'calc(100vw - 270px)', overflow: 'hidden', position: 'fixed', left: '270px', top: '60px', right: 0 }}>
+              {renderContent(currentPage, id, param)}
+            </Box>
+          ) : (
+            <div className='container' style={{ minHeight: '100vh', paddingTop: '75px', position: 'relative' }}>
               {renderContent(currentPage, id, param)}
               <Footer />
             </div>
-          </div>
+          )}
         </div>
-      </>
+      </div>
+    </>
   );
 };
 

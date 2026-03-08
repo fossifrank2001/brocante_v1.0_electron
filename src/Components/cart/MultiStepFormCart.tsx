@@ -11,12 +11,13 @@ import CustomerAPI from "Data/Api/Customer.ts";
 import SellAPI from "Data/Api/Sell.ts";
 import { ISellPayload, TPayment, TTransactionType } from "Data/Interfaces/Sell.ts";
 import { useAppContext } from "@/contexts/appContext.tsx";
-import { useAppDispatch } from "@/hooks";
+import { useAppDispatch, useAppSelector } from "@/hooks";
 import { setActivePage } from "Data/Slices/NavigationSlice.ts";
 import { Pages } from "Data/Objects/state.ts";
 import DebtRecoveryModal from './DebtRecoveryModal';
 import Toast from "Data/Utilities/Toast";
 import ActivityLogService from '@/Services/ActivityLogService';
+import { incrementSalesCount, addToTotalSales } from '@/Data/Slices/dashboard/cashSessionSlice';
 
 // LocalStorage keys
 const CART_STEP_KEY = 'brocante_cart_step';
@@ -64,6 +65,7 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
     const steps = ['Cart Listing', 'Checkout Process'];
     const context = useAppContext();
     const dispatch = useAppDispatch();
+    const { currentSession } = useAppSelector((state) => state.cashSession);
     const isLastStep = step === steps.length - 1;
     const activityLogService = ActivityLogService.getInstance();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -202,9 +204,35 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
 
     const submitSell = async (values: FormValues, actions: FormikHelpers<FormValues>, useCompanyBalance = false, useSurplusForDebts = false) => {
         try {
+            // GUARD: Vérifier qu'une session de caisse est ouverte
+            if (!currentSession) {
+                Toast.error(
+                    'Veuillez ouvrir une session de caisse avant de créer une vente.',
+                    4000,
+                    'top-center'
+                );
+                setIsLoading(false);
+                return;
+            }
+
             setIsLoading(true);
             const treatedData = treatedDataFunc(values, useCompanyBalance, useSurplusForDebts);
-            const result = await SellAPI.create(treatedData);
+            
+            // Ajouter le cash_session_id au payload
+            const dataWithSession = {
+                ...treatedData,
+                cash_session_id: currentSession.id,
+            };
+            
+            const result = await SellAPI.create(dataWithSession);
+            
+            // Mettre à jour les compteurs de la session UNIQUEMENT pour les paiements en espèces
+            const isCashPayment = values.payment === 'Cash';
+            dispatch(incrementSalesCount());
+            if (isCashPayment) {
+                dispatch(addToTotalSales(cart.totalPrice));
+            }
+            
             actions.resetForm();
 
             dispatch(clearCart());
@@ -229,6 +257,17 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
         if (!pendingSubmission) return;
 
         try {
+            // GUARD: Vérifier qu'une session de caisse est ouverte
+            if (!currentSession) {
+                Toast.error(
+                    'Veuillez ouvrir une session de caisse avant de créer une vente.',
+                    4000,
+                    'top-center'
+                );
+                setOpenDebtModal(false);
+                return;
+            }
+
             setIsLoading(true);
 
             // TODO: Créer un nouvel endpoint backend qui gère:
@@ -240,7 +279,21 @@ const MultiStepFormCart: React.FC<IMultiStepFormCartProps> = ({ cart }) => {
 
             // Backend gère maintenant company_balance et surplus automatiquement
             const treatedData = treatedDataFunc(pendingSubmission, useCompanyBalance, useExcess);
-            const result = await SellAPI.create(treatedData);
+            
+            // Ajouter le cash_session_id au payload
+            const dataWithSession = {
+                ...treatedData,
+                cash_session_id: currentSession.id,
+            };
+            
+            const result = await SellAPI.create(dataWithSession);
+            
+            // Mettre à jour les compteurs de la session UNIQUEMENT pour les paiements en espèces
+            const isCashPayment = pendingSubmission.payment === 'Cash';
+            dispatch(incrementSalesCount());
+            if (isCashPayment) {
+                dispatch(addToTotalSales(cart.totalPrice));
+            }
 
             // Log de la vente
             console.log('[MultiStepFormCart] About to log sale:', {

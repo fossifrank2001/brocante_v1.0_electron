@@ -95,8 +95,8 @@ const Item: React.FC<{ item: CartItem | never; index: number }> = ({ item, index
                     >
                         <Remove fontSize="small" sx={{ fontSize: 16 }} />
                     </IconButton>
-                    <Typography variant="body1" sx={{ minWidth: 32, textAlign: 'center', fontWeight: 900, color: '#1e293b' }}>
-                        {item.quantity}
+                    <Typography sx={{ minWidth: 22, textAlign: 'center', fontWeight: 900, fontSize: '0.85rem' }}>
+                        {item?.product?.allowsDecimal ? Number(item?.quantity || 0).toFixed(2) : (item?.quantity || 0)}
                     </Typography>
                     <IconButton
                         size="small"
@@ -117,12 +117,12 @@ const Item: React.FC<{ item: CartItem | never; index: number }> = ({ item, index
             </td>
             <td style={{ padding: '20px', verticalAlign: 'middle', textAlign: 'right' }}>
                 <Typography variant="body2" sx={{ fontWeight: 700, color: '#64748b' }}>
-                    {UtilMethods.formatNumber(item.product.price as never)}
+                    {UtilMethods.formatNumber(item?.product?.price ?? 0)}
                 </Typography>
             </td>
             <td style={{ padding: '20px', verticalAlign: 'middle', textAlign: 'right' }}>
-                <Typography variant="h6" sx={{ fontWeight: 900, color: '#6366f1', letterSpacing: '-0.02em' }}>
-                    {UtilMethods.formatNumber(item.subtotal as never)}
+                <Typography sx={{ fontWeight: 800, fontSize: '0.78rem', color: '#6366f1' }}>
+                    {UtilMethods.formatNumber(item?.subtotal ?? 0)}
                 </Typography>
             </td>
             <td style={{ padding: '20px', verticalAlign: 'middle', textAlign: 'right' }}>

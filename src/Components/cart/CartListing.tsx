@@ -94,7 +94,7 @@ const CartListing: React.FC<{
                                 {cart.items.length > 0 && (
                                     <>
                                         <Chip
-                                            label={`${cart.totalQuantity} article${cart.totalQuantity > 1 ? 's' : ''}`}
+                                            label={`${cart?.totalQuantity ?? 0} article${(cart?.totalQuantity ?? 0) > 1 ? 's' : ''}`}
                                             sx={{
                                                 fontWeight: 700,
                                                 bgcolor: 'rgba(99, 102, 241, 0.1)',
@@ -121,7 +121,7 @@ const CartListing: React.FC<{
                             </Box>
                         </Box>
 
-                        {cart.totalQuantity > 0 ? (
+                        {cart?.totalQuantity > 0 ? (
                             <Paper sx={{
                                 borderRadius: '24px',
                                 overflow: 'hidden',
@@ -143,7 +143,7 @@ const CartListing: React.FC<{
                                         </thead>
                                         <tbody>
                                             <AnimatePresence>
-                                                {cart.items?.map((_item, index) => (
+                                                {cart?.items?.map((_item, index) => (
                                                     <Item key={_item.product.id} item={_item} index={index} />
                                                 ))}
                                             </AnimatePresence>
@@ -198,7 +198,7 @@ const CartListing: React.FC<{
                         )}
                     </div>
 
-                    {cart.items.length > 0 && (
+                    {cart?.items?.length > 0 && (
                         <div className='col-xs-12 col-md-4'>
                             <Paper
                                 sx={{
@@ -218,7 +218,7 @@ const CartListing: React.FC<{
                                 </Typography>
 
                                 <Stack spacing={2} sx={{ mb: 4 }}>
-                                    <SummaryRow label="Sous-total" value={cart.totalPrice} />
+                                    <SummaryRow label="Sous-total" value={cart?.totalPrice ?? 0} />
                                     <SummaryRow label="TVA (0%)" value={0} />
                                     <SummaryRow label="Frais de traitement" value={0} />
 
@@ -229,7 +229,7 @@ const CartListing: React.FC<{
                                             Total
                                         </Typography>
                                         <Typography variant="h4" sx={{ fontWeight: 900, color: '#6366f1', letterSpacing: '-0.03em' }}>
-                                            {UtilMethods.formatNumber(cart.totalPrice)}
+                                            {UtilMethods.formatNumber(cart?.totalPrice ?? 0)}
                                         </Typography>
                                     </Box>
                                 </Stack>

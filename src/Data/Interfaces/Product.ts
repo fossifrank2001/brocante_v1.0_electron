@@ -14,4 +14,6 @@ export interface IProductPayload {
     suppliers: ISupply[];
     product_details: Partial<IProductDetail>;
     category?: string;
+    unit_id?: number | null;
+    price_per_unit?: number | null;
 }

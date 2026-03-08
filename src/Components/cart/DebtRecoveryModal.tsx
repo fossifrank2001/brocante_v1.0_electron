@@ -130,7 +130,7 @@ const DebtRecoveryModal = ({
                                             <Box sx={{ bgcolor: 'white', p: 2, borderRadius: '16px', border: '1px solid #f1f5f9', textAlign: 'center' }}>
                                                 <Typography variant="caption" sx={{ fontWeight: 700, color: '#94a3b8' }}>Vente Actuelle</Typography>
                                                 <Typography variant="h6" sx={{ fontWeight: 800, color: '#334155' }}>
-                                                    {UtilMethods.formatNumber(totalAmount)}
+                                                    {UtilMethods.formatNumber(totalAmount ?? 0)}
                                                 </Typography>
                                             </Box>
                                         </Grid>
@@ -138,7 +138,7 @@ const DebtRecoveryModal = ({
                                             <Box sx={{ bgcolor: 'white', p: 2, borderRadius: '16px', border: '1px solid #f1f5f9', textAlign: 'center' }}>
                                                 <Typography variant="caption" sx={{ fontWeight: 700, color: '#059669' }}>Excédent Reçu</Typography>
                                                 <Typography variant="h6" sx={{ fontWeight: 800, color: '#10b981' }}>
-                                                    +{UtilMethods.formatNumber(excessAmount)}
+                                                    +{UtilMethods.formatNumber(excessAmount ?? 0)}
                                                 </Typography>
                                             </Box>
                                         </Grid>
@@ -147,7 +147,7 @@ const DebtRecoveryModal = ({
                                                 <Box sx={{ bgcolor: 'white', p: 2, borderRadius: '16px', border: '1px solid #f1f5f9', textAlign: 'center' }}>
                                                     <Typography variant="caption" sx={{ fontWeight: 700, color: '#3b82f6' }}>Solde Disponible</Typography>
                                                     <Typography variant="h6" sx={{ fontWeight: 800, color: '#3b82f6' }}>
-                                                        {UtilMethods.formatNumber(companyBalance)}
+                                                        {UtilMethods.formatNumber(companyBalance ?? 0)}
                                                     </Typography>
                                                 </Box>
                                             </Grid>
@@ -201,7 +201,7 @@ const DebtRecoveryModal = ({
                                                     </Box>
                                                 </Box>
                                                 <Typography variant="body2" sx={{ fontWeight: 800, color: '#ef4444' }}>
-                                                    {UtilMethods.formatNumber(parseFloat(amount))}
+                                                    {UtilMethods.formatNumber(parseFloat(amount ?? 0))}
                                                 </Typography>
                                             </Box>
                                         ))}
@@ -210,7 +210,7 @@ const DebtRecoveryModal = ({
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, pt: 2, borderTop: '1px dashed #f1f5f9' }}>
                                         <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b' }}>Total de la dette cumulée</Typography>
                                         <Typography variant="h5" sx={{ fontWeight: 900, color: '#ef4444' }}>
-                                            {UtilMethods.formatNumber(totalDebts)}
+                                            {UtilMethods.formatNumber(totalDebts ?? 0)}
                                         </Typography>
                                     </Box>
                                 </CardContent>
@@ -240,7 +240,7 @@ const DebtRecoveryModal = ({
                                                         <Box>
                                                             <Typography sx={{ fontWeight: 700, color: useExcess ? '#065f46' : '#64748b' }}>Excédent actuel</Typography>
                                                             <Typography variant="caption" sx={{ fontWeight: 600, color: useExcess ? '#059669' : '#94a3b8' }}>
-                                                                Recouvrer {UtilMethods.formatNumber(excessAmount)} depuis le reçu
+                                                                Recouvrer {UtilMethods.formatNumber(excessAmount ?? 0)} depuis le reçu
                                                             </Typography>
                                                         </Box>
                                                     </Box>
@@ -270,7 +270,7 @@ const DebtRecoveryModal = ({
                                                         <Box>
                                                             <Typography sx={{ fontWeight: 700, color: useCompanyBalance ? '#1e40af' : '#64748b' }}>Utiliser le Solde</Typography>
                                                             <Typography variant="caption" sx={{ fontWeight: 600, color: useCompanyBalance ? '#1d4ed8' : '#94a3b8' }}>
-                                                                Recouvrer {UtilMethods.formatNumber(companyBalance)} depuis le compte client
+                                                                Recouvrer {UtilMethods.formatNumber(companyBalance ?? 0)} depuis le compte client
                                                             </Typography>
                                                         </Box>
                                                     </Box>
@@ -315,7 +315,7 @@ const DebtRecoveryModal = ({
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b' }}>Règlement par l'excédent</Typography>
                                                     <Typography variant="body2" sx={{ fontWeight: 800, color: '#10b981' }}>
-                                                        -{UtilMethods.formatNumber(excessCoverage)}
+                                                        -{UtilMethods.formatNumber(excessCoverage ?? 0)}
                                                     </Typography>
                                                 </Box>
                                             )}
@@ -323,7 +323,7 @@ const DebtRecoveryModal = ({
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b' }}>Règlement par le solde</Typography>
                                                     <Typography variant="body2" sx={{ fontWeight: 800, color: '#3b82f6' }}>
-                                                        -{UtilMethods.formatNumber(balanceCoverage)}
+                                                        -{UtilMethods.formatNumber(balanceCoverage ?? 0)}
                                                     </Typography>
                                                 </Box>
                                             )}
@@ -331,7 +331,7 @@ const DebtRecoveryModal = ({
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>Total Recouvré</Typography>
                                                 <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b' }}>
-                                                    {UtilMethods.formatNumber(totalCoverage)}
+                                                    {UtilMethods.formatNumber(totalCoverage ?? 0)}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -341,7 +341,7 @@ const DebtRecoveryModal = ({
                                         {remainingDebt > 0 ? (
                                             <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} key="debt">
                                                 <Alert severity="warning" sx={{ mt: 3, borderRadius: '16px', fontWeight: 600 }}>
-                                                    Dette restante après opération : {UtilMethods.formatNumber(remainingDebt)}
+                                                    Dette restante après opération : {UtilMethods.formatNumber(remainingDebt ?? 0)}
                                                 </Alert>
                                             </motion.div>
                                         ) : (

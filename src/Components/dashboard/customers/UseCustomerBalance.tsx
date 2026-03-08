@@ -168,7 +168,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                                 Solde Actuel
                                             </Typography>
                                             <Typography variant="h4" sx={{ fontWeight: 900, color: '#10b981' }}>
-                                                {UtilMethods.formatNumber(balance)}
+                                                {UtilMethods.formatNumber(balance ?? 0)}
                                             </Typography>
                                         </Box>
                                     </Paper>
@@ -206,7 +206,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                                         <Typography sx={{ fontWeight: 700, color: '#334155' }}>Vente {sellCode}</Typography>
                                                     </Box>
                                                     <Typography sx={{ fontWeight: 800, color: '#ef4444' }}>
-                                                        {UtilMethods.formatNumber(parseFloat(amount))}
+                                                        {UtilMethods.formatNumber(parseFloat(amount ?? 0))}
                                                     </Typography>
                                                 </Paper>
                                             ))}
@@ -222,7 +222,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                             }}>
                                                 <Typography sx={{ fontWeight: 800, color: '#ef4444' }}>TOTAL DES DETTES</Typography>
                                                 <Typography variant="h5" sx={{ fontWeight: 900, color: '#ef4444' }}>
-                                                    {UtilMethods.formatNumber(totalDebts)}
+                                                    {UtilMethods.formatNumber(totalDebts ?? 0)}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -266,7 +266,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                                             Montant à imputer
                                                         </Typography>
                                                         <Typography variant="h6" sx={{ fontWeight: 800, color: '#10b981' }}>
-                                                            {UtilMethods.formatNumber(Math.min(balance, totalDebts))}
+                                                            {UtilMethods.formatNumber(Math.min(balance ?? 0, totalDebts ?? 0))}
                                                         </Typography>
                                                     </Box>
                                                 </Box>
@@ -280,7 +280,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                                             Solde après opération
                                                         </Typography>
                                                         <Typography variant="h6" sx={{ fontWeight: 800, color: '#6366f1' }}>
-                                                            {UtilMethods.formatNumber(Math.max(0, balance - totalDebts))}
+                                                            {UtilMethods.formatNumber(Math.max(0, (balance ?? 0) - (totalDebts ?? 0)))}
                                                         </Typography>
                                                     </Box>
                                                 </Box>
@@ -292,7 +292,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                                     </AlertTitle>
                                                     {balance >= totalDebts
                                                         ? "Le solde couvre intégralement les dettes en cours."
-                                                        : `Le solde couvrira une partie des dettes. Reste à payer : ${UtilMethods.formatNumber(totalDebts - balance)}`
+                                                        : `Le solde couvrira une partie des dettes. Reste à payer : ${UtilMethods.formatNumber((totalDebts ?? 0) - (balance ?? 0))}`
                                                     }
                                                 </Alert>
                                             </Box>
@@ -344,18 +344,18 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                                     <Typography sx={{ color: '#64748b', fontWeight: 600 }}>Ancien Solde</Typography>
-                                                    <Typography sx={{ fontWeight: 700 }}>{UtilMethods.formatNumber(result.customer.previous_balance)}</Typography>
+                                                    <Typography sx={{ fontWeight: 700 }}>{UtilMethods.formatNumber(result?.customer?.previous_balance ?? 0)}</Typography>
                                                 </Box>
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <Typography sx={{ color: '#ef4444', fontWeight: 600 }}>Déduction</Typography>
-                                                    <Chip label={`-${UtilMethods.formatNumber(result.customer.balance_used)}`}
+                                                    <Chip label={`-${UtilMethods.formatNumber(result?.customer?.balance_used ?? 0)}`}
                                                         sx={{ fontWeight: 800, bgcolor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }} />
                                                 </Box>
                                                 <Divider />
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                                     <Typography sx={{ color: '#1e293b', fontWeight: 800 }}>Nouveau Solde</Typography>
                                                     <Typography sx={{ fontWeight: 900, color: '#10b981', fontSize: '1.2rem' }}>
-                                                        {UtilMethods.formatNumber(result.customer.new_balance)}
+                                                        {UtilMethods.formatNumber(result?.customer?.new_balance ?? 0)}
                                                     </Typography>
                                                 </Box>
                                             </Box>
@@ -380,7 +380,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                                         <Typography sx={{ fontWeight: 700, color: '#1e293b' }}>Facture #{debt.sale_id}</Typography>
                                                     </Box>
                                                     <Typography sx={{ fontWeight: 800, color: '#10b981' }}>
-                                                        {UtilMethods.formatNumber(debt.amount_covered)}
+                                                        {UtilMethods.formatNumber(debt?.amount_covered ?? 0)}
                                                     </Typography>
                                                 </Paper>
                                             ))}
@@ -402,7 +402,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
                                                     <Box sx={{ textAlign: 'right' }}>
                                                         <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block' }}>RESTE À PAYER</Typography>
                                                         <Typography sx={{ fontWeight: 800, color: '#f59e0b' }}>
-                                                            {UtilMethods.formatNumber(debt.remaining_amount)}
+                                                            {UtilMethods.formatNumber(debt?.remaining_amount ?? 0)}
                                                         </Typography>
                                                     </Box>
                                                 </Paper>

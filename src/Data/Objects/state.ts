@@ -1,7 +1,7 @@
 import { IMenu, IMenus, IUser } from "Interfaces"
 import { IHabilitation } from "../Interfaces/Habilitation"
 
-export enum Pages{
+export enum Pages {
     HOME = "HOME",
     CART_PAGE = "CART PAGE",
     DASHBOARD = "DASHBOARD",
@@ -27,11 +27,12 @@ export enum Pages{
     INVOICE = "INVOICE",
     ACTIVITY_LOGS = "ACTIVITY_LOGS",
     ONBOARDING = "ONBOARDING",
-    PROFILE = "PROFILE"
+    PROFILE = "PROFILE",
+    POS_EXPRESS = "POS_EXPRESS"
 }
 
-export class State{
-    constructor(){
+export class State {
+    constructor() {
         this.user = new UserState()
         this.navigaton = new NavigationState()
         this.user_authorization = new UserAuthorizationState()
@@ -42,57 +43,57 @@ export class State{
         this.menus = new MenusState()
     }
 
-    user : UserState
-    navigaton : NavigationState 
-    user_authorization :  UserAuthorizationState
-    forgot : ForgotState
-    reset: ResetState 
-    resendToken: ResendTokenState 
-    menus_role: MenuRoleState  
-    menus: MenusState  
+    user: UserState
+    navigaton: NavigationState
+    user_authorization: UserAuthorizationState
+    forgot: ForgotState
+    reset: ResetState
+    resendToken: ResendTokenState
+    menus_role: MenuRoleState
+    menus: MenusState
 }
 
-export class UserState{
-    token : string
-    message : string
-    authUser : IUser
+export class UserState {
+    token: string
+    message: string
+    authUser: IUser
 }
 
-export class NavigationState{
-    currentPage : Pages|undefined
-    id : number|null|undefined
-    param : any
-    search : any
+export class NavigationState {
+    currentPage: Pages | undefined
+    id: number | null | undefined
+    param: any
+    search: any
     lastPageBeforeLogin?: Pages;
     savedStateBeforeLogin?: any;
 }
 
-export class UserAuthorizationState{
-    authorizations : IHabilitation[]
-    auth_access_id : number | string
+export class UserAuthorizationState {
+    authorizations: IHabilitation[]
+    auth_access_id: number | string
 }
 
-export class ForgotState{
-    reset_token : string
-    message : string
-    username : string
+export class ForgotState {
+    reset_token: string
+    message: string
+    username: string
 }
 
-export class ResetState{
-    message : string
+export class ResetState {
+    message: string
 }
 
-export class ResendTokenState{
-    message : string 
-    reset_token : string
+export class ResendTokenState {
+    message: string
+    reset_token: string
 }
 
-export class MenuRoleState{
-    menus_role : IMenu[]
-    active_role : string | null
+export class MenuRoleState {
+    menus_role: IMenu[]
+    active_role: string | null
 }
 
-export class MenusState{
+export class MenusState {
     isLoading: boolean
-    menus : IMenus
+    menus: IMenus
 }
