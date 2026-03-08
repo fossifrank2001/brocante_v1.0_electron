@@ -4,9 +4,10 @@ import { Multiselect } from 'multiselect-react-dropdown';
 import { ICategory, SubCategory } from 'Data/Interfaces/Category';
 import CategoryAPI from 'Data/Api/Category';
 import { IProductPayload } from 'Data/Interfaces/Product';
-import { motion } from 'framer-motion';
 import { TextField, MenuItem, Select, FormControl, InputLabel, Box, Grid, Alert, AlertTitle, InputAdornment, Typography } from '@mui/material';
-import { TbShoppingBag, TbBarcode, TbTag, TbBuildingFactory2, TbScan, TbBox, TbCurrencyEuro, TbCategory, TbTags, TbFileDescription } from 'react-icons/tb';
+import { TbShoppingBag, TbBarcode, TbTag, TbBuildingFactory2, TbScan, TbBox, TbCurrencyEuro, TbCategory, TbTags, TbFileDescription, TbScale } from 'react-icons/tb';
+import UnitAPI from 'Data/Api/Unit';
+import { IUnit } from 'Data/Interfaces/Unit';
 import './ProductInfo.scss';
 
 interface IProductInfoProps {
@@ -15,18 +16,24 @@ interface IProductInfoProps {
 
 const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
     const [categories, setCategories] = useState<ICategory[] | null>(null);
+    const [units, setUnits] = useState<IUnit[] | null>(null);
     const [category, setCategory] = useState<ICategory | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const { values, handleChange, setFieldValue, touched, errors, handleBlur } = useFormikContext<IProductPayload>();
 
-    const getCategories = useCallback(async () => {
+    const getInitialData = useCallback(async () => {
         try {
             setIsLoading(true);
-            const { data: _categories } = await CategoryAPI.index();
-            setCategories(_categories.data);
+            const [categoriesRes, unitsRes] = await Promise.all([
+                CategoryAPI.index(),
+                UnitAPI.index()
+            ]);
+
+            setCategories(categoriesRes.data.data);
+            setUnits(unitsRes.data);
 
             if (categoryRecord) {
-                const selectedCategory = _categories.data?.find(cat => cat.id === categoryRecord?.id) || null;
+                const selectedCategory = categoriesRes.data.data?.find(cat => cat.id === categoryRecord?.id) || null;
                 setCategory(selectedCategory);
             }
         } catch (e) {
@@ -37,8 +44,8 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
     }, [categoryRecord]);
 
     useEffect(() => {
-        getCategories();
-    }, [getCategories, categoryRecord]);
+        getInitialData();
+    }, [getInitialData]);
 
     return (
         <Box className="product-info-modern">
@@ -189,6 +196,33 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                                 sx: { borderRadius: '14px', bgcolor: '#fff' }
                             }}
                         />
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                        <FormControl fullWidth variant="outlined">
+                            <InputLabel id="unit-label">Unité de Mesure</InputLabel>
+                            <Select
+                                labelId="unit-label"
+                                label="Unité de Mesure"
+                                name="unit_id"
+                                value={values.unit_id || ''}
+                                onChange={handleChange}
+                                disabled={isLoading}
+                                startAdornment={
+                                    <InputAdornment position="start" sx={{ mr: 1 }}>
+                                        <TbScale size={20} color="#64748b" />
+                                    </InputAdornment>
+                                }
+                                sx={{ borderRadius: '14px', bgcolor: '#fff' }}
+                            >
+                                <MenuItem value=""><em>Par défaut (Unitaire)</em></MenuItem>
+                                {units?.map(unit => (
+                                    <MenuItem key={unit.id} value={unit.id}>
+                                        {unit.name} ({unit.abbreviation})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                     </Grid>
 
                     <Grid item xs={12} md={6}>

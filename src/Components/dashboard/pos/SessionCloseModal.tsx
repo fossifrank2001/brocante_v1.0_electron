@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     TextField, Button, Box, Typography, Alert, CircularProgress,
     InputAdornment, Divider, Chip
 } from '@mui/material';
-import { Lock, Warning, CheckCircle } from '@mui/icons-material';
+import { Lock, CheckCircle, Warning } from '@mui/icons-material';
+import { useReactToPrint } from 'react-to-print';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { closeSession } from '@/Data/Slices/dashboard/cashSessionSlice';
 import CashSessionAPI from '@/Data/Api/CashSession';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
+import ZReportPrintable from './ZReportPrintable';
 
 interface SessionCloseModalProps {
     open: boolean;
@@ -22,6 +24,12 @@ const SessionCloseModal = ({ open, onClose }: SessionCloseModalProps) => {
     const [notes, setNotes] = useState('');
     const [summary, setSummary] = useState<any>(null);
     const [loadingSummary, setLoadingSummary] = useState(false);
+    const componentRef = useRef<HTMLDivElement>(null);
+
+    const handlePrint = useReactToPrint({
+        content: () => componentRef.current,
+        documentTitle: `Z-Report_${currentSession?.session_code || 'Session'}`,
+    });
 
     useEffect(() => {
         if (open && currentSession) {
@@ -222,32 +230,56 @@ const SessionCloseModal = ({ open, onClose }: SessionCloseModalProps) => {
                 )}
             </DialogContent>
 
-            <DialogActions sx={{ p: 3, pt: 0 }}>
+            <DialogActions sx={{ p: 3, pt: 0, display: 'flex', justifyContent: 'space-between' }}>
                 <Button
-                    onClick={onClose}
+                    onClick={handlePrint}
+                    variant="outlined"
+                    disabled={!currentSession || !summary}
+                    color="primary"
                     sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700 }}
                 >
-                    Annuler
+                    Imprimer Rapport Z
                 </Button>
-                <Button
-                    onClick={handleClose}
-                    variant="contained"
-                    disabled={isClosing || !actualCash || parseFloat(actualCash) < 0}
-                    startIcon={isClosing ? <CircularProgress size={20} color="inherit" /> : <Lock />}
-                    sx={{
-                        borderRadius: '12px',
-                        textTransform: 'none',
-                        fontWeight: 800,
-                        px: 4,
-                        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                        '&:hover': {
-                            background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-                        }
-                    }}
-                >
-                    Fermer la Caisse
-                </Button>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button
+                        onClick={onClose}
+                        sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700 }}
+                    >
+                        Annuler
+                    </Button>
+                    <Button
+                        onClick={handleClose}
+                        variant="contained"
+                        disabled={isClosing || !actualCash || parseFloat(actualCash) < 0}
+                        startIcon={isClosing ? <CircularProgress size={20} color="inherit" /> : <Lock />}
+                        sx={{
+                            borderRadius: '12px',
+                            textTransform: 'none',
+                            fontWeight: 800,
+                            px: 4,
+                            background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                            }
+                        }}
+                    >
+                        Fermer la Caisse
+                    </Button>
+                </Box>
             </DialogActions>
+
+            <Box sx={{ display: 'none' }}>
+                {currentSession && summary && (
+                    <ZReportPrintable
+                        ref={componentRef}
+                        session={currentSession}
+                        summary={summary}
+                        actualCash={parseFloat(actualCash) || 0}
+                        difference={difference || 0}
+                        closingNotes={notes}
+                    />
+                )}
+            </Box>
         </Dialog>
     );
 };

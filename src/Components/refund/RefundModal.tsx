@@ -22,7 +22,7 @@ interface RefundModalProps {
 const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps) => {
     const dispatch = useAppDispatch();
     const { currentSession } = useAppSelector((state) => state.cashSession);
-    
+
     const [amount, setAmount] = useState<string>('');
     const [refundType, setRefundType] = useState<'full' | 'partial'>('full');
     const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Orange Money' | 'MTN Money' | 'Card'>('Cash');
@@ -50,7 +50,7 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
 
     const handleSubmit = async () => {
         if (!sell) return;
-        
+
         const refundAmount = parseFloat(amount);
         if (isNaN(refundAmount) || refundAmount <= 0) {
             setError('Montant invalide');
@@ -86,7 +86,7 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
             }
 
             Toast.success('Remboursement enregistré avec succès', 3000, 'top-right');
-            
+
             if (onRefundCreated) {
                 onRefundCreated();
             }
@@ -167,7 +167,7 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
                             borderRadius: '16px',
                             bgcolor: '#f8fafc',
                             border: '1px solid #e2e8f0',
-                            mb: 3,
+                            my: 3,
                         }}>
                             <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#334155', mb: 1 }}>
                                 Informations de la vente
@@ -236,7 +236,6 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
                                 <FormControlLabel value="Cash" control={<Radio />} label="Espèces (Cash)" />
                                 <FormControlLabel value="Orange Money" control={<Radio />} label="Orange Money" />
                                 <FormControlLabel value="MTN Money" control={<Radio />} label="MTN Money" />
-                                <FormControlLabel value="Card" control={<Radio />} label="Carte bancaire" />
                             </RadioGroup>
                         </FormControl>
 

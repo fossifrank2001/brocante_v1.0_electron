@@ -10,8 +10,9 @@ import Toast from '@/Data/Utilities/Toast';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import dayjs from 'dayjs';
 import '@/Styles/sells.scss';
-import StreamedDocumentAPI, { RecordType } from "Data/Api/StreamedDocument.ts";
+import StreamedDocumentAPI  from "Data/Api/StreamedDocument.ts";
 import { IInvoice } from "Interfaces";
+import axiosInstance from '@/Data/Utilities/axiosInstance';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     TextField, MenuItem, Select, FormControl,
@@ -19,14 +20,12 @@ import {
     Divider, Typography, CircularProgress,
     Box, Button, Checkbox, FormControlLabel,
     Grid, Chip, IconButton, Tooltip, Zoom, Fade,
-    CardContent,
-    Card
+    CardContent, Card, Stack
 } from '@mui/material';
 import {
     Receipt, Person, History, AccountBalanceWallet,
-    ArrowBack, Info, ShoppingCart, Warning,
-    Download, Close, CreditCard, PointOfSale,
-    Event, TrendingUp, AttachMoney, Wallet
+    ArrowBack, Info, ShoppingCart, Warning, Close, CreditCard, PointOfSale,
+    Event, TrendingUp, AttachMoney, FilePresent
 } from '@mui/icons-material';
 import { CurrencyExchange } from '@mui/icons-material';
 import RefundModal from '@/Components/refund/RefundModal';
@@ -111,6 +110,7 @@ const ReadSell = () => {
     const [showResponseModal, setShowResponseModal] = useState(false);
     const [calculatedAmountToPay, setCalculatedAmountToPay] = useState(0);
     const [showRefundModal, setShowRefundModal] = useState(false);
+    const [downloading, setDownloading] = useState<'receipt' | 'invoice' | null>(null);
 
     const fetchRecord = useCallback(async () => {
         setIsLoading(true);
@@ -228,15 +228,55 @@ const ReadSell = () => {
         }
     };
 
-    const downloadInvoice = async () => {
+    const handleDownloadDocument = async (type: 'receipt' | 'invoice') => {
         if (!record) return;
-
+        
         try {
-            const type: RecordType = record.status === 'paid' ? 'receipt' : 'invoice';
-            await StreamedDocumentAPI.generate(type, record.id, 'download');
+            setDownloading(type);
+            
+            if (type === 'receipt') {
+                // Pour les reçus, utiliser la route /sells/{sell_id}/pdf-receipt
+                const response = await axiosInstance.get(`/sells/${record.id}/pdf-receipt`, {
+                    responseType: 'blob'
+                });
+                const blob = new Blob([response.data], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+            } else {
+                // Pour les factures, essayer d'abord de récupérer l'invoice associée
+                try {
+                    const invoiceResponse = await axiosInstance.get(`/invoices?sell_id=${record.id}&per_page=1`);
+                    const invoices = invoiceResponse.data.data?.data || [];
+                    
+                    if (invoices.length > 0) {
+                        await StreamedDocumentAPI.generate('invoice', invoices[0].invoice_number);
+                    } else {
+                        // Si pas d'invoice, utiliser la route de reçu comme fallback
+                        const response = await axiosInstance.get(`/sells/${record.id}/pdf-receipt`, {
+                            responseType: 'blob'
+                        });
+                        const blob = new Blob([response.data], { type: 'application/pdf' });
+                        const url = URL.createObjectURL(blob);
+                        window.open(url, '_blank');
+                        setTimeout(() => URL.revokeObjectURL(url), 100);
+                    }
+                } catch (invoiceError) {
+                    // En cas d'erreur, utiliser la route de reçu
+                    const response = await axiosInstance.get(`/sells/${record.id}/pdf-receipt`, {
+                        responseType: 'blob'
+                    });
+                    const blob = new Blob([response.data], { type: 'application/pdf' });
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                }
+            }
         } catch (error) {
-            console.error('Failed to download invoice:', error);
-            Toast.error('Failed to download invoice');
+            console.error('Error downloading document:', error);
+            Toast.error('Erreur lors du téléchargement du document');
+        } finally {
+            setDownloading(null);
         }
     };
 
@@ -266,8 +306,8 @@ const ReadSell = () => {
     const companyBalance = record.customer?.company_balance || 0;
 
     return (
-        <div className="container py-4">
-            <Breadcrumd parent="Ventes" url={Pages.SELL} />
+        <div className="container">
+            <Breadcrumd parent="Ventes" url={Pages.SELL} _child={id}  />
             <div className="row g-4">
                 <div className="col-lg-8">
                     <motion.div
@@ -311,20 +351,44 @@ const ReadSell = () => {
                                             <ArrowBack />
                                         </IconButton>
                                     </Tooltip>
-                                    <Button
-                                        variant="contained"
-                                        startIcon={<Download />}
-                                        onClick={downloadInvoice}
-                                        sx={{
-                                            borderRadius: '12px',
-                                            textTransform: 'none',
-                                            fontWeight: 700,
-                                            background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-                                            boxShadow: '0 4px 12px rgba(30, 41, 59, 0.2)'
-                                        }}
-                                    >
-                                        Facture
-                                    </Button>
+                                    <Stack direction="row" spacing={1}>
+                                        <Tooltip title="Télécharger Reçu" arrow>
+                                            <IconButton
+                                                onClick={() => handleDownloadDocument('receipt')}
+                                                disabled={downloading === 'receipt'}
+                                                sx={{ 
+                                                    borderRadius: '15px',
+                                                    bgcolor: 'rgba(30, 41, 59, 0.05)',
+                                                    color: '#64748b',
+                                                    border: '1px solid rgba(30, 41, 59, 0.1)',
+                                                    '&:hover': { 
+                                                        bgcolor: 'rgba(30, 41, 59, 0.1)',
+                                                        color: '#1e293b'
+                                                    }
+                                                }}
+                                            >
+                                                {downloading === 'receipt' ? <CircularProgress size={20} color="inherit" /> : <Receipt />}
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Télécharger Facture" arrow>
+                                            <IconButton
+                                                onClick={() => handleDownloadDocument('invoice')}
+                                                disabled={downloading === 'invoice'}
+                                                sx={{ 
+                                                    borderRadius: '15px',
+                                                    bgcolor: 'rgba(30, 41, 59, 0.05)',
+                                                    color: '#64748b',
+                                                    border: '1px solid rgba(30, 41, 59, 0.1)',
+                                                    '&:hover': { 
+                                                        bgcolor: 'rgba(30, 41, 59, 0.1)',
+                                                        color: '#1e293b'
+                                                    }
+                                                }}
+                                            >
+                                                {downloading === 'invoice' ? <CircularProgress size={20} color="inherit" /> : <FilePresent />}
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Stack>
                                 </Box>
                             </Box>
 
@@ -340,7 +404,7 @@ const ReadSell = () => {
                                             <Box sx={{ p: 2, borderRadius: '16px', bgcolor: '#f8fafc', border: '1px solid #f1f5f9' }}>
                                                 <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, display: 'block', mb: 0.5 }}>NOM COMPLET</Typography>
                                                 <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                                                    {record.customer ? `${record.customer.lastname} ${record.customer.firstname}` : 'Client Anonyme'}
+                                                    {record.customer ? `${record.customer.lastname} ${record.customer.firstname}` : '-'}
                                                 </Typography>
                                             </Box>
 

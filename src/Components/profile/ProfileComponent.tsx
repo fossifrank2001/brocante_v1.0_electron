@@ -58,7 +58,7 @@ const ProfileComponent: React.FC = () => {
         setIsEditing(false);
     };
 
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);
     };
 
@@ -73,62 +73,111 @@ const ProfileComponent: React.FC = () => {
             <div className="row">
                 {/* Profile Header */}
                 <div className="col-12 mb-4">
-                    <motion.div 
-                        className="card overflow-hidden"
-                        initial={{ opacity: 0, y: 20 }}
+                    <motion.div
+                        className="card overflow-hidden shadow-sm border-0"
+                        style={{
+                            borderRadius: '25px',
+                            background: 'rgba(255, 255, 255, 0.7)',
+                            backdropFilter: 'blur(15px)',
+                            border: '1px solid rgba(255, 255, 255, 0.3)'
+                        }}
+                        initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
+                        transition={{ duration: 0.6 }}
                     >
-                        <div className="card-body position-relative">
-                            {/* Cover Image */}
-                            <div 
-                                className="position-absolute top-0 start-0 w-100"
+                        <div className="card-body p-0 position-relative">
+                            {/* Premium Cover Gradient */}
+                            <div
+                                className="w-100"
                                 style={{
-                                    height: '150px',
-                                    background: 'linear-gradient(45deg, #3a7bd5, #00d2ff)',
-                                    zIndex: 1
+                                    height: '200px',
+                                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                                    position: 'relative',
+                                    overflow: 'hidden'
                                 }}
-                            />
-                            
-                            {/* Profile Content */}
-                            <div className="position-relative" style={{ zIndex: 2 }}>
-                                <div className="text-center mt-5">
-                                    <div className="d-inline-block position-relative">
-                                        <img
-                                            src={defaultAvatar}
-                                            alt="profile"
-                                            className="rounded-circle"
-                                            width="130"
-                                            height="130"
-                                            style={{ 
-                                                border: '4px solid white',
-                                                boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-                                            }}
-                                        />
-                                        <button 
-                                            className="btn btn-primary btn-sm position-absolute bottom-0 end-0 rounded-circle"
-                                            style={{ width: '32px', height: '32px' }}
+                            >
+                                <div style={{
+                                    position: 'absolute',
+                                    width: '100%',
+                                    height: '100%',
+                                    background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.1) 0%, transparent 50%)'
+                                }} />
+                            </div>
+
+                            {/* Profile Overlay Content */}
+                            <div className="px-4 pb-4" style={{ marginTop: '-80px', position: 'relative', zIndex: 2 }}>
+                                <div className="d-flex flex-column flex-md-row align-items-center align-items-md-end gap-4 text-center text-md-start">
+                                    <div className="position-relative">
+                                        <div className="rounded-circle p-1 bg-white shadow-lg">
+                                            <img
+                                                src={defaultAvatar}
+                                                alt="profile"
+                                                className="rounded-circle"
+                                                width="150"
+                                                height="150"
+                                                style={{
+                                                    objectFit: 'cover'
+                                                }}
+                                            />
+                                        </div>
+                                        <motion.button
+                                            whileHover={{ scale: 1.1 }}
+                                            whileTap={{ scale: 0.9 }}
+                                            className="btn btn-primary d-flex align-items-center justify-content-center position-absolute bottom-0 end-0 rounded-circle shadow-lg border-2 border-white"
+                                            style={{ width: '42px', height: '42px' }}
                                         >
-                                            <i className="ti ti-pencil fs-5"></i>
+                                            <i className="ti ti-camera fs-5"></i>
+                                        </motion.button>
+                                    </div>
+                                    <div className="flex-grow-1 pt-2 pb-1">
+                                        <h2 className="fw-bold mb-1 text-dark">{authUser?.last_name} {authUser?.first_name || ''}</h2>
+                                        <div className="d-flex flex-wrap justify-content-center justify-content-md-start gap-3 align-items-center">
+                                            <span className="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
+                                                <i className="ti ti-shield-check me-1 fs-4"></i>
+                                                {UtilMethods.capitalizeFirstLetter(authUser?.status ?? 'Professionnel')}
+                                            </span>
+                                            <span className="text-muted d-flex align-items-center fw-medium">
+                                                <i className="ti ti-mail me-2 fs-5"></i>
+                                                {authUser?.email}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="mb-md-2">
+                                        <button className="btn btn-primary px-4 py-2 rounded-pill shadow-sm d-flex align-items-center gap-2" onClick={() => setIsEditing(true)}>
+                                            <i className="ti ti-user-edit fs-5"></i>
+                                            <span>Modifier le Profil</span>
                                         </button>
                                     </div>
-                                    <h4 className="mt-3 mb-1">{authUser?.last_name} {authUser?.first_name || ''}</h4>
-                                    <p className="text-muted">{authUser?.email}</p>
                                 </div>
 
-                                {/* Stats */}
-                                <div className="d-flex justify-content-center gap-4 mt-4">
-                                    <div className="text-center">
-                                        <h5 className="mb-0">254</h5>
-                                        <small className="text-muted">Articles</small>
+                                {/* Modern Stats Row */}
+                                <div className="d-flex justify-content-center justify-content-md-start gap-5 mt-4 pt-4 border-top">
+                                    <div className="d-flex align-items-center gap-3">
+                                        <div className="bg-light-primary rounded-3 p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                            <i className="ti ti-shopping-cart text-primary fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <h5 className="fw-bold mb-0">254</h5>
+                                            <small className="text-muted text-uppercase fw-bold ls-1" style={{ fontSize: '10px' }}>Ventes</small>
+                                        </div>
                                     </div>
-                                    <div className="text-center">
-                                        <h5 className="mb-0">12.8k</h5>
-                                        <small className="text-muted">Followers</small>
+                                    <div className="d-flex align-items-center gap-3">
+                                        <div className="bg-light-success rounded-3 p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                            <i className="ti ti-device-laptop text-success fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <h5 className="fw-bold mb-0">12</h5>
+                                            <small className="text-muted text-uppercase fw-bold ls-1" style={{ fontSize: '10px' }}>Sessions</small>
+                                        </div>
                                     </div>
-                                    <div className="text-center">
-                                        <h5 className="mb-0">1.8k</h5>
-                                        <small className="text-muted">Following</small>
+                                    <div className="d-flex align-items-center gap-3">
+                                        <div className="bg-light-warning rounded-3 p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                            <i className="ti ti-bolt text-warning fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <h5 className="fw-bold mb-0">1.8k</h5>
+                                            <small className="text-muted text-uppercase fw-bold ls-1" style={{ fontSize: '10px' }}>Score</small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -138,15 +187,15 @@ const ProfileComponent: React.FC = () => {
 
                 {/* Profile Content */}
                 <div className="col-12">
-                    <motion.div 
+                    <motion.div
                         className="card"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.2 }}
                     >
                         <div className="card-body">
-                            <Tabs 
-                                value={activeTab} 
+                            <Tabs
+                                value={activeTab}
                                 onChange={handleTabChange}
                                 className="mb-4"
                                 variant="scrollable"
@@ -159,65 +208,64 @@ const ProfileComponent: React.FC = () => {
                             </Tabs>
 
                             <TabPanel value={activeTab} index={0}>
-                                <div className="row">
-                                    <div className="col-md-6">
-                                        <div className="mb-3">
-                                            <h6 className="text-muted mb-2">Personal Information</h6>
-                                            <div className="card">
-                                                <div className="card-body">
-                                                    <div className="d-flex justify-content-between align-items-center mb-3">
-                                                        <h6 className="mb-0">Informations du profil</h6>
-                                                        <button 
-                                                            className={`btn btn-${isEditing ? 'success' : 'primary'} btn-sm`}
-                                                            onClick={isEditing ? handleSave : () => setIsEditing(true)}
-                                                        >
-                                                            <i className={`ti ti-${isEditing ? 'check' : 'pencil'} me-1`}></i>
-                                                            {isEditing ? 'Sauvegarder' : 'Modifier'}
-                                                        </button>
-                                                    </div>
-                                                    <div className="mb-3">
-                                                        <label className="form-label text-muted">Nom</label>
-                                                        <input 
-                                                            type="text" 
-                                                            className="form-control" 
+                                <div className="row g-4">
+                                    <div className="col-lg-7">
+                                        <div className="card shadow-sm border-0 h-100" style={{ borderRadius: '15px' }}>
+                                            <div className="card-body p-4">
+                                                <div className="d-flex justify-content-between align-items-center mb-4">
+                                                    <h5 className="fw-bold mb-0">Informations du profil</h5>
+                                                    <button
+                                                        className={`btn btn-${isEditing ? 'success' : 'light-primary'} btn-sm px-3 rounded-pill`}
+                                                        onClick={isEditing ? handleSave : () => setIsEditing(true)}
+                                                    >
+                                                        <i className={`ti ti-${isEditing ? 'check' : 'pencil'} me-1`}></i>
+                                                        {isEditing ? 'Sauvegarder' : 'Modifier'}
+                                                    </button>
+                                                </div>
+                                                <div className="row g-3">
+                                                    <div className="col-md-6 text-start">
+                                                        <label className="form-label text-muted small fw-bold">NOM</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control rounded-3"
                                                             name="lastName"
-                                                            value={isEditing ? formData.lastName : authUser?.last_name || ''} 
+                                                            value={isEditing ? formData.lastName : authUser?.last_name || ''}
                                                             onChange={handleInputChange}
                                                             disabled={!isEditing}
                                                             placeholder="Votre nom"
                                                         />
                                                     </div>
-                                                    <div className="mb-3">
-                                                        <label className="form-label text-muted">Prénom</label>
-                                                        <input 
-                                                            type="text" 
-                                                            className="form-control" 
+                                                    <div className="col-md-6 text-start">
+                                                        <label className="form-label text-muted small fw-bold">PRÉNOM</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control rounded-3"
                                                             name="firstName"
-                                                            value={isEditing ? formData.firstName : authUser?.first_name || ''} 
+                                                            value={isEditing ? formData.firstName : authUser?.first_name || ''}
                                                             onChange={handleInputChange}
                                                             disabled={!isEditing}
                                                             placeholder="Votre prénom"
                                                         />
                                                     </div>
-                                                    <div className="mb-3">
-                                                        <label className="form-label text-muted">Email</label>
-                                                        <input 
-                                                            type="email" 
-                                                            className="form-control" 
+                                                    <div className="col-md-12 text-start">
+                                                        <label className="form-label text-muted small fw-bold">EMAIL</label>
+                                                        <input
+                                                            type="email"
+                                                            className="form-control rounded-3"
                                                             name="email"
-                                                            value={isEditing ? formData.email : authUser?.email || ''} 
+                                                            value={isEditing ? formData.email : authUser?.email || ''}
                                                             onChange={handleInputChange}
                                                             disabled={!isEditing}
                                                             placeholder="votre@email.com"
                                                         />
                                                     </div>
-                                                    <div className="mb-3">
-                                                        <label className="form-label text-muted">Téléphone</label>
-                                                        <input 
-                                                            type="tel" 
-                                                            className="form-control" 
+                                                    <div className="col-md-12 text-start">
+                                                        <label className="form-label text-muted small fw-bold">TÉLÉPHONE</label>
+                                                        <input
+                                                            type="tel"
+                                                            className="form-control rounded-3"
                                                             name="phone"
-                                                            value={isEditing ? formData.phone : authUser?.phone || ''} 
+                                                            value={isEditing ? formData.phone : authUser?.phone || ''}
                                                             onChange={handleInputChange}
                                                             disabled={!isEditing}
                                                             placeholder="+237 XXX XXX XXX"
@@ -227,71 +275,44 @@ const ProfileComponent: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="col-md-6">
-                                        <div className="mb-3">
-                                            <h6 className="text-muted mb-2">Account Information</h6>
-                                            <div className="card">
-                                                <div className="card-body">
-                                                    <div className="d-flex align-items-center mb-3">
-                                                        <div className="flex-shrink-0">
-                                                            <i className="ti ti-shield-check fs-4 text-primary"></i>
-                                                        </div>
-                                                        <div className="flex-grow-1 ms-3">
-                                                            <h6 className="mb-1">Account Status</h6>
-                                                            <span className="badge bg-success">{UtilMethods.capitalizeFirstLetter(authUser?.status ?? '')}</span>
+                                    <div className="col-lg-5">
+                                        <div className="d-flex flex-column gap-4">
+                                            <div className="card shadow-sm border-0" style={{ borderRadius: '15px' }}>
+                                                <div className="card-body p-4 text-start">
+                                                    <h6 className="fw-bold mb-3">Statut du compte</h6>
+                                                    <div className="d-flex align-items-center mb-3 p-3 bg-light rounded-4">
+                                                        <div className="bg-success-subtle rounded-circle p-2"><i className="ti ti-shield-check text-success fs-5"></i></div>
+                                                        <div className="ms-3">
+                                                            <p className="mb-0 text-muted small">Status</p>
+                                                            <span className="fw-bold">{UtilMethods.capitalizeFirstLetter(authUser?.status ?? '')}</span>
                                                         </div>
                                                     </div>
-                                                    <div className="d-flex align-items-center mb-3">
-                                                        <div className="flex-shrink-0">
-                                                            <i className="ti ti-calendar fs-4 text-primary"></i>
-                                                        </div>
-                                                        <div className="flex-grow-1 ms-3">
-                                                            <h6 className="mb-1">Member Since</h6>
-                                                            <p className="text-muted mb-0">{UtilMethods.formatDate(authUser?.created_at)}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="d-flex align-items-center">
-                                                        <div className="flex-shrink-0">
-                                                            <i className="ti ti-award fs-4 text-primary"></i>
-                                                        </div>
-                                                        <div className="flex-grow-1 ms-3">
-                                                            <h6 className="mb-1">Account Type</h6>
-                                                            <p className="text-muted mb-0">Premium</p>
+                                                    <div className="d-flex align-items-center p-3 bg-light rounded-4">
+                                                        <div className="bg-primary-subtle rounded-circle p-2"><i className="ti ti-calendar text-primary fs-5"></i></div>
+                                                        <div className="ms-3">
+                                                            <p className="mb-0 text-muted small">Membre depuis</p>
+                                                            <span className="fw-bold">{UtilMethods.formatDate(authUser?.created_at)}</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <div className="mb-3">
-                                            <h6 className="text-muted mb-2">Accès et Rôles</h6>
-                                            <div className="card">
-                                                <div className="card-body">
-                                                    <div className="mb-4">
-                                                        <h6 className="mb-3">Accès</h6>
-                                                        {authUser?.accesses && authUser.accesses.length > 0 ? (
-                                                            <div className="list-group">
-                                                                {authUser.accesses.map((access, index) => (
-                                                                    <div key={index} className="list-group-item list-group-item-action">
-                                                                        <div className="d-flex w-100 justify-content-between align-items-center">
-                                                                            <div>
-                                                                                <h6 className="mb-1">{access.role.label}</h6>
-                                                                            </div>
-                                                                            <span className={`badge bg-${access.status ? 'success' : 'danger'}`}>
-                                                                                {access.status === AccessAPI.ACTIVE ? AccessAPI.ACTIVE : AccessAPI.INACTIVE}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-center text-muted py-3">
-                                                                <i className="ti ti-door-off fs-3 mb-2 d-block"></i>
-                                                                <p>Aucun accès disponible</p>
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                            <div className="card shadow-sm border-0" style={{ borderRadius: '15px' }}>
+                                                <div className="card-body p-4 text-start">
+                                                    <h6 className="fw-bold mb-3">Accès et Rôles</h6>
+                                                    {authUser?.accesses && authUser.accesses.length > 0 ? (
+                                                        <div className="d-flex flex-column gap-2">
+                                                            {authUser.accesses.map((access, index) => (
+                                                                <div key={index} className="p-2 border rounded-3 d-flex justify-content-between align-items-center">
+                                                                    <span className="fw-semibold">{access.role.label}</span>
+                                                                    <span className={`badge bg-${access.status ? 'success' : 'danger'} rounded-pill`}>
+                                                                        {access.status === AccessAPI.ACTIVE ? 'Actif' : 'Inactif'}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center py-2 text-muted">Aucun rôle assigné</div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -300,47 +321,65 @@ const ProfileComponent: React.FC = () => {
                             </TabPanel>
 
                             <TabPanel value={activeTab} index={1}>
-                                <div className="row">
-                                    <div className="col-12">
-                                        <h6 className="text-muted mb-3">Your Articles</h6>
-                                        {/* Article list will go here */}
-                                        <div className="text-center text-muted py-5">
-                                            <i className="ti ti-article fs-1 mb-3 d-block"></i>
-                                            <p>No articles yet</p>
+                                <div className="card shadow-sm border-0" style={{ borderRadius: '15px' }}>
+                                    <div className="card-body p-5 text-center">
+                                        <div className="bg-light-primary rounded-circle d-inline-flex p-4 mb-4">
+                                            <i className="ti ti-article fs-1 text-primary"></i>
                                         </div>
+                                        <h4 className="fw-bold mb-2">Vos Articles</h4>
+                                        <p className="text-muted mb-4 mx-auto" style={{ maxWidth: '400px' }}>
+                                            Vous n'avez pas encore d'articles enregistrés. Commencez à vendre vos produits sur la plateforme Brocante.
+                                        </p>
+                                        <button className="btn btn-primary px-4 rounded-pill">
+                                            <i className="ti ti-plus me-2"></i>
+                                            Ajouter un Article
+                                        </button>
                                     </div>
                                 </div>
                             </TabPanel>
 
                             <TabPanel value={activeTab} index={2}>
-                                <div className="row">
-                                    <div className="col-12">
-                                        <h6 className="text-muted mb-3">Account Settings</h6>
-                                        <div className="card">
-                                            <div className="card-body">
-                                                <div className="mb-4">
-                                                    <h6 className="mb-3">Notifications</h6>
-                                                    <div className="form-check form-switch mb-2">
-                                                        <input className="form-check-input" type="checkbox" id="emailNotif" />
-                                                        <label className="form-check-label" htmlFor="emailNotif">
-                                                            Email Notifications
-                                                        </label>
-                                                    </div>
-                                                    <div className="form-check form-switch mb-2">
-                                                        <input className="form-check-input" type="checkbox" id="pushNotif" />
-                                                        <label className="form-check-label" htmlFor="pushNotif">
-                                                            Push Notifications
-                                                        </label>
-                                                    </div>
-                                                </div>
+                                <div className="card shadow-sm border-0" style={{ borderRadius: '15px' }}>
+                                    <div className="card-body p-4 text-start">
+                                        <h5 className="fw-bold mb-4">Paramètres du Compte</h5>
+
+                                        <div className="mb-4 pt-2">
+                                            <h6 className="fw-bold d-flex align-items-center mb-3">
+                                                <i className="ti ti-bell-ringing me-2 text-primary"></i>
+                                                Notifications
+                                            </h6>
+                                            <div className="p-3 bg-light rounded-4 mb-2 d-flex justify-content-between align-items-center">
                                                 <div>
-                                                    <h6 className="mb-3">Privacy</h6>
-                                                    <div className="form-check form-switch mb-2">
-                                                        <input className="form-check-input" type="checkbox" id="profileVisibility" />
-                                                        <label className="form-check-label" htmlFor="profileVisibility">
-                                                            Profile Visibility
-                                                        </label>
-                                                    </div>
+                                                    <h6 className="mb-0 fw-semibold">Notifications Email</h6>
+                                                    <small className="text-muted">Recevoir les alertes de vente par mail</small>
+                                                </div>
+                                                <div className="form-check form-switch">
+                                                    <input className="form-check-input" type="checkbox" id="emailNotif" defaultChecked />
+                                                </div>
+                                            </div>
+                                            <div className="p-3 bg-light rounded-4 d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 className="mb-0 fw-semibold">Alertes de Stock</h6>
+                                                    <small className="text-muted">Notifications pour les stocks bas</small>
+                                                </div>
+                                                <div className="form-check form-switch">
+                                                    <input className="form-check-input" type="checkbox" id="pushNotif" defaultChecked />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-2">
+                                            <h6 className="fw-bold d-flex align-items-center mb-3">
+                                                <i className="ti ti-eye me-2 text-primary"></i>
+                                                Confidentialité
+                                            </h6>
+                                            <div className="p-3 bg-light rounded-4 d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 className="mb-0 fw-semibold">Profil Public</h6>
+                                                    <small className="text-muted">Afficher vos informations aux autres revendeurs</small>
+                                                </div>
+                                                <div className="form-check form-switch">
+                                                    <input className="form-check-input" type="checkbox" id="profileVisibility" />
                                                 </div>
                                             </div>
                                         </div>
@@ -349,34 +388,52 @@ const ProfileComponent: React.FC = () => {
                             </TabPanel>
 
                             <TabPanel value={activeTab} index={3}>
-                                <div className="row">
-                                    <div className="col-12">
-                                        <h6 className="text-muted mb-3">Security Settings</h6>
-                                        <div className="card">
-                                            <div className="card-body">
-                                                <div className="mb-4">
-                                                    <h6 className="mb-3">Change Password</h6>
-                                                    <div className="mb-3">
-                                                        <label className="form-label">Current Password</label>
-                                                        <input type="password" className="form-control" />
-                                                    </div>
-                                                    <div className="mb-3">
-                                                        <label className="form-label">New Password</label>
-                                                        <input type="password" className="form-control" />
-                                                    </div>
-                                                    <div className="mb-3">
-                                                        <label className="form-label">Confirm New Password</label>
-                                                        <input type="password" className="form-control" />
-                                                    </div>
-                                                    <button className="btn btn-primary">Update Password</button>
+                                <div className="card shadow-sm border-0" style={{ borderRadius: '15px' }}>
+                                    <div className="card-body p-4 text-start">
+                                        <h5 className="fw-bold mb-4">Sécurité du Compte</h5>
+
+                                        <div className="row g-4">
+                                            <div className="col-lg-6 border-end">
+                                                <h6 className="fw-bold mb-3 d-flex align-items-center">
+                                                    <i className="ti ti-key me-2 text-warning"></i>
+                                                    Changer le mot de passe
+                                                </h6>
+                                                <div className="mb-3">
+                                                    <label className="form-label small fw-bold text-muted">MOT DE PASSE ACTUEL</label>
+                                                    <input type="password" className="form-control rounded-3" placeholder="••••••••" />
                                                 </div>
-                                                <div>
-                                                    <h6 className="mb-3">Two-Factor Authentication</h6>
+                                                <div className="mb-3">
+                                                    <label className="form-label small fw-bold text-muted">NOUVEAU MOT DE PASSE</label>
+                                                    <input type="password" className="form-control rounded-3" placeholder="••••••••" />
+                                                </div>
+                                                <div className="mb-4">
+                                                    <label className="form-label small fw-bold text-muted">CONFIRMER LE MOT DE PASSE</label>
+                                                    <input type="password" className="form-control rounded-3" placeholder="••••••••" />
+                                                </div>
+                                                <button className="btn btn-warning px-4 rounded-pill text-white fw-bold">
+                                                    Mettre à jour le mot de passe
+                                                </button>
+                                            </div>
+                                            <div className="col-lg-6">
+                                                <h6 className="fw-bold mb-3 d-flex align-items-center">
+                                                    <i className="ti ti-shield-lock me-2 text-success"></i>
+                                                    Authentification à Deux Facteurs (2FA)
+                                                </h6>
+                                                <div className="p-4 bg-light-success rounded-4 border border-success-subtle mb-4">
+                                                    <div className="d-flex gap-3">
+                                                        <div className="flex-shrink-0 text-success"><i className="ti ti-info-circle fs-6"></i></div>
+                                                        <p className="small mb-0 text-success fw-medium">
+                                                            Doublez la sécurité de votre compte en activant l'authentification 2FA. Un code vous sera demandé à chaque connexion.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="d-flex justify-content-between align-items-center p-3 bg-light rounded-4">
+                                                    <div>
+                                                        <h6 className="mb-0 fw-bold">Activer la 2FA</h6>
+                                                        <small className="text-muted">Protection renforcée</small>
+                                                    </div>
                                                     <div className="form-check form-switch">
                                                         <input className="form-check-input" type="checkbox" id="twoFactor" />
-                                                        <label className="form-check-label" htmlFor="twoFactor">
-                                                            Enable Two-Factor Authentication
-                                                        </label>
                                                     </div>
                                                 </div>
                                             </div>

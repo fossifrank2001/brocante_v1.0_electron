@@ -187,7 +187,14 @@ const ReadProduct = () => {
                                                     <Grid item xs={12} sm={6}>
                                                         <InfoItem
                                                             label="Prix de vente"
-                                                            value={<Typography variant="h6" sx={{ color: '#10b981', fontWeight: 800 }}>{UtilMethods.formatNumber(record.price)}</Typography>}
+                                                            value={
+                                                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                                                    <Typography variant="h6" sx={{ color: '#10b981', fontWeight: 800 }}>{UtilMethods.formatNumber(record.price)}</Typography>
+                                                                    {record.unit?.abbreviation && record.unit.abbreviation !== 'pce' && (
+                                                                        <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700 }}>/ {record.unit.abbreviation}</Typography>
+                                                                    )}
+                                                                </Box>
+                                                            }
                                                         />
                                                     </Grid>
                                                     <Grid item xs={12} sm={6}>
@@ -212,7 +219,7 @@ const ReadProduct = () => {
                                                                     }}
                                                                 />
                                                                 <Typography variant="body1" sx={{ fontWeight: 700, color: '#334155' }}>
-                                                                    {record.stock_quantity} unité(s)
+                                                                    {record.stock_quantity} {record.unit?.abbreviation || 'unité(s)'}
                                                                 </Typography>
                                                             </Box>
                                                         </Box>

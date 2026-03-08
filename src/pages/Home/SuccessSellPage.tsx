@@ -1,5 +1,7 @@
 import { useLayoutEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { Box, Typography, Button, Paper, CircularProgress, Container } from '@mui/material';
+import { ArrowBack, Print, Download, CheckCircle } from '@mui/icons-material';
 import PageLoadingIndicator from "Components/PageLoadingIndicator";
 import { useAppContext } from "@/contexts/appContext";
 import { useAppDispatch, useAppSelector } from "@/hooks";
@@ -7,10 +9,10 @@ import constants from "Data/Utilities/constants";
 import success_congratulation from "../../assets/images/products/success_congratulation.jpg";
 import { setActivePage } from "Data/Slices/NavigationSlice";
 import { Pages } from "Data/Objects/state";
-import StreamedDocumentAPI from "Data/Api/StreamedDocument.ts";
 import PrintDialog from "@/Components/dashboard/pos/PrintDialog";
 import SellAPI from "@/Data/Api/Sell";
 import { ISellWithDetails } from "@/Services/ReceiptTemplate";
+import axiosInstance from '@/Data/Utilities/axiosInstance';
 
 /**
  * @returns {JSX.Element}
@@ -24,157 +26,196 @@ function SuccessSellPage(): JSX.Element {
     const [sellData, setSellData] = useState<ISellWithDetails | null>(null);
 
     useLayoutEffect(() => {
-        document.title = constants.APP_NAME + " .:. Success Sell";
+        document.title = constants.APP_NAME + " .:. Transaction Réussie";
         context.togglePageLoading(false);
         // Load sell data for printing
         if (navigation.param?.number) {
             loadSellData(navigation.param.number);
         }
-    }, []);
+    }, [navigation.param?.number]);
 
-    const loadSellData = async (sellCode: string | number) => {
+    const loadSellData = async (sellId: string | number) => {
         try {
-            const { data } = await SellAPI.show(sellCode as unknown as number);
+            const { data } = await SellAPI.show(sellId as unknown as number);
             setSellData(data as unknown as ISellWithDetails);
         } catch (error) {
             console.error('Failed to load sell data:', error);
         }
     };
 
-    const handleDownloadPDF = async () => {
+    const handleDownloadPDF = () => {
+        if (!sellData) return;
+        setIsDownloading(true);
         try {
-            setIsDownloading(true);
-            const recordNumber = navigation.param?.number;
-            const documentType = navigation.param?.type === 'total' ? 'receipt' : 'invoice';
-
-            if (recordNumber) {
-                await StreamedDocumentAPI.generate(documentType, recordNumber, 'download');
-            } else {
-                throw new Error("Record number is missing");
-            }
-        } catch (e) {
-            // You might want to show an error message to the user here
+            const baseURL = axiosInstance.defaults.baseURL;
+            const token = localStorage.getItem('token');
+            const url = `${baseURL}/sells/${sellData.id}/pdf-receipt?token=${token}`;
+            window.open(url, '_blank');
         } finally {
-            setIsDownloading(false);
+            setTimeout(() => setIsDownloading(false), 1000);
         }
     };
 
     const pageVariants = {
-        initial: { opacity: 0, y: 50 },
-        in: { opacity: 1, y: 0 },
-        out: { opacity: 0, y: -50 }
+        initial: { opacity: 0, scale: 0.95 },
+        in: { opacity: 1, scale: 1 },
+        out: { opacity: 0, scale: 1.05 }
     };
 
     const pageTransition = {
-        type: "tween",
-        ease: "anticipate",
-        duration: 0.5
+        type: "spring",
+        stiffness: 300,
+        damping: 30
     };
 
-    const buttonVariants = {
-        hover: { scale: 1.05 },
-        tap: { scale: 0.95 }
-    };
+    const displayCode = sellData?.sell_code || navigation.param?.code || 'Chargement...';
 
     return (
-        <>
+        <Box sx={{
+            minHeight: '100vh',
+            bgcolor: '#f8fafc',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 3
+        }}>
             <PageLoadingIndicator visible={context.pageLoading} />
-            <motion.div
-                className="body-wrapper-home"
-                initial="initial"
-                animate="in"
-                exit="out"
-                variants={pageVariants}
-                transition={pageTransition}
-            >
-                <div className="min-vh-100">
-                    <div className='w-100 d-flex justify-content-center flex-column' style={{height: "100vh"}}>
+
+            <Container maxWidth="sm">
+                <motion.div
+                    initial="initial"
+                    animate="in"
+                    exit="out"
+                    variants={pageVariants}
+                    transition={pageTransition}
+                >
+                    <Paper
+                        elevation={0}
+                        sx={{
+                            p: { xs: 4, md: 5 },
+                            borderRadius: '16px',
+                            textAlign: 'center',
+                            background: '#ffffff',
+                            border: '1px solid #e2e8f0',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 4
+                        }}
+                    >
                         <motion.div
-                            className=""
-                            style={{margin: "0 auto", width: '75%', height: "200px"}}
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 0.2, type: "spring", stiffness: 260, damping: 20 }}
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.1 }}
                         >
-                            <img src={success_congratulation} className='w-100 h-100 object-fit-contain' alt='success-sell' style={{objectPosition: "center"}} />
+                            <CheckCircle sx={{ fontSize: 72, color: '#10b981', mb: 1 }} />
+                            <Typography variant="h5" sx={{ fontWeight: 700, color: '#0f172a', mb: 1 }}>
+                                Paiement Réussi
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#64748b' }}>
+                                La transaction a été enregistrée avec succès.
+                            </Typography>
                         </motion.div>
-                        <motion.p
-                            className='fs-6 text-center'
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 }}
-                        >
-                            Sale has been processed successfully.
-                        </motion.p>
-                        <motion.p
-                            className='fs-2 text-center'
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.6 }}
-                        >
-                            Sale Number: <strong>{navigation.param?.number}</strong>
-                        </motion.p>
+
                         <motion.div
-                            className='btn-actions d-flex align-items-center justify-content-center w-100 gap-3'
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.8 }}
+                            transition={{ delay: 0.2 }}
+                            style={{ width: '100%' }}
                         >
-                            <motion.button
-                                className='btn py-3 px-5 btn-primary d-flex align-items-center'
-                                onClick={() => {
-                                    context.togglePageLoading(true);
-                                    dispatch(setActivePage({page: Pages.HOME}));
-                                }}
-                                variants={buttonVariants}
-                                whileHover="hover"
-                                whileTap="tap"
-                            >
-                                <i className='ti ti-arrow-left me-2'></i>
-                                <span>Back to shop</span>
-                            </motion.button>
-                            {navigation.param && (
-                                <>
-                                    <motion.button
-                                        className='btn py-3 px-5 btn-success d-flex align-items-center'
-                                        onClick={() => setPrintDialogOpen(true)}
+                            <Box sx={{
+                                py: 2,
+                                px: 3,
+                                bgcolor: '#f1f5f9',
+                                borderRadius: '8px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                            }}>
+                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500 }}>
+                                    Ticket N°
+                                </Typography>
+                                <Typography variant="subtitle1" sx={{ color: '#0f172a', fontWeight: 700, fontFamily: 'monospace' }}>
+                                    {displayCode}
+                                </Typography>
+                            </Box>
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                            style={{ width: '100%' }}
+                        >
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
+                                <Box sx={{ display: 'flex', gap: 2 }}>
+                                    <Button
+                                        variant="outlined"
+                                        color="inherit"
+                                        size="large"
+                                        fullWidth
                                         disabled={!sellData}
-                                        variants={buttonVariants}
-                                        whileHover="hover"
-                                        whileTap="tap"
+                                        onClick={() => setPrintDialogOpen(true)}
+                                        startIcon={<Print />}
+                                        sx={{
+                                            borderRadius: '8px',
+                                            textTransform: 'none',
+                                            fontWeight: 600,
+                                            borderColor: '#cbd5e1',
+                                            color: '#475569'
+                                        }}
                                     >
-                                        <i className='ti ti-printer me-2'></i>
-                                        <span>Imprimer ticket</span>
-                                    </motion.button>
-                                    <motion.button
-                                        className='btn py-3 px-5 btn-secondary d-flex align-items-center'
+                                        Ticket Cash
+                                    </Button>
+
+                                    <Button
+                                        variant="outlined"
+                                        color="primary"
+                                        size="large"
+                                        fullWidth
+                                        disabled={isDownloading || !sellData}
                                         onClick={handleDownloadPDF}
-                                        disabled={isDownloading}
-                                        variants={buttonVariants}
-                                        whileHover="hover"
-                                        whileTap="tap"
+                                        startIcon={isDownloading ? <CircularProgress size={20} color="inherit" /> : <Download />}
+                                        sx={{
+                                            borderRadius: '8px',
+                                            textTransform: 'none',
+                                            fontWeight: 600
+                                        }}
                                     >
-                                        {isDownloading ? (
-                                            <motion.i
-                                                className='ti ti-loader me-2'
-                                                animate={{ rotate: 360 }}
-                                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                            ></motion.i>
-                                        ) : (
-                                            <i className='ti ti-file-text me-2'></i>
-                                        )}
-                                        <span>
-                                            {navigation.param?.type === 'total' ? 'Download receipt' : 'Download invoice'}
-                                        </span>
-                                    </motion.button>
-                                </>
-                            )}
+                                        Facture PDF
+                                    </Button>
+                                </Box>
+
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    size="large"
+                                    fullWidth
+                                    onClick={() => {
+                                        context.togglePageLoading(true);
+                                        dispatch(setActivePage({ page: Pages.POS_EXPRESS }));
+                                    }}
+                                    startIcon={<ArrowBack />}
+                                    sx={{
+                                        borderRadius: '8px',
+                                        fontWeight: 600,
+                                        textTransform: 'none',
+                                        boxShadow: 'none',
+                                        '&:hover': {
+                                            boxShadow: 'none'
+                                        }
+                                    }}
+                                >
+                                    Fermer et retourner au POS
+                                </Button>
+                            </Box>
                         </motion.div>
-                    </div>
-                </div>
-            </motion.div>
+                    </Paper>
+                </motion.div>
+            </Container>
+
             <PrintDialog open={printDialogOpen} onClose={() => setPrintDialogOpen(false)} sellData={sellData} />
-        </>
+        </Box>
     );
 }
 

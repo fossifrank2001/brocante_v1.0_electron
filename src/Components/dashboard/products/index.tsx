@@ -23,7 +23,7 @@ import {
 import {
     Visibility, Edit, Delete, Refresh, Add,
     FileDownload, Inventory2, LocalOffer,
-    Warning
+    Warning, QrCode
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
@@ -36,6 +36,7 @@ import { IProduct, IProductTableData, ISupply } from '@/Data/Interfaces/Supply';
 import ProductAPI from "@/Data/Api/Product";
 import SupplyAPI from "@/Data/Api/Suppliers";
 import dayjs from "dayjs";
+import { QRCodeCanvas } from 'qrcode.react';
 
 export default function IndexProduct() {
     const context = useAppContext();
@@ -192,32 +193,110 @@ export default function IndexProduct() {
             },
         },
         {
+            accessorKey: "internal_reference",
+            header: "Réf. Interne",
+            size: 130,
+            Cell: ({ cell }) => (
+                <Typography variant="caption" sx={{ fontWeight: 800, color: '#64748b', fontFamily: 'monospace' }}>
+                    {cell.getValue() as string || '-'}
+                </Typography>
+            ),
+        },
+        {
+            accessorKey: "barcode",
+            header: "Code-barres",
+            size: 130,
+            Cell: ({ cell }) => (
+                <Typography variant="caption" sx={{ fontWeight: 800, color: '#64748b', fontFamily: 'monospace' }}>
+                    {cell.getValue() as string || '-'}
+                </Typography>
+            ),
+        },
+        {
+            accessorKey: "qrcode_data",
+            header: "QR Code",
+            size: 100,
+            Cell: ({ cell }) => (
+                cell.getValue() ? (
+                    <Tooltip
+                        title={
+                            <Box sx={{ p: 1, bgcolor: 'white', borderRadius: '8px' }}>
+                                <QRCodeCanvas
+                                    value={cell.getValue() as string}
+                                    size={150}
+                                    level="H"
+                                    includeMargin={true}
+                                />
+                                <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', mt: 1, color: '#1e293b', fontWeight: 700 }}>
+                                    {cell.getValue() as string}
+                                </Typography>
+                            </Box>
+                        }
+                        componentsProps={{
+                            tooltip: {
+                                sx: {
+                                    bgcolor: 'white',
+                                    boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                                    border: '1px solid #e2e8f0',
+                                    p: 0
+                                }
+                            }
+                        }}
+                        arrow
+                    >
+                        <Box sx={{ cursor: 'zoom-in', display: 'inline-block', p: 0.5, bgcolor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                            <QRCodeCanvas
+                                value={cell.getValue() as string}
+                                size={32}
+                                level="M"
+                            />
+                        </Box>
+                    </Tooltip>
+                ) : (
+                    <Typography variant="caption" sx={{ color: '#cbd5e1', fontStyle: 'italic' }}>Non généré</Typography>
+                )
+            ),
+        },
+        {
             accessorKey: "price",
             header: "Prix unitaire",
             size: 140,
-            Cell: ({ cell }) => (
-                <Typography variant="body2" sx={{ fontWeight: 900, color: '#0f172a', fontSize: '0.95rem' }}>
-                    {UtilMethods.formatNumber(cell.getValue<number>())}
-                </Typography>
+            Cell: ({ cell, row }) => (
+                <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 900, color: '#0f172a', fontSize: '0.95rem' }}>
+                        {UtilMethods.formatNumber(cell.getValue<number>())}
+                    </Typography>
+                    {(row.original as any).unit?.abbreviation && (row.original as any).unit?.abbreviation !== 'pce' && (
+                        <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
+                            par {(row.original as any).unit.abbreviation}
+                        </Typography>
+                    )}
+                </Box>
             ),
         },
         {
             accessorKey: "stock_quantity",
             header: "Stock",
             size: 110,
-            Cell: ({ cell }) => {
+            Cell: ({ cell, row }) => {
                 const qty = cell.getValue<number>();
                 const isLow = qty > 0 && qty <= 5;
                 const isOut = qty === 0;
+                const unit = (row.original as any).unit?.abbreviation || 'pce';
                 return (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         {isOut && <Warning sx={{ fontSize: 14, color: '#ef4444' }} />}
-                        <Typography variant="body2" sx={{
-                            fontWeight: 800, fontSize: '0.9rem',
-                            color: isOut ? '#ef4444' : isLow ? '#f59e0b' : '#10b981'
-                        }}>
-                            {qty}
-                        </Typography>
+                        <Box>
+                            <Typography variant="body2" sx={{
+                                fontWeight: 800, fontSize: '0.9rem',
+                                color: isOut ? '#ef4444' : isLow ? '#f59e0b' : '#10b981'
+                            }}>
+                                {qty}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700, fontSize: '0.65rem', textTransform: 'uppercase' }}>
+                                {unit}
+                            </Typography>
+                        </Box>
                     </Box>
                 );
             },

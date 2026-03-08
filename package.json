@@ -93,6 +93,7 @@
     "react-qr-code": "^2.0.18",
     "react-redux": "^9.1.2",
     "react-slick": "^0.30.2",
+    "react-to-print": "^3.3.0",
     "react-toastify": "^10.0.5",
     "react-window": "^2.2.7",
     "slick-carousel": "^1.8.1",

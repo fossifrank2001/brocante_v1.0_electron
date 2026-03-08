@@ -1,21 +1,23 @@
-import React, {useCallback, useEffect, useState, useRef} from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import user from "../assets/images/profile/user-1.jpg";
-import {useAppContext} from "../contexts/appContext";
-import {useAppDispatch, useAppSelector} from '@/hooks';
-import {IRole} from '@/Data/Interfaces';
-import {Link} from '@mui/material';
+import { useAppContext } from "../contexts/appContext";
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { IRole } from '@/Data/Interfaces';
+import { Link } from '@mui/material';
 import NotificationsAPI from '@/Data/Api/Notifications';
-import {INotification} from '@/Data/Interfaces/Notifications';
-import {AnimatePresence, motion} from 'framer-motion';
+import { INotification } from '@/Data/Interfaces/Notifications';
+import { AnimatePresence, motion } from 'framer-motion';
 import "Styles/Navbar.less"
-import {setActivePage} from "Data/Slices/NavigationSlice.ts";
-import {Pages} from "Data/Objects/state.ts";
+import { setActivePage } from "Data/Slices/NavigationSlice.ts";
+import { Pages } from "Data/Objects/state.ts";
 import CashSessionBar from '@/Components/dashboard/pos/CashSessionBar';
 
-interface INavBarPropsInterface{
-    onHandleChangeRole: (role?: IRole) => void
+interface INavBarPropsInterface {
+    onHandleChangeRole: (role?: IRole) => void;
+    toggleSidebar?: () => void;
+    isSidebarOpen?: boolean;
 }
-const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
+const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSidebar, isSidebarOpen }) => {
     const context = useAppContext();
     const dispatch = useAppDispatch();
     const { authUser } = useAppSelector(state => state.user);
@@ -24,7 +26,7 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
     const { auth_access_id } = useAppSelector(state => state.userAuthorizing);
     const [notifications, setNotifications] = useState<INotification[] | null>(null);
     const [hasClickSecond, setHasClickSecond] = useState(false);
-    const {totalQuantity} = useAppSelector(state => state.cart);
+    const { totalQuantity } = useAppSelector(state => state.cart);
     const notificationRef = useRef<HTMLDivElement>(null);
     const accessDropdownRef = useRef<HTMLLIElement>(null);
     const userDropdownRef = useRef<HTMLLIElement>(null);
@@ -46,7 +48,7 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
             context.togglePageLoading(true);
             console.log('access_id ::: ', access_id)
             const { loadAuthorizationAsync } = await import('Data/Slices/auth/authorizationSlice');
-            await dispatch(loadAuthorizationAsync({access_id}));
+            await dispatch(loadAuthorizationAsync({ access_id }));
             const role = authUser?.accesses?.find(access => access.id === access_id)?.role;
             onHandleChangeRole(role);
         } catch (e) {
@@ -79,9 +81,8 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
                     handleChangeAccess(access.id);
                     setShowAccessDropdown(false);
                 }}
-                className={`dropdown-item d-flex align-items-center gap-3 py-2 px-3 border-0 w-100 ${
-                    isActual ? 'bg-light-primary' : 'hover-bg-light'
-                }`}
+                className={`dropdown-item d-flex align-items-center gap-3 py-2 px-3 border-0 w-100 ${isActual ? 'bg-light-primary' : 'hover-bg-light'
+                    }`}
                 style={{ transition: 'all 0.2s ease' }}
             >
                 <div className={`rounded-circle p-2 ${isActual ? 'bg-primary' : 'bg-light'}`}>
@@ -160,15 +161,15 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
     const renderNotificationIcon = (nature: string) => {
         switch (nature) {
             case 'info':
-                return <i className="ti ti-info-circle text-info" style={{fontSize: "32px"}}></i>;
+                return <i className="ti ti-info-circle text-info" style={{ fontSize: "32px" }}></i>;
             case 'success':
-                return <i className="ti ti-circle-check text-success" style={{fontSize: "32px"}}></i>;
+                return <i className="ti ti-circle-check text-success" style={{ fontSize: "32px" }}></i>;
             case 'warning':
-                return <i className="ti ti-alert-triangle text-warning" style={{fontSize: "32px"}}></i>;
+                return <i className="ti ti-alert-triangle text-warning" style={{ fontSize: "32px" }}></i>;
             case 'error':
-                return <i className="ti ti-alert-circle text-danger" style={{fontSize: "32px"}}></i>;
+                return <i className="ti ti-alert-circle text-danger" style={{ fontSize: "32px" }}></i>;
             default:
-                return <i className="ti ti-info-circle" style={{fontSize: "32px"}}></i>;
+                return <i className="ti ti-info-circle" style={{ fontSize: "32px" }}></i>;
         }
     };
 
@@ -197,12 +198,19 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
     }
 
     return (
-        <header className="app-header">
+        <header className="app-header" style={{
+            zIndex: 100
+        }}>
             <nav className="navbar navbar-expand-lg navbar-light" style={{ borderBottom: "1px solid lightgray" }}>
                 <ul className="navbar-nav">
-                    <li className="nav-item d-block d-xl-none">
-                        <Link className="nav-link sidebartoggler nav-icon-hover" id="headerCollapse" onClick={handleToggleOpening} href="#">
-                            {!hasClickSecond? <i className="ti ti-menu-2"></i> : <i className="ti ti-x" ></i>}
+                    <li className="nav-item">
+                        <Link
+                            className="nav-link sidebartoggler nav-icon-hover"
+                            id="headerCollapse"
+                            onClick={toggleSidebar || handleToggleOpening}
+                            href="#"
+                        >
+                            {(!isSidebarOpen) ? <i className="ti ti-menu-2"></i> : <i className="ti ti-x" ></i>}
                         </Link>
                     </li>
                     <li className="nav-item nav-icon-hover-bg rounded-circle position-relative">
@@ -246,7 +254,7 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
                                             {notifications.map((notification) => {
                                                 const notifData = notification.data;
                                                 return (
-                                                    <li key={notification.id} 
+                                                    <li key={notification.id}
                                                         className={`notification-item d-flex align-items-start mb-3 p-2 hover-bg-light rounded ${!notification.read_at ? 'bg-light' : ''}`}
                                                     >
                                                         <div className='d-flex align-items-start w-100'>
@@ -274,11 +282,11 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
                                         </ul>
                                     )}
                                     <div className="d-flex text-center justify-content-center mt-3 pt-2 border-top">
-                                        <Link 
-                                            href="#" 
-                                            className="see-more-link text-primary text-decoration-none" 
+                                        <Link
+                                            href="#"
+                                            className="see-more-link text-primary text-decoration-none"
                                             onClick={() => {
-                                                dispatch(setActivePage({page:Pages.NOTIFICATION}));
+                                                dispatch(setActivePage({ page: Pages.NOTIFICATION }));
                                                 setHasClickToLoadNotif(false);
                                             }}
                                         >
@@ -296,15 +304,15 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
                 <div className="navbar-collapse justify-content-end px-0" id="navbarNav">
                     <ul className="navbar-nav flex-row ms-auto align-items-center justify-content-end">
                         <li className="nav-item nav-icon-hover-bg rounded-circle">
-                            <button className="btn btn-primary d-flex align-items-center" onClick={() => dispatch(setActivePage({page: Pages.HOME}))} >
+                            <button className="btn btn-primary d-flex align-items-center" onClick={() => dispatch(setActivePage({ page: Pages.HOME }))} >
                                 <i className='ti ti-building-store me-1'></i>
                                 <span>Shop</span>
                             </button>
                         </li>
                         <li className="nav-item nav-icon-hover-bg rounded-circle">
                             <Link className="nav-link position-relative" href="#"
-                               data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight"
-                               aria-controls="offcanvasRight">
+                                data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight"
+                                aria-controls="offcanvasRight">
                                 <i className="ti ti-basket"></i>
                                 {totalQuantity > 0 && <span className="popup-badge rounded-pill bg-danger text-white fs-2">{totalQuantity}</span>}
                             </Link>
@@ -318,9 +326,9 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
                             >
                                 <i className='ti ti-switch-3 fs-5 bg-primary text-white p-2 rounded'></i>
                             </button>
-                            <div 
+                            <div
                                 className={`dropdown-menu dropdown-menu-end shadow-lg ${showAccessDropdown ? 'show' : ''}`}
-                                style={{ 
+                                style={{
                                     position: 'absolute',
                                     top: '100%',
                                     right: '0',
@@ -347,17 +355,17 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
                                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                                 aria-expanded={showUserDropdown}
                             >
-                                <img 
-                                    src={user} 
-                                    alt="user profile" 
-                                    width="35" 
+                                <img
+                                    src={user}
+                                    alt="user profile"
+                                    width="35"
                                     height="35"
-                                    className="rounded-circle" 
+                                    className="rounded-circle"
                                 />
                             </button>
-                            <div 
+                            <div
                                 className={`dropdown-menu dropdown-menu-end shadow-lg ${showUserDropdown ? 'show' : ''}`}
-                                style={{ 
+                                style={{
                                     position: 'absolute',
                                     top: '100%',
                                     right: '0',
@@ -372,16 +380,16 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole }) => {
                                 <div className="p-3">
                                     <div className="d-flex align-items-center border-bottom pb-3 mb-3">
                                         <div className="flex-shrink-0">
-                                            <img 
-                                                src={user} 
-                                                alt="" 
-                                                width="45" 
+                                            <img
+                                                src={user}
+                                                alt=""
+                                                width="45"
                                                 height="45"
-                                                className="rounded-circle" 
+                                                className="rounded-circle"
                                             />
                                         </div>
                                         <div className="flex-grow-1 ms-3">
-                                            <h6 className="mb-1 fw-semibold">{authUser?.last_name +' '+ authUser?.first_name}</h6>
+                                            <h6 className="mb-1 fw-semibold">{authUser?.last_name + ' ' + authUser?.first_name}</h6>
                                             <small className="text-muted">{authUser?.email}</small>
                                         </div>
                                     </div>

@@ -15,8 +15,8 @@ import {
 } from 'material-react-table'
 import { MRT_Localization_EN } from "material-react-table/locales/en"
 import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance'
-import { Autocomplete, Box, Stack, TextField, Typography, Chip, IconButton, Tooltip, Zoom, Button, CircularProgress } from "@mui/material"
-import { Visibility, Edit, Refresh, Add } from '@mui/icons-material'
+import { Autocomplete, Box, Stack, TextField, Typography, Chip, IconButton, Tooltip, Zoom, Button } from "@mui/material"
+import {Visibility, Edit, Refresh, Add, Person} from '@mui/icons-material'
 import UtilMethods from '@/Data/Utilities/UtilMethods'
 import { useAppDispatch, useAppSelector } from '@/hooks'
 import { setActivePage } from '@/Data/Slices/NavigationSlice'
@@ -125,7 +125,7 @@ export default function IndexSell() {
     const tableData: ISellTableData[] = useMemo(() => {
         return sells ? sells.map((_sell) => ({
             ..._sell,
-            person_id: _sell?.person ? `${_sell.person.lastname || ""} ${_sell.person.firstname || ""}` : "Client Anonyme",
+            person_id: _sell?.person ? `${_sell.person.lastname || ""} ${_sell.person.firstname || ""}` : "-",
             actions: (
                 <Stack direction="row" spacing={1}>
                     <Tooltip title="Voir Détails" arrow TransitionComponent={Zoom}>
@@ -211,7 +211,39 @@ export default function IndexSell() {
             {
                 accessorKey: "person_id",
                 header: "Client",
-                size: 200,
+                size: 240,
+                Cell: ({ row }) => {
+                    const person = row.original.person;
+
+                    if (!person) return (
+                        <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#334155' }}> - </Typography>
+                        </Box>
+                    );
+
+                    const lastName = person.lastname || "";
+                    const firstName = person.firstname || "";
+                    const phone = person.phone;
+                    const address = person.address;
+
+                    return (
+                        <Box>
+                            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 1,fontWeight: 700, color: '#334155', mb: 0.5 }}>
+                                <Person sx={{ fontSize: 16, color: '#64748b' }} /> {`${lastName} ${firstName}`.trim() || "N/A"}
+                            </Typography>
+                            {phone && (
+                                <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '11px', display: 'block' }}>
+                                    📞 {phone}
+                                </Typography>
+                            )}
+                            {address && (
+                                <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '11px', display: 'block' }}>
+                                    📍 {address}
+                                </Typography>
+                            )}
+                        </Box>
+                    );
+                },
                 Filter: ({ column }) => (
                     <Autocomplete
                         options={customers || []}

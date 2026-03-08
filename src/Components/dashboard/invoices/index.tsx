@@ -110,13 +110,41 @@ export default function IndexInvoice() {
     const handleDownload = async (_type: 'receipt' | 'invoice', record) => {
         try {
             context.togglePageLoading(true);
-            setIsRefetching(true)
-            await StreamedDocumentAPI.generate(_type, record.invoice_number);
+            setIsRefetching(true);
+            
+            if (_type === 'receipt') {
+                try {
+                    const invoiceResponse = await axiosInstance.get(`/invoices/${record.id}`);
+                    const invoiceData = invoiceResponse.data.data;
+
+                    if (invoiceData.sell_id) {
+                        const sellId = invoiceData.sell_id;
+                        console.log('Using sell_id from invoice:', sellId);
+                        const response = await axiosInstance.get(`/sells/${sellId}/pdf-receipt`, {
+                            responseType: 'blob'
+                        });
+                        const blob = new Blob([response.data], { type: 'application/pdf' });
+                        const url = URL.createObjectURL(blob);
+                        window.open(url, '_blank');
+                        setTimeout(() => URL.revokeObjectURL(url), 100);
+                        return;
+                    }
+                    
+                    throw new Error('Aucun receipt_number ou sell_id trouvé dans l\'invoice');
+                    
+                } catch (receiptError) {
+                    console.error('Error getting receipt:', receiptError);
+                    throw new Error('Impossible de récupérer le reçu: ' + (receiptError as Error).message);
+                }
+            } else {
+                await StreamedDocumentAPI.generate('invoice', record.invoice_number);
+            }
         } catch (error) {
             console.error('Error downloading document:', error);
+            alert('Erreur lors du téléchargement du document: ' + (error as Error).message);
         } finally {
             context.togglePageLoading(false);
-            setIsRefetching(false)
+            setIsRefetching(false);
         }
     };
 
@@ -170,27 +198,43 @@ export default function IndexInvoice() {
             {
                 id: "client",
                 header: "Client",
-                size: 180,
+                size: 220,
                 Cell: ({ row }) => {
-                    const customer = row.original.customer;
-                    const person = (row.original as any).person;
-                    const client = customer || person;
+                    const customer = row.original.sell?.person;
 
-                    if (!client) return (
-                        <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>
-                            Client Anonyme
-                        </Typography>
+                    if (!customer) return (
+                        <Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>
+                                    -
+                                </Typography>
+                            </Box>
+                        </Box>
                     );
 
-                    const lastName = client.lastname || client.last_name || "";
-                    const firstName = client.firstname || client.first_name || "";
+                    const lastName = customer.lastname || "";
+                    const firstName = customer.firstname || "";
+                    const phone = customer.phone;
+                    const address = customer.address;
 
                     return (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Person sx={{ fontSize: 16, color: '#64748b' }} />
-                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#334155' }}>
-                                {`${lastName} ${firstName}`.trim() || "N/A"}
-                            </Typography>
+                        <Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                <Person sx={{ fontSize: 16, color: '#64748b' }} />
+                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#334155' }}>
+                                    {`${lastName} ${firstName}`.trim() || "N/A"}
+                                </Typography>
+                            </Box>
+                            {phone && (
+                                <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '11px', ml: 3.5 }}>
+                                    📞 {phone}
+                                </Typography>
+                            )}
+                            {address && (
+                                <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '11px', ml: 3.5, display: 'block' }}>
+                                    📍 {address}
+                                </Typography>
+                            )}
                         </Box>
                     );
                 },

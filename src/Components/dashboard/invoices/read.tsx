@@ -4,19 +4,17 @@ import {
     DialogActions, DialogContent, DialogTitle, TextField, MenuItem,
     Select, Alert, AlertTitle, Collapse, FormControl, InputLabel,
     FormHelperText, Checkbox, FormControlLabel, Paper, Divider,
-    Chip, IconButton, Tooltip, Zoom, Fade, Card, CardContent
+    Chip, IconButton, Tooltip, Zoom, Fade, Card, CardContent, Stack
 } from '@mui/material';
 import {
-    Receipt, FileDownload, PointOfSale, Wallet, History,
-    Person, Info, Close, AttachMoney, AccountBalanceWallet,
-    Event, TrendingUp, CreditCard, Warning, CheckCircle,
-    ArrowBack, ShoppingCart, Download
+    Receipt, PointOfSale, History,
+    Person, Close, AttachMoney, AccountBalanceWallet, CheckCircle,
+    ArrowBack, FilePresent
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
 import Breadcrumd from '@/Components/Breadcrumd';
-import InfoItem from '@/Components/InfoItem';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
@@ -26,8 +24,8 @@ import dayjs from 'dayjs';
 import InvoiceAPI from 'Data/Api/Invoice.ts';
 import { IInvoice } from "Interfaces";
 import StreamedDocumentAPI from "Data/Api/StreamedDocument.ts";
-import SellAPI from "Data/Api/Sell.ts";
 import ActivityLogService from '@/Services/ActivityLogService';
+import axiosInstance from '@/Data/Utilities/axiosInstance';
 
 interface IPaymentResponse {
     current_sell: IInvoice;
@@ -76,6 +74,7 @@ const ReadInvoice = () => {
     const [paymentResponse, setPaymentResponse] = useState<IPaymentResponse | null>(null);
     const [showResponseModal, setShowResponseModal] = useState(false);
     const [calculatedAmountToPay, setCalculatedAmountToPay] = useState(0);
+    const [downloading, setDownloading] = useState<'receipt' | 'invoice' | null>(null);
 
     const fetchRecord = useCallback(async () => {
         setInProgress(true);
@@ -173,16 +172,34 @@ const ReadInvoice = () => {
 
     const handleCloseModal = () => setOpenModal(false);
 
-    const handleDownloadDocument = async (_type: 'receipt' | 'invoice') => {
+    const handleDownloadDocument = async (type: 'receipt' | 'invoice') => {
+        if (!record) return;
+        
         try {
-            setInProgressTwo(true)
-            await StreamedDocumentAPI.generate(_type, record?.invoice_number)
-        } catch (e) {
-            console.error("PDF Error: ", e);
+            setDownloading(type);
+            
+            if (type === 'receipt') {
+                if (record.sell_id) {
+                    const response = await axiosInstance.get(`/sells/${record.sell_id}/pdf-receipt`, {
+                        responseType: 'blob'
+                    });
+                    const blob = new Blob([response.data], { type: 'application/pdf' });
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                } else {
+                    throw new Error('Aucun sell_id trouvé pour cette facture');
+                }
+            } else {
+                await StreamedDocumentAPI.generate('invoice', record.invoice_number);
+            }
+        } catch (error) {
+            console.error('Error downloading document:', error);
+            Toast.error('Erreur lors du téléchargement du document');
         } finally {
-            setInProgressTwo(false)
+            setDownloading(null);
         }
-    }
+    };
 
     if (inProgress && !record) {
         return (
@@ -194,7 +211,7 @@ const ReadInvoice = () => {
 
     if (!record) return null;
 
-    const client = record.customer || (record as any).person;
+    const client = record?.customer || record?.sell?.person;
     const companyBalance = client?.company_balance || 0;
 
     return (
@@ -215,20 +232,44 @@ const ReadInvoice = () => {
                         </Button>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button
-                            variant="contained"
-                            startIcon={<Download />}
-                            onClick={() => handleDownloadDocument(record.status === 'paid' ? 'receipt' : 'invoice')}
-                            sx={{
-                                borderRadius: '15px',
-                                textTransform: 'none',
-                                fontWeight: 800,
-                                background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-                                boxShadow: '0 10px 15px -3px rgba(15, 23, 42, 0.2)'
-                            }}
-                        >
-                            {record.status === 'paid' ? 'Imprimer Reçu' : 'Imprimer Facture'}
-                        </Button>
+                        <Stack direction="row" spacing={1}>
+                            <Tooltip title="Télécharger Reçu" arrow>
+                                <IconButton
+                                    onClick={() => handleDownloadDocument('receipt')}
+                                    disabled={downloading === 'receipt'}
+                                    sx={{ 
+                                        borderRadius: '15px',
+                                        bgcolor: 'rgba(30, 41, 59, 0.05)',
+                                        color: '#64748b',
+                                        border: '1px solid rgba(30, 41, 59, 0.1)',
+                                        '&:hover': { 
+                                            bgcolor: 'rgba(30, 41, 59, 0.1)',
+                                            color: '#1e293b'
+                                        }
+                                    }}
+                                >
+                                    {downloading === 'receipt' ? <CircularProgress size={20} color="inherit" /> : <Receipt />}
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Télécharger Facture" arrow>
+                                <IconButton
+                                    onClick={() => handleDownloadDocument('invoice')}
+                                    disabled={downloading === 'invoice'}
+                                    sx={{ 
+                                        borderRadius: '15px',
+                                        bgcolor: 'rgba(30, 41, 59, 0.05)',
+                                        color: '#64748b',
+                                        border: '1px solid rgba(30, 41, 59, 0.1)',
+                                        '&:hover': { 
+                                            bgcolor: 'rgba(30, 41, 59, 0.1)',
+                                            color: '#1e293b'
+                                        }
+                                    }}
+                                >
+                                    {downloading === 'invoice' ? <CircularProgress size={20} color="inherit" /> : <FilePresent />}
+                                </IconButton>
+                            </Tooltip>
+                        </Stack>
                         {record.remaining_balance > 0 && (
                             <Button
                                 variant="contained"
@@ -311,8 +352,18 @@ const ReadInvoice = () => {
                                                 <Grid item xs={12} sm={6}>
                                                     <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Client</Typography>
                                                     <Typography variant="body1" sx={{ fontWeight: 800 }}>
-                                                        {`${client.lastname || client.last_name || ""} ${client.firstname || client.first_name || ""}`.trim() || "N/A"}
+                                                        {`${client.lastname || ""} ${client.firstname || ""}`.trim() || "N/A"}
                                                     </Typography>
+                                                    {client.phone && (
+                                                        <Typography variant="body2" sx={{ color: '#6b7280', mt: 0.5 }}>
+                                                            📞 {client.phone}
+                                                        </Typography>
+                                                    )}
+                                                    {client.address && (
+                                                        <Typography variant="body2" sx={{ color: '#6b7280', mt: 0.5 }}>
+                                                            📍 {client.address}
+                                                        </Typography>
+                                                    )}
                                                 </Grid>
                                                 <Grid item xs={12} sm={6}>
                                                     <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Solde Disponible</Typography>
@@ -418,7 +469,6 @@ const ReadInvoice = () => {
                 </Grid>
             </motion.div>
 
-            {/* Modal de Paiement Glassmorphism */}
             <Dialog
                 open={openModal}
                 onClose={handleCloseModal}
@@ -505,7 +555,6 @@ const ReadInvoice = () => {
                                 <MenuItem value="Cash">Espèces</MenuItem>
                                 <MenuItem value="Orange Money">Orange Money</MenuItem>
                                 <MenuItem value="MTN Money">MTN Money</MenuItem>
-                                <MenuItem value="Card">Carte Bancaire</MenuItem>
                             </Select>
                         </FormControl>
                     </Box>
@@ -531,7 +580,6 @@ const ReadInvoice = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Modal Résultat de Paiement */}
             <Dialog
                 open={showResponseModal}
                 onClose={() => setShowResponseModal(false)}

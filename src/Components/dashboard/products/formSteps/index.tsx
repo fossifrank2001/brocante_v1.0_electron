@@ -43,6 +43,8 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
         description: record?.description ?? '',
         price: record?.price ?? 0,
         stock_quantity: record?.stock_quantity ?? 0,
+        unit_id: record?.unit_id ?? null,
+        price_per_unit: record?.price_per_unit ?? null,
         subcategory_ids: record?.subcategories ?? [],
         suppliers: record?.suppliers ?? [
             {

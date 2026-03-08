@@ -84,6 +84,7 @@ const renderContent = (currentPage, id, param) => {
       if (param.sub_page === 'UPDATE') return null;
       if (param.sub_page === 'READ') return <ReadSellPage />;
       return null;
+    case Pages.BILL:
     case Pages.INVOICE:
       if (!id && !param) return <IndexInvoice />;
       if (param.sub_page === 'READ') return <ReadInvoicePage />;
@@ -112,20 +113,46 @@ const Layout: React.FC = () => {
     param
   } = useAppSelector((state) => state.navigaton);
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(currentPage !== Pages.POS_EXPRESS);
+
+  // Auto-collapse sidebar on POS page
+  React.useEffect(() => {
+    if (currentPage === Pages.POS_EXPRESS) {
+      setIsSidebarOpen(false);
+    } else {
+      setIsSidebarOpen(true);
+    }
+  }, [currentPage]);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
   return (
     <>
       <PageLoadingIndicator visible={pageLoading} />
-      <div className="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6"
-        data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed"
+      <div className={`page-wrapper ${!isSidebarOpen ? 'mini-sidebar' : ''}`} id="main-wrapper" data-layout="vertical" data-navbarbg="skin6"
+        data-sidebartype={isSidebarOpen ? "full" : "mini-sidebar"} data-sidebar-position="fixed" data-header-position="fixed"
       >
-        <Aside role={roleId} />
-        <div className="body-wrapper" style={{ backgroundColor: "rgba(208,208,208,0.5)" }}>
-          <Navbar onHandleChangeRole={(_role) => {
-            dispatch(setCurrentRole(_role?.code));
-            setRole(_role)
-          }} />
+        <Aside role={roleId} isSidebarOpen={isSidebarOpen} />
+        <div className="body-wrapper" style={{
+          backgroundColor: "rgba(208,208,208,0.5)",
+          transition: 'margin-left 0.2s ease-in-out'
+        }}>
+          <Navbar
+            onHandleChangeRole={(_role) => {
+              dispatch(setCurrentRole(_role?.code));
+              setRole(_role)
+            }}
+            toggleSidebar={toggleSidebar}
+            isSidebarOpen={isSidebarOpen}
+          />
           {currentPage === Pages.POS_EXPRESS ? (
-            <Box sx={{ display: 'flex', height: 'calc(100vh - 60px)', width: 'calc(100vw - 270px)', overflow: 'hidden', position: 'fixed', left: '270px', top: '60px', right: 0 }}>
+            <Box sx={{
+              display: 'flex',
+              height: 'calc(100vh - 75px)',
+              width: '100%',
+              overflow: 'hidden',
+              mt: '75px'
+            }}>
               {renderContent(currentPage, id, param)}
             </Box>
           ) : (

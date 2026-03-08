@@ -35,7 +35,12 @@ const getMenuIcon = (code: string): string => {
     return iconOfMenus[code] || 'ti ti-circle-dot';
 }
 
-export default function Aside({ role = null }) {
+interface AsideProps {
+    role?: number | null;
+    isSidebarOpen?: boolean;
+}
+
+export default function Aside({ role = null, isSidebarOpen = true }: AsideProps) {
     const context = useAppContext()
     const dispatch = useAppDispatch()
     const { auth_access_id } = useAppSelector(state => state.userAuthorizing)
@@ -209,7 +214,15 @@ export default function Aside({ role = null }) {
     )
 
     return (
-        <aside id="left-sidebar" ref={asideRef} className="left-sidebar">
+        <aside
+            id="left-sidebar"
+            ref={asideRef}
+            className="left-sidebar"
+            style={{
+                transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-275px)',
+                transition: 'transform 0.2s ease-in-out'
+            }}
+        >
             <div>
                 <div className="brand-logo d-flex align-items-center justify-content-between">
                     <Logo
