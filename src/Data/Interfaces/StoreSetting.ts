@@ -1,0 +1,63 @@
+export interface IStoreSetting {
+    id: number;
+    store_name: string;
+    store_slogan: string | null;
+    owner_name: string | null;
+    address: string | null;
+    city: string | null;
+    country: string | null;
+    phone: string | null;
+    phone_secondary: string | null;
+    email: string | null;
+    website: string | null;
+    tax_id: string | null;
+    registration_number: string | null;
+    currency: string;
+    currency_symbol: string;
+    currency_decimals: number;
+    timezone: string;
+    locale: string;
+    logo_path: string | null;
+    receipt_header: string | null;
+    receipt_footer: string | null;
+    invoice_footer: string | null;
+    invoice_prefix: string;
+    receipt_prefix: string;
+    sell_code_prefix: string;
+    low_stock_alert_enabled: boolean;
+    low_stock_threshold: number;
+    negative_stock_allowed: boolean;
+    require_cash_session: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface IStoreSettingPayload {
+    store_name?: string;
+    store_slogan?: string | null;
+    owner_name?: string | null;
+    address?: string | null;
+    city?: string | null;
+    country?: string | null;
+    phone?: string | null;
+    phone_secondary?: string | null;
+    email?: string | null;
+    website?: string | null;
+    tax_id?: string | null;
+    registration_number?: string | null;
+    currency?: string;
+    currency_symbol?: string;
+    currency_decimals?: number;
+    timezone?: string;
+    locale?: string;
+    receipt_header?: string | null;
+    receipt_footer?: string | null;
+    invoice_footer?: string | null;
+    invoice_prefix?: string;
+    receipt_prefix?: string;
+    sell_code_prefix?: string;
+    low_stock_alert_enabled?: boolean;
+    low_stock_threshold?: number;
+    negative_stock_allowed?: boolean;
+    require_cash_session?: boolean;
+}
