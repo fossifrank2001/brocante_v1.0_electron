@@ -24,9 +24,24 @@ export interface ProductStats {
     };
 }
 
+export interface DashboardChartsStats {
+    sales_overview: {
+        days: string[];
+        amounts: number[];
+        start_date: string;
+        end_date: string;
+    };
+    revenue_distribution: {
+        labels: string[];
+        amounts: number[];
+        start_date: string;
+        end_date: string;
+    };
+}
+
 export interface DashboardResponse {
     success: boolean;
-    data: AccountStats | SaleStats | ProductStats;
+    data: AccountStats | SaleStats | ProductStats | DashboardChartsStats;
 }
 
 export interface IDashboardItem {

@@ -73,7 +73,9 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
     };
 
     const displayAccesses = authUser?.accesses?.map(access => {
-        const isActual = access?.role?.id === authUser?.accesses?.find(access => access.id === auth_access_id)?.role?.id;
+        const activeAccessId = Number(auth_access_id);
+        const activeAccess = authUser?.accesses?.find(a => Number(a.id) === activeAccessId);
+        const isActual = access?.role?.id === activeAccess?.role?.id;
         return (
             <button
                 key={access.id}

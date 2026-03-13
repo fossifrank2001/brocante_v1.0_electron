@@ -13,6 +13,19 @@ class CategoryAPI {
         }
     }
 
+    static async indexAll(_q = ''): Promise<IApiResponseBase<ICategory[]>> {
+        try {
+            const response = await axiosInstance.get<IApiResponseBase<ICategory[]>>(`/categories?q=${_q}`, {
+                headers: {
+                    'Without-Pagination': '1',
+                }
+            });
+            return response.data as IApiResponseBase<ICategory[]>;
+        } catch (error) {
+            throw error;
+        }
+    }
+
 
 
     static async show(category: number): Promise<IApiResponseBase<ICategory>> {

@@ -175,9 +175,10 @@ export default class UtilMethods {
         // eslint-disable-next-line no-unsafe-optional-chaining
         const {authUser} = store.getState()?.user
 
-        const access = authUser.accesses?.find(access => access.id === auth_access_id)
+        const activeAccessId = Number(auth_access_id)
+        const access = authUser?.accesses?.find(access => Number(access.id) === activeAccessId)
 
-        if(access.role.code === Constants.ROLES.ADMIN){
+        if(access?.role?.code === Constants.ROLES.ADMIN){
             return true
         }
 
@@ -190,9 +191,10 @@ export default class UtilMethods {
         // eslint-disable-next-line no-unsafe-optional-chaining
         const {authUser} = store.getState()?.user
 
-        const access = authUser.accesses?.find(access => access.id === auth_access_id)
+        const activeAccessId = Number(auth_access_id)
+        const access = authUser?.accesses?.find(access => Number(access.id) === activeAccessId)
 
-        if(access.role.code === Constants.ROLES.SELLER){
+        if(access?.role?.code === Constants.ROLES.SELLER){
             return true
         }
 
@@ -205,9 +207,10 @@ export default class UtilMethods {
         // eslint-disable-next-line no-unsafe-optional-chaining
         const {authUser} = store.getState()?.user
 
-        const access = authUser.accesses?.find(access => access.id === auth_access_id)
+        const activeAccessId = Number(auth_access_id)
+        const access = authUser?.accesses?.find(access => Number(access.id) === activeAccessId)
 
-        return access_id === access.id;
+        return Number(access_id) === Number(access?.id);
     }
     
     static isOneOfAuthAccess (access_id: number){

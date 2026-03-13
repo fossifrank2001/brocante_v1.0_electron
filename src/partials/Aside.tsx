@@ -29,6 +29,8 @@ const iconOfMenus: Record<string, string> = {
     USER_ACCESS_PAGE: 'ti ti-shield-lock',
     ACTIVITY_LOGS: 'ti ti-activity',
     POS_EXPRESS: 'ti ti-cash-register',
+    SETTINGS: 'ti ti-settings',
+    STOCK_MOVEMENTS: 'ti ti-arrows-exchange',
 }
 
 const getMenuIcon = (code: string): string => {
@@ -68,7 +70,8 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
             setError(null)
             const { loadMenuByRoleAsync } = await import("Data/Slices/MenuRoleSlice")
             console.log('auth_access_id ASIDE FUNCTION ::: ', auth_access_id)
-            const access = authUser?.accesses ? authUser?.accesses.find(access => access.id === auth_access_id) : null
+            const activeAccessId = Number(auth_access_id)
+            const access = authUser?.accesses ? authUser?.accesses.find(access => Number(access.id) === activeAccessId) : null
             console.log('ROLE ASIDE FUNCTION ::: ', role)
 
             if (access && access.role && access.role.id) {
@@ -136,7 +139,7 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
                                 handleToggleParent(parent.id)
                             } else if (parent.url && parent.url !== '#') {
                                 context.togglePageLoading(true)
-                                dispatch(setActivePage({ page: parent.code }))
+                                dispatch(setActivePage({ page: String(parent.code).trim() as any }))
                             }
                         }}
                         aria-expanded={isOpen}
@@ -170,7 +173,7 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
                                             className={`sidebar-link ${isChildActive ? 'bg-primary text-white' : ''}`}
                                             onClick={() => {
                                                 context.togglePageLoading(true)
-                                                dispatch(setActivePage({ page: child.code }))
+                                                dispatch(setActivePage({ page: String(child.code).trim() as any }))
                                             }}
                                         >
                                             <span>

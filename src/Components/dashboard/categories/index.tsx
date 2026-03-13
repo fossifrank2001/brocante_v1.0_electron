@@ -293,7 +293,7 @@ export default function IndexCategory() {
       rowSelection,
     },
     renderTopToolbarCustomActions: () => (
-      <Box sx={{ display: "flex", gap: 3, p: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+      <Box sx={{ display: "flex", gap: 2, p: 2, alignItems: 'center', flexWrap: 'wrap' }}>
         <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
           Catégories
         </Typography>
@@ -387,12 +387,8 @@ export default function IndexCategory() {
 
   return (
     <Box>
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <Box sx={{ mb: 4 }}>
-          <Breadcrumd parent="Administration" />
-        </Box>
+        <Breadcrumd parent="Administration" />
         <MaterialReactTable table={mrTable} />
-      </motion.div>
 
       <CustomAlert
         openDetailModal={openDetailModal}

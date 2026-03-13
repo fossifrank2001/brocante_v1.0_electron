@@ -13,13 +13,118 @@ import SessionCloseModal from './SessionCloseModal';
 
 const CashSessionBar = () => {
     const dispatch = useAppDispatch();
-    const { currentSession, isLoading } = useAppSelector((state) => state.cashSession);
+    const { currentSession, isLoading, error } = useAppSelector((state) => state.cashSession);
     const [openModal, setOpenModal] = useState(false);
     const [closeModal, setCloseModal] = useState(false);
+    const [loadingTimeout, setLoadingTimeout] = useState(false);
 
     useEffect(() => {
         dispatch(fetchCurrentSession());
     }, [dispatch]);
+
+    useEffect(() => {
+        if (!isLoading || currentSession) {
+            setLoadingTimeout(false);
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            setLoadingTimeout(true);
+        }, 20000);
+
+        return () => clearTimeout(timer);
+    }, [isLoading, currentSession]);
+
+    if (error && !currentSession) {
+        return (
+            <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                px: 2,
+                py: 1,
+                borderRadius: '12px',
+                bgcolor: 'rgba(254, 242, 242, 0.9)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+            }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: '#b91c1c' }}>
+                    Session: erreur
+                </Typography>
+                <Tooltip title={String(error)} arrow>
+                    <Chip
+                        size="small"
+                        label="Détails"
+                        variant="outlined"
+                        sx={{
+                            borderColor: 'rgba(239, 68, 68, 0.4)',
+                            color: '#b91c1c',
+                            fontWeight: 800,
+                            height: 22,
+                        }}
+                    />
+                </Tooltip>
+                <Button
+                    onClick={() => dispatch(fetchCurrentSession())}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                        borderRadius: '10px',
+                        textTransform: 'none',
+                        fontWeight: 800,
+                        fontSize: '0.7rem',
+                        py: 0.25,
+                        borderColor: 'rgba(239, 68, 68, 0.6)',
+                        color: '#b91c1c',
+                        '&:hover': {
+                            borderColor: '#ef4444',
+                            bgcolor: 'rgba(239, 68, 68, 0.05)',
+                        }
+                    }}
+                >
+                    Réessayer
+                </Button>
+            </Box>
+        );
+    }
+
+    if (loadingTimeout && isLoading && !currentSession) {
+        return (
+            <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                px: 2,
+                py: 1,
+                borderRadius: '12px',
+                bgcolor: 'rgba(255, 251, 235, 0.9)',
+                border: '1px solid rgba(245, 158, 11, 0.25)',
+            }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: '#92400e' }}>
+                    Session: attente API...
+                </Typography>
+                <Button
+                    onClick={() => dispatch(fetchCurrentSession())}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                        borderRadius: '10px',
+                        textTransform: 'none',
+                        fontWeight: 800,
+                        fontSize: '0.7rem',
+                        py: 0.25,
+                        borderColor: 'rgba(245, 158, 11, 0.55)',
+                        color: '#92400e',
+                        '&:hover': {
+                            borderColor: '#f59e0b',
+                            bgcolor: 'rgba(245, 158, 11, 0.06)',
+                        }
+                    }}
+                >
+                    Réessayer
+                </Button>
+            </Box>
+        );
+    }
 
     if (isLoading && !currentSession) {
         return (

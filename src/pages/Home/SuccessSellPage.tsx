@@ -73,7 +73,6 @@ function SuccessSellPage(): JSX.Element {
     return (
         <Box sx={{
             minHeight: '100vh',
-            bgcolor: '#f8fafc',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

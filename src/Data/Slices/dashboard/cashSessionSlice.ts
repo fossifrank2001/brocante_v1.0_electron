@@ -23,7 +23,7 @@ export const fetchCurrentSession = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const response = await CashSessionAPI.current();
-            return response.data;
+            return response;
         } catch (error: any) {
             return rejectWithValue(error.message || 'Erreur lors de la récupération de la session.');
         }
@@ -91,7 +91,7 @@ const cashSessionSlice = createSlice({
         builder.addCase(fetchCurrentSession.fulfilled, (state, action) => {
             state.isLoading = false;
             const payload = action.payload as any;
-            state.currentSession = payload.data ?? payload;
+            state.currentSession = payload?.data ?? null;
         });
         builder.addCase(fetchCurrentSession.rejected, (state, action) => {
             state.isLoading = false;

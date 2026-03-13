@@ -41,6 +41,8 @@ import ComingSoon from "Components/ComingSoon.tsx";
 import ActivityLogsViewer from "@/Components/admin/ActivityLogsViewer";
 import PosExpress from "@/Components/dashboard/pos/PosExpress";
 import SuccessSellPage from "@/pages/Home/SuccessSellPage";
+import StoreSettingsPage from "@/Components/dashboard/settings/StoreSettingsPage";
+import StockMovementsPage from "@/Components/dashboard/stock/StockMovementsPage";
 
 const renderContent = (currentPage, id, param) => {
   switch (currentPage) {
@@ -93,6 +95,10 @@ const renderContent = (currentPage, id, param) => {
       return <ActivityLogsViewer />;
     case Pages.POS_EXPRESS:
       return <PosExpress />;
+    case Pages.SETTINGS:
+      return <StoreSettingsPage />;
+    case Pages.STOCK_MOVEMENTS:
+      return <StockMovementsPage />;
     case Pages.SUCCESS_ORDER:
       return <SuccessSellPage />;
     case Pages.DASHBOARD:
@@ -148,10 +154,13 @@ const Layout: React.FC = () => {
           {currentPage === Pages.POS_EXPRESS ? (
             <Box sx={{
               display: 'flex',
-              height: 'calc(100vh - 75px)',
+              position: 'fixed',
+              top: '70px',
+              left: 0,
+              right: 0,
+              bottom: 0,
               width: '100%',
-              overflow: 'hidden',
-              mt: '75px'
+              overflow: 'hidden'
             }}>
               {renderContent(currentPage, id, param)}
             </Box>

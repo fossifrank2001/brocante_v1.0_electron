@@ -32,6 +32,7 @@ const PosExpress: React.FC = () => {
     const [categories, setCategories] = useState<ICategory[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+    const [selectedSubCategoryIds, setSelectedSubCategoryIds] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingCats, setLoadingCats] = useState(false);
     const searchRef = useRef<HTMLInputElement>(null);
@@ -45,8 +46,8 @@ const PosExpress: React.FC = () => {
         (async () => {
             try {
                 setLoadingCats(true);
-                const { data: result } = await CategoryAPI.index();
-                setCategories(result.data);
+                const { data: result } = await CategoryAPI.indexAll();
+                setCategories(result);
             } catch (e) { console.error(e); }
             finally { setLoadingCats(false); }
         })();
@@ -56,9 +57,19 @@ const PosExpress: React.FC = () => {
     const loadProducts = useCallback(async () => {
         try {
             setLoading(true);
-            const subCats = selectedCategoryId
+            const selectedCategory: never = selectedCategoryId
                 ? categories.find(c => c.id === selectedCategoryId)
-                    ?.sub_categories?.map(sc => sc.id).join(',') || ''
+                : null;
+            const subCategories: never[] = selectedCategory
+                ? (selectedCategory.sub_categories ?? selectedCategory.subCategories ?? [])
+                : [];
+
+            const subCategoryIdsToFilter = selectedSubCategoryIds.length > 0
+                ? selectedSubCategoryIds
+                : (Array.isArray(subCategories) ? subCategories.map((sc: never) => sc.id) : []);
+
+            const subCats = subCategoryIdsToFilter.length > 0
+                ? subCategoryIdsToFilter.join(',')
                 : '';
             const { data: res } = await ProductAPI.index(searchTerm, 1, subCats, '', 'stock', POS_PER_PAGE);
             if ('data' in res && Array.isArray(res.data)) {
@@ -66,12 +77,16 @@ const PosExpress: React.FC = () => {
             }
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
-    }, [searchTerm, selectedCategoryId, categories]);
+    }, [searchTerm, selectedCategoryId, selectedSubCategoryIds, categories]);
 
     useEffect(() => {
         const t = setTimeout(() => loadProducts(), 350);
         return () => clearTimeout(t);
     }, [loadProducts]);
+
+    useEffect(() => {
+        setSelectedSubCategoryIds([]);
+    }, [selectedCategoryId]);
 
     // Auto-focus search
     useEffect(() => { searchRef.current?.focus(); }, []);
@@ -163,13 +178,13 @@ const PosExpress: React.FC = () => {
             e.preventDefault();
             try {
                 setIsScanning(true);
-                const { data: res }: any = await ProductAPI.findByReference(searchTerm.trim());
+                const { data: res }: unknown = await ProductAPI.findByReference(searchTerm.trim());
                 if (res && res.data) {
                     handleAddProduct(res.data);
                     setSearchTerm('');
                     Toast.success(`${res.data.name} ajouté au panier`);
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error(err);
                 if (err.response?.status === 404) {
                     // Do nothing, maybe it's a partial text search
@@ -184,10 +199,12 @@ const PosExpress: React.FC = () => {
 
     return (
         <Box sx={{
-            display: 'flex', height: '92.5%', width: '100%', overflow: 'hidden',
-            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', mt: '70px', zIndex: 1000
+            display: 'flex',
+            height: '100%',
+            width: '100%',
+            overflow: 'hidden',
+            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)'
         }}>
-            {/* LEFT: Products */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
                 {/* Search + Filters bar - GLASSMORPHISM */}
                 <Box sx={{
@@ -261,6 +278,77 @@ const PosExpress: React.FC = () => {
                             />
                         ))}
                     </Box>
+
+                    {!!selectedCategoryId && (() => {
+                        const selectedCategory: unknown = categories.find(c => c.id === selectedCategoryId);
+                        const subCategories: never[] = selectedCategory
+                            ? (selectedCategory.sub_categories ?? selectedCategory.subCategories ?? [])
+                            : [];
+
+                        if (!Array.isArray(subCategories) || subCategories.length === 0) return null;
+
+                        return (
+                            <Box sx={{
+                                display: 'flex',
+                                gap: 1,
+                                mt: 1.25,
+                                overflowX: 'auto',
+                                pb: 0.5,
+                                '&::-webkit-scrollbar': { height: 4 },
+                                '&::-webkit-scrollbar-thumb': { bgcolor: '#cbd5e1', borderRadius: 2 }
+                            }}>
+                                <Chip
+                                    label="Toutes les sous-catégories"
+                                    onClick={() => setSelectedSubCategoryIds([])}
+                                    sx={{
+                                        fontWeight: 800,
+                                        borderRadius: '12px',
+                                        px: 1,
+                                        py: 2,
+                                        background: selectedSubCategoryIds.length === 0
+                                            ? 'linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)'
+                                            : 'rgba(255,255,255,0.8)',
+                                        color: selectedSubCategoryIds.length === 0 ? '#fff' : '#475569',
+                                        boxShadow: selectedSubCategoryIds.length === 0
+                                            ? '0 4px 12px rgba(14, 165, 233, 0.25)'
+                                            : '0 2px 4px rgba(0,0,0,0.02)',
+                                        border: selectedSubCategoryIds.length === 0 ? 'none' : '1px solid rgba(0,0,0,0.05)',
+                                    }}
+                                />
+
+                                {subCategories.map((sc: never) => {
+                                    const isSelected = selectedSubCategoryIds.includes(sc.id);
+                                    return (
+                                        <Chip
+                                            key={sc.id}
+                                            label={sc.label}
+                                            onClick={() => {
+                                                setSelectedSubCategoryIds(prev => {
+                                                    if (prev.includes(sc.id)) return prev.filter(id => id !== sc.id);
+                                                    return [...prev, sc.id];
+                                                });
+                                            }}
+                                            sx={{
+                                                fontWeight: 700,
+                                                borderRadius: '12px',
+                                                px: 0.5,
+                                                py: 2,
+                                                whiteSpace: 'nowrap',
+                                                background: isSelected
+                                                    ? 'linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)'
+                                                    : 'rgba(255,255,255,0.8)',
+                                                color: isSelected ? '#fff' : '#64748b',
+                                                boxShadow: isSelected
+                                                    ? '0 4px 12px rgba(14, 165, 233, 0.25)'
+                                                    : '0 2px 4px rgba(0,0,0,0.02)',
+                                                border: isSelected ? 'none' : '1px solid rgba(0,0,0,0.05)',
+                                            }}
+                                        />
+                                    );
+                                })}
+                            </Box>
+                        );
+                    })()}
                 </Box>
 
                 {/* Product Grid */}
@@ -334,7 +422,6 @@ const PosExpress: React.FC = () => {
                 </Box>
             </Box>
 
-            {/* RIGHT: Cart Sidebar - PREMIUM GLASSMORPHISM */}
             <Paper elevation={0} sx={{
                 width: 380, minWidth: 380,
                 display: 'flex', flexDirection: 'column',
@@ -344,7 +431,6 @@ const PosExpress: React.FC = () => {
                 zIndex: 20,
                 boxShadow: '-10px 0 40px rgba(0,0,0,0.03)'
             }}>
-                {/* Cart header */}
                 <Box sx={{ p: 3, pb: 2, borderBottom: '1px dashed rgba(0,0,0,0.08)' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -369,8 +455,6 @@ const PosExpress: React.FC = () => {
                         )}
                     </Box>
                 </Box>
-
-                {/* Cart items */}
                 <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
                     {cart.items.length === 0 ? (
                         <Box sx={{ textAlign: 'center', py: 10, color: '#cbd5e1' }}>
@@ -388,8 +472,6 @@ const PosExpress: React.FC = () => {
                         </AnimatePresence>
                     )}
                 </Box>
-
-                {/* Cart footer / totals */}
                 <Box sx={{ p: 3, pt: 2, background: 'rgba(248, 250, 252, 0.5)', borderTop: '1px solid rgba(255, 255, 255, 0.8)' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                         <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 700 }}>Articles au total</Typography>

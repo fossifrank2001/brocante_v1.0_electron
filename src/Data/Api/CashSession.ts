@@ -3,7 +3,9 @@ import { ICashSession, ICashSessionOpenPayload, ICashSessionClosePayload, ICashS
 
 class CashSessionAPI {
     static async current(): Promise<IApiResponseBase<ICashSession | null>> {
-        const response = await axiosInstance.get<IApiResponseBase<ICashSession | null>>('/cash-sessions/current');
+        const response = await axiosInstance.get<IApiResponseBase<ICashSession | null>>('/cash-sessions/current', {
+            timeout: 15000,
+        });
         return response.data;
     }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
     Container,
     Box,
@@ -7,6 +7,7 @@ import {
     Tab,
     Paper,
     TextField,
+    MenuItem,
     IconButton,
     Stack,
     Tooltip,
@@ -15,12 +16,10 @@ import {
     Card,
     CardContent,
     Typography,
-    Avatar,
-    alpha
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useAppSelector } from "@/hooks";
-import { AccountStats, SaleStats, ProductStats } from "Data/Interfaces/dashboard.ts";
+import { AccountStats, DashboardChartsStats, SaleStats, ProductStats } from "Data/Interfaces/dashboard.ts";
 import UtilMethods from "Data/Utilities/UtilMethods.ts";
 import { SalesStats } from "Components/dashboard/SalesStats.tsx";
 import { AccountsStats } from "Components/dashboard/AccountsStats.tsx";
@@ -28,6 +27,11 @@ import { ProductsStats } from "Components/dashboard/ProductsStats";
 import { Dashboard as DasboardAPI } from "Data/Api/Dashboard.ts";
 import { TrendingUp, AccountBalance, Inventory } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
+import UserAPI from '@/Data/Api/Users';
+import CategoryAPI from '@/Data/Api/Category';
+import { ICategory } from 'Data/Interfaces';
+import ReactApexChart from 'react-apexcharts';
+import { ApexOptions } from 'apexcharts';
 
 const glassContainerStyle = {
     borderRadius: '24px',
@@ -90,11 +94,18 @@ export const DashboardIndicator: React.FC = () => {
     const [accountStats, setAccountStats] = useState<AccountStats | null>(null);
     const [salesStats, setSalesStats] = useState<SaleStats | null>(null);
     const [productStats, setProductStats] = useState<ProductStats | null>(null);
+    const [chartsData, setChartsData] = useState<DashboardChartsStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [tabValue, setTabValue] = useState(0);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [sellers, setSellers] = useState<Array<{ id: number; label: string }>>([]);
+    const [selectedSellerId, setSelectedSellerId] = useState<string>('');
+    const [isLoadingSellers, setIsLoadingSellers] = useState(false);
+    const [categories, setCategories] = useState<ICategory[]>([]);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+    const [isLoadingCategories, setIsLoadingCategories] = useState(false);
     const { authUser: user } = useAppSelector(state => state.user);
     const { active_role } = useAppSelector(state => state.menus_role)
 
@@ -107,10 +118,17 @@ export const DashboardIndicator: React.FC = () => {
             setLoading(true);
             setError(null);
 
-            const salesResponse = await DasboardAPI.getSalesStats({
+            const chartParams = {
                 startDate: startDate || undefined,
-                endDate: endDate || undefined
-            });
+                endDate: endDate || undefined,
+                sellerId: UtilMethods.isAdmin() ? selectedSellerId || undefined : undefined,
+                categoryId: selectedCategoryId || undefined,
+            };
+
+            const chartsResponse = await DasboardAPI.getCharts(chartParams);
+            setChartsData(chartsResponse.data as DashboardChartsStats);
+
+            const salesResponse = await DasboardAPI.getSalesStats(chartParams);
             setSalesStats(salesResponse.data as SaleStats);
 
             const productResponse = await DasboardAPI.getProductStats();
@@ -128,8 +146,147 @@ export const DashboardIndicator: React.FC = () => {
         }
     };
 
+    const salesChart = useMemo((): { series: any[]; options: ApexOptions } => {
+        const seriesData = chartsData?.sales_overview?.amounts ?? [];
+        const categories = chartsData?.sales_overview?.days ?? [];
+
+        return {
+            series: [{ name: 'Ventes payées', data: seriesData }],
+            options: {
+                chart: {
+                    type: 'bar',
+                    height: 330,
+                    toolbar: { show: false },
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 10,
+                        columnWidth: '55%',
+                    },
+                },
+                dataLabels: {
+                    enabled: false,
+                },
+                xaxis: {
+                    categories,
+                    labels: {
+                        style: {
+                            colors: '#64748b',
+                            fontWeight: 600,
+                            fontSize: '12px'
+                        }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: '#64748b',
+                            fontWeight: 600,
+                            fontSize: '12px'
+                        },
+                        formatter: (value) => `${value} FCFA`,
+                    }
+                },
+                grid: { borderColor: 'rgba(226, 232, 240, 0.6)' },
+                colors: ['#6366f1'],
+                tooltip: {
+                    theme: 'light',
+                    y: { formatter: (value) => `${value} FCFA` },
+                },
+            }
+        };
+    }, [chartsData]);
+
+    const revenueChart = useMemo((): { series: number[]; options: ApexOptions } => {
+        const seriesData = chartsData?.revenue_distribution?.amounts ?? [];
+        const labels = chartsData?.revenue_distribution?.labels ?? [];
+
+        return {
+            series: seriesData,
+            options: {
+                chart: {
+                    type: 'donut',
+                    height: 330,
+                },
+                labels,
+                legend: {
+                    position: 'bottom',
+                    labels: { colors: '#64748b' },
+                },
+                dataLabels: { enabled: false },
+                tooltip: {
+                    theme: 'light',
+                    y: { formatter: (value) => `${value} FCFA` },
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    showAlways: true,
+                                    label: 'Total',
+                                    formatter: function (w) {
+                                        return w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0) + ' FCFA';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                colors: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#3b82f6', '#14b8a6'],
+            }
+        };
+    }, [chartsData]);
+
+    const loadSellers = async () => {
+        if (!UtilMethods.isAdmin()) {
+            setSellers([]);
+            return;
+        }
+
+        try {
+            setIsLoadingSellers(true);
+            const res = await UserAPI.sellers('');
+            const users = res?.data?.data ?? [];
+
+            const sellerList = users
+                .map(u => ({
+                    id: u.id,
+                    label: `${u?.last_name ?? ''} ${u?.first_name ?? ''}`.trim() || u.email,
+                }))
+                .sort((a, b) => a.label.localeCompare(b.label));
+
+            setSellers(sellerList);
+        } catch (err) {
+            console.error('Error loading sellers:', err);
+            setSellers([]);
+        } finally {
+            setIsLoadingSellers(false);
+        }
+    };
+
+    const loadCategories = async () => {
+        setIsLoadingCategories(true);
+        try {
+            const response = await CategoryAPI.indexAll('');
+            setCategories(response.data || []);
+        } catch (err) {
+            console.error('Failed to load categories:', err);
+            setCategories([]);
+        } finally {
+            setIsLoadingCategories(false);
+        }
+    };
+
     useEffect(() => {
         fetchDashboardData();
+    }, [user, active_role, startDate, endDate, selectedSellerId, selectedCategoryId]);
+
+    useEffect(() => {
+        loadSellers();
+        loadCategories();
     }, [user, active_role]);
 
     const handleRefresh = async () => {
@@ -302,16 +459,56 @@ export const DashboardIndicator: React.FC = () => {
                             />
                         </Tabs>
 
-                        {tabValue === 0 && (
-                            <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
+                        <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
+                            <TextField
+                                type="date"
+                                label="Date de début"
+                                value={startDate}
+                                onChange={(e) => handleDateChange('start', e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                                size="small"
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '12px',
+                                        bgcolor: 'rgba(255, 255, 255, 0.6)',
+                                        fontWeight: 600,
+                                        color: '#334155',
+                                        '& fieldset': { borderColor: 'rgba(226, 232, 240, 0.8)' },
+                                        '&:hover fieldset': { borderColor: '#94a3b8' },
+                                        '&.Mui-focused fieldset': { borderColor: '#6366f1' },
+                                    }
+                                }}
+                            />
+                            <TextField
+                                type="date"
+                                label="Date de fin"
+                                value={endDate}
+                                onChange={(e) => handleDateChange('end', e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                                size="small"
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '12px',
+                                        bgcolor: 'rgba(255, 255, 255, 0.6)',
+                                        fontWeight: 600,
+                                        color: '#334155',
+                                        '& fieldset': { borderColor: 'rgba(226, 232, 240, 0.8)' },
+                                        '&:hover fieldset': { borderColor: '#94a3b8' },
+                                        '&.Mui-focused fieldset': { borderColor: '#6366f1' },
+                                    }
+                                }}
+                            />
+
+                            {UtilMethods.isAdmin() && (
                                 <TextField
-                                    type="date"
-                                    label="Date de début"
-                                    value={startDate}
-                                    onChange={(e) => handleDateChange('start', e.target.value)}
+                                    select
+                                    label="Vendeur"
+                                    value={selectedSellerId}
+                                    onChange={(e) => setSelectedSellerId(e.target.value)}
                                     InputLabelProps={{ shrink: true }}
                                     size="small"
                                     sx={{
+                                        minWidth: 220,
                                         '& .MuiOutlinedInput-root': {
                                             borderRadius: '12px',
                                             bgcolor: 'rgba(255, 255, 255, 0.6)',
@@ -320,30 +517,46 @@ export const DashboardIndicator: React.FC = () => {
                                             '& fieldset': { borderColor: 'rgba(226, 232, 240, 0.8)' },
                                             '&:hover fieldset': { borderColor: '#94a3b8' },
                                             '&.Mui-focused fieldset': { borderColor: '#6366f1' },
-                                        }
+                                        },
                                     }}
-                                />
-                                <TextField
-                                    type="date"
-                                    label="Date de fin"
-                                    value={endDate}
-                                    onChange={(e) => handleDateChange('end', e.target.value)}
-                                    InputLabelProps={{ shrink: true }}
-                                    size="small"
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: '12px',
-                                            bgcolor: 'rgba(255, 255, 255, 0.6)',
-                                            fontWeight: 600,
-                                            color: '#334155',
-                                            '& fieldset': { borderColor: 'rgba(226, 232, 240, 0.8)' },
-                                            '&:hover fieldset': { borderColor: '#94a3b8' },
-                                            '&.Mui-focused fieldset': { borderColor: '#6366f1' },
-                                        }
-                                    }}
-                                />
-                            </Stack>
-                        )}
+                                >
+                                    <MenuItem value="">
+                                        {isLoadingSellers ? 'Chargement...' : 'Tous les vendeurs'}
+                                    </MenuItem>
+                                    {sellers.map(s => (
+                                        <MenuItem key={s.id} value={String(s.id)}>{s.label}</MenuItem>
+                                    ))}
+                                </TextField>
+                            )}
+
+                            <TextField
+                                select
+                                label="Catégorie"
+                                value={selectedCategoryId}
+                                onChange={(e) => setSelectedCategoryId(e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                                size="small"
+                                sx={{
+                                    minWidth: 220,
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '12px',
+                                        bgcolor: 'rgba(255, 255, 255, 0.6)',
+                                        fontWeight: 600,
+                                        color: '#334155',
+                                        '& fieldset': { borderColor: 'rgba(226, 232, 240, 0.8)' },
+                                        '&:hover fieldset': { borderColor: '#94a3b8' },
+                                        '&.Mui-focused fieldset': { borderColor: '#6366f1' },
+                                    },
+                                }}
+                            >
+                                <MenuItem value="">
+                                    {isLoadingCategories ? 'Chargement...' : 'Toutes les catégories'}
+                                </MenuItem>
+                                {categories.map(c => (
+                                    <MenuItem key={c.id} value={String(c.id)}>{c.label}</MenuItem>
+                                ))}
+                            </TextField>
+                        </Stack>
                     </Box>
 
                     {/* Tab Content */}
@@ -363,8 +576,33 @@ export const DashboardIndicator: React.FC = () => {
                                         </Grid>
                                     ))}
                                 </Grid>
-                            ) : salesStats && (
-                                <SalesStats stats={salesStats} />
+                            ) : (
+                                <>
+                                    <Grid container spacing={4} sx={{ mb: 2 }}>
+                                        <Grid item xs={12} md={7}>
+                                            <Card sx={{ ...glassCardStyle }}>
+                                                <CardContent sx={{ p: 4 }}>
+                                                    <Typography sx={{ fontWeight: 800, color: '#1e293b', mb: 2 }}>
+                                                        Aperçu des ventes
+                                                    </Typography>
+                                                    <ReactApexChart options={salesChart.options} series={salesChart.series} type="bar" height={330} />
+                                                </CardContent>
+                                            </Card>
+                                        </Grid>
+                                        <Grid item xs={12} md={5}>
+                                            <Card sx={{ ...glassCardStyle }}>
+                                                <CardContent sx={{ p: 4 }}>
+                                                    <Typography sx={{ fontWeight: 800, color: '#1e293b', mb: 2 }}>
+                                                        Répartition des revenus
+                                                    </Typography>
+                                                    <ReactApexChart options={revenueChart.options} series={revenueChart.series} type="donut" height={330} />
+                                                </CardContent>
+                                            </Card>
+                                        </Grid>
+                                    </Grid>
+
+                                    {salesStats && <SalesStats stats={salesStats} />}
+                                </>
                             )}
                         </TabPanel>
 

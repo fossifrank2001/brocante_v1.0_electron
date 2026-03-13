@@ -79,6 +79,16 @@ class UserAPI {
             throw error;
         }
     }
+
+    static async sellers(_q = ''): Promise<IApiResponsePaginated<IUser>> {
+        // eslint-disable-next-line no-useless-catch
+        try {
+            const response = await axiosInstance.get<IApiResponsePaginated<IUser>>(`/sellers?q=${_q}`);
+            return response.data as never;
+        } catch (error) {
+            throw error;
+        }
+    }
 }
 
 export default UserAPI;
