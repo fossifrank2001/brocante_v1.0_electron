@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     TextField, Button, Box, Typography, Alert, CircularProgress,
@@ -27,7 +27,7 @@ const SessionCloseModal = ({ open, onClose }: SessionCloseModalProps) => {
     const componentRef = useRef<HTMLDivElement>(null);
 
     const handlePrint = useReactToPrint({
-        content: () => componentRef.current,
+        contentRef: componentRef,
         documentTitle: `Z-Report_${currentSession?.session_code || 'Session'}`,
     });
 

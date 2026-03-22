@@ -94,15 +94,18 @@ export const cartSlice = createSlice({
             if (isNaN(numericPrice)) return;
 
             if (existingItem) {
-                existingItem.quantity = (existingItem.quantity || 0) + 1;
-                existingItem.subtotal = (existingItem.subtotal || 0) + numericPrice;
-                existingItem.product.quantity = (existingItem.product.quantity || 0) - 1;
+                existingItem.quantity = Math.round(((existingItem.quantity || 0) + 1) * 1000) / 1000;
+                existingItem.subtotal = Math.round((existingItem.quantity * numericPrice) * 100) / 100;
+                existingItem.product.quantity = Math.round(((existingItem.product.quantity || 0) - 1) * 1000) / 1000;
             } else {
                 const productQty = action.payload.quantity != null ? Number(action.payload.quantity) : 0;
                 state.items.push({
-                    product: { ...action.payload, quantity: Math.max(0, productQty - 1) },
+                    product: { 
+                        ...action.payload, 
+                        quantity: Math.round(Math.max(0, productQty - 1) * 1000) / 1000 
+                    },
                     quantity: 1,
-                    subtotal: numericPrice,
+                    subtotal: Math.round(numericPrice * 100) / 100,
                 });
             }
 
@@ -150,9 +153,9 @@ export const cartSlice = createSlice({
             if (existingItem) {
                 const currentQty = existingItem.quantity || 0;
                 if (currentQty > 1) {
-                    existingItem.quantity = currentQty - 1;
-                    existingItem.subtotal = (existingItem.subtotal || 0) - numericPrice;
-                    existingItem.product.quantity = (existingItem.product.quantity || 0) + 1;
+                    existingItem.quantity = Math.round((currentQty - 1) * 1000) / 1000;
+                    existingItem.subtotal = Math.round((existingItem.quantity * numericPrice) * 100) / 100;
+                    existingItem.product.quantity = Math.round(((existingItem.product.quantity || 0) + 1) * 1000) / 1000;
                 } else {
                     state.items = state.items.filter(item => item.product.id !== id);
                 }

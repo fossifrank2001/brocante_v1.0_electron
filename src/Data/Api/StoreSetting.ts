@@ -20,6 +20,15 @@ class StoreSettingAPI {
         });
         return response.data;
     }
+
+    static async uploadSignature(file: File): Promise<IApiResponseBase<IStoreSetting>> {
+        const formData = new FormData();
+        formData.append('signature', file);
+        const response = await axiosInstance.post<IApiResponseBase<IStoreSetting>>('/store-settings/signature', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return response.data;
+    }
 }
 
 export default StoreSettingAPI;

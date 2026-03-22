@@ -1,5 +1,4 @@
-import axiosInstance, { IApiResponse, IApiResponseBase, IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
-import { INotification } from 'Interfaces';
+import axiosInstance, { IApiResponse, IApiResponseBase } from 'Data/Utilities/axiosInstance';
 
 
 class NotificationsAPI {

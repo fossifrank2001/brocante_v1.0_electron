@@ -15,8 +15,7 @@ import {
     Divider,
     Grid,
     Chip,
-    Zoom,
-    Fade
+    Zoom
 } from '@mui/material';
 import {
     Close,
@@ -27,7 +26,6 @@ import {
     Person,
     TrendingDown,
     TrendingUp,
-    Wallet,
     Info,
     ArrowForward
 } from '@mui/icons-material';
@@ -81,7 +79,7 @@ const UseCustomerBalance = ({ customer, open, onClose, onSuccess }: UseCustomerB
         ? (typeof customer.remaining_balance === 'string' ? JSON.parse(customer.remaining_balance) : customer.remaining_balance)
         : {};
     const hasDebts = Object.keys(remainingBalance).length > 0;
-    const totalDebts = Object.values(remainingBalance).reduce((sum: number, amount: any) => sum + (parseFloat(amount) || 0), 0);
+    const totalDebts = Object.values(remainingBalance).reduce((sum: number, amount: any) => sum + (parseFloat(amount) || 0), 0) as number;
 
     return (
         <Dialog

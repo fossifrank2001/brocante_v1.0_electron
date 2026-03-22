@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Box, Typography, TextField, InputAdornment, Chip, IconButton,
-    Tooltip, CircularProgress, Button, Paper
+    Tooltip, CircularProgress, Button, Paper, FormControl, InputLabel,
+    Select, MenuItem, Checkbox, ListItemText, OutlinedInput
 } from '@mui/material';
 import {
     Search, ShoppingCart, Add, Remove, Delete, Payment,
-    Refresh, PointOfSale, Category
+    Refresh, PointOfSale, Category, FilterList
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '@/hooks';
@@ -31,10 +32,8 @@ const PosExpress: React.FC = () => {
     const [products, setProducts] = useState<IProduct[]>([]);
     const [categories, setCategories] = useState<ICategory[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-    const [selectedSubCategoryIds, setSelectedSubCategoryIds] = useState<number[]>([]);
+    const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
-    const [loadingCats, setLoadingCats] = useState(false);
     const searchRef = useRef<HTMLInputElement>(null);
     const [quantityDialogOpen, setQuantityDialogOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
@@ -45,11 +44,9 @@ const PosExpress: React.FC = () => {
     useEffect(() => {
         (async () => {
             try {
-                setLoadingCats(true);
                 const { data: result } = await CategoryAPI.indexAll();
                 setCategories(result);
             } catch (e) { console.error(e); }
-            finally { setLoadingCats(false); }
         })();
     }, []);
 
@@ -57,16 +54,21 @@ const PosExpress: React.FC = () => {
     const loadProducts = useCallback(async () => {
         try {
             setLoading(true);
-            const selectedCategory: never = selectedCategoryId
-                ? categories.find(c => c.id === selectedCategoryId)
-                : null;
-            const subCategories: never[] = selectedCategory
-                ? (selectedCategory.sub_categories ?? selectedCategory.subCategories ?? [])
-                : [];
-
-            const subCategoryIdsToFilter = selectedSubCategoryIds.length > 0
-                ? selectedSubCategoryIds
-                : (Array.isArray(subCategories) ? subCategories.map((sc: never) => sc.id) : []);
+            
+            // Get all sub-categories for all selected main categories
+            let subCategoryIdsToFilter: number[] = [];
+            
+            if (selectedCategoryIds.length > 0) {
+                selectedCategoryIds.forEach(catId => {
+                    const cat:any = categories.find((c:any) => c.id === catId);
+                    if (cat) {
+                        const subCats = (cat.sub_categories ?? cat.subCategories ?? []);
+                        if (Array.isArray(subCats)) {
+                            subCategoryIdsToFilter.push(...subCats.map((sc: any) => sc.id));
+                        }
+                    }
+                });
+            }
 
             const subCats = subCategoryIdsToFilter.length > 0
                 ? subCategoryIdsToFilter.join(',')
@@ -77,16 +79,19 @@ const PosExpress: React.FC = () => {
             }
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
-    }, [searchTerm, selectedCategoryId, selectedSubCategoryIds, categories]);
+    }, [searchTerm, selectedCategoryIds, categories]);
 
     useEffect(() => {
         const t = setTimeout(() => loadProducts(), 350);
         return () => clearTimeout(t);
     }, [loadProducts]);
 
+    // Remove the reset effect since we handle multiple categories now
+    /*
     useEffect(() => {
         setSelectedSubCategoryIds([]);
     }, [selectedCategoryId]);
+    */
 
     // Auto-focus search
     useEffect(() => { searchRef.current?.focus(); }, []);
@@ -110,15 +115,15 @@ const PosExpress: React.FC = () => {
                 e.preventDefault();
                 if (searchTerm) {
                     setSearchTerm('');
-                } else if (selectedCategoryId) {
-                    setSelectedCategoryId(null);
+                } else if (selectedCategoryIds.length > 0) {
+                    setSelectedCategoryIds([]);
                 }
                 searchRef.current?.focus();
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [searchTerm, selectedCategoryId, cart.items.length, currentSession]);
+    }, [searchTerm, selectedCategoryIds, cart.items.length, currentSession]);
 
     const handleAddProduct = (product: IProduct) => {
         if (product.stock_quantity <= 0) {
@@ -178,7 +183,7 @@ const PosExpress: React.FC = () => {
             e.preventDefault();
             try {
                 setIsScanning(true);
-                const { data: res }: unknown = await ProductAPI.findByReference(searchTerm.trim());
+                const { data: res }: any = await ProductAPI.findByReference(searchTerm.trim());
                 if (res && res.data) {
                     handleAddProduct(res.data);
                     setSearchTerm('');
@@ -186,7 +191,7 @@ const PosExpress: React.FC = () => {
                 }
             } catch (err: unknown) {
                 console.error(err);
-                if (err.response?.status === 404) {
+                if ((err as any).response?.status === 404) {
                     // Do nothing, maybe it's a partial text search
                 } else {
                     Toast.error('Erreur lors de la recherche du code');
@@ -218,7 +223,8 @@ const PosExpress: React.FC = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <TextField
                             inputRef={searchRef}
-                            fullWidth size="small"
+                            sx={{ flex: 3 }}
+                            size="small"
                             placeholder="Rechercher ou scanner... (F3)"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -233,7 +239,7 @@ const PosExpress: React.FC = () => {
                                     borderRadius: '16px',
                                     bgcolor: 'rgba(255,255,255,0.9)',
                                     fontWeight: 700,
-                                    fontSize: '1rem',
+                                    fontSize: '0.9rem',
                                     border: '1px solid rgba(79, 70, 229, 0.1)',
                                     transition: 'all 0.3s',
                                     '&.Mui-focused': {
@@ -243,112 +249,42 @@ const PosExpress: React.FC = () => {
                                 }
                             }}
                         />
+
+                        <FormControl sx={{ flex: 2 }} size="small">
+                            <InputLabel id="category-filter-label" sx={{ fontWeight: 700, color: '#64748b' }}>Filtrer par catégories</InputLabel>
+                            <Select
+                                labelId="category-filter-label"
+                                multiple
+                                value={selectedCategoryIds}
+                                onChange={(e) => setSelectedCategoryIds(typeof e.target.value === 'string' ? [] : (e.target.value as number[]))}
+                                input={<OutlinedInput label="Filtrer par catégories" sx={{ borderRadius: '16px', bgcolor: 'rgba(255,255,255,0.9)', fontWeight: 700 }} />}
+                                renderValue={(selected) => (
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                        {selected.map((id) => (
+                                            <Chip 
+                                                key={id} 
+                                                label={categories.find(c => c.id === id)?.label} 
+                                                size="small" 
+                                                sx={{ height: 24, borderRadius: '8px', bgcolor: '#6366f1', color: 'white', fontWeight: 800 }}
+                                            />
+                                        ))}
+                                    </Box>
+                                )}
+                                startAdornment={
+                                    <InputAdornment position="start">
+                                        <FilterList sx={{ color: '#6366f1' }} />
+                                    </InputAdornment>
+                                }
+                            >
+                                {categories.map((cat) => (
+                                    <MenuItem key={cat.id} value={cat.id} sx={{ fontWeight: 600 }}>
+                                        <Checkbox checked={selectedCategoryIds.indexOf(cat.id) > -1} />
+                                        <ListItemText primary={cat.label} />
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                     </Box>
-
-                    {/* Category chips */}
-                    <Box sx={{
-                        display: 'flex', gap: 1, mt: 2, overflowX: 'auto', pb: 0.5,
-                        '&::-webkit-scrollbar': { height: 4 },
-                        '&::-webkit-scrollbar-thumb': { bgcolor: '#cbd5e1', borderRadius: 2 }
-                    }}>
-                        <Chip
-                            label="Tous"
-                            onClick={() => setSelectedCategoryId(null)}
-                            sx={{
-                                fontWeight: 800, borderRadius: '12px', px: 1, py: 2,
-                                background: !selectedCategoryId ? 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)' : 'rgba(255,255,255,0.8)',
-                                color: !selectedCategoryId ? '#fff' : '#475569',
-                                boxShadow: !selectedCategoryId ? '0 4px 12px rgba(99, 102, 241, 0.3)' : '0 2px 4px rgba(0,0,0,0.02)',
-                                border: !selectedCategoryId ? 'none' : '1px solid rgba(0,0,0,0.05)',
-                                '&:hover': { background: !selectedCategoryId ? 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)' : 'white' }
-                            }}
-                        />
-                        {!loadingCats && categories.map(cat => (
-                            <Chip
-                                key={cat.id} label={cat.label}
-                                onClick={() => setSelectedCategoryId(cat.id === selectedCategoryId ? null : cat.id)}
-                                sx={{
-                                    fontWeight: 700, borderRadius: '12px', px: 0.5, py: 2, whiteSpace: 'nowrap',
-                                    background: selectedCategoryId === cat.id ? 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)' : 'rgba(255,255,255,0.8)',
-                                    color: selectedCategoryId === cat.id ? '#fff' : '#64748b',
-                                    boxShadow: selectedCategoryId === cat.id ? '0 4px 12px rgba(99, 102, 241, 0.3)' : '0 2px 4px rgba(0,0,0,0.02)',
-                                    border: selectedCategoryId === cat.id ? 'none' : '1px solid rgba(0,0,0,0.05)',
-                                    '&:hover': { background: selectedCategoryId === cat.id ? 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)' : 'white' }
-                                }}
-                            />
-                        ))}
-                    </Box>
-
-                    {!!selectedCategoryId && (() => {
-                        const selectedCategory: unknown = categories.find(c => c.id === selectedCategoryId);
-                        const subCategories: never[] = selectedCategory
-                            ? (selectedCategory.sub_categories ?? selectedCategory.subCategories ?? [])
-                            : [];
-
-                        if (!Array.isArray(subCategories) || subCategories.length === 0) return null;
-
-                        return (
-                            <Box sx={{
-                                display: 'flex',
-                                gap: 1,
-                                mt: 1.25,
-                                overflowX: 'auto',
-                                pb: 0.5,
-                                '&::-webkit-scrollbar': { height: 4 },
-                                '&::-webkit-scrollbar-thumb': { bgcolor: '#cbd5e1', borderRadius: 2 }
-                            }}>
-                                <Chip
-                                    label="Toutes les sous-catégories"
-                                    onClick={() => setSelectedSubCategoryIds([])}
-                                    sx={{
-                                        fontWeight: 800,
-                                        borderRadius: '12px',
-                                        px: 1,
-                                        py: 2,
-                                        background: selectedSubCategoryIds.length === 0
-                                            ? 'linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)'
-                                            : 'rgba(255,255,255,0.8)',
-                                        color: selectedSubCategoryIds.length === 0 ? '#fff' : '#475569',
-                                        boxShadow: selectedSubCategoryIds.length === 0
-                                            ? '0 4px 12px rgba(14, 165, 233, 0.25)'
-                                            : '0 2px 4px rgba(0,0,0,0.02)',
-                                        border: selectedSubCategoryIds.length === 0 ? 'none' : '1px solid rgba(0,0,0,0.05)',
-                                    }}
-                                />
-
-                                {subCategories.map((sc: never) => {
-                                    const isSelected = selectedSubCategoryIds.includes(sc.id);
-                                    return (
-                                        <Chip
-                                            key={sc.id}
-                                            label={sc.label}
-                                            onClick={() => {
-                                                setSelectedSubCategoryIds(prev => {
-                                                    if (prev.includes(sc.id)) return prev.filter(id => id !== sc.id);
-                                                    return [...prev, sc.id];
-                                                });
-                                            }}
-                                            sx={{
-                                                fontWeight: 700,
-                                                borderRadius: '12px',
-                                                px: 0.5,
-                                                py: 2,
-                                                whiteSpace: 'nowrap',
-                                                background: isSelected
-                                                    ? 'linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)'
-                                                    : 'rgba(255,255,255,0.8)',
-                                                color: isSelected ? '#fff' : '#64748b',
-                                                boxShadow: isSelected
-                                                    ? '0 4px 12px rgba(14, 165, 233, 0.25)'
-                                                    : '0 2px 4px rgba(0,0,0,0.02)',
-                                                border: isSelected ? 'none' : '1px solid rgba(0,0,0,0.05)',
-                                            }}
-                                        />
-                                    );
-                                })}
-                            </Box>
-                        );
-                    })()}
                 </Box>
 
                 {/* Product Grid */}
@@ -583,7 +519,7 @@ const PosProductCard: React.FC<{ product: IProduct; onAdd: (p: IProduct) => void
                         zIndex: 2
                     }}>
                         <Chip
-                            label={outOfStock ? 'Épuisé' : `Stock: ${Number(product.stock_quantity).toFixed(0)}`}
+                            label={outOfStock ? 'Épuisé' : `Stock: ${product.unit?.allows_decimal ? Number(product.stock_quantity).toFixed(3) : Number(product.stock_quantity).toFixed(0)}`}
                             size="small"
                             sx={{
                                 height: 22,
@@ -712,7 +648,7 @@ const PosCartItem: React.FC<{ item: CartItem }> = ({ item }) => {
                             {UtilMethods.formatNumber(item?.subtotal ?? 0)}
                         </Typography>
                         <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>
-                            ({item?.product?.allowsDecimal ? Number(item?.quantity || 0).toFixed(2) : (item?.quantity || 0)} {item?.product?.unitAbbreviation || 'pce'})
+                            ({item?.product?.allowsDecimal ? Number(item?.quantity || 0).toFixed(3) : (item?.quantity || 0)} {item?.product?.unitAbbreviation || 'pce'})
                         </Typography>
                     </Box>
                 </Box>
@@ -722,7 +658,7 @@ const PosCartItem: React.FC<{ item: CartItem }> = ({ item }) => {
                         <Remove sx={{ fontSize: 14 }} />
                     </IconButton>
                     <Typography sx={{ minWidth: 24, textAlign: 'center', fontWeight: 900, fontSize: '0.85rem', color: '#1e293b' }}>
-                        {item?.product?.allowsDecimal ? Number(item?.quantity || 0).toFixed(2) : (item?.quantity || 0)}
+                        {item?.product?.allowsDecimal ? Number(item?.quantity || 0).toFixed(3) : (item?.quantity || 0)}
                     </Typography>
                     <IconButton size="small" onClick={() => dispatch(addToCart({ ...item.product }))}
                         disabled={item.product.quantity <= 0}

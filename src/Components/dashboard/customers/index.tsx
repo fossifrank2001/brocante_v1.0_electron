@@ -35,6 +35,7 @@ import CustomAlert from '@/Components/CustomAlert';
 import CustomerAPI from "Data/Api/Customer.ts";
 import { IPerson, IPersonTableData } from 'Interfaces';
 import UseCustomerBalance from './UseCustomerBalance';
+import CustomerForm from './CustomerForm';
 import { motion } from 'framer-motion';
 
 export default function IndexCustomer() {
@@ -459,6 +460,13 @@ export default function IndexCustomer() {
                     onSuccess={handleSuccess}
                 />
             )}
+
+            <CustomerForm
+                open={openFormModal}
+                onClose={handleCloseModels}
+                customer={selectedCustomer}
+                onSuccess={handleSuccess}
+            />
         </Box>
     );
 }

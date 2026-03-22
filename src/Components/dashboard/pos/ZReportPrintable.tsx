@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import { forwardRef } from 'react';
 import { Box, Typography, Divider } from '@mui/material';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { ICashSession } from '@/Data/Interfaces/CashSession';

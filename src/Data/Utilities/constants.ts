@@ -18,8 +18,13 @@ const Constants = {
         name: "Nozakap FOSSI Frank Jordan",
         phone: "+237677831959",
     },
-    BASE_URL: "http://brocante.local/api/v1",
-    URL: "http://brocante.local",
+    get BASE_URL() {
+        return localStorage.getItem('API_BASE_URL') || "http://brocante.local/api/v1";
+    },
+    get URL() {
+        const baseUrl = localStorage.getItem('API_BASE_URL');
+        return baseUrl ? baseUrl.replace(/\/api\/v1\/?$/, '') : "http://brocante.local";
+    },
     PER_PAGE: 15,
     APP_NAME: 'Brocante V1.0',
     defaultStoredValue: JSON.stringify({

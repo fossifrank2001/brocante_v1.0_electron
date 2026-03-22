@@ -45,8 +45,18 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
         stock_quantity: record?.stock_quantity ?? 0,
         unit_id: record?.unit_id ?? null,
         price_per_unit: record?.price_per_unit ?? null,
-        subcategory_ids: record?.subcategories ?? [],
-        suppliers: record?.suppliers ?? [
+        category: record?.subcategories && record.subcategories.length > 0 
+            ? String(record.subcategories[0].category_id) 
+            : '',
+        subcategory_ids: record?.subcategories?.map(sub => ({
+            id: sub.id,
+            label: sub.label
+        })) ?? [],
+        suppliers: record?.suppliers?.map(sup => ({
+            id: sup.id,
+            name: sup.name,
+            contact_info: sup.contact_info
+        })) ?? [
             {
                 name: '',
                 contact_info: '',
@@ -131,12 +141,27 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
     const handleSubmit = async (values: FormValues, actions: FormikHelpers<FormValues>) => {
         if (isLastStep) {
             try {
+                // Nettoyage et typage des données avant envoi
+                const payload = {
+                    ...values,
+                    stock_quantity: parseFloat(String(values.stock_quantity)) || 0,
+                    price: parseFloat(String(values.price)) || 0,
+                    subcategory_ids: (values.subcategory_ids || [])
+                        .filter(sub => sub && sub.id)
+                        .map(sub => sub.id),
+                    suppliers: (values.suppliers || [])
+                        .filter(sup => sup.name && sup.contact_info)
+                        .map(sup => ({
+                            id: sup.id,
+                            name: sup.name,
+                            contact_info: sup.contact_info
+                        }))
+                };
+
                 if (record && id) {
-                    await ProductAPI.update(id, values);
-                    Toast.success('Article mis à jour avec succès');
+                    await ProductAPI.update(id, payload as any);
                 } else {
-                    await ProductAPI.create(values);
-                    Toast.success('Article créé avec succès');
+                    await ProductAPI.create(payload as any);
                 }
                 actions.resetForm();
                 context.togglePageLoading(true);

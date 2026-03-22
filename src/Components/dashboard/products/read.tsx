@@ -1,7 +1,7 @@
 import Breadcrumd from '@/Components/Breadcrumd';
 import InfoItem from '@/Components/InfoItem';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { Grid, Skeleton, CircularProgress, Card, CardContent, Box, Typography, Button, Paper, Divider, Chip, Stack } from '@mui/material';
+import { Grid, CircularProgress, Card, CardContent, Box, Typography, Button, Paper, Chip, Stack } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';

@@ -24,10 +24,9 @@ import {
   Delete,
   Layers,
   FileDownload,
-  FolderCopy,
   FolderOpen
 } from '@mui/icons-material';
-import { motion } from 'framer-motion';
+
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { Pages } from '@/Data/Objects/state';
 import { useAppDispatch, useAppSelector } from '@/hooks';

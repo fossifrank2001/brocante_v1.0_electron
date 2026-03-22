@@ -5,14 +5,13 @@ import Breadcrumd from "Components/Breadcrumd";
 import {
     MaterialReactTable, MRT_ColumnDef,
     MRT_ShowHideColumnsButton, MRT_TableInstance,
-    MRT_ToggleDensePaddingButton,
     MRT_ToggleFiltersButton, MRT_ToggleFullScreenButton,
     MRT_ToggleGlobalFilterButton,
     useMaterialReactTable
 } from "material-react-table";
 import { MRT_Localization_EN } from "material-react-table/locales/en";
 import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
-import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Link, Stack, Typography, Card, CardContent, Button, CircularProgress, Tooltip, IconButton, Zoom } from "@mui/material";
+import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography, Button, CircularProgress, Tooltip, IconButton, Zoom } from "@mui/material";
 import { Refresh, FileDownload, Edit, Delete } from '@mui/icons-material';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { IRole, IRoleTableData } from '@/Data/Interfaces';
@@ -40,7 +39,7 @@ export default function IndexRole() {
     });
     const [isLoading, setIsLoading] = useState(false);
     const [isDeleted, setIsDeleted] = useState(false);
-    const [roleId, setRoleId] = useState<number>(null);
+    const [roleId, setRoleId] = useState<number | null>(null);
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [columnFilters, setColumnFilters] = useState([]);

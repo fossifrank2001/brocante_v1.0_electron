@@ -18,6 +18,7 @@ export interface IStoreSetting {
     timezone: string;
     locale: string;
     logo_path: string | null;
+    signature_path: string | null;
     receipt_header: string | null;
     receipt_footer: string | null;
     invoice_footer: string | null;
@@ -50,6 +51,8 @@ export interface IStoreSettingPayload {
     currency_decimals?: number;
     timezone?: string;
     locale?: string;
+    logo_path?: string | null;
+    signature_path?: string | null;
     receipt_header?: string | null;
     receipt_footer?: string | null;
     invoice_footer?: string | null;

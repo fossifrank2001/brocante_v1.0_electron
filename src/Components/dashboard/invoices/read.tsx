@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     Grid, Typography, CircularProgress, Box, Button, Dialog,
     DialogActions, DialogContent, DialogTitle, TextField, MenuItem,
-    Select, Alert, AlertTitle, Collapse, FormControl, InputLabel,
-    FormHelperText, Checkbox, FormControlLabel, Paper, Divider,
+    Select, FormControl, InputLabel, Checkbox, FormControlLabel, Paper, Divider,
     Chip, IconButton, Tooltip, Zoom, Fade, Card, CardContent, Stack
 } from '@mui/material';
 import {
@@ -70,7 +69,6 @@ const ReadInvoice = () => {
     const [inProgressTwo, setInProgressTwo] = useState(false);
     const [openModal, setOpenModal] = useState(false);
     const [reloadRecord, setReloadRecord] = useState(false);
-    const [paymentFeedback, setPaymentFeedback] = useState({ message: '', type: '', show: false });
     const [paymentResponse, setPaymentResponse] = useState<IPaymentResponse | null>(null);
     const [showResponseModal, setShowResponseModal] = useState(false);
     const [calculatedAmountToPay, setCalculatedAmountToPay] = useState(0);
@@ -97,7 +95,7 @@ const ReadInvoice = () => {
         setInProgressTwo(true);
         try {
             if (amount > 0 && amount < MIN_PAYMENT) {
-                setPaymentFeedback({ message: `Minimum ${MIN_PAYMENT}.`, type: 'error', show: true });
+                Toast.error(`Minimum ${MIN_PAYMENT}.`);
                 return;
             }
 
@@ -108,7 +106,7 @@ const ReadInvoice = () => {
             });
 
             if (!response?.success) {
-                setPaymentFeedback({ message: response?.message || 'Le paiement a échoué.', type: 'error', show: true });
+                Toast.error(response?.message || 'Le paiement a échoué.');
                 return;
             }
 
@@ -128,7 +126,6 @@ const ReadInvoice = () => {
             setReloadRecord(prev => !prev);
         } catch (error: any) {
             const msg = error?.response?.data?.message || 'Échec du paiement.';
-            setPaymentFeedback({ message: msg, type: 'error', show: true });
             Toast.error(msg);
         } finally {
             setInProgressTwo(false);

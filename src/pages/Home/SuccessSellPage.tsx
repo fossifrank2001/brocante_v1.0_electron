@@ -6,7 +6,7 @@ import PageLoadingIndicator from "Components/PageLoadingIndicator";
 import { useAppContext } from "@/contexts/appContext";
 import { useAppDispatch, useAppSelector } from "@/hooks";
 import constants from "Data/Utilities/constants";
-import success_congratulation from "../../assets/images/products/success_congratulation.jpg";
+
 import { setActivePage } from "Data/Slices/NavigationSlice";
 import { Pages } from "Data/Objects/state";
 import PrintDialog from "@/Components/dashboard/pos/PrintDialog";

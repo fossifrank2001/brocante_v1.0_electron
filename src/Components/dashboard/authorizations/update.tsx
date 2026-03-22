@@ -33,7 +33,7 @@ const UpdateAuthorization = () => {
     const [menu, setMenu] = useState<IMenu | null>(null);
 
     const [record, setRecord] = useState<IHabilitation | null>(null);
-    const { currentPage, id } = useAppSelector((state) => state.navigaton);
+    const { id } = useAppSelector((state) => state.navigaton);
 
     const context = useAppContext();
 

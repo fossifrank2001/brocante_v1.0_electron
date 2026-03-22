@@ -15,16 +15,22 @@ import {
     Avatar,
     Tabs,
     Tab,
-    Chip,
+    InputAdornment,
+    Paper,
+    useTheme,
 } from '@mui/material';
 import {
     Save as SaveIcon,
     Store as StoreIcon,
-    Receipt as ReceiptIcon,
     Settings as SettingsIcon,
     CloudUpload as UploadIcon,
     Inventory as InventoryIcon,
+    Language as LanguageIcon,
+    Payments as PaymentsIcon,
+    Description as DescriptionIcon,
+    LocalOffer as OfferIcon,
 } from '@mui/icons-material';
+import { motion, AnimatePresence } from 'framer-motion';
 import StoreSettingAPI from '@/Data/Api/StoreSetting';
 import { IStoreSetting, IStoreSettingPayload } from '@/Data/Interfaces/StoreSetting';
 import Toast from '@/Data/Utilities/Toast';
@@ -36,15 +42,27 @@ interface TabPanelProps {
     value: number;
 }
 
-function TabPanel({ children, value, index }: TabPanelProps) {
+const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
     return (
-        <div role="tabpanel" hidden={value !== index} style={{ paddingTop: 24 }}>
-            {value === index && <Box>{children}</Box>}
-        </div>
+        <AnimatePresence mode="wait">
+            {value === index && (
+                <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    role="tabpanel"
+                >
+                    <Box sx={{ pt: 3 }}>{children}</Box>
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
-}
+};
 
 const StoreSettingsPage: React.FC = () => {
+    const theme = useTheme();
     const [settings, setSettings] = useState<IStoreSetting | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -58,8 +76,10 @@ const StoreSettingsPage: React.FC = () => {
             const response = await StoreSettingAPI.show();
             setSettings(response.data);
             setForm(response.data);
+            setHasChanges(false);
         } catch (e) {
             console.error('Error fetching store settings:', e);
+            Toast.error('Impossible de charger les paramètres');
         } finally {
             setLoading(false);
         }
@@ -81,24 +101,33 @@ const StoreSettingsPage: React.FC = () => {
             setSettings(response.data);
             setForm(response.data);
             setHasChanges(false);
-            Toast.success('Paramètres enregistrés avec succès', 2000, 'top-right');
+            Toast.success('Paramètres enregistrés avec succès');
         } catch (e: any) {
-            Toast.error(e?.message || 'Erreur lors de la sauvegarde', 2000, 'top-right');
+            Toast.error(e?.message || 'Erreur lors de la sauvegarde');
         } finally {
             setSaving(false);
         }
     };
 
-    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'signature' = 'logo') => {
         const file = e.target.files?.[0];
         if (!file) return;
         try {
             setSaving(true);
-            const response = await StoreSettingAPI.uploadLogo(file);
+            const response = type === 'logo' 
+                ? await StoreSettingAPI.uploadLogo(file)
+                : await StoreSettingAPI.uploadSignature(file);
+            
             setSettings(response.data);
-            Toast.success('Logo mis à jour', 2000, 'top-right');
+            if (type === 'logo') {
+                setForm(prev => ({ ...prev, logo_path: response.data.logo_path }));
+                Toast.success('Logo mis à jour');
+            } else {
+                setForm(prev => ({ ...prev, signature_path: response.data.signature_path }));
+                Toast.success('Signature mise à jour');
+            }
         } catch (err: any) {
-            Toast.error(err?.message || 'Erreur upload logo', 2000, 'top-right');
+            Toast.error(err?.message || `Erreur lors de l’upload du ${type}`);
         } finally {
             setSaving(false);
         }
@@ -106,215 +135,444 @@ const StoreSettingsPage: React.FC = () => {
 
     if (loading) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-                <CircularProgress />
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="500px">
+                <CircularProgress thickness={5} size={60} sx={{ color: theme.palette.primary.main }} />
             </Box>
         );
     }
 
     return (
-        <Box sx={{ py: 3 }}>
-            {/* Header */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <Box>
-                    <Typography variant="h5" fontWeight={700} display="flex" alignItems="center" gap={1}>
-                        <SettingsIcon color="primary" />
-                        Paramètres du magasin
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" mt={0.5}>
-                        Configurez les informations de votre entreprise, devises, tickets et préférences de stock.
-                    </Typography>
+        <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, md: 4 }, py: 4 }}>
+            {/* Header Section */}
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+            >
+                <Box display="flex" justifyContent="space-between" alignItems="flex-end" mb={4}>
+                    <Box>
+                        <Box display="flex" alignItems="center" gap={2} mb={1}>
+                            <Box 
+                                sx={{ 
+                                    p: 1, 
+                                    borderRadius: '12px', 
+                                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                }}
+                            >
+                                <SettingsIcon sx={{ color: '#fff', fontSize: 24 }} />
+                            </Box>
+                            <Typography variant="h4" fontWeight={800} sx={{ color: theme.palette.text.primary }}>
+                                Configuration
+                            </Typography>
+                        </Box>
+                        <Typography variant="body1" color="text.secondary">
+                            Gérez l'identité de votre magasin et personnalisez vos documents fiscaux.
+                        </Typography>
+                    </Box>
+                    
+                    <Button
+                        variant="contained"
+                        size="large"
+                        startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+                        onClick={handleSave}
+                        disabled={!hasChanges || saving}
+                        sx={{ 
+                            borderRadius: '12px', 
+                            px: 4, 
+                            py: 1.5,
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            fontSize: '1rem',
+                            boxShadow: theme.shadows[4],
+                            '&:hover': {
+                                boxShadow: theme.shadows[8],
+                            }
+                        }}
+                    >
+                        {saving ? 'Sauvegarde...' : 'Enregistrer'}
+                    </Button>
                 </Box>
-                <Button
-                    variant="contained"
-                    startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
-                    onClick={handleSave}
-                    disabled={!hasChanges || saving}
-                    sx={{ textTransform: 'none', borderRadius: 2, px: 3 }}
-                >
-                    Enregistrer
-                </Button>
-            </Box>
+            </motion.div>
 
             {hasChanges && (
-                <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
-                    Vous avez des modifications non enregistrées.
-                </Alert>
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+                    <Alert 
+                        severity="info" 
+                        variant="outlined"
+                        sx={{ mb: 3, borderRadius: '12px', fontWeight: 600 }}
+                    >
+                        Vous avez des modifications non enregistrées.
+                    </Alert>
+                </motion.div>
             )}
 
-            {/* Tabs */}
-            <Card sx={{ borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
-                <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
-                    <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto">
-                        <Tab icon={<StoreIcon />} iconPosition="start" label="Entreprise" sx={{ textTransform: 'none' }} />
-                        <Tab icon={<ReceiptIcon />} iconPosition="start" label="Tickets & Factures" sx={{ textTransform: 'none' }} />
-                        <Tab icon={<InventoryIcon />} iconPosition="start" label="Stock & Caisse" sx={{ textTransform: 'none' }} />
+            {/* Main Configuration Card */}
+            <Paper 
+                elevation={0}
+                sx={{ 
+                    borderRadius: '24px', 
+                    overflow: 'hidden',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    backgroundColor: 'background.paper',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.04)'
+                }}
+            >
+                <Box sx={{ borderBottom: 1, borderColor: 'divider', px: { xs: 1, md: 3 }, pt: 2, bgcolor: '#f9fafb' }}>
+                    <Tabs 
+                        value={tab} 
+                        onChange={(_, v) => setTab(v)} 
+                        variant="scrollable" 
+                        scrollButtons="auto"
+                        sx={{
+                            '& .MuiTab-root': {
+                                minHeight: 64,
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                fontSize: '0.95rem',
+                                color: 'text.secondary',
+                                '&.Mui-selected': {
+                                    color: 'primary.main',
+                                }
+                            },
+                            '& .MuiTabs-indicator': {
+                                height: 3,
+                                borderRadius: '3px 3px 0 0'
+                            }
+                        }}
+                    >
+                        <Tab icon={<StoreIcon />} iconPosition="start" label="Identité Store" />
+                        <Tab icon={<InventoryIcon />} iconPosition="start" label="Gestion Stock & POS" />
+                        <Tab icon={<LanguageIcon />} iconPosition="start" label="Régionalisation" />
                     </Tabs>
                 </Box>
 
-                <CardContent sx={{ p: 3 }}>
-                    {/* ── TAB 0: Entreprise ── */}
+                <Box sx={{ p: { xs: 2, md: 4 } }}>
+                    {/* ── SECTION 0: IDENTITÉ ── */}
                     <TabPanel value={tab} index={0}>
-                        {/* Logo */}
-                        <Box display="flex" alignItems="center" gap={3} mb={4}>
-                            <Avatar
-                                src={settings?.logo_path ? `${constants.URL}/storage/${settings.logo_path}` : undefined}
-                                sx={{ width: 80, height: 80, bgcolor: 'primary.light', fontSize: 32 }}
-                            >
-                                {!settings?.logo_path && <StoreIcon sx={{ fontSize: 40 }} />}
-                            </Avatar>
-                            <Box>
-                                <Typography variant="subtitle1" fontWeight={600}>Logo du magasin</Typography>
-                                <Typography variant="caption" color="text.secondary">PNG, JPG, SVG — max 2 Mo</Typography>
-                                <br />
-                                <Button
-                                    component="label"
-                                    variant="outlined"
-                                    size="small"
-                                    startIcon={<UploadIcon />}
-                                    sx={{ mt: 1, textTransform: 'none', borderRadius: 2 }}
-                                >
-                                    Changer le logo
-                                    <input type="file" hidden accept="image/*" onChange={handleLogoUpload} />
-                                </Button>
-                            </Box>
-                        </Box>
+                        <Grid container spacing={4}>
+                            <Grid item xs={12} md={4}>
+                                <Typography variant="h6" fontWeight={700} gutterBottom>Logo & Image de Marque</Typography>
+                                <Typography variant="body2" color="text.secondary" mb={3}>
+                                    Ce logo apparaîtra sur toutes vos factures, reçus et l'interface client.
+                                </Typography>
+                                
+                                <Box sx={{ textAlign: 'center', p: 4, border: '2px dashed', borderColor: 'divider', borderRadius: '20px' }}>
+                                    <Avatar
+                                        key={settings?.logo_path}
+                                        src={settings?.logo_path ? `${constants.URL}/storage/${settings.logo_path}` : undefined}
+                                        sx={{ 
+                                            width: 120, 
+                                            height: 120, 
+                                            mx: 'auto',
+                                            mb: 2,
+                                            boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                                            bgcolor: 'primary.light'
+                                        }}
+                                    >
+                                        {!settings?.logo_path && <StoreIcon sx={{ fontSize: 60, color: 'primary.main' }} />}
+                                    </Avatar>
+                                    <Button
+                                        component="label"
+                                        variant="outlined"
+                                        size="medium"
+                                        startIcon={<UploadIcon />}
+                                        sx={{ borderRadius: '10px', textTransform: 'none' }}
+                                    >
+                                        Télécharger Logo
+                                        <input type="file" hidden accept="image/*" onChange={handleLogoUpload} />
+                                    </Button>
 
-                        <Divider sx={{ mb: 3 }} />
+                                    <Typography variant="subtitle2" fontWeight={700} sx={{ mt: 4, mb: 1.5, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <DescriptionIcon fontSize="small" color="primary" /> Signature / Cachet
+                                    </Typography>
+                                    <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: '12px', bgcolor: '#fcfcfc', mb: 2 }}>
+                                        <Avatar
+                                            key={settings?.signature_path}
+                                            variant="square"
+                                            src={settings?.signature_path ? `${constants.URL}/storage/${settings.signature_path}` : undefined}
+                                            sx={{ 
+                                                width: '100%', 
+                                                height: 80, 
+                                                mb: 2,
+                                                borderRadius: '8px',
+                                                bgcolor: 'background.paper',
+                                                border: '1px solid #eee',
+                                                '& img': { objectFit: 'contain' }
+                                            }}
+                                        >
+                                            {!settings?.signature_path && <Typography variant="caption" color="text.secondary">Aucune signature</Typography>}
+                                        </Avatar>
+                                        <Button
+                                            component="label"
+                                            variant="outlined"
+                                            size="small"
+                                            fullWidth
+                                            startIcon={<UploadIcon />}
+                                            sx={{ borderRadius: '8px', textTransform: 'none' }}
+                                        >
+                                            Changer Signature
+                                            <input type="file" hidden accept="image/*" onChange={(e) => handleLogoUpload(e, 'signature')} />
+                                        </Button>
+                                    </Box>
+                                    <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+                                        PNG ou JPG conseillé. Max 2Mb.
+                                    </Typography>
 
+                                    <Divider sx={{ my: 4 }} />
+                                    
+                                    <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <DescriptionIcon fontSize="small" color="primary" /> Préfixes de numérotation
+                                    </Typography>
+                                    <Box display="flex" flexDirection="column" gap={2}>
+                                        <TextField
+                                            label="Préfixe Facture"
+                                            value={form.invoice_prefix || ''}
+                                            onChange={e => handleChange('invoice_prefix', e.target.value)}
+                                            fullWidth
+                                            size="small"
+                                        />
+                                        <TextField
+                                            label="Préfixe Reçu"
+                                            value={form.receipt_prefix || ''}
+                                            onChange={e => handleChange('receipt_prefix', e.target.value)}
+                                            fullWidth
+                                            size="small"
+                                        />
+                                        <TextField
+                                            label="Préfixe Vente"
+                                            value={form.sell_code_prefix || ''}
+                                            onChange={e => handleChange('sell_code_prefix', e.target.value)}
+                                            fullWidth
+                                            size="small"
+                                        />
+                                    </Box>
+                                </Box>
+                            </Grid>
+
+                            <Grid item xs={12} md={8}>
+                                <Typography variant="h6" fontWeight={700} mb={3}>Détails de l'entreprise</Typography>
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            label="Nom Commercial"
+                                            value={form.store_name || ''}
+                                            onChange={e => handleChange('store_name', e.target.value)}
+                                            fullWidth
+                                            required
+                                            size="small"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            label="Slogan / Baseline"
+                                            value={form.store_slogan || ''}
+                                            onChange={e => handleChange('store_slogan', e.target.value)}
+                                            fullWidth
+                                            size="small"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            label="Gérant / Propriétaire"
+                                            value={form.owner_name || ''}
+                                            onChange={e => handleChange('owner_name', e.target.value)}
+                                            fullWidth
+                                            size="small"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            label="Email Professionnel"
+                                            value={form.email || ''}
+                                            onChange={e => handleChange('email', e.target.value)}
+                                            fullWidth
+                                            size="small"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            label="N° Téléphone Principal"
+                                            value={form.phone || ''}
+                                            onChange={e => handleChange('phone', e.target.value)}
+                                            fullWidth
+                                            size="small"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            label="N° SIRET / Registre Commerce"
+                                            value={form.registration_number || ''}
+                                            onChange={e => handleChange('registration_number', e.target.value)}
+                                            fullWidth
+                                            size="small"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="Adresse Physique"
+                                            value={form.address || ''}
+                                            onChange={e => handleChange('address', e.target.value)}
+                                            fullWidth
+                                            multiline
+                                            rows={2}
+                                            size="small"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            label="Ville"
+                                            value={form.city || ''}
+                                            onChange={e => handleChange('city', e.target.value)}
+                                            fullWidth
+                                            size="small"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            label="Site Web"
+                                            value={form.website || ''}
+                                            onChange={e => handleChange('website', e.target.value)}
+                                            fullWidth
+                                            size="small"
+                                        />
+                                    </Grid>
+                                </Grid>
+                                
+                                <Box mt={4}>
+                                    <Typography variant="h6" fontWeight={700} mb={2}>En-tête & Pied de Page des Documents</Typography>
+                                    <Grid container spacing={3}>
+                                        <Grid item xs={12}>
+                                            <TextField
+                                                label="En-tête des Tickets (Receipt Header)"
+                                                value={form.receipt_header || ''}
+                                                onChange={e => handleChange('receipt_header', e.target.value)}
+                                                fullWidth
+                                                multiline
+                                                rows={2}
+                                                size="small"
+                                                placeholder="Bienvenue dans notre boutique !"
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                label="Pied de Page Tickets"
+                                                value={form.receipt_footer || ''}
+                                                onChange={e => handleChange('receipt_footer', e.target.value)}
+                                                fullWidth
+                                                multiline
+                                                rows={3}
+                                                size="small"
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                label="Pied de Page Factures PDF"
+                                                value={form.invoice_footer || ''}
+                                                onChange={e => handleChange('invoice_footer', e.target.value)}
+                                                fullWidth
+                                                multiline
+                                                rows={3}
+                                                size="small"
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                </Box>
+                            </Grid>
+                        </Grid>
+                    </TabPanel>
+
+                    {/* ── SECTION 1: STOCK & POS ── */}
+                    <TabPanel value={tab} index={1}>
+                        <Grid container spacing={4}>
+                            <Grid item xs={12} md={6}>
+                                <Card variant="outlined" sx={{ borderRadius: '16px', height: '100%', borderColor: 'warning.light' }}>
+                                    <CardContent>
+                                        <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+                                            <InventoryIcon color="warning" />
+                                            <Typography variant="h6" fontWeight={700}>Politique de Stock</Typography>
+                                        </Box>
+                                        <Divider sx={{ mb: 3 }} />
+                                        <Box display="flex" flexDirection="column" gap={3}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Switch
+                                                        checked={form.low_stock_alert_enabled ?? true}
+                                                        onChange={e => handleChange('low_stock_alert_enabled', e.target.checked)}
+                                                        color="warning"
+                                                    />
+                                                }
+                                                label={<Typography fontWeight={600}>Alertes stock critique</Typography>}
+                                            />
+                                            
+                                            <TextField
+                                                label="Seuil d'alerte global"
+                                                type="number"
+                                                value={form.low_stock_threshold ?? 5}
+                                                onChange={e => handleChange('low_stock_threshold', parseInt(e.target.value) || 0)}
+                                                disabled={!form.low_stock_alert_enabled}
+                                                fullWidth
+                                                size="small"
+                                                InputProps={{ startAdornment: <InputAdornment position="start"><OfferIcon sx={{ opacity: 0.5 }} /></InputAdornment> }}
+                                            />
+
+                                            <FormControlLabel
+                                                control={
+                                                    <Switch
+                                                        checked={form.negative_stock_allowed ?? false}
+                                                        onChange={e => handleChange('negative_stock_allowed', e.target.checked)}
+                                                        color="error"
+                                                    />
+                                                }
+                                                label={<Typography fontWeight={600}>Autoriser stock négatif</Typography>}
+                                            />
+                                             <Typography variant="caption" color="text.secondary">
+                                                Attention : l'autorisation des stocks négatifs peut fausser vos rapports de rentabilité.
+                                            </Typography>
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                                <Card variant="outlined" sx={{ borderRadius: '16px', height: '100%', borderColor: 'primary.light' }}>
+                                    <CardContent>
+                                        <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+                                            <PaymentsIcon color="primary" />
+                                            <Typography variant="h6" fontWeight={700}>Paramètres de Caisse</Typography>
+                                        </Box>
+                                        <Divider sx={{ mb: 3 }} />
+                                        <Box display="flex" flexDirection="column" gap={3}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Switch
+                                                        checked={form.require_cash_session ?? true}
+                                                        onChange={e => handleChange('require_cash_session', e.target.checked)}
+                                                        color="primary"
+                                                    />
+                                                }
+                                                label={<Typography fontWeight={600}>Sessions obligatoires</Typography>}
+                                            />
+                                            <Typography variant="body2" color="text.secondary">
+                                                Le caissier devra systématiquement ouvrir une session avec un fonds de roulement avant de pouvoir vendre.
+                                            </Typography>
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        </Grid>
+                    </TabPanel>
+
+                    {/* ── SECTION 2: RÉGIONALISATION ── */}
+                    <TabPanel value={tab} index={2}>
                         <Grid container spacing={3}>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Nom du magasin"
-                                    value={form.store_name || ''}
-                                    onChange={e => handleChange('store_name', e.target.value)}
-                                    fullWidth
-                                    required
-                                    size="small"
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Slogan"
-                                    value={form.store_slogan || ''}
-                                    onChange={e => handleChange('store_slogan', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                    placeholder="Votre slogan ici..."
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Nom du propriétaire"
-                                    value={form.owner_name || ''}
-                                    onChange={e => handleChange('owner_name', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Email"
-                                    value={form.email || ''}
-                                    onChange={e => handleChange('email', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                    type="email"
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Téléphone principal"
-                                    value={form.phone || ''}
-                                    onChange={e => handleChange('phone', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Téléphone secondaire"
-                                    value={form.phone_secondary || ''}
-                                    onChange={e => handleChange('phone_secondary', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                />
-                            </Grid>
                             <Grid item xs={12}>
-                                <TextField
-                                    label="Adresse"
-                                    value={form.address || ''}
-                                    onChange={e => handleChange('address', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                    multiline
-                                    rows={2}
-                                />
+                                <Typography variant="h6" fontWeight={700} mb={3}>Préférences locales</Typography>
                             </Grid>
-                            <Grid item xs={12} md={4}>
-                                <TextField
-                                    label="Ville"
-                                    value={form.city || ''}
-                                    onChange={e => handleChange('city', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <TextField
-                                    label="Pays"
-                                    value={form.country || ''}
-                                    onChange={e => handleChange('country', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <TextField
-                                    label="Site web"
-                                    value={form.website || ''}
-                                    onChange={e => handleChange('website', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                />
-                            </Grid>
-
-                            <Grid item xs={12}>
-                                <Divider sx={{ my: 1 }} />
-                                <Typography variant="subtitle2" color="text.secondary" mb={2}>
-                                    Informations légales
-                                </Typography>
-                            </Grid>
-
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Numéro fiscal (Tax ID)"
-                                    value={form.tax_id || ''}
-                                    onChange={e => handleChange('tax_id', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="N° d'enregistrement"
-                                    value={form.registration_number || ''}
-                                    onChange={e => handleChange('registration_number', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                />
-                            </Grid>
-
-                            <Grid item xs={12}>
-                                <Divider sx={{ my: 1 }} />
-                                <Typography variant="subtitle2" color="text.secondary" mb={2}>
-                                    Régionalisation
-                                </Typography>
-                            </Grid>
-
                             <Grid item xs={12} md={3}>
                                 <TextField
-                                    label="Devise"
+                                    label="Devise (ISO)"
                                     value={form.currency || ''}
                                     onChange={e => handleChange('currency', e.target.value)}
                                     fullWidth
@@ -324,7 +582,7 @@ const StoreSettingsPage: React.FC = () => {
                             </Grid>
                             <Grid item xs={12} md={3}>
                                 <TextField
-                                    label="Symbole devise"
+                                    label="Symbole d’affichage"
                                     value={form.currency_symbol || ''}
                                     onChange={e => handleChange('currency_symbol', e.target.value)}
                                     fullWidth
@@ -334,16 +592,17 @@ const StoreSettingsPage: React.FC = () => {
                             </Grid>
                             <Grid item xs={12} md={3}>
                                 <TextField
-                                    label="Fuseau horaire"
+                                    label="Fuseau Horaire"
                                     value={form.timezone || ''}
                                     onChange={e => handleChange('timezone', e.target.value)}
                                     fullWidth
                                     size="small"
+                                    placeholder="Africa/Douala"
                                 />
                             </Grid>
                             <Grid item xs={12} md={3}>
                                 <TextField
-                                    label="Langue"
+                                    label="Langue Défaut"
                                     value={form.locale || ''}
                                     onChange={e => handleChange('locale', e.target.value)}
                                     fullWidth
@@ -353,167 +612,8 @@ const StoreSettingsPage: React.FC = () => {
                             </Grid>
                         </Grid>
                     </TabPanel>
-
-                    {/* ── TAB 1: Tickets & Factures ── */}
-                    <TabPanel value={tab} index={1}>
-                        <Grid container spacing={3}>
-                            <Grid item xs={12}>
-                                <Typography variant="subtitle2" color="text.secondary" mb={1}>
-                                    Préfixes de numérotation
-                                </Typography>
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <TextField
-                                    label="Préfixe facture"
-                                    value={form.invoice_prefix || ''}
-                                    onChange={e => handleChange('invoice_prefix', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                    InputProps={{
-                                        endAdornment: <Chip label="ex: FAC-00001" size="small" variant="outlined" />,
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <TextField
-                                    label="Préfixe reçu"
-                                    value={form.receipt_prefix || ''}
-                                    onChange={e => handleChange('receipt_prefix', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                    InputProps={{
-                                        endAdornment: <Chip label="ex: REC-00001" size="small" variant="outlined" />,
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <TextField
-                                    label="Préfixe code vente"
-                                    value={form.sell_code_prefix || ''}
-                                    onChange={e => handleChange('sell_code_prefix', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                />
-                            </Grid>
-
-                            <Grid item xs={12}>
-                                <Divider sx={{ my: 1 }} />
-                                <Typography variant="subtitle2" color="text.secondary" mb={1}>
-                                    Contenu tickets & factures
-                                </Typography>
-                            </Grid>
-
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="En-tête du ticket"
-                                    value={form.receipt_header || ''}
-                                    onChange={e => handleChange('receipt_header', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                    placeholder="Texte affiché en haut du ticket..."
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="Pied de page du ticket"
-                                    value={form.receipt_footer || ''}
-                                    onChange={e => handleChange('receipt_footer', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                    multiline
-                                    rows={3}
-                                    placeholder="Merci de votre visite ! Conditions de retour..."
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="Pied de page facture"
-                                    value={form.invoice_footer || ''}
-                                    onChange={e => handleChange('invoice_footer', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                    multiline
-                                    rows={3}
-                                    placeholder="Conditions de paiement, mentions légales..."
-                                />
-                            </Grid>
-                        </Grid>
-                    </TabPanel>
-
-                    {/* ── TAB 2: Stock & Caisse ── */}
-                    <TabPanel value={tab} index={2}>
-                        <Grid container spacing={3}>
-                            <Grid item xs={12}>
-                                <Typography variant="subtitle2" color="text.secondary" mb={1}>
-                                    Gestion du stock
-                                </Typography>
-                            </Grid>
-
-                            <Grid item xs={12} md={6}>
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={form.low_stock_alert_enabled ?? true}
-                                            onChange={e => handleChange('low_stock_alert_enabled', e.target.checked)}
-                                            color="primary"
-                                        />
-                                    }
-                                    label="Activer les alertes de stock faible"
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Seuil d'alerte stock faible"
-                                    value={form.low_stock_threshold ?? 5}
-                                    onChange={e => handleChange('low_stock_threshold', parseInt(e.target.value) || 0)}
-                                    fullWidth
-                                    size="small"
-                                    type="number"
-                                    disabled={!form.low_stock_alert_enabled}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={form.negative_stock_allowed ?? false}
-                                            onChange={e => handleChange('negative_stock_allowed', e.target.checked)}
-                                            color="warning"
-                                        />
-                                    }
-                                    label="Autoriser le stock négatif"
-                                />
-                                <Typography variant="caption" color="text.secondary" display="block" ml={6}>
-                                    Si désactivé, les ventes seront refusées quand le stock est insuffisant.
-                                </Typography>
-                            </Grid>
-
-                            <Grid item xs={12}>
-                                <Divider sx={{ my: 1 }} />
-                                <Typography variant="subtitle2" color="text.secondary" mb={1}>
-                                    Caisse
-                                </Typography>
-                            </Grid>
-
-                            <Grid item xs={12} md={6}>
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={form.require_cash_session ?? true}
-                                            onChange={e => handleChange('require_cash_session', e.target.checked)}
-                                            color="primary"
-                                        />
-                                    }
-                                    label="Session de caisse obligatoire pour vendre"
-                                />
-                                <Typography variant="caption" color="text.secondary" display="block" ml={6}>
-                                    Si activé, un vendeur doit ouvrir une session de caisse avant de pouvoir enregistrer des ventes.
-                                </Typography>
-                            </Grid>
-                        </Grid>
-                    </TabPanel>
-                </CardContent>
-            </Card>
+                </Box>
+            </Paper>
         </Box>
     );
 };

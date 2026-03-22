@@ -25,7 +25,7 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
     const [hasClickToLoadNotif, setHasClickToLoadNotif] = useState(false);
     const { auth_access_id } = useAppSelector(state => state.userAuthorizing);
     const [notifications, setNotifications] = useState<INotification[] | null>(null);
-    const [hasClickSecond, setHasClickSecond] = useState(false);
+
     const { totalQuantity } = useAppSelector(state => state.cart);
     const notificationRef = useRef<HTMLDivElement>(null);
     const accessDropdownRef = useRef<HTMLLIElement>(null);
@@ -194,7 +194,6 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
     };
 
     const handleToggleOpening = () => {
-        setHasClickSecond(prev => !prev)
         const aside = document.querySelector("#left-sidebar");
         aside.classList.toggle('visible')
     }

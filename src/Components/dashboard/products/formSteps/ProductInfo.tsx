@@ -47,6 +47,16 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
         getInitialData();
     }, [getInitialData]);
 
+    // Synchronisation de l'état local category avec la valeur Formik initiale
+    useEffect(() => {
+        if (categories && values.category && !category) {
+            const selectedCategory = categories.find(cat => String(cat.id) === values.category);
+            if (selectedCategory) {
+                setCategory(selectedCategory);
+            }
+        }
+    }, [categories, values.category, category]);
+
     return (
         <Box className="product-info-modern">
             <Box sx={{ p: 4, borderRadius: '24px', bgcolor: 'rgba(255, 255, 255, 0.4)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.5)', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' }}>
@@ -268,12 +278,12 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                             </Box>
                             <Multiselect
                                 options={category?.sub_categories || []}
-                                selectedValues={values.subcategory_ids}
+                                selectedValues={category ? (values.subcategory_ids || []).filter(sub => sub && typeof sub === 'object' && 'id' in sub) : []}
                                 onSelect={(list: SubCategory[]) => setFieldValue('subcategory_ids', list)}
                                 onRemove={(list: SubCategory[]) => setFieldValue('subcategory_ids', list)}
                                 displayValue="label"
                                 placeholder={category ? "Rechercher..." : "Veuillez d'abord choisir une catégorie"}
-                                disable={!category}
+                                disable={!category || isLoading}
                                 style={{
                                     chips: { background: '#4f46e5', borderRadius: '8px', fontWeight: 600 },
                                     searchBox: { border: 'none', background: 'transparent', padding: '0' },

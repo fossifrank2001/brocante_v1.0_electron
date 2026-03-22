@@ -1,7 +1,7 @@
 import axiosInstance, { IApiResponseBase, IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
 import Toast from "../Utilities/Toast";
 import { IProductPayload } from "Data/Interfaces/Product.ts";
-import { IProduct, ISubCategory, ISupply } from 'Data/Interfaces/Supply.ts';
+import { IProduct } from 'Data/Interfaces/Supply.ts';
 import constants from "Data/Utilities/constants.ts";
 
 
@@ -49,36 +49,41 @@ class ProductAPI {
         }
     }
 
-    static async create(paylaod: Partial<IProductPayload>): Promise<IApiResponseBase<IProduct>> {
-        // eslint-disable-next-line no-useless-catch
+    static async create(payload: Partial<IProductPayload>): Promise<IApiResponseBase<IProduct>> {
         try {
-            const newPayload = { ...paylaod, subcategory_ids: paylaod.subcategory_ids.map(subCategory => subCategory.id) }
+            const subcategory_ids = (payload.subcategory_ids || [])
+                .map(sub => (typeof sub === 'object' && sub !== null) ? sub.id : sub)
+                .filter(id => id !== null && id !== undefined);
+
+            const newPayload = { ...payload, subcategory_ids };
             const response = await axiosInstance.post<IApiResponseBase<IProduct>>('/products', newPayload);
-            Toast.success(response.data.message)
+            Toast.success(response.data.message);
             return response.data as any;
         } catch (error) {
             throw error;
         }
     }
 
-    static async update(id: number, paylaods): Promise<IApiResponseBase<IProduct>> {
-        // eslint-disable-next-line no-useless-catch
+    static async update(id: number, payload: Partial<IProductPayload>): Promise<IApiResponseBase<IProduct>> {
         try {
-            for (const paylaod in paylaods) {
-                if (paylaod === 'subcategory_ids') {
-                    paylaods[paylaod] = paylaods[paylaod].map((subCategy: ISubCategory) => subCategy.id)
-                }
-                if (paylaod === 'suppliers') {
-                    paylaods[paylaod] = paylaods[paylaod].map((detail: ISupply) => ({
-                        name: detail.name,
-                        contact_info: detail.contact_info,
-                        ...detail.id && { id: detail.id }
-                    }))
-                }
+            const sanitizedPayload = { ...payload };
+
+            if (sanitizedPayload.subcategory_ids) {
+                sanitizedPayload.subcategory_ids = sanitizedPayload.subcategory_ids
+                    .map(sub => (typeof sub === 'object' && sub !== null) ? sub.id : sub)
+                    .filter(id => id !== null && id !== undefined) as any;
             }
 
-            const response = await axiosInstance.put<IApiResponseBase<IProduct>>(`/products/${id}`, paylaods);
-            Toast.success(response.data.message)
+            if (sanitizedPayload.suppliers) {
+                sanitizedPayload.suppliers = sanitizedPayload.suppliers.map((sup: any) => ({
+                    name: sup.name,
+                    contact_info: sup.contact_info,
+                    ...(sup.id && { id: sup.id })
+                }));
+            }
+
+            const response = await axiosInstance.put<IApiResponseBase<IProduct>>(`/products/${id}`, sanitizedPayload);
+            Toast.success(response.data.message);
             return response.data as any;
         } catch (error) {
             throw error;

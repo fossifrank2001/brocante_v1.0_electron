@@ -17,12 +17,10 @@ interface ProductListProps{
     showFilters?: boolean;
 }
 
-const ProductList: React.FC<ProductListProps> = ({products, showFilters = true}) => {
+const ProductList: React.FC<ProductListProps> = ({products}) => {
     // When filters are shown: 4 per row on lg+ => col-lg-3
     // When filters are hidden: 6 per row on lg+ => col-lg-2
-    const columnClass = showFilters
-        ? 'col-6 col-md-4 col-lg-3 col-xxl-3'
-        : 'col-6 col-md-4 col-lg-2 col-xxl-2';
+
 
     return (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 3 }}> 

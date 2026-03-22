@@ -35,9 +35,13 @@ const SupplierInfo: React.FC<ISupplyInfoProps> = ({ suppliersRecord }) => {
         try {
             setLoading(true);
             const { data: __suppliers } = await SupplyAPI.index();
-            setSuppliers(__suppliers as ISupply[] | null);
-            if (suppliersRecord) {
-                setSelectedSupplier(suppliersRecord);
+            const allSuppliers = __suppliers as ISupply[] | null;
+            setSuppliers(allSuppliers);
+            if (suppliersRecord && allSuppliers) {
+                const preselected = allSuppliers.filter(s => 
+                    suppliersRecord.some(rs => rs.id === s.id)
+                );
+                setSelectedSupplier(preselected);
             }
         } catch (e) {
             console.error('Error fetching suppliers: ', e);

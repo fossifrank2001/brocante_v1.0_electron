@@ -16,7 +16,7 @@ import { Box, Card, CardContent, Button, Typography, Grid, CircularProgress, Pap
 import { ArrowBack as ArrowBackIcon, AutoAwesome } from '@mui/icons-material';
 
 const ProductUpdate: React.FC = () => {
-    const { currentPage, id } = useAppSelector((state) => state.navigaton);
+    const { id } = useAppSelector((state) => state.navigaton);
     const dispatch = useAppDispatch();
     const context = useAppContext();
     const [record, setRecord] = useState<IProduct | null>(null);

@@ -65,7 +65,7 @@ export interface IProduct {
     description: string;
     thumbnail?: IImage | null;
     details: IProductDetail;
-    suppliers: ISupplyPayload[]
+    suppliers: ISupply[]
     subcategories: ISubCategory[]
     unit_id?: number | null;
     unit?: IUnit | null;

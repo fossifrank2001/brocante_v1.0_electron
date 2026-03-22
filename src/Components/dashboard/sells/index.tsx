@@ -16,7 +16,7 @@ import {
 import { MRT_Localization_EN } from "material-react-table/locales/en"
 import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance'
 import { Autocomplete, Box, Stack, TextField, Typography, Chip, IconButton, Tooltip, Zoom, Button } from "@mui/material"
-import {Visibility, Edit, Refresh, Add, Person} from '@mui/icons-material'
+import {Visibility, Edit, Refresh, Add, Person, Download} from '@mui/icons-material'
 import UtilMethods from '@/Data/Utilities/UtilMethods'
 import { useAppDispatch, useAppSelector } from '@/hooks'
 import { setActivePage } from '@/Data/Slices/NavigationSlice'
@@ -224,7 +224,7 @@ export default function IndexSell() {
                     const lastName = person.lastname || "";
                     const firstName = person.firstname || "";
                     const phone = person.phone;
-                    const address = person.address;
+                    const address = (person as any).address;
 
                     return (
                         <Box>
@@ -392,6 +392,43 @@ export default function IndexSell() {
                     sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
                 >
                     Actualiser
+                </Button>
+                <Button
+                    variant="outlined"
+                    onClick={async () => {
+                        try {
+                            setIsLoading(true);
+                            const url = new URL(`${constants.BASE_URL}/sells/export-csv`);
+                            const filters = UtilMethods.formatTableFilters(columnFilters);
+                            const sortingTab = UtilMethods.formatTableSorting(sorting);
+                            url.searchParams.set("filters", JSON.stringify(filters));
+                            url.searchParams.set("q", globalFilter ?? "");
+                            url.searchParams.set("sorting", JSON.stringify(sortingTab));
+                            
+                            const response = await axiosInstance.get(url.href, {
+                                responseType: 'blob'
+                            });
+                            
+                            const blob = new Blob([response.data as any], { type: 'text/csv;charset=utf-8;' });
+                            const link = document.createElement('a');
+                            const downloadUrl = window.URL.createObjectURL(blob);
+                            link.href = downloadUrl;
+                            link.setAttribute('download', `sales_export_${new Date().getTime()}.csv`);
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove();
+                        } catch (e) {
+                            console.error("Export error", e);
+                        } finally {
+                            setIsLoading(false);
+                            setIsRefetching(false);
+                        }
+                    }}
+                    startIcon={<Download />}
+                    disabled={isLoading || isRefetching || rowCount === 0}
+                    sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
+                >
+                    Export CSV
                 </Button>
                 {UtilMethods.getHabilitations(authorizations, 'sell').canCreate && (
                     <Button

@@ -11,7 +11,7 @@ import ShopComponent from "Components/dashboard/shop/Shop.tsx";
 import logo from "../../../public/favicon.png";
 import { handleRedirectToDashboard } from "Components/App.tsx";
 import Toast from "Data/Utilities/Toast.ts";
-import { Badge, IconButton } from '@mui/material';
+import { Badge } from '@mui/material';
 import { ShoppingCart } from '@mui/icons-material';
 
 function HomePage() {

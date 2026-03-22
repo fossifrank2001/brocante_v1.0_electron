@@ -22,8 +22,6 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       devTools: isDev,
-      // Désactiver le cache en mode dev pour forcer le rechargement
-      cache: !isDev,
     }
   });
 
@@ -76,7 +74,7 @@ function createWindow() {
       }, 2000); // Vérifier toutes les 2 secondes
     };
 
-    mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
       console.log(`Failed to load URL: ${validatedURL}, Error: ${errorDescription} (${errorCode})`);
 
       // Si c'est une erreur de connexion, commencer le polling

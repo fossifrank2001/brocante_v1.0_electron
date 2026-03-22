@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
     Avatar, Grid, Paper, Skeleton, Tooltip,
@@ -80,7 +80,7 @@ const InfoBlock = ({ icon: Icon, label, value, color = '#6366f1' }: any) => (
 );
 
 const ReadUser = () => {
-    const { currentPage, id } = useAppSelector((state) => state.navigaton);
+    const { id } = useAppSelector((state) => state.navigaton);
     const [record, setRecord] = useState<IUser | null>(null);
     const [inProgress, setInProgress] = useState(false);
     const { authorizations } = useAppSelector(state => state.userAuthorizing);

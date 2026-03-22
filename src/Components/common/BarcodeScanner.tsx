@@ -18,7 +18,7 @@ import {
     QrCodeScanner as QrCodeScannerIcon,
     Close as CloseIcon,
     Search as SearchIcon,
-    Barcode as BarcodeIcon
+    QrCode as BarcodeIcon
 } from '@mui/icons-material';
 import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
 import ProductAPI from '@/Data/Api/Product';
@@ -99,7 +99,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ open, onClose, onProduc
 
         try {
             const response = await ProductAPI.findByReference(reference, type);
-            const product = response.data.data;
+            const product = (response as any).data.data;
             
             if (product) {
                 onProductFound(product);

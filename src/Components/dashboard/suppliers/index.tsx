@@ -34,6 +34,7 @@ import CustomAlert from '@/Components/CustomAlert';
 import { IAppContext, ISupply } from 'Interfaces';
 import SupplyAPI from "Data/Api/Suppliers.ts";
 import { motion } from 'framer-motion';
+import SupplierForm from './SupplierForm';
 
 export default function IndexSupply() {
     const context: IAppContext = useAppContext();
@@ -389,6 +390,13 @@ export default function IndexSupply() {
                 onHandleDelete={handleDelete}
                 onHandleOpenDetail={() => setOpenDetailModal(false)}
                 inProgress={inProgress}
+            />
+
+            <SupplierForm
+                open={openFormModal}
+                onClose={handleCloseModels}
+                supplier={selectedSupplier}
+                onSuccess={handleSuccess}
             />
         </Box>
     );

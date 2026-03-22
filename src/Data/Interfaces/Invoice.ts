@@ -44,6 +44,7 @@ export interface IInvoice {
     remaining_balance: number;
     date_to_pay: string;
     sell_id: number;
+    sell?: any;
     payments: IPayment[];
     created_at?: string;
     updated_at?: string;

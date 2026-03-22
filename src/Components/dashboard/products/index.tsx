@@ -23,7 +23,7 @@ import {
 import {
     Visibility, Edit, Delete, Refresh, Add,
     FileDownload, Inventory2, LocalOffer,
-    Warning, QrCode
+    Warning
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
@@ -100,7 +100,7 @@ export default function IndexProduct() {
     const getSuppliers = useCallback(async () => {
         try {
             const { data: __suppliers } = await SupplyAPI.index();
-            if (__suppliers) setSuppliers(__suppliers);
+            if (__suppliers) setSuppliers(__suppliers as any);
         } catch (e) {
             console.error('Error fetching suppliers', e);
         }

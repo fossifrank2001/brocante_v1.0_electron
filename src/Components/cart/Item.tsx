@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppDispatch } from "@/hooks";
 import { addToCart, CartItem, decreaseQuantity, removeFromCart } from "Data/Slices/dashboard/seller/cartSlice.ts";
-import { IconButton, Typography, Box, Tooltip, Zoom, Chip } from "@mui/material";
+import { IconButton, Typography, Box, Tooltip, Zoom } from "@mui/material";
 import { Add, Remove, Delete, Inventory2 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import Toast from "Data/Utilities/Toast.ts";

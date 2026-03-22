@@ -8,6 +8,9 @@ import { useAppDispatch } from '@/hooks';
 import { motion } from 'framer-motion';
 import "Styles/auth.less";
 import Logo from '@/Components/common/Logo';
+import ConnectionSettingsDialog from './ConnectionSettingsDialog';
+import { IconButton, Tooltip } from '@mui/material';
+import { SettingsInputAntenna } from '@mui/icons-material';
 
 interface FormValues {
     login: string;
@@ -18,6 +21,7 @@ interface FormValues {
 export default function LoginComponent() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
     const dispatch = useAppDispatch();
 
     const initialValues: FormValues = {
@@ -82,7 +86,15 @@ export default function LoginComponent() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
             >
-                <div className="auth-card">
+                <div className="auth-card" style={{ position: 'relative' }}>
+                    <div style={{ position: 'absolute', top: 16, right: 16 }}>
+                        <Tooltip title="Configuration réseau">
+                            <IconButton onClick={() => setShowSettings(true)} sx={{ color: '#64748b', '&:hover': { color: '#4f46e5', bgcolor: '#e0e7ff' } }}>
+                                <SettingsInputAntenna />
+                            </IconButton>
+                        </Tooltip>
+                    </div>
+                    
                     <div className="auth-header" onClick={() => {
                         context.togglePageLoading(true)
                         dispatch(setActivePage({page: Pages.HOME}))
@@ -202,6 +214,7 @@ export default function LoginComponent() {
                                 </motion.button>
                         </div>
                     </form>
+                    <ConnectionSettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
                 </div>
             </motion.div>
         </div>

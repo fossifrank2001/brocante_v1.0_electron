@@ -5,7 +5,6 @@ import Breadcrumd from "Components/Breadcrumd";
 import {
     MaterialReactTable, MRT_ColumnDef,
     MRT_ShowHideColumnsButton, MRT_TableInstance,
-    MRT_ToggleDensePaddingButton,
     MRT_ToggleFiltersButton, MRT_ToggleFullScreenButton,
     MRT_ToggleGlobalFilterButton,
     useMaterialReactTable
