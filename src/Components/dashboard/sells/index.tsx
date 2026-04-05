@@ -25,8 +25,10 @@ import { ISell, ISellTableData } from 'Data/Interfaces/Sell.ts'
 import SellAPI from "Data/Api/Sell.ts"
 import { IAppContext, IPerson, IPersonList } from 'Interfaces'
 import CustomerAPI from "Data/Api/Customer.ts"
+import { useTranslation } from 'react-i18next';
 
 export default function IndexSell() {
+    const { t } = useTranslation()
     const context: IAppContext = useAppContext()
 
     const [isError, setIsError] = useState(false)
@@ -51,8 +53,8 @@ export default function IndexSell() {
 
     useLayoutEffect(() => {
         context.togglePageLoading()
-        document.title = constants.APP_NAME + ' .:. Ventes'
-    }, [context])
+        document.title = constants.APP_NAME + ' .:. ' + t('navigation.sales')
+    }, [context, t])
 
     const resetScroll = () => {
         window.scrollTo(0, 0)
@@ -128,7 +130,7 @@ export default function IndexSell() {
             person_id: _sell?.person ? `${_sell.person.lastname || ""} ${_sell.person.firstname || ""}` : "-",
             actions: (
                 <Stack direction="row" spacing={1}>
-                    <Tooltip title="Voir Détails" arrow TransitionComponent={Zoom}>
+                    <Tooltip title={t('common.viewDetails')} arrow TransitionComponent={Zoom}>
                         <IconButton
                             size="small"
                             onClick={() => {
@@ -146,7 +148,7 @@ export default function IndexSell() {
                             <Visibility sx={{ fontSize: '18px' }} />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Modifier" arrow TransitionComponent={Zoom}>
+                    <Tooltip title={t('common.edit')} arrow TransitionComponent={Zoom}>
                         <IconButton
                             size="small"
                             onClick={() => {
@@ -173,7 +175,7 @@ export default function IndexSell() {
         () => [
             {
                 accessorKey: "sell_code",
-                header: "Référence",
+                header: t('common.reference'),
                 size: 120,
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>
@@ -183,7 +185,7 @@ export default function IndexSell() {
             },
             {
                 accessorKey: "total_amount",
-                header: "Montant Total",
+                header: t('sell.totalAmount'),
                 size: 150,
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>
@@ -193,7 +195,7 @@ export default function IndexSell() {
             },
             {
                 accessorKey: "transaction_type",
-                header: "Type",
+                header: t('common.type'),
                 size: 130,
                 Cell: ({ cell }) => (
                     <Chip
@@ -210,7 +212,7 @@ export default function IndexSell() {
             },
             {
                 accessorKey: "person_id",
-                header: "Client",
+                header: t('sell.customer'),
                 size: 240,
                 Cell: ({ row }) => {
                     const person = row.original.person;
@@ -252,7 +254,7 @@ export default function IndexSell() {
                             <TextField
                                 {...params}
                                 variant="standard"
-                                placeholder="Filtrer par client"
+                                placeholder={t('sell.filterByCustomer')}
                                 size="small"
                             />
                         )}
@@ -270,7 +272,7 @@ export default function IndexSell() {
             },
             {
                 accessorKey: "status",
-                header: "Statut",
+                header: t('common.status'),
                 size: 130,
                 Cell: ({ cell }) => {
                     const value = String(cell.getValue())

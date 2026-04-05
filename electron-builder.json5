@@ -11,6 +11,30 @@
     "dist",
     "dist-electron"
   ],
+  // Bundle portable PHP and Laravel API as extra resources (outside asar)
+  "extraResources": [
+    {
+      "from": "resources-portable/php",
+      "to": "php",
+      "filter": ["**/*"]
+    },
+    {
+      "from": "resources-portable/laravel-api",
+      "to": "laravel-api",
+      "filter": [
+        "**/*",
+        "**/.*",
+        "!.git",
+        "!.git/**",
+        "!node_modules",
+        "!node_modules/**",
+        "!tests",
+        "!tests/**",
+        "!*.md",
+        "!.phpunit.result.cache"
+      ]
+    }
+  ],
   "mac": {
     "target": [
       "dmg"
@@ -20,13 +44,13 @@
   "win": {
     "target": [
       {
-        "target": "nsis",
-        "arch": [
-          "x64"
-        ]
+        "target": "dir",
+        "arch": ["x64"]
       }
     ],
-    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
+    "artifactName": "${productName}-Windows-${version}",
+    "sign": null,
+    "verifyUpdateCodeSignature": false
   },
   "nsis": {
     "oneClick": false,

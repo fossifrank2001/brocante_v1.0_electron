@@ -20,6 +20,7 @@ import { Pages } from '@/Data/Objects/state';
 import AccessAPI from '@/Data/Api/Access';
 import RoleAPI from '@/Data/Api/Role';
 import Constants from '@/Data/Utilities/constants';
+import { useTranslation } from 'react-i18next';
 
 interface FormValues {
     role_id: number | string;
@@ -28,6 +29,7 @@ interface FormValues {
 }
 
 const UpdateAccess = () => {
+    const { t } = useTranslation();
     const { currentPage, id } = useAppSelector((state) => state.navigaton);
     const [isLoading, setIsLoading] = useState(false);
     const [initialValues, setInitialValues] = useState<FormValues>({
@@ -122,11 +124,11 @@ const UpdateAccess = () => {
             const errors: Partial<FormValues> = {};
 
             if (!values.role_id) {
-                errors.role_id = 'Le rôle est requis.';
+                errors.role_id = t('access.roleRequired');
             }
 
             if (!values.status) {
-                errors.status = 'Le statut est requis.';
+                errors.status = t('access.statusRequired');
             }
 
             return errors;
@@ -144,7 +146,7 @@ const UpdateAccess = () => {
     return (
         <Box>
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <Breadcrumd parent="Accès" url={currentPage} _child={id} />
+                <Breadcrumd parent={t('access.accesses')} url={currentPage} _child={id} />
 
                 <Grid container spacing={4} justifyContent="center">
                     <Grid item xs={12}>
@@ -161,7 +163,7 @@ const UpdateAccess = () => {
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                         <Box>
                                             <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-                                                Modification d'Accès
+                                                {t('access.updateAccess')}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -172,17 +174,17 @@ const UpdateAccess = () => {
                                             onClick={() => dispatch(setActivePage({ page: Pages.ACCESS }))}
                                             sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
                                         >
-                                            Retour
+                                            {t('common.back')}
                                         </Button>
                                     </Box>
                                 </Box>
                                 <form onSubmit={formik.handleSubmit}>
                                     <Grid container spacing={3.5}>
                                         <Grid item xs={12}>
-                                            <Tooltip title="Recherchez et modifiez l'utilisateur si nécessaire" arrow placement="top">
+                                            <Tooltip title={t('access.searchEditUserTooltip')} arrow placement="top">
                                                 <Box>
                                                     <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#334155', mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                         Utilisateur Cible <span style={{ color: '#ef4444' }}>*</span>
+                                                         {t('access.targetUser')} <span style={{ color: '#ef4444' }}>*</span>
                                                     </Typography>
 
                                                     <Autocomplete
@@ -198,8 +200,8 @@ const UpdateAccess = () => {
                                                             <TextField
                                                                 {...params}
                                                                 error={!user && formik.submitCount > 0}
-                                                                helperText={(!user && formik.submitCount > 0) ? "Veuillez sélectionner un utilisateur." : ""}
-                                                                placeholder="Rechercher un utilisateur..."
+                                                                helperText={(!user && formik.submitCount > 0) ? t('access.selectUserRequired') : ""}
+                                                                placeholder={t('access.searchUserPlaceholder')}
                                                                 InputProps={{
                                                                     ...params.InputProps,
                                                                     sx: { borderRadius: '12px', bgcolor: '#f8fafc', '& fieldset': { borderColor: '#e2e8f0' } }
@@ -213,7 +215,7 @@ const UpdateAccess = () => {
 
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#334155', mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                Rôle Attribué <span style={{ color: '#ef4444' }}>*</span>
+                                                {t('access.assignedRole')} <span style={{ color: '#ef4444' }}>*</span>
                                             </Typography>
                                             <FormControl fullWidth error={formik.touched.role_id && Boolean(formik.errors.role_id)}>
                                                 <Select
@@ -224,7 +226,7 @@ const UpdateAccess = () => {
                                                     onChange={formik.handleChange}
                                                     sx={{ borderRadius: '12px', bgcolor: '#f8fafc', '& fieldset': { borderColor: '#e2e8f0' } }}
                                                 >
-                                                    <MenuItem value="" disabled>Sélectionner un rôle</MenuItem>
+                                                    <MenuItem value="" disabled>{t('access.selectRole')}</MenuItem>
                                                     {roles?.map(role => (
                                                         <MenuItem key={role.id} value={role.id}>{role.label}</MenuItem>
                                                     ))}
@@ -237,7 +239,7 @@ const UpdateAccess = () => {
 
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#334155', mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <ToggleOn fontSize="small" sx={{ color: '#10b981' }} /> Statut de l'Accès <span style={{ color: '#ef4444' }}>*</span>
+                                                <ToggleOn fontSize="small" sx={{ color: '#10b981' }} /> {t('access.accessStatus')} <span style={{ color: '#ef4444' }}>*</span>
                                             </Typography>
                                             <FormControl fullWidth error={formik.touched.status && Boolean(formik.errors.status)}>
                                                 <Select
@@ -248,9 +250,9 @@ const UpdateAccess = () => {
                                                     onChange={formik.handleChange}
                                                     sx={{ borderRadius: '12px', bgcolor: '#f8fafc', '& fieldset': { borderColor: '#e2e8f0' } }}
                                                 >
-                                                    <MenuItem value="" disabled>Sélectionner le statut</MenuItem>
-                                                    <MenuItem value={Constants.STATUS_ACCESS.ACTIVE}>Actif</MenuItem>
-                                                    <MenuItem value={Constants.STATUS_ACCESS.INACTIVE}>Inactif</MenuItem>
+                                                    <MenuItem value="" disabled>{t('access.selectStatus')}</MenuItem>
+                                                    <MenuItem value={Constants.STATUS_ACCESS.ACTIVE}>{t('common.active')}</MenuItem>
+                                                    <MenuItem value={Constants.STATUS_ACCESS.INACTIVE}>{t('common.inactive')}</MenuItem>
                                                 </Select>
                                                 {formik.touched.status && formik.errors.status && (
                                                     <FormHelperText>{formik.errors.status}</FormHelperText>
@@ -261,7 +263,7 @@ const UpdateAccess = () => {
                                         <Grid item xs={12}>
                                             <Box sx={{ p: 3, borderRadius: '16px', bgcolor: 'rgba(241, 245, 249, 0.5)', border: '1px solid #e2e8f0' }}>
                                                 <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#334155', mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                    Code d'Accès <span style={{ color: '#ef4444' }}>*</span>
+                                                    {t('access.accessCode')} <span style={{ color: '#ef4444' }}>*</span>
                                                 </Typography>
                                                 <TextField
                                                     fullWidth
@@ -276,7 +278,7 @@ const UpdateAccess = () => {
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1.5 }}>
                                                     <Info sx={{ fontSize: 16, color: '#94a3b8' }} />
                                                     <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
-                                                        Le code d'accès ne peut pas être modifié après la création.
+                                                        {t('access.codeCannotBeModified')}
                                                     </Typography>
                                                 </Box>
                                             </Box>
@@ -300,7 +302,7 @@ const UpdateAccess = () => {
                                             }
                                         }}
                                     >
-                                        Mettre à jour l'Accès
+                                        {t('access.updateAccess')}
                                     </Button>
                                 </Box>
                             </CardContent>

@@ -32,21 +32,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      'jquery': path.resolve(__dirname, 'node_modules/jquery/dist/jquery.min.js'),
     },
   },
   optimizeDeps: {
-    include: ['jquery'],
+    include: [],
   },
   build: {
     outDir: 'dist',
     rollupOptions: {
       external: ['ws'],
-      output: {
-        manualChunks: {
-          vendor: ['jquery'],
-        },
-      },
     },
   },
   server: {

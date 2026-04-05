@@ -15,8 +15,10 @@ import Toast from '@/Data/Utilities/Toast';
 import { IHabilitation } from "Data/Interfaces/Habilitation";
 import { ArrowBack, Menu as MenuIcon, Shield, Lock, Save } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const UpdateAuthorization = () => {
+    const { t } = useTranslation();
     const [isLoading, setIsLoading] = useState(false);
     const dispatch = useAppDispatch()
 
@@ -135,7 +137,7 @@ const UpdateAuthorization = () => {
     return (
         <Box>
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <Breadcrumd parent="Administration" url={Pages.HABILITATION} _child={id} />
+                <Breadcrumd parent={t('menu.ADMINISTRATION')} url={Pages.HABILITATION} _child={id} />
 
                 <Grid container spacing={4} justifyContent="center">
                     <Grid item xs={12}>
@@ -152,7 +154,7 @@ const UpdateAuthorization = () => {
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                         <Box>
                                             <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-                                                Mettre à jour l'Authorisation
+                                                {t('authorization.updateAuthorization')}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -162,7 +164,7 @@ const UpdateAuthorization = () => {
                                         onClick={() => dispatch(setActivePage({ page: Pages.HABILITATION }))}
                                         sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
                                     >
-                                        Retour
+                                        {t('common.back')}
                                     </Button>
                                 </Box>
 
@@ -172,7 +174,7 @@ const UpdateAuthorization = () => {
                                             <Grid item xs={12} md={6}>
                                                 <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                                                     <MenuIcon sx={{ color: '#94a3b8', fontSize: 20 }} />
-                                                    <Typography sx={{ fontWeight: 700, color: '#475569' }}>Menu <span style={{ color: '#ef4444' }}>*</span></Typography>
+                                                    <Typography sx={{ fontWeight: 700, color: '#475569' }}>{t('authorization.menu')} <span style={{ color: '#ef4444' }}>*</span></Typography>
                                                 </Box>
                                                 <Autocomplete
                                                     disablePortal
@@ -190,7 +192,7 @@ const UpdateAuthorization = () => {
                                                         <TextField
                                                             {...params}
                                                             error={!menu}
-                                                            placeholder="Chercher un menu..."
+                                                            placeholder={t('authorization.searchMenu')}
                                                             InputProps={{
                                                                 ...params.InputProps,
                                                                 sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }
@@ -200,7 +202,7 @@ const UpdateAuthorization = () => {
                                                 />
                                                 {!menu && (
                                                     <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 600, mt: 0.5, display: 'block' }}>
-                                                        Le menu est requis.
+                                                        {t('authorization.menuRequired')}
                                                     </Typography>
                                                 )}
                                             </Grid>
@@ -208,7 +210,7 @@ const UpdateAuthorization = () => {
                                             <Grid item xs={12} md={6}>
                                                 <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                                                     <Shield sx={{ color: '#94a3b8', fontSize: 20 }} />
-                                                    <Typography sx={{ fontWeight: 700, color: '#475569' }}>Rôle <span style={{ color: '#ef4444' }}>*</span></Typography>
+                                                    <Typography sx={{ fontWeight: 700, color: '#475569' }}>{t('authorization.role')} <span style={{ color: '#ef4444' }}>*</span></Typography>
                                                 </Box>
                                                 <Autocomplete
                                                     disablePortal
@@ -226,7 +228,7 @@ const UpdateAuthorization = () => {
                                                         <TextField
                                                             {...params}
                                                             error={!role}
-                                                            placeholder="Sélectionner un rôle"
+                                                            placeholder={t('authorization.selectRole')}
                                                             InputProps={{
                                                                 ...params.InputProps,
                                                                 sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }
@@ -236,7 +238,7 @@ const UpdateAuthorization = () => {
                                                 />
                                                 {!role && (
                                                     <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 600, mt: 0.5, display: 'block' }}>
-                                                        Le rôle est requis.
+                                                        {t('authorization.roleRequired')}
                                                     </Typography>
                                                 )}
                                             </Grid>
@@ -244,7 +246,7 @@ const UpdateAuthorization = () => {
                                             <Grid item xs={12} md={6}>
                                                 <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                                                     <Lock sx={{ color: '#94a3b8', fontSize: 20 }} />
-                                                    <Typography sx={{ fontWeight: 700, color: '#475569' }}>Permission <span style={{ color: '#ef4444' }}>*</span></Typography>
+                                                    <Typography sx={{ fontWeight: 700, color: '#475569' }}>{t('authorization.permission')} <span style={{ color: '#ef4444' }}>*</span></Typography>
                                                 </Box>
                                                 <Autocomplete
                                                     disablePortal
@@ -262,7 +264,7 @@ const UpdateAuthorization = () => {
                                                         <TextField
                                                             {...params}
                                                             error={!permission}
-                                                            placeholder="Sélectionner une permission"
+                                                            placeholder={t('authorization.selectPermission')}
                                                             InputProps={{
                                                                 ...params.InputProps,
                                                                 sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }
@@ -272,7 +274,7 @@ const UpdateAuthorization = () => {
                                                 />
                                                 {!permission && (
                                                     <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 600, mt: 0.5, display: 'block' }}>
-                                                        La permission est requise.
+                                                        {t('authorization.permissionRequired')}
                                                     </Typography>
                                                 )}
                                             </Grid>
@@ -295,7 +297,7 @@ const UpdateAuthorization = () => {
                                                     }
                                                 }}
                                             >
-                                                Mettre à jour
+                                                {t('common.update')}
                                             </Button>
                                         </Box>
                                     </form>

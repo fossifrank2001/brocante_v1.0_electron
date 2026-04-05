@@ -8,6 +8,8 @@ import "Styles/auth.less";
 import { setActivePage } from "Data/Slices/NavigationSlice.ts";
 import { Pages } from "Data/Objects/state.ts";
 import Logo from '@/Components/common/Logo';
+import { useTranslation } from "react-i18next";
+import { Link } from '@mui/material';
 
 interface FormValues {
     password: string;
@@ -16,6 +18,7 @@ interface FormValues {
 }
 
 export default function ResetComponent() {
+    const { t } = useTranslation();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -44,7 +47,7 @@ export default function ResetComponent() {
         try {
             const token = digitValues.join('');
             if (token.length !== 5) {
-                setCodeError('Please enter the complete 5-digit code');
+                setCodeError(t('auth.codeIncomplete'));
                 return;
             }
             
@@ -55,7 +58,7 @@ export default function ResetComponent() {
             console.error('Error during password reset:', e);
             setAlert({
                 type: 'error',
-                message: 'Failed to reset password. Please try again.'
+                message: t('auth.resetFailed')
             });
         } finally {
             setIsLoading(false);
@@ -149,20 +152,20 @@ export default function ResetComponent() {
             const errors: Partial<FormValues> = {};
             
             if (!values.password) {
-                errors.password = 'Password is required';
+                errors.password = t('auth.passwordRequired');
             } else if (values.password.length < 8) {
-                errors.password = 'Password must be at least 8 characters';
+                errors.password = t('auth.passwordMinLength');
             }
 
             if (!values.password_confirmation) {
-                errors.password_confirmation = 'Please confirm your password';
+                errors.password_confirmation = t('auth.passwordConfirmRequired');
             } else if (values.password !== values.password_confirmation) {
-                errors.password_confirmation = 'Passwords do not match';
+                errors.password_confirmation = t('auth.passwordsDoNotMatch');
             }
 
             const token = digitValues.join('');
             if (!token || token.length !== 5) {
-                setCodeError('Please enter the complete 5-digit code');
+                setCodeError(t('auth.codeIncomplete'));
             } else {
                 setCodeError(null);
             }
@@ -214,8 +217,8 @@ export default function ResetComponent() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2 }}
                         >
-                            <h4>Reset Password</h4>
-                            <p>Enter the code we sent you and your new password</p>
+                            <h4>{t('auth.resetPassword')}</h4>
+                            <p>{t('auth.resetPasswordDescription')}</p>
                         </motion.div>
 
                         <form onSubmit={formik.handleSubmit} className="auth-form">
@@ -225,7 +228,7 @@ export default function ResetComponent() {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.3 }}
                             >
-                                <label>Security Code <span className="required">*</span></label>
+                                <label>{t('auth.securityCode')} <span className="required">*</span></label>
                                 <div className="input-group ">
                                     <div className="otp-container w-100">
                                         <div className="otp-inputs">
@@ -247,7 +250,7 @@ export default function ResetComponent() {
                                         </div>
                                         <div className="resend-token">
                                             {resendTimer > 0 ? (
-                                                <span className="timer">Resend code in {resendTimer}s</span>
+                                                <span className="timer">{t('auth.resendCodeIn', {seconds: resendTimer})}</span>
                                             ) : (
                                                 <button 
                                                     type="button" 
@@ -255,7 +258,7 @@ export default function ResetComponent() {
                                                     disabled={isLoading || resendTimer > 0}
                                                 >
                                                     <i className="ti ti-refresh"></i>
-                                                    Resend Code
+                                                    {t('auth.resendCode')}
                                                 </button>
                                             )}
                                         </div>
@@ -279,7 +282,7 @@ export default function ResetComponent() {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.4 }}
                             >
-                                <label htmlFor="password">New Password <span className="required">*</span></label>
+                                <label htmlFor="password">{t('auth.newPassword')} <span className="required">*</span></label>
                                 <div className="input-group">
                                     <span className="input-group-text">
                                         <i className="ti ti-lock"></i>
@@ -289,7 +292,7 @@ export default function ResetComponent() {
                                         className={`form-control ${formik.errors.password && formik.touched.password ? 'is-invalid' : ''}`}
                                         id="password"
                                         name="password"
-                                        placeholder="Enter new password"
+                                        placeholder={t('auth.newPasswordPlaceholder')}
                                         onChange={formik.handleChange}
                                         onBlur={formik.handleBlur}
                                         value={formik.values.password}
@@ -321,7 +324,7 @@ export default function ResetComponent() {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.5 }}
                             >
-                                <label htmlFor="password_confirmation">Confirm Password <span className="required">*</span></label>
+                                <label htmlFor="password_confirmation">{t('auth.confirmPassword')} <span className="required">*</span></label>
                                 <div className="input-group">
                                     <span className="input-group-text">
                                         <i className="ti ti-lock"></i>
@@ -331,7 +334,7 @@ export default function ResetComponent() {
                                         className={`form-control ${formik.errors.password_confirmation && formik.touched.password_confirmation ? 'is-invalid' : ''}`}
                                         id="password_confirmation"
                                         name="password_confirmation"
-                                        placeholder="Confirm new password"
+                                        placeholder={t('auth.confirmPasswordPlaceholder')}
                                         onChange={formik.handleChange}
                                         onBlur={formik.handleBlur}
                                         value={formik.values.password_confirmation}
@@ -365,7 +368,7 @@ export default function ResetComponent() {
                             >
                                 <motion.button
                                     type="submit"
-                                    className="btn btn-primary w-100"
+                                    className="btn btn-primary w-100 py-3"
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.95 }}
                                     disabled={isLoading || !formik.isValid || !formik.dirty}
@@ -373,28 +376,32 @@ export default function ResetComponent() {
                                     {isLoading ? (
                                         <>
                                             <span className="spinner-grow spinner-grow-sm"></span>
-                                            <span>Resetting Password...</span>
+                                            <span>{t('auth.resettingPassword')}</span>
                                         </>
                                     ) : (
-                                        'Reset Password'
+                                        t('auth.resetPassword')
                                     )}
                                 </motion.button>
 
                                 <motion.div 
-                                    className=""
+                                    className="back-to-login py-2"
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.95 }}
                                 >
-                                    <button
-                                        type="button"
+                                    <Link
+                                        component="button"
                                         onClick={handleBackToLogin}
-                                        className="btn-link py-2"
+                                        className="btn-link"
                                         disabled={isLoading}
-                                        style={{backgroundColor: 'inherit', color: 'var(--va-primary)', border: 'none'}}
+                                        sx={{ textDecoration: 'none', bgcolor:'inherit', boxShadow: 'none',
+                                            '&:hover': {
+                                                bgcolor:'inherit', boxShadow: 'none'
+                                            }
+                                        }}
                                     >
                                         <i className="ti ti-arrow-left"></i>
-                                        <span>Back to Login</span>
-                                    </button>
+                                        <span>{t('auth.backToLogin')}</span>
+                                    </Link>
                                 </motion.div>
                             </motion.div>
                         </form>

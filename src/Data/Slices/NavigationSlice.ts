@@ -11,7 +11,7 @@ export interface ISavedPageState {
 
 // État par défaut
 const initialState: NavigationState = {
-    currentPage: localStorage.getItem('hasSeenOnboarding') && Boolean(localStorage.getItem('hasSeenOnboarding')) ? Pages.HOME : Pages.ONBOARDING,
+    currentPage: localStorage.getItem('hasSeenOnboarding') && Boolean(localStorage.getItem('hasSeenOnboarding')) ? Pages.LOGIN : Pages.ONBOARDING,
     id: null,
     param: null,
     search: null,
@@ -48,7 +48,7 @@ const navigationSlice = createSlice({
             // Si l'utilisateur quitte l'onboarding, marquer comme vu et rediriger vers HOME
             if (state.currentPage !== Pages.ONBOARDING && (!localStorage.getItem('hasSeenOnboarding') || !localStorage.getItem('hasSeenOnboarding'))) {
                 localStorage.setItem('hasSeenOnboarding', '1');
-                state.currentPage = Pages.HOME;
+                state.currentPage = Pages.LOGIN;
             }
         },
         redirectToLogin: (state: NavigationState) => {

@@ -23,14 +23,10 @@ class AuthAPI {
     static async forgot(payload: IForgotPayload): Promise<IApiResponseBase<{
         reset_token: string;
         username: string;
-        message: string;
-        data: {
-            reset_token: string
-            username: string;
-        };
     }>> {
         try {
             const response = await axiosInstance.post(`/auth/forgot`, payload);
+            console.log('Auth.forgot response:', response.data);
             return response.data;
         } catch (error) {
             console.error("Error occurred during forgot password:", error);

@@ -22,7 +22,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
-import Toast from '@/Data/Utilities/Toast';
+import { useTranslation } from 'react-i18next';
 import Constants from '@/Data/Utilities/constants';
 
 const containerVariants = {
@@ -39,7 +39,7 @@ const cardVariants = {
     visible: { opacity: 1, scale: 1, transition: { duration: 0.5 } }
 };
 
-const InfoBlock = ({ icon: Icon, label, value, color = '#6366f1' }: any) => (
+const InfoBlock = ({ icon: Icon, label, value, color = '#6366f1', t }: any) => (
     <Box sx={{
         display: 'flex',
         gap: 2.5,
@@ -73,13 +73,14 @@ const InfoBlock = ({ icon: Icon, label, value, color = '#6366f1' }: any) => (
                 {label}
             </Typography>
             <Typography variant="body1" sx={{ color: '#1e293b', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {value || 'Non renseigné'}
+                {value || t('common.notSpecified')}
             </Typography>
         </Box>
     </Box>
 );
 
 const ReadUser = () => {
+    const { t } = useTranslation();
     const { id } = useAppSelector((state) => state.navigaton);
     const [record, setRecord] = useState<IUser | null>(null);
     const [inProgress, setInProgress] = useState(false);
@@ -95,7 +96,7 @@ const ReadUser = () => {
             setRecord(data);
         } catch (e: any) {
             console.error(e.message);
-            Toast.error("Erreur lors du chargement du profil");
+            Toast.error(t('user.profileLoadError'));
         } finally {
             setIsLoading(false);
         }
@@ -114,7 +115,7 @@ const ReadUser = () => {
             Toast.success(message);
         } catch (e) {
             console.error(e);
-            Toast.error("Échec de l'action sur le compte");
+            Toast.error(t('user.accountActionFailed'));
         } finally {
             setInProgress(false);
         }
@@ -146,7 +147,7 @@ const ReadUser = () => {
     return (
         <Box>
             <motion.div variants={containerVariants} initial="hidden" animate="visible">
-                <Breadcrumd parent="Administration" url={Pages.ACCOUNT} _child={id} />
+                <Breadcrumd parent={t('navigation.administration')} url={Pages.ACCOUNT} _child={id} />
 
                 <Box sx={{ mb: 6, mt: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -166,10 +167,10 @@ const ReadUser = () => {
                         </IconButton>
                         <Box>
                             <Typography variant="h4" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
-                                Profil Utilisateur
+                                {t('user.userProfile')}
                             </Typography>
                             <Typography variant="body1" sx={{ color: '#64748b', fontWeight: 600 }}>
-                                Détails complets et gestion des accès
+                                {t('user.profileDetailsAndAccess')}
                             </Typography>
                         </Box>
                     </Box>
@@ -196,7 +197,7 @@ const ReadUser = () => {
                                     '&:hover': { bgcolor: '#f8fafc', borderColor: '#6366f1' }
                                 }}
                             >
-                                Modifier
+                                {t('common.edit')}
                             </Button>
                         </Box>
                     )}
@@ -290,7 +291,7 @@ const ReadUser = () => {
                                                 '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 15px 25px -5px rgba(99, 102, 241, 0.5)' }
                                             }}
                                         >
-                                            Éditer les informations
+                                            {t('common.editInformation')}
                                         </Button>
 
                                         {UtilMethods.getHabilitations(authorizations, "account").canDisable && !UtilMethods.isAuth(id) && (
@@ -310,7 +311,7 @@ const ReadUser = () => {
                                                     '&:hover': { borderWidth: '2px' }
                                                 }}
                                             >
-                                                {inProgress ? 'Action...' : (record.status === 'active' ? 'Suspendre le compte' : 'Activer le compte')}
+                                                {inProgress ? t('common.actionInProgress') : (record.status === 'active' ? t('user.suspendAccount') : t('user.activateAccount'))}
                                             </Button>
                                         )}
                                     </Stack>
@@ -318,7 +319,7 @@ const ReadUser = () => {
                                     <Box sx={{ mt: 5, pt: 4, borderTop: '1px solid rgba(226, 232, 240, 0.8)' }}>
                                         <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                                             <Key sx={{ fontSize: 16 }} />
-                                            ID Système : #{record.id}
+                                            {t('user.systemId')}: #{record.id}
                                         </Typography>
                                     </Box>
                                 </Paper>
@@ -341,20 +342,20 @@ const ReadUser = () => {
                                         <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1', display: 'flex' }}>
                                             <Person />
                                         </Box>
-                                        Détails Personnels
+                                        {t('user.personalDetails')}
                                     </Typography>
                                     <Grid container spacing={3}>
                                         <Grid item xs={12} sm={6}>
-                                            <InfoBlock icon={Phone} label="Contact Téléphonique" value={record.phone} color="#3b82f6" />
+                                            <InfoBlock icon={Phone} label={t('user.phoneContact')} value={record.phone} color="#3b82f6" t={t} />
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
-                                            <InfoBlock icon={Mail} label="Adresse de Messagerie" value={record.email} color="#ec4899" />
+                                            <InfoBlock icon={Mail} label={t('user.emailAddress')} value={record.email} color="#ec4899" t={t} />
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
-                                            <InfoBlock icon={Transgender} label="Sexe / Genre" value={record.gender === 'male' ? 'Masculin' : (record.gender === 'female' ? 'Féminin' : 'Non défini')} color="#f59e0b" />
+                                            <InfoBlock icon={Transgender} label={t('user.genderSex')} value={record.gender === 'male' ? t('user.male') : (record.gender === 'female' ? t('user.female') : t('common.undefined'))} color="#f59e0b" t={t} />
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
-                                            <InfoBlock icon={AppRegistration} label="Statut d'Inscription" value={record.first_connexion ? 'Première connexion requise' : 'Déjà connecté'} color="#10b981" />
+                                            <InfoBlock icon={AppRegistration} label={t('user.registrationStatus')} value={record.first_connexion ? t('user.firstConnectionRequired') : t('user.alreadyConnected')} color="#10b981" t={t} />
                                         </Grid>
                                     </Grid>
                                 </Paper>
@@ -372,7 +373,7 @@ const ReadUser = () => {
                                         <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6', display: 'flex' }}>
                                             <Security />
                                         </Box>
-                                        Privilèges & Sécurité
+                                        {t('user.privilegesAndSecurity')}
                                     </Typography>
 
                                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
@@ -398,7 +399,7 @@ const ReadUser = () => {
                                         )) : (
                                             <Box sx={{ p: 3, textAlign: 'center', width: '100%', borderRadius: '20px', bgcolor: 'rgba(0,0,0,0.02)', border: '1px dashed #cbd5e1' }}>
                                                 <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic', fontWeight: 600 }}>
-                                                    Aucun rôle ou privilège spécifique n'a été attribué à ce compte.
+                                                    {t('user.noRolesAssigned')}
                                                 </Typography>
                                             </Box>
                                         )}
@@ -416,13 +417,13 @@ const ReadUser = () => {
                                             height: '100%'
                                         }}>
                                             <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                                <History sx={{ fontSize: 16 }} /> Inscription
+                                                <History sx={{ fontSize: 16 }} /> {t('user.registration')}
                                             </Typography>
                                             <Typography variant="body1" sx={{ fontWeight: 800, color: '#1e293b' }}>
                                                 {dayjs(record.created_at).format('DD MMMM YYYY')}
                                             </Typography>
                                             <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
-                                                à {dayjs(record.created_at).format('HH:mm')}
+                                                {t('common.at')} {dayjs(record.created_at).format('HH:mm')}
                                             </Typography>
                                         </Paper>
                                     </Grid>
@@ -435,13 +436,13 @@ const ReadUser = () => {
                                             height: '100%'
                                         }}>
                                             <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                                <AutoAwesome sx={{ fontSize: 16 }} /> Dernière activité
+                                                <AutoAwesome sx={{ fontSize: 16 }} /> {t('user.lastActivity')}
                                             </Typography>
                                             <Typography variant="body1" sx={{ fontWeight: 800, color: '#1e293b' }}>
                                                 {dayjs(record.updated_at).format('DD MMMM YYYY')}
                                             </Typography>
                                             <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
-                                                à {dayjs(record.updated_at).format('HH:mm')}
+                                                {t('common.at')} {dayjs(record.updated_at).format('HH:mm')}
                                             </Typography>
                                         </Paper>
                                     </Grid>
@@ -453,13 +454,13 @@ const ReadUser = () => {
                     <Paper sx={{ p: 8, textAlign: 'center', borderRadius: '35px', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
                         <Person sx={{ fontSize: 60, color: '#e2e8f0', mb: 2 }} />
                         <Typography variant="h6" sx={{ color: '#64748b', fontWeight: 700 }}>
-                            Oups ! Données introuvables.
+                            {t('common.dataNotFound')}
                         </Typography>
                         <Button
                             onClick={() => dispatch(setActivePage({ page: Pages.ACCOUNT }))}
                             sx={{ mt: 3, textTransform: 'none', fontWeight: 700 }}
                         >
-                            Retourner au listing
+                            {t('common.backToList')}
                         </Button>
                     </Paper>
                 )}

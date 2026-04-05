@@ -36,6 +36,8 @@ const instance = axios.create({
 
 instance.interceptors.request.use(
     (config) => {
+        // Always use the latest BASE_URL (dynamic getter) so IPC-resolved URL is picked up
+        config.baseURL = constants.BASE_URL;
         config.headers['Auth-Token'] = store.getState()?.user?.token;
         return config;
     },

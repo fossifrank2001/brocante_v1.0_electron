@@ -39,6 +39,8 @@ import ThumbnailDropzone from "Components/ThumbnailDropzone.tsx";
 import constants from "Data/Utilities/constants.ts";
 import { IImage } from "Data/Interfaces/Image.ts";
 import Toast from '@/Data/Utilities/Toast';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n/config';
 
 interface FormValues {
     last_name: string;
@@ -50,21 +52,22 @@ interface FormValues {
 
 const validationSchema = Yup.object({
     last_name: Yup.string()
-        .required('Le nom est requis')
-        .max(50, 'Maximum 50 caractères'),
+        .required(i18n.t('validation.required'))
+        .max(50, i18n.t('validation.maxLength', { max: 50 })),
     first_name: Yup.string()
-        .max(50, 'Maximum 50 caractères'),
+        .max(50, i18n.t('validation.maxLength', { max: 50 })),
     email: Yup.string()
-        .email('Email invalide')
-        .required("L'email est requis"),
+        .email(i18n.t('validation.invalidEmail'))
+        .required(i18n.t('validation.required')),
     phone: Yup.string()
-        .required('Le téléphone est requis')
-        .matches(/^6[0-9]{8}$/i, 'Format de téléphone invalide (ex: 690000000)'),
+        .required(i18n.t('validation.required'))
+        .matches(/^6[0-9]{8}$/i, i18n.t('validation.invalidPhone')),
     gender: Yup.string()
-        .required('Le genre est requis'),
+        .required(i18n.t('validation.required')),
 });
 
 const UpdateUser = () => {
+    const { t } = useTranslation();
     const { id } = useAppSelector((state) => state.navigaton);
     const [isLoading, setIsLoading] = useState(false);
     const [isDataLoading, setIsDataLoading] = useState(true);
@@ -107,11 +110,11 @@ const UpdateUser = () => {
             setIsLoading(true);
             await UserAPI.update(id, values);
             context.togglePageLoading(true);
-            Toast.success('Compte mis à jour avec succès');
+            Toast.success(t('user.accountUpdated'));
             dispatch(setActivePage({ page: Pages.ACCOUNT }));
         } catch (error: any) {
             console.error("Failed to update user", error);
-            Toast.error(error?.message || "Échec de la mise à jour");
+            Toast.error(error?.message || t('user.accountUpdateFailed'));
         } finally {
             setIsLoading(false);
         }
@@ -141,7 +144,7 @@ const UpdateUser = () => {
     return (
         <Box>
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <Breadcrumd parent="Administration" url={Pages.ACCOUNT} _child={id} />
+                <Breadcrumd parent={t('administration')} url={Pages.ACCOUNT} _child={id} />
 
                 <Grid container spacing={4} justifyContent="center">
                     <Grid item xs={12}>
@@ -158,7 +161,7 @@ const UpdateUser = () => {
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                         <Box>
                                             <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-                                                Modifier le Compte
+                                                {t('user.editAccount')}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -168,7 +171,7 @@ const UpdateUser = () => {
                                         onClick={() => dispatch(setActivePage({ page: Pages.ACCOUNT }))}
                                         sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
                                     >
-                                        Retour
+                                        {t('common.back')}
                                     </Button>
                                 </Box>
 
@@ -180,7 +183,7 @@ const UpdateUser = () => {
                                                 <Grid item xs={12} md={6}>
                                                     <TextField
                                                         fullWidth
-                                                        label="Nom"
+                                                        label={t('user.lastName')}
                                                         {...formik.getFieldProps('last_name')}
                                                         error={formik.touched.last_name && Boolean(formik.errors.last_name)}
                                                         helperText={formik.touched.last_name && formik.errors.last_name}
@@ -193,7 +196,7 @@ const UpdateUser = () => {
                                                 <Grid item xs={12} md={6}>
                                                     <TextField
                                                         fullWidth
-                                                        label="Prénom"
+                                                        label={t('user.firstName')}
                                                         {...formik.getFieldProps('first_name')}
                                                         error={formik.touched.first_name && Boolean(formik.errors.first_name)}
                                                         helperText={formik.touched.first_name && formik.errors.first_name}
@@ -205,16 +208,16 @@ const UpdateUser = () => {
                                                 </Grid>
                                                 <Grid item xs={12} md={4}>
                                                     <FormControl fullWidth error={formik.touched.gender && Boolean(formik.errors.gender)}>
-                                                        <InputLabel id="gender-label">Genre</InputLabel>
+                                                        <InputLabel id="gender-label">{t('user.gender')}</InputLabel>
                                                         <Select
                                                             labelId="gender-label"
-                                                            label="Genre"
+                                                            label={t('user.gender')}
                                                             {...formik.getFieldProps('gender')}
                                                             sx={{ borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }}
                                                             startAdornment={<InputAdornment position="start"><Wc sx={{ color: '#94a3b8', mr: 1 }} /></InputAdornment>}
                                                         >
-                                                            <MenuItem value="male">Masculin</MenuItem>
-                                                            <MenuItem value="female">Féminin</MenuItem>
+                                                            <MenuItem value="male">{t('user.male')}</MenuItem>
+                                                            <MenuItem value="female">{t('user.female')}</MenuItem>
                                                         </Select>
                                                         {formik.touched.gender && formik.errors.gender && (
                                                             <FormHelperText>{formik.errors.gender}</FormHelperText>
@@ -225,7 +228,7 @@ const UpdateUser = () => {
                                                 <Grid item xs={12} md={8}>
                                                     <TextField
                                                         fullWidth
-                                                        label="Email"
+                                                        label={t('user.email')}
                                                         {...formik.getFieldProps('email')}
                                                         error={formik.touched.email && Boolean(formik.errors.email)}
                                                         helperText={formik.touched.email && formik.errors.email}
@@ -238,7 +241,7 @@ const UpdateUser = () => {
                                                 <Grid item xs={12} md={12}>
                                                     <TextField
                                                         fullWidth
-                                                        label="Téléphone"
+                                                        label={t('user.phone')}
                                                         {...formik.getFieldProps('phone')}
                                                         error={formik.touched.phone && Boolean(formik.errors.phone)}
                                                         helperText={formik.touched.phone && formik.errors.phone}
@@ -267,7 +270,7 @@ const UpdateUser = () => {
                                                     }
                                                 }}
                                             >
-                                                Mettre à jour le Compte
+                                                {t('user.updateAccount')}
                                             </Button>
                                         </Box>
                                     </Grid>
@@ -299,7 +302,7 @@ const UpdateUser = () => {
                                             <Box sx={{ mt: 4, pt: 4, borderTop: '1px solid rgba(226, 232, 240, 0.8)', width: '100%' }}>
                                                 <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                                                     <AutoAwesome sx={{ fontSize: 14 }} />
-                                                    Utilisez une photo nette
+                                                    {t('user.useClearPhoto')}
                                                 </Typography>
                                             </Box>
                                         </Paper>

@@ -35,8 +35,10 @@ import CustomAlert from '@/Components/CustomAlert';
 import Toast from '@/Data/Utilities/Toast';
 import { ICategory, ICategoryTableData } from '@/Data/Interfaces/Category';
 import CategoryAPI from '@/Data/Api/Category';
+import { useTranslation } from 'react-i18next';
 
 export default function IndexCategory() {
+  const { t } = useTranslation();
   const context = useAppContext();
 
   const [isError, setIsError] = useState(false);
@@ -61,8 +63,8 @@ export default function IndexCategory() {
 
   useLayoutEffect(() => {
     context.togglePageLoading();
-    document.title = constants.APP_NAME + ' .:. Categories';
-  }, [context]);
+    document.title = constants.APP_NAME + ' .:. ' + t('navigation.categories');
+  }, [context, t]);
 
   const resetScroll = () => {
     window.scrollTo(0, 0);
@@ -115,7 +117,7 @@ export default function IndexCategory() {
       sub_category: category?.sub_categories?.length ?? 0,
       actions: (
         <Stack direction="row" spacing={1}>
-          <Tooltip title="Modifier" arrow TransitionComponent={Zoom}>
+          <Tooltip title={t('common.edit')} arrow TransitionComponent={Zoom}>
             <IconButton
               size="small"
               onClick={() => {
@@ -131,7 +133,7 @@ export default function IndexCategory() {
               <Edit sx={{ fontSize: '18px' }} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Supprimer" arrow TransitionComponent={Zoom}>
+          <Tooltip title={t('common.delete')} arrow TransitionComponent={Zoom}>
             <IconButton
               size="small"
               onClick={() => {
@@ -151,7 +153,7 @@ export default function IndexCategory() {
   const columns: MRT_ColumnDef<ICategoryTableData>[] = useMemo(() => [
     {
       accessorKey: "label",
-      header: "Structure des Catégories",
+      header: t('category.categoryStructure'),
       size: 300,
       Cell: ({ cell, row }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
@@ -174,7 +176,7 @@ export default function IndexCategory() {
               {cell.getValue() as string}
             </Typography>
             <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
-              ID Catégorie: #{row.original.id}
+              {t('category.categoryId')}: #{row.original.id}
             </Typography>
           </Box>
         </Box>
@@ -182,14 +184,14 @@ export default function IndexCategory() {
     },
     {
       accessorKey: "sub_category",
-      header: "Contenu",
+      header: t('category.content'),
       size: 200,
       enableColumnFilter: false,
       Cell: ({ cell }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Chip
             icon={<Layers sx={{ fontSize: '14px !important' }} />}
-            label={`${cell.getValue() || 0} Sous-catégories`}
+            label={`${cell.getValue() || 0} ${t('category.subCategories')}`}
             size="small"
             sx={{
               fontWeight: 900,
@@ -207,7 +209,7 @@ export default function IndexCategory() {
     },
     {
       accessorKey: "created_at",
-      header: "Date de création",
+      header: t('common.createdAt'),
       size: 180,
       enableColumnFilter: false,
       Cell: ({ cell }) => (
@@ -218,12 +220,12 @@ export default function IndexCategory() {
     },
     {
       accessorKey: "actions",
-      header: "Actions",
+      header: t('common.actions'),
       size: 150,
       enableColumnFilter: false,
       enableSorting: false,
     },
-  ], []);
+  ], [t]);
 
   const mrTable = useMaterialReactTable({
     columns: columns,
@@ -294,7 +296,7 @@ export default function IndexCategory() {
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: "flex", gap: 2, p: 2, alignItems: 'center', flexWrap: 'wrap' }}>
         <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
-          Catégories
+          {t('navigation.categories')}
         </Typography>
         <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
           <Button
@@ -313,7 +315,7 @@ export default function IndexCategory() {
               '&:hover': { bgcolor: '#f5f7ff', borderColor: '#6366f1' }
             }}
           >
-            Rafraîchir
+            {t('common.refresh')}
           </Button>
 
           {UtilMethods.getHabilitations(authorizations, 'category').canCreate && (
@@ -342,7 +344,7 @@ export default function IndexCategory() {
                 }
               }}
             >
-              Nouvelle Catégorie
+              {t('category.newCategory')}
             </Button>
           )}
         </Box>
@@ -355,7 +357,7 @@ export default function IndexCategory() {
         <MRT_ShowHideColumnsButton table={table} />
         <MRT_ToggleFullScreenButton table={table} />
         {UtilMethods.getHabilitations(authorizations, 'category').canExport && (
-          <Tooltip title="Exporter les catégories" arrow TransitionComponent={Zoom}>
+          <Tooltip title={t('category.exportCategories')} arrow TransitionComponent={Zoom}>
             <IconButton
               sx={{ color: '#64748b', '&:hover': { color: '#6366f1', bgcolor: 'rgba(99, 102, 241, 0.05)' } }}
             >
@@ -376,7 +378,7 @@ export default function IndexCategory() {
       setIsDeleted(prev => !prev)
     } catch (error) {
       console.error(error)
-      Toast.error("Erreur lors de la suppression")
+      Toast.error(t('category.deleteError'))
     } finally {
       setOpenDetailModal(false)
       setInProgress(false)
@@ -393,8 +395,8 @@ export default function IndexCategory() {
         openDetailModal={openDetailModal}
         content={{
           style: 'ti ti-info-circle text text-danger',
-          icon: 'Suppression définitive',
-          message: 'Êtes-vous sûr de vouloir supprimer cette catégorie ? Toutes les sous-catégories associées peuvent être impactées.'
+          icon: t('common.permanentDelete'),
+          message: t('category.deleteConfirmMessage')
         }}
         onHandleDelete={handleDelete}
         onHandleOpenDetail={() => setOpenDetailModal(false)}

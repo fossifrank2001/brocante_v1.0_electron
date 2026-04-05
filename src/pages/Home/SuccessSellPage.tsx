@@ -12,7 +12,6 @@ import { Pages } from "Data/Objects/state";
 import PrintDialog from "@/Components/dashboard/pos/PrintDialog";
 import SellAPI from "@/Data/Api/Sell";
 import { ISellWithDetails } from "@/Services/ReceiptTemplate";
-import axiosInstance from '@/Data/Utilities/axiosInstance';
 
 /**
  * @returns {JSX.Element}
@@ -47,7 +46,7 @@ function SuccessSellPage(): JSX.Element {
         if (!sellData) return;
         setIsDownloading(true);
         try {
-            const baseURL = axiosInstance.defaults.baseURL;
+            const baseURL = constants.BASE_URL;
             const token = localStorage.getItem('token');
             const url = `${baseURL}/sells/${sellData.id}/pdf-receipt?token=${token}`;
             window.open(url, '_blank');

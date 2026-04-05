@@ -23,6 +23,7 @@ import Constants from '@/Data/Utilities/constants';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { addAccessToAuthUser } from '@/Data/Slices/auth/userSlice';
 import { IApiResponseBase, IApiResponsePaginated } from 'Data/Utilities/axiosInstance.ts';
+import { useTranslation } from 'react-i18next';
 
 interface FormValues {
     role_id: number | string;
@@ -31,6 +32,7 @@ interface FormValues {
 }
 
 const NewAccess = () => {
+    const { t } = useTranslation();
     const [isLoading, setIsLoading] = useState(false);
     const dispatch = useAppDispatch();
     const [qUser, setqUser] = useState('');
@@ -105,17 +107,17 @@ const NewAccess = () => {
             const errors: Partial<FormValues> = {};
 
             if (!values.role_id) {
-                errors.role_id = 'Le rôle est requis.';
+                errors.role_id = t('access.roleRequired');
             }
 
             if (!values.status) {
-                errors.status = 'Le statut est requis.';
+                errors.status = t('access.statusRequired');
             }
 
             if (!values.code) {
-                errors.code = 'Le code d\'accès est requis.';
+                errors.code = t('access.codeRequired');
             } else if (!/^[A-Z0-9_@./*]{5,}$/.test(values.code)) {
-                errors.code = 'Code invalide (min 5 car. majuscules, chiffres, _@./*).';
+                errors.code = t('access.codeInvalid');
             }
 
             return errors;
@@ -125,7 +127,7 @@ const NewAccess = () => {
     return (
         <Box>
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <Breadcrumd parent="Accès" />
+                <Breadcrumd parent={t('access.accesses')} />
 
                 <Grid container spacing={4} justifyContent="center">
                     <Grid item xs={12}>
@@ -142,7 +144,7 @@ const NewAccess = () => {
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                         <Box>
                                             <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-                                                Nouvel Accès
+                                                {t('access.newAccess')}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -152,14 +154,14 @@ const NewAccess = () => {
                                         onClick={() => dispatch(setActivePage({ page: Pages.ACCESS }))}
                                         sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
                                     >
-                                        Retour
+                                        {t('common.back')}
                                     </Button>
                                 </Box>
 
                                 <form onSubmit={formik.handleSubmit}>
                                     <Grid container spacing={3.5}>
                                         <Grid item xs={12}>
-                                            <Tooltip title="Recherchez et sélectionnez l'utilisateur" arrow placement="top">
+                                            <Tooltip title={t('access.searchUser')} arrow placement="top">
                                                 <Box>
                                                     <Autocomplete
                                                         disablePortal
@@ -174,8 +176,8 @@ const NewAccess = () => {
                                                             <TextField
                                                                 {...params}
                                                                 error={!user && formik.submitCount > 0}
-                                                                helperText={(!user && formik.submitCount > 0) ? "Veuillez sélectionner un utilisateur." : ""}
-                                                                placeholder="Rechercher un utilisateur..."
+                                                                helperText={(!user && formik.submitCount > 0) ? t('access.selectUserRequired') : ""}
+                                                                placeholder={t('access.searchUserPlaceholder')}
                                                                 InputProps={{
                                                                     ...params.InputProps,
                                                                     sx: { borderRadius: '12px', bgcolor: '#f8fafc', '& fieldset': { borderColor: '#e2e8f0' } }
@@ -210,7 +212,7 @@ const NewAccess = () => {
                                                     }}
                                                     sx={{ borderRadius: '12px', bgcolor: '#f8fafc', '& fieldset': { borderColor: '#e2e8f0' } }}
                                                 >
-                                                    <MenuItem value="" disabled>Sélectionner un rôle</MenuItem>
+                                                    <MenuItem value="" disabled>{t('access.selectRole')}</MenuItem>
                                                     {roles?.map(role => (
                                                         <MenuItem key={role.id} value={role.id}>{role.label}</MenuItem>
                                                     ))}
@@ -231,9 +233,9 @@ const NewAccess = () => {
                                                     onChange={formik.handleChange}
                                                     sx={{ borderRadius: '12px', bgcolor: '#f8fafc', '& fieldset': { borderColor: '#e2e8f0' } }}
                                                 >
-                                                    <MenuItem value="" disabled>Sélectionner le statut</MenuItem>
-                                                    <MenuItem value={Constants.STATUS_ACCESS.ACTIVE}>Actif</MenuItem>
-                                                    <MenuItem value={Constants.STATUS_ACCESS.INACTIVE}>Inactif</MenuItem>
+                                                    <MenuItem value="" disabled>{t('access.selectStatus')}</MenuItem>
+                                                    <MenuItem value={Constants.STATUS_ACCESS.ACTIVE}>{t('common.active')}</MenuItem>
+                                                    <MenuItem value={Constants.STATUS_ACCESS.INACTIVE}>{t('common.inactive')}</MenuItem>
                                                 </Select>
                                                 {formik.touched.status && formik.errors.status && (
                                                     <FormHelperText>{formik.errors.status}</FormHelperText>
@@ -245,13 +247,13 @@ const NewAccess = () => {
                                             <Grid item xs={12}>
                                                 <Box sx={{ p: 3, borderRadius: '16px', bgcolor: 'rgba(241, 245, 249, 0.5)', border: '1px dashed #cbd5e1' }}>
                                                     <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#334155', mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                        <Code fontSize="small" sx={{ color: '#f59e0b' }} /> Code d'Accès <span style={{ color: '#ef4444' }}>*</span>
+                                                        <Code fontSize="small" sx={{ color: '#f59e0b' }} /> {t('access.accessCode')} <span style={{ color: '#ef4444' }}>*</span>
                                                     </Typography>
                                                     <TextField
                                                         fullWidth
                                                         id="code"
                                                         name="code"
-                                                        placeholder="Saisir le code d'accès"
+                                                        placeholder={t('access.enterCode')}
                                                         value={formik.values.code}
                                                         onChange={formik.handleChange}
                                                         error={formik.touched.code && Boolean(formik.errors.code)}
@@ -263,7 +265,7 @@ const NewAccess = () => {
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1.5 }}>
                                                         <Info sx={{ fontSize: 16, color: '#64748b' }} />
                                                         <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
-                                                            5 caractères min. Lettres en majuscule, chiffres et caractères spéciaux (_@./*) uniquement.
+                                                            {t('access.codeHint')}
                                                         </Typography>
                                                     </Box>
                                                 </Box>
@@ -288,7 +290,7 @@ const NewAccess = () => {
                                             }
                                         }}
                                     >
-                                        Enregistrer l'Accès
+                                        {t('access.saveAccess')}
                                     </Button>
                                 </Box>
                             </CardContent>

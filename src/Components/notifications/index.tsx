@@ -18,9 +18,11 @@ import dayjs from "dayjs";
 import { INotification, INotificationTableData } from 'Data/Interfaces/Notifications.ts';
 import NotificationsAPI from "Data/Api/Notifications.ts";
 import Toast from "Data/Utilities/Toast.ts";
+import { useTranslation } from 'react-i18next';
 
 export default function NotificationIndex() {
     const context = useAppContext();
+    const { t } = useTranslation();
 
     const [isError, setIsError] = useState(false);
     const [pagination, setPagination] = useState({
@@ -41,8 +43,8 @@ export default function NotificationIndex() {
 
     useLayoutEffect(() => {
         context.togglePageLoading();
-        document.title = constants.APP_NAME + ' .:. Notifications';
-    }, [context]);
+        document.title = constants.APP_NAME + ' .:. ' + t('notifications.notifications');
+    }, [context, t]);
 
     const resetScroll = () => {
         window.scrollTo(0, 0);
@@ -112,22 +114,22 @@ export default function NotificationIndex() {
         () => [
             {
                 accessorKey: "title",
-                header: "Title",
+                header: t('notifications.title'),
                 size: 150,
                 enableColumnFilter: false,
             },
             {
                 accessorKey: "type",
-                header: "Type",
+                header: t('notifications.type'),
                 size: 100,
                 filterVariant: "select",
                 filterSelectOptions: [
-                    {label: "Info", value: 'info'}
+                    {label: t('notifications.info'), value: 'info'}
                 ],
             },
             {
                 accessorKey: "status",
-                header: "Status",
+                header: t('notifications.status'),
                 size: 150,
                 Cell: ({ cell }) => {
                     const value = cell.getValue();
@@ -138,12 +140,12 @@ export default function NotificationIndex() {
             },
             {
                 accessorKey: "message",
-                header: "Message",
+                header: t('notifications.message'),
                 size: 150,
             },
             {
                 accessorKey: "read_at",
-                header: "Read At",
+                header: t('notifications.readAt'),
                 size: 150,
                 Cell: ({ cell }) => {
                     const value = cell.getValue();
@@ -153,7 +155,7 @@ export default function NotificationIndex() {
             },
             {
                 accessorKey: "created_at",
-                header: "Created At",
+                header: t('notifications.createdAt'),
                 size: 150,
                 Cell: ({ cell }) => {
                     const value = cell.getValue();
@@ -163,13 +165,13 @@ export default function NotificationIndex() {
             },
             {
                 accessorKey: "actions",
-                header: "Actions",
+                header: t('common.actions'),
                 size: 150,
                 unexport: true,
                 enableColumnFilter: false,
             },
         ],
-        [],
+        [t],
     );
 
     const mrTable = useMaterialReactTable({
@@ -213,7 +215,7 @@ export default function NotificationIndex() {
             <Box sx={{ display: "flex", gap: "1rem", p: "4px" }}>
                 <button type='button' className='btn btn-outline-primary' onClick={handleMarkAllAsRead} style={{ marginLeft: '12px' }}>
                     <i className='ti ti-mask-off'></i>
-                    <span className='ms-2'>Mark all as read</span>
+                    <span className='ms-2'>{t('notifications.markAllAsRead')}</span>
                 </button>
             </Box>
         ),
@@ -259,7 +261,7 @@ export default function NotificationIndex() {
 
     return (
         <div className="container">
-            <Breadcrumd parent="Notifications" />
+            <Breadcrumd parent={t('notifications.notifications')} />
             <MaterialReactTable table={mrTable}/>
         </div>
     );

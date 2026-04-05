@@ -18,6 +18,7 @@ import {
     FileDownload
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { IAppContext, IUser, IUserTableData } from '@/Data/Interfaces';
 import { useAppDispatch, useAppSelector } from '@/hooks';
@@ -28,6 +29,7 @@ import Toast from '@/Data/Utilities/Toast';
 import CustomAlert from '@/Components/CustomAlert';
 
 export default function IndexUser() {
+    const { t } = useTranslation();
     const context: IAppContext = useAppContext();
 
     const [isError, setIsError] = useState(false);
@@ -52,8 +54,8 @@ export default function IndexUser() {
 
     useLayoutEffect(() => {
         context.togglePageLoading();
-        document.title = constants.APP_NAME + ' .:. Users';
-    }, [context]);
+        document.title = constants.APP_NAME + ' .:. ' + t('navigation.users');
+    }, [context, t]);
 
     const resetScroll = () => {
         window.scrollTo(0, 0);
@@ -126,7 +128,7 @@ export default function IndexUser() {
             name: `${user.last_name || ''} ${user.first_name || ''}`,
             actions: (
                 <Stack direction="row" spacing={1}>
-                    <Tooltip title="Voir Profil" TransitionComponent={Zoom} arrow>
+                    <Tooltip title={t('user.viewProfile')} TransitionComponent={Zoom} arrow>
                         <IconButton
                             size="small"
                             onClick={() => {
@@ -142,7 +144,7 @@ export default function IndexUser() {
                             <Visibility fontSize="small" />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Modifier" TransitionComponent={Zoom} arrow>
+                    <Tooltip title={t('common.edit')} TransitionComponent={Zoom} arrow>
                         <IconButton
                             size="small"
                             onClick={() => {
@@ -159,7 +161,7 @@ export default function IndexUser() {
                         </IconButton>
                     </Tooltip>
                     {(UtilMethods.authEmail() !== user.email) && (
-                        <Tooltip title="Supprimer" TransitionComponent={Zoom} arrow>
+                        <Tooltip title={t('common.delete')} TransitionComponent={Zoom} arrow>
                             <IconButton
                                 size="small"
                                 onClick={() => {
@@ -181,7 +183,7 @@ export default function IndexUser() {
         () => [
             {
                 accessorKey: "last_name",
-                header: "Identité Utilisateur",
+                header: t('user.userIdentity'),
                 size: 250,
                 Cell: ({ row }) => (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -205,7 +207,7 @@ export default function IndexUser() {
                                 {`${row.original.last_name || ''} ${row.original.first_name || ''}`}
                             </Typography>
                             <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
-                                {row.original.gender === 'male' ? '👤 Homme' : '👤 Femme'}
+                                {row.original.gender === 'male' ? `👤 ${t('user.male')}` : `👤 ${t('user.female')}`}
                             </Typography>
                         </Box>
                     </Box>
@@ -213,7 +215,7 @@ export default function IndexUser() {
             },
             {
                 accessorKey: "email",
-                header: "Email & Contact",
+                header: t('user.emailContact'),
                 size: 250,
                 Cell: ({ row }) => (
                     <Box>
@@ -226,7 +228,7 @@ export default function IndexUser() {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Phone sx={{ fontSize: 14, color: '#94a3b8' }} />
                             <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
-                                {row.original.phone || 'N/A'}
+                                {row.original.phone || t('common.notAvailable')}
                             </Typography>
                         </Box>
                     </Box>
@@ -234,7 +236,7 @@ export default function IndexUser() {
             },
             {
                 accessorKey: "status",
-                header: "État du Compte",
+                header: t('user.accountStatus'),
                 size: 150,
                 Cell: ({ cell }) => {
                     const value = cell.getValue() as string;
@@ -249,7 +251,7 @@ export default function IndexUser() {
                                 boxShadow: `0 0 10px ${isActive ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'}`
                             }} />
                             <Chip
-                                label={isActive ? 'ACTIF' : 'SUSPENDU'}
+                                label={isActive ? t('user.active') : t('user.suspended')}
                                 size="small"
                                 sx={{
                                     fontWeight: 900,
@@ -266,7 +268,7 @@ export default function IndexUser() {
             },
             {
                 accessorKey: "actions",
-                header: "Actions",
+                header: t('common.actions'),
                 size: 150,
                 enableColumnFilter: false,
                 enableSorting: false,
@@ -344,7 +346,7 @@ export default function IndexUser() {
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: 2.5, p: 3, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
-                    Utilisateurs
+                    {t('navigation.users')}
                 </Typography>
 
                 <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
@@ -364,7 +366,7 @@ export default function IndexUser() {
                             '&:hover': { bgcolor: '#f5f7ff', borderColor: '#6366f1' }
                         }}
                     >
-                        Rafraîchir
+                        {t('common.refresh')}
                     </Button>
 
                     {UtilMethods.getHabilitations(authorizations, 'account').canCreate && (
@@ -393,7 +395,7 @@ export default function IndexUser() {
                                 }
                             }}
                         >
-                            Ajouter un Compte
+                            {t('user.addAccount')}
                         </Button>
                     )}
                 </Box>
@@ -406,7 +408,7 @@ export default function IndexUser() {
                 <MRT_ShowHideColumnsButton table={table} />
                 <MRT_ToggleFullScreenButton table={table} />
                 {UtilMethods.getHabilitations(authorizations, 'account').canExport && (
-                    <Tooltip title="Exporter la liste" arrow TransitionComponent={Zoom}>
+                    <Tooltip title={t('user.exportList')} arrow TransitionComponent={Zoom}>
                         <IconButton
                             sx={{ color: '#64748b', '&:hover': { color: '#6366f1', bgcolor: 'rgba(99, 102, 241, 0.05)' } }}
                         >
@@ -432,8 +434,8 @@ export default function IndexUser() {
                 openDetailModal={openDetailModal}
                 content={{
                     style: 'ti ti-info-circle text text-danger',
-                    icon: 'Suppression de compte',
-                    message: 'Êtes-vous certain de vouloir supprimer cet utilisateur ? Cette action est irréversible.'
+                    icon: t('user.accountDeletion'),
+                    message: t('user.deleteConfirmMessage')
                 }}
                 onHandleDelete={handleDelete}
                 onHandleOpenDetail={() => setOpenDetailModal(false)}

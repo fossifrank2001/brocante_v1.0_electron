@@ -15,12 +15,14 @@ import MenuAPI from '@/Data/Api/Menu';
 import Multiselect from "multiselect-react-dropdown";
 import Toast from '@/Data/Utilities/Toast';
 import { ArrowBack, Menu as MenuIcon, Shield, Lock, Save } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 interface FormValues {
     role: number | string;
 }
 
 const NewAuthorization = () => {
+    const { t } = useTranslation();
     const [isLoading, setIsLoading] = useState(false);
     const dispatch = useAppDispatch();
     const [qPermission, setqPermission] = useState('');
@@ -102,7 +104,7 @@ const NewAuthorization = () => {
         validate: (values: FormValues) => {
             const errors: Partial<FormValues> = {};
             if (!values.role) {
-                errors.role = 'Le champ rôle est requis.';
+                errors.role = t('authorization.roleRequired');
             }
             return errors;
         },
@@ -111,7 +113,7 @@ const NewAuthorization = () => {
     return (
         <Box>
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <Breadcrumd parent="Administration" url={Pages.HABILITATION} />
+                <Breadcrumd parent={t('menu.ADMINISTRATION')} url={Pages.HABILITATION} />
 
                 <Grid container spacing={4} justifyContent="center">
                     <Grid item xs={12}>
@@ -128,7 +130,7 @@ const NewAuthorization = () => {
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                         <Box>
                                             <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-                                                Nouvelle Authorisation
+                                                {t('authorization.newAuthorization')}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -138,7 +140,7 @@ const NewAuthorization = () => {
                                         onClick={() => dispatch(setActivePage({ page: Pages.HABILITATION }))}
                                         sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
                                     >
-                                        Retour
+                                        {t('common.back')}
                                     </Button>
                                 </Box>
 
@@ -147,7 +149,7 @@ const NewAuthorization = () => {
                                         <Grid item xs={12} md={6}>
                                             <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                                                 <MenuIcon sx={{ color: '#94a3b8', fontSize: 20 }} />
-                                                <Typography sx={{ fontWeight: 700, color: '#475569' }}>Menu <span style={{ color: '#ef4444' }}>*</span></Typography>
+                                                <Typography sx={{ fontWeight: 700, color: '#475569' }}>{t('authorization.menu')} <span style={{ color: '#ef4444' }}>*</span></Typography>
                                             </Box>
                                             <Autocomplete
                                                 disablePortal
@@ -165,7 +167,7 @@ const NewAuthorization = () => {
                                                     <TextField
                                                         {...params}
                                                         error={!menu}
-                                                        placeholder="Chercher un menu..."
+                                                        placeholder={t('authorization.searchMenu')}
                                                         InputProps={{
                                                             ...params.InputProps,
                                                             sx: { borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }
@@ -175,7 +177,7 @@ const NewAuthorization = () => {
                                             />
                                             {!menu && (
                                                 <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 600, mt: 0.5, display: 'block' }}>
-                                                    Le menu est requis.
+                                                    {t('authorization.menuRequired')}
                                                 </Typography>
                                             )}
                                         </Grid>
@@ -183,7 +185,7 @@ const NewAuthorization = () => {
                                         <Grid item xs={12} md={6}>
                                             <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                                                 <Shield sx={{ color: '#94a3b8', fontSize: 20 }} />
-                                                <Typography sx={{ fontWeight: 700, color: '#475569' }}>Rôle <span style={{ color: '#ef4444' }}>*</span></Typography>
+                                                <Typography sx={{ fontWeight: 700, color: '#475569' }}>{t('authorization.role')} <span style={{ color: '#ef4444' }}>*</span></Typography>
                                             </Box>
                                             <select
                                                 className="form-select"
@@ -201,7 +203,7 @@ const NewAuthorization = () => {
                                                     width: '100%'
                                                 }}
                                             >
-                                                <option value="">Sélectionner un rôle</option>
+                                                <option value="">{t('authorization.selectRole')}</option>
                                                 {roles && roles.map(role => (
                                                     <option key={role.id} value={role.id}>
                                                         {role.label}
@@ -218,7 +220,7 @@ const NewAuthorization = () => {
                                         <Grid item xs={12}>
                                             <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                                                 <Lock sx={{ color: '#94a3b8', fontSize: 20 }} />
-                                                <Typography sx={{ fontWeight: 700, color: '#475569' }}>Permissions <span style={{ color: '#ef4444' }}>*</span></Typography>
+                                                <Typography sx={{ fontWeight: 700, color: '#475569' }}>{t('authorization.permissions')} <span style={{ color: '#ef4444' }}>*</span></Typography>
                                             </Box>
                                             <Multiselect
                                                 options={permissions || []}
@@ -227,7 +229,7 @@ const NewAuthorization = () => {
                                                 onRemove={(e) => set_Permissions(e)}
                                                 displayValue="label"
                                                 showCheckbox
-                                                placeholder="Sélectionner des permissions"
+                                                placeholder={t('authorization.selectPermissions')}
                                                 style={{
                                                     chips: { background: '#6366f1' },
                                                     searchBox: {
@@ -241,7 +243,7 @@ const NewAuthorization = () => {
                                             />
                                             {(!_permissions || _permissions.length <= 0) && (
                                                 <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 600, mt: 0.5, display: 'block' }}>
-                                                    Sélectionner au moins une permission.
+                                                    {t('authorization.permissionRequired')}
                                                 </Typography>
                                             )}
                                         </Grid>
@@ -264,7 +266,7 @@ const NewAuthorization = () => {
                                             }
                                         }}
                                     >
-                                        Enregistrer
+                                        {t('common.save')}
                                     </Button>
                                 </Box>
                             </CardContent>

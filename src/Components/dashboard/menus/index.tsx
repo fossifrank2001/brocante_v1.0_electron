@@ -17,9 +17,11 @@ import { Refresh, FileDownload } from '@mui/icons-material';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { IMenu, IMenuList, IMenuTableData } from '@/Data/Interfaces';
 import { useAppSelector } from "@/hooks";
+import { useTranslation } from 'react-i18next';
 
 export default function IndexMenu() {
     const context = useAppContext();
+    const { t } = useTranslation();
 
     const [isError, setIsError] = useState(false);
     const [pagination, setPagination] = useState({
@@ -39,8 +41,8 @@ export default function IndexMenu() {
 
     useLayoutEffect(() => {
         context.togglePageLoading();
-        document.title = constants.APP_NAME + ' .:. Menus';
-    }, [context]);
+        document.title = constants.APP_NAME + ' .:. ' + t('navigation.menus');
+    }, [context, t]);
 
     const resetScroll = () => {
         window.scrollTo(0, 0);
@@ -98,10 +100,10 @@ export default function IndexMenu() {
         () => [
             {
                 accessorKey: "label",
-                header: "Label",
+                header: t('menu.label'),
                 size: 150,
                 muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
+                    inputProps: { placeHolder: t('common.filter') },
                 }),
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>
@@ -111,7 +113,7 @@ export default function IndexMenu() {
             },
             {
                 accessorKey: "group",
-                header: "Groupe",
+                header: t('menu.group'),
                 size: 150,
                 enableColumnFilter: false,
                 Cell: ({ cell }) => (
@@ -122,7 +124,7 @@ export default function IndexMenu() {
             },
             {
                 accessorKey: "parent",
-                header: "Parent",
+                header: t('menu.parent'),
                 size: 150,
                 enableColumnFilter: false,
                 Cell: ({ cell }) => (
@@ -133,7 +135,7 @@ export default function IndexMenu() {
             },
             {
                 accessorKey: "order",
-                header: "Ordre",
+                header: t('menu.order'),
                 size: 100,
                 enableColumnFilter: false,
                 Cell: ({ cell }) => (
@@ -144,10 +146,10 @@ export default function IndexMenu() {
             },
             {
                 accessorKey: "code",
-                header: "Code",
+                header: t('menu.code'),
                 size: 150,
                 muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filter" },
+                    inputProps: { placeHolder: t('common.filter') },
                 }),
                 Cell: ({ cell }) => (
                     <Box sx={{
@@ -218,7 +220,7 @@ export default function IndexMenu() {
         muiToolbarAlertBannerProps: isError
             ? {
                 color: "error",
-                children: "Erreur lors du chargement des données",
+                children: t('common.loadDataError'),
             }
             : undefined,
         onColumnFiltersChange: setColumnFilters,
@@ -240,7 +242,7 @@ export default function IndexMenu() {
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: 2, p: 2, alignItems: 'center' }}>
                 <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
-                    Menus
+                    {t('navigation.menus')}
                 </Typography>
                 <Button
                     onClick={handleRefresh}
@@ -257,7 +259,7 @@ export default function IndexMenu() {
                         '&:hover': { bgcolor: '#f8fafc', borderColor: '#cbd5e1' }
                     }}
                 >
-                    Actualiser
+                    {t('common.refresh')}
                 </Button>
                 {UtilMethods.getHabilitations(authorizations, 'articles').canExport && (
                     <Button
@@ -273,7 +275,7 @@ export default function IndexMenu() {
                             '&:hover': { transform: 'translateY(-1px)', boxShadow: '0 12px 20px -4px rgba(99, 102, 241, 0.4)' }
                         }}
                     >
-                        Exporter
+                        {t('common.export')}
                     </Button>
                 )}
             </Box>
@@ -291,7 +293,7 @@ export default function IndexMenu() {
 
     return (
         <Box>
-            <Breadcrumd parent="Menus" />
+            <Breadcrumd parent={t('navigation.menus')} />
             <MaterialReactTable table={mrTable} />
         </Box>
     );

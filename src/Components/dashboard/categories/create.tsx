@@ -9,6 +9,7 @@ import { Pages } from '@/Data/Objects/state';
 import { useAppContext } from '@/contexts/appContext';
 import CategoryAPI from '@/Data/Api/Category';
 import { ICategoryPayload } from '@/Data/Interfaces/Category';
+import { useTranslation } from 'react-i18next';
 import {
     Box,
     Card,
@@ -51,26 +52,9 @@ const initialValues: CategoryFormValues = {
     sub_categories: [{ label: '', description: '' }],
 };
 
-const validationSchema = Yup.object({
-    label: Yup.string()
-        .required('Le nom de la catégorie est requis')
-        .max(50, 'Maximum 50 caractères'),
-    description: Yup.string()
-        .max(300, 'Maximum 300 caractères'),
-    sub_categories: Yup.array()
-        .of(
-            Yup.object({
-                label: Yup.string()
-                    .required('Le nom de la sous-catégorie est requis')
-                    .max(50, 'Maximum 50 caractères'),
-                description: Yup.string()
-                    .max(300, 'Maximum 300 caractères'),
-            })
-        )
-        .min(1, 'Au moins une sous-catégorie est requise'),
-});
 
 const NewCategory = () => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const context = useAppContext();
     const [isLoading, setIsLoading] = useState(false);
@@ -83,12 +67,31 @@ const NewCategory = () => {
             context.togglePageLoading(true);
             dispatch(setActivePage({ page: Pages.CATEGORY }));
         } catch (error) {
-            setError('Échec de la création de la catégorie');
+            setError(t('category.createError'));
             console.error('Failed to create category:', error);
         } finally {
             setIsLoading(false);
         }
     };
+    
+    const validationSchema = Yup.object({
+        label: Yup.string()
+            .required(t('category.categoryNameRequired'))
+            .max(50, t('category.max50Characters')),
+        description: Yup.string()
+            .max(300, t('category.max300Characters')),
+        sub_categories: Yup.array()
+            .of(
+                Yup.object({
+                    label: Yup.string()
+                        .required(t('category.subCategoryNameRequired'))
+                        .max(50, t('category.max50Characters')),
+                    description: Yup.string()
+                        .max(300, t('category.max300Characters')),
+                })
+            )
+            .min(1, t('category.atLeastOneSubCategory')),
+    });
 
     const formik = useFormik<CategoryFormValues>({
         initialValues,
@@ -99,7 +102,7 @@ const NewCategory = () => {
     return (
         <Box>
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <Breadcrumd parent="Administration" url={Pages.CATEGORY} />
+                <Breadcrumd parent={t('menu.ADMINISTRATION')} url={Pages.CATEGORY} />
 
                 <Grid container spacing={4} justifyContent="center">
                     <Grid item xs={12}>
@@ -116,7 +119,7 @@ const NewCategory = () => {
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                         <Box>
                                             <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-                                                Nouvelle Catégorie
+                                                {t('category.newCategory')}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -126,7 +129,7 @@ const NewCategory = () => {
                                         onClick={() => dispatch(setActivePage({ page: Pages.CATEGORY }))}
                                         sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
                                     >
-                                        Retour
+                                        {t('common.back')}
                                     </Button>
                                 </Box>
 
@@ -135,8 +138,8 @@ const NewCategory = () => {
                                         <Grid item xs={12} md={5}>
                                             <TextField
                                                 fullWidth
-                                                label="Nom de la catégorie"
-                                                placeholder="ex: Électronique"
+                                                label={t('category.categoryName')}
+                                                placeholder={t('category.categoryNamePlaceholder')}
                                                 {...formik.getFieldProps('label')}
                                                 error={formik.touched.label && Boolean(formik.errors.label)}
                                                 helperText={formik.touched.label && formik.errors.label}
@@ -149,8 +152,8 @@ const NewCategory = () => {
                                         <Grid item xs={12} md={7}>
                                             <TextField
                                                 fullWidth
-                                                label="Description globale"
-                                                placeholder="Brève description de ce que contient cette catégorie..."
+                                                label={t('category.globalDescription')}
+                                                placeholder={t('category.globalDescriptionPlaceholder')}
                                                 {...formik.getFieldProps('description')}
                                                 error={formik.touched.description && Boolean(formik.errors.description)}
                                                 helperText={formik.touched.description && formik.errors.description}
@@ -165,10 +168,10 @@ const NewCategory = () => {
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, mt: 2 }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                                     <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>
-                                                        Sous-catégories
+                                                        {t('category.subCategories')}
                                                     </Typography>
                                                     <Chip
-                                                        label={`${formik.values.sub_categories.length} item(s)`}
+                                                        label={`${formik.values.sub_categories.length} ${t('common.items')}`}
                                                         size="small"
                                                         sx={{ fontWeight: 700, bgcolor: '#6366f1', color: 'white', borderRadius: '8px' }}
                                                     />
@@ -182,7 +185,7 @@ const NewCategory = () => {
                                                     ])}
                                                     sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, color: '#6366f1', borderColor: 'rgba(99, 102, 241, 0.4)' }}
                                                 >
-                                                    Ajouter
+                                                    {t('common.add')}
                                                 </Button>
                                             </Box>
 
@@ -219,8 +222,8 @@ const NewCategory = () => {
                                                                     <Grid item xs={12} md={5}>
                                                                         <TextField
                                                                             fullWidth
-                                                                            label={`Nom de la sous-catégorie ${index + 1}`}
-                                                                            placeholder="ex: Smartphones"
+                                                                            label={`${t('category.subCategoryName')} ${index + 1}`}
+                                                                            placeholder={t('category.subCategoryNamePlaceholder')}
                                                                             {...formik.getFieldProps(`sub_categories.${index}.label`)}
                                                                             error={formik.touched.sub_categories?.[index]?.label && Boolean((formik.errors.sub_categories?.[index] as any)?.label)}
                                                                             helperText={formik.touched.sub_categories?.[index]?.label && (formik.errors.sub_categories?.[index] as any)?.label}
@@ -233,8 +236,8 @@ const NewCategory = () => {
                                                                     <Grid item xs={12} md={7}>
                                                                         <TextField
                                                                             fullWidth
-                                                                            label="Description spécifique"
-                                                                            placeholder="Qu'est-ce qui caractérise cette sous-catégorie ?"
+                                                                            label={t('category.specificDescription')}
+                                                                            placeholder={t('category.specificDescriptionPlaceholder')}
                                                                             {...formik.getFieldProps(`sub_categories.${index}.description`)}
                                                                             error={formik.touched.sub_categories?.[index]?.description && Boolean((formik.errors.sub_categories?.[index] as any)?.description)}
                                                                             helperText={formik.touched.sub_categories?.[index]?.description && (formik.errors.sub_categories?.[index] as any)?.description}
@@ -278,7 +281,7 @@ const NewCategory = () => {
                                                 }
                                             }}
                                         >
-                                            Créer la Catégorie
+                                            {t('category.createCategory')}
                                         </Button>
                                     </Box>
                                 </form>

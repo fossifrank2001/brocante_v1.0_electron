@@ -6,6 +6,7 @@ import { Tab, Tabs } from '@mui/material';
 import Breadcrumd from '../Breadcrumd';
 import AccessAPI from '@/Data/Api/Access';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
+import { useTranslation } from 'react-i18next';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -34,6 +35,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const ProfileComponent: React.FC = () => {
+    const { t } = useTranslation();
     const { authUser } = useAppSelector((state) => state.user);
     const [activeTab, setActiveTab] = useState(0);
     const [isEditing, setIsEditing] = useState(false);
@@ -66,7 +68,7 @@ const ProfileComponent: React.FC = () => {
         <div className="container">
             <div className="row">
                 <div className="col-12">
-                    <Breadcrumd parent="Profile" />
+                    <Breadcrumd parent={t('profile.profile')} />
                 </div>
             </div>
 
@@ -201,10 +203,10 @@ const ProfileComponent: React.FC = () => {
                                 variant="scrollable"
                                 scrollButtons="auto"
                             >
-                                <Tab label="Overview" />
-                                <Tab label="Articles" />
-                                <Tab label="Settings" />
-                                <Tab label="Security" />
+                                <Tab label={t('profile.overview')} />
+                                <Tab label={t('profile.articles')} />
+                                <Tab label={t('profile.settings')} />
+                                <Tab label={t('profile.security')} />
                             </Tabs>
 
                             <TabPanel value={activeTab} index={0}>
@@ -213,18 +215,18 @@ const ProfileComponent: React.FC = () => {
                                         <div className="card shadow-sm border-0 h-100" style={{ borderRadius: '15px' }}>
                                             <div className="card-body p-4">
                                                 <div className="d-flex justify-content-between align-items-center mb-4">
-                                                    <h5 className="fw-bold mb-0">Informations du profil</h5>
+                                                    <h5 className="fw-bold mb-0">{t('profile.profileInfo')}</h5>
                                                     <button
                                                         className={`btn btn-${isEditing ? 'success' : 'light-primary'} btn-sm px-3 rounded-pill`}
                                                         onClick={isEditing ? handleSave : () => setIsEditing(true)}
                                                     >
                                                         <i className={`ti ti-${isEditing ? 'check' : 'pencil'} me-1`}></i>
-                                                        {isEditing ? 'Sauvegarder' : 'Modifier'}
+                                                        {isEditing ? t('common.save') : t('common.edit')}
                                                     </button>
                                                 </div>
                                                 <div className="row g-3">
                                                     <div className="col-md-6 text-start">
-                                                        <label className="form-label text-muted small fw-bold">NOM</label>
+                                                        <label className="form-label text-muted small fw-bold">{t('profile.name')}</label>
                                                         <input
                                                             type="text"
                                                             className="form-control rounded-3"
@@ -232,11 +234,11 @@ const ProfileComponent: React.FC = () => {
                                                             value={isEditing ? formData.lastName : authUser?.last_name || ''}
                                                             onChange={handleInputChange}
                                                             disabled={!isEditing}
-                                                            placeholder="Votre nom"
+                                                            placeholder={t('profile.yourName')}
                                                         />
                                                     </div>
                                                     <div className="col-md-6 text-start">
-                                                        <label className="form-label text-muted small fw-bold">PRÉNOM</label>
+                                                        <label className="form-label text-muted small fw-bold">{t('profile.firstName')}</label>
                                                         <input
                                                             type="text"
                                                             className="form-control rounded-3"
@@ -244,11 +246,11 @@ const ProfileComponent: React.FC = () => {
                                                             value={isEditing ? formData.firstName : authUser?.first_name || ''}
                                                             onChange={handleInputChange}
                                                             disabled={!isEditing}
-                                                            placeholder="Votre prénom"
+                                                            placeholder={t('profile.yourFirstName')}
                                                         />
                                                     </div>
                                                     <div className="col-md-12 text-start">
-                                                        <label className="form-label text-muted small fw-bold">EMAIL</label>
+                                                        <label className="form-label text-muted small fw-bold">{t('user.email')}</label>
                                                         <input
                                                             type="email"
                                                             className="form-control rounded-3"
@@ -256,11 +258,11 @@ const ProfileComponent: React.FC = () => {
                                                             value={isEditing ? formData.email : authUser?.email || ''}
                                                             onChange={handleInputChange}
                                                             disabled={!isEditing}
-                                                            placeholder="votre@email.com"
+                                                            placeholder={t('profile.yourEmail')}
                                                         />
                                                     </div>
                                                     <div className="col-md-12 text-start">
-                                                        <label className="form-label text-muted small fw-bold">TÉLÉPHONE</label>
+                                                        <label className="form-label text-muted small fw-bold">{t('user.phone')}</label>
                                                         <input
                                                             type="tel"
                                                             className="form-control rounded-3"
@@ -279,18 +281,18 @@ const ProfileComponent: React.FC = () => {
                                         <div className="d-flex flex-column gap-4">
                                             <div className="card shadow-sm border-0" style={{ borderRadius: '15px' }}>
                                                 <div className="card-body p-4 text-start">
-                                                    <h6 className="fw-bold mb-3">Statut du compte</h6>
+                                                    <h6 className="fw-bold mb-3">{t('profile.accountStatus')}</h6>
                                                     <div className="d-flex align-items-center mb-3 p-3 bg-light rounded-4">
                                                         <div className="bg-success-subtle rounded-circle p-2"><i className="ti ti-shield-check text-success fs-5"></i></div>
                                                         <div className="ms-3">
-                                                            <p className="mb-0 text-muted small">Status</p>
+                                                            <p className="mb-0 text-muted small">{t('common.status')}</p>
                                                             <span className="fw-bold">{UtilMethods.capitalizeFirstLetter(authUser?.status ?? '')}</span>
                                                         </div>
                                                     </div>
                                                     <div className="d-flex align-items-center p-3 bg-light rounded-4">
                                                         <div className="bg-primary-subtle rounded-circle p-2"><i className="ti ti-calendar text-primary fs-5"></i></div>
                                                         <div className="ms-3">
-                                                            <p className="mb-0 text-muted small">Membre depuis</p>
+                                                            <p className="mb-0 text-muted small">{t('profile.memberSince')}</p>
                                                             <span className="fw-bold">{UtilMethods.formatDate(authUser?.created_at)}</span>
                                                         </div>
                                                     </div>
@@ -298,20 +300,20 @@ const ProfileComponent: React.FC = () => {
                                             </div>
                                             <div className="card shadow-sm border-0" style={{ borderRadius: '15px' }}>
                                                 <div className="card-body p-4 text-start">
-                                                    <h6 className="fw-bold mb-3">Accès et Rôles</h6>
+                                                    <h6 className="fw-bold mb-3">{t('profile.accessAndRoles')}</h6>
                                                     {authUser?.accesses && authUser.accesses.length > 0 ? (
                                                         <div className="d-flex flex-column gap-2">
                                                             {authUser.accesses.map((access, index) => (
                                                                 <div key={index} className="p-2 border rounded-3 d-flex justify-content-between align-items-center">
                                                                     <span className="fw-semibold">{access.role.label}</span>
                                                                     <span className={`badge bg-${access.status ? 'success' : 'danger'} rounded-pill`}>
-                                                                        {access.status === AccessAPI.ACTIVE ? 'Actif' : 'Inactif'}
+                                                                        {access.status === AccessAPI.ACTIVE ? t('common.active') : t('common.inactive')}
                                                                     </span>
                                                                 </div>
                                                             ))}
                                                         </div>
                                                     ) : (
-                                                        <div className="text-center py-2 text-muted">Aucun rôle assigné</div>
+                                                        <div className="text-center py-2 text-muted">{t('profile.noRolesAssigned')}</div>
                                                     )}
                                                 </div>
                                             </div>
@@ -326,13 +328,13 @@ const ProfileComponent: React.FC = () => {
                                         <div className="bg-light-primary rounded-circle d-inline-flex p-4 mb-4">
                                             <i className="ti ti-article fs-1 text-primary"></i>
                                         </div>
-                                        <h4 className="fw-bold mb-2">Vos Articles</h4>
+                                        <h4 className="fw-bold mb-2">{t('profile.yourArticles')}</h4>
                                         <p className="text-muted mb-4 mx-auto" style={{ maxWidth: '400px' }}>
-                                            Vous n'avez pas encore d'articles enregistrés. Commencez à vendre vos produits sur la plateforme Brocante.
+                                            {t('profile.noArticlesYet')}
                                         </p>
                                         <button className="btn btn-primary px-4 rounded-pill">
                                             <i className="ti ti-plus me-2"></i>
-                                            Ajouter un Article
+                                            {t('profile.addArticle')}
                                         </button>
                                     </div>
                                 </div>
@@ -341,17 +343,17 @@ const ProfileComponent: React.FC = () => {
                             <TabPanel value={activeTab} index={2}>
                                 <div className="card shadow-sm border-0" style={{ borderRadius: '15px' }}>
                                     <div className="card-body p-4 text-start">
-                                        <h5 className="fw-bold mb-4">Paramètres du Compte</h5>
+                                        <h5 className="fw-bold mb-4">{t('profile.accountSettings')}</h5>
 
                                         <div className="mb-4 pt-2">
                                             <h6 className="fw-bold d-flex align-items-center mb-3">
                                                 <i className="ti ti-bell-ringing me-2 text-primary"></i>
-                                                Notifications
+                                                {t('profile.notifications')}
                                             </h6>
                                             <div className="p-3 bg-light rounded-4 mb-2 d-flex justify-content-between align-items-center">
                                                 <div>
-                                                    <h6 className="mb-0 fw-semibold">Notifications Email</h6>
-                                                    <small className="text-muted">Recevoir les alertes de vente par mail</small>
+                                                    <h6 className="mb-0 fw-semibold">{t('profile.emailNotifications')}</h6>
+                                                    <small className="text-muted">{t('profile.receiveSaleAlerts')}</small>
                                                 </div>
                                                 <div className="form-check form-switch">
                                                     <input className="form-check-input" type="checkbox" id="emailNotif" defaultChecked />
@@ -359,8 +361,8 @@ const ProfileComponent: React.FC = () => {
                                             </div>
                                             <div className="p-3 bg-light rounded-4 d-flex justify-content-between align-items-center">
                                                 <div>
-                                                    <h6 className="mb-0 fw-semibold">Alertes de Stock</h6>
-                                                    <small className="text-muted">Notifications pour les stocks bas</small>
+                                                    <h6 className="mb-0 fw-semibold">{t('profile.stockAlerts')}</h6>
+                                                    <small className="text-muted">{t('profile.lowStockNotifications')}</small>
                                                 </div>
                                                 <div className="form-check form-switch">
                                                     <input className="form-check-input" type="checkbox" id="pushNotif" defaultChecked />
@@ -371,12 +373,12 @@ const ProfileComponent: React.FC = () => {
                                         <div className="pt-2">
                                             <h6 className="fw-bold d-flex align-items-center mb-3">
                                                 <i className="ti ti-eye me-2 text-primary"></i>
-                                                Confidentialité
+                                                {t('profile.privacy')}
                                             </h6>
                                             <div className="p-3 bg-light rounded-4 d-flex justify-content-between align-items-center">
                                                 <div>
-                                                    <h6 className="mb-0 fw-semibold">Profil Public</h6>
-                                                    <small className="text-muted">Afficher vos informations aux autres revendeurs</small>
+                                                    <h6 className="mb-0 fw-semibold">{t('profile.publicProfile')}</h6>
+                                                    <small className="text-muted">{t('profile.showInfoToSellers')}</small>
                                                 </div>
                                                 <div className="form-check form-switch">
                                                     <input className="form-check-input" type="checkbox" id="profileVisibility" />
@@ -390,47 +392,47 @@ const ProfileComponent: React.FC = () => {
                             <TabPanel value={activeTab} index={3}>
                                 <div className="card shadow-sm border-0" style={{ borderRadius: '15px' }}>
                                     <div className="card-body p-4 text-start">
-                                        <h5 className="fw-bold mb-4">Sécurité du Compte</h5>
+                                        <h5 className="fw-bold mb-4">{t('profile.accountSecurity')}</h5>
 
                                         <div className="row g-4">
                                             <div className="col-lg-6 border-end">
                                                 <h6 className="fw-bold mb-3 d-flex align-items-center">
                                                     <i className="ti ti-key me-2 text-warning"></i>
-                                                    Changer le mot de passe
+                                                    {t('profile.changePassword')}
                                                 </h6>
                                                 <div className="mb-3">
-                                                    <label className="form-label small fw-bold text-muted">MOT DE PASSE ACTUEL</label>
+                                                    <label className="form-label small fw-bold text-muted">{t('profile.currentPassword')}</label>
                                                     <input type="password" className="form-control rounded-3" placeholder="••••••••" />
                                                 </div>
                                                 <div className="mb-3">
-                                                    <label className="form-label small fw-bold text-muted">NOUVEAU MOT DE PASSE</label>
+                                                    <label className="form-label small fw-bold text-muted">{t('profile.newPassword')}</label>
                                                     <input type="password" className="form-control rounded-3" placeholder="••••••••" />
                                                 </div>
                                                 <div className="mb-4">
-                                                    <label className="form-label small fw-bold text-muted">CONFIRMER LE MOT DE PASSE</label>
+                                                    <label className="form-label small fw-bold text-muted">{t('profile.confirmPassword')}</label>
                                                     <input type="password" className="form-control rounded-3" placeholder="••••••••" />
                                                 </div>
                                                 <button className="btn btn-warning px-4 rounded-pill text-white fw-bold">
-                                                    Mettre à jour le mot de passe
+                                                    {t('profile.updatePassword')}
                                                 </button>
                                             </div>
                                             <div className="col-lg-6">
                                                 <h6 className="fw-bold mb-3 d-flex align-items-center">
                                                     <i className="ti ti-shield-lock me-2 text-success"></i>
-                                                    Authentification à Deux Facteurs (2FA)
+                                                    {t('profile.twoFactorAuth')}
                                                 </h6>
                                                 <div className="p-4 bg-light-success rounded-4 border border-success-subtle mb-4">
                                                     <div className="d-flex gap-3">
                                                         <div className="flex-shrink-0 text-success"><i className="ti ti-info-circle fs-6"></i></div>
                                                         <p className="small mb-0 text-success fw-medium">
-                                                            Doublez la sécurité de votre compte en activant l'authentification 2FA. Un code vous sera demandé à chaque connexion.
+                                                            {t('profile.twoFADescription')}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <div className="d-flex justify-content-between align-items-center p-3 bg-light rounded-4">
                                                     <div>
-                                                        <h6 className="mb-0 fw-bold">Activer la 2FA</h6>
-                                                        <small className="text-muted">Protection renforcée</small>
+                                                        <h6 className="mb-0 fw-bold">{t('profile.enable2FA')}</h6>
+                                                        <small className="text-muted">{t('profile.enhancedProtection')}</small>
                                                     </div>
                                                     <div className="form-check form-switch">
                                                         <input className="form-check-input" type="checkbox" id="twoFactor" />

@@ -37,8 +37,10 @@ import Toast from '@/Data/Utilities/Toast';
 import { IAccess, IAccessTableData } from '@/Data/Interfaces/Access';
 import AccessAPI from '@/Data/Api/Access';
 import { removeAccessToAuthUser } from '@/Data/Slices/auth/userSlice';
+import { useTranslation } from 'react-i18next';
 
 export default function IndexAccess() {
+    const { t } = useTranslation();
     const context = useAppContext();
 
     const [isError, setIsError] = useState(false);
@@ -60,8 +62,8 @@ export default function IndexAccess() {
 
     useLayoutEffect(() => {
         context.togglePageLoading();
-        document.title = constants.APP_NAME + ' .:. Accès';
-    }, [context]);
+        document.title = constants.APP_NAME + ' .:. ' + t('access.accesses');
+    }, [context, t]);
 
     const resetScroll = () => {
         window.scrollTo(0, 0);
@@ -122,7 +124,7 @@ export default function IndexAccess() {
             user: `${access?.user?.last_name || ""} ${access?.user?.first_name || ""}`,
             actions: (
                 <Stack direction="row" spacing={1}>
-                    <Tooltip title="Modifier" arrow TransitionComponent={Zoom}>
+                    <Tooltip title={t('common.edit')} arrow TransitionComponent={Zoom}>
                         <IconButton
                             size="small"
                             onClick={() => {
@@ -139,7 +141,7 @@ export default function IndexAccess() {
                         </IconButton>
                     </Tooltip>
                     {!UtilMethods.isActiveAccess(access.id) && (
-                        <Tooltip title="Supprimer" arrow TransitionComponent={Zoom}>
+                        <Tooltip title={t('common.delete')} arrow TransitionComponent={Zoom}>
                             <IconButton
                                 size="small"
                                 onClick={() => {
@@ -160,7 +162,7 @@ export default function IndexAccess() {
     const columns: MRT_ColumnDef<IAccessTableData>[] = useMemo(() => [
         {
             accessorKey: "user",
-            header: "Utilisateur",
+            header: t('access.user'),
             size: 220,
             Cell: ({ cell, row }) => {
                 const initials = (row.original as any)?.user?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '?';
@@ -190,7 +192,7 @@ export default function IndexAccess() {
         },
         {
             accessorKey: "role.label",
-            header: "Rôle",
+            header: t('access.role'),
             size: 160,
             Cell: ({ row }) => {
                 const roleCode = (row.original as any)?.role?.code || '';
@@ -213,12 +215,12 @@ export default function IndexAccess() {
         },
         {
             accessorKey: "status",
-            header: "Statut",
+            header: t('access.status'),
             size: 130,
             filterVariant: "select",
             filterSelectOptions: [
-                { label: 'Active', value: UtilMethods.ACTIVE },
-                { label: 'Inactive', value: UtilMethods.INACTIVE },
+                { label: t('common.active'), value: UtilMethods.ACTIVE },
+                { label: t('common.inactive'), value: UtilMethods.INACTIVE },
             ],
             Cell: ({ cell }) => {
                 const value = String(cell.getValue());
@@ -226,7 +228,7 @@ export default function IndexAccess() {
                 return (
                     <Chip
                         icon={isActive ? <CheckCircle sx={{ fontSize: '14px !important' }} /> : <Cancel sx={{ fontSize: '14px !important' }} />}
-                        label={value}
+                        label={isActive ? t('common.active') : t('common.inactive')}
                         size="small"
                         sx={{
                             fontWeight: 900,
@@ -241,7 +243,7 @@ export default function IndexAccess() {
         },
         {
             accessorKey: "code",
-            header: "Code",
+            header: t('access.code'),
             size: 160,
             Cell: ({ cell }) => (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -254,12 +256,12 @@ export default function IndexAccess() {
         },
         {
             accessorKey: "actions",
-            header: "Actions",
+            header: t('common.actions'),
             size: 120,
             enableColumnFilter: false,
             enableSorting: false,
         },
-    ], []);
+    ], [t]);
 
     const mrTable = useMaterialReactTable({
         columns,
@@ -316,9 +318,9 @@ export default function IndexAccess() {
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: "0.75rem", p: "4px", alignItems: 'center' }}>
                 <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
-                    Accès
+                    {t('access.accesses')}
                 </Typography>
-                <Tooltip title="Rafraîchir" arrow>
+                <Tooltip title={t('common.refresh')} arrow>
                     <motion.div whileTap={{ scale: 0.9 }}>
                         <Button
                             onClick={handleRefresh}
@@ -334,7 +336,7 @@ export default function IndexAccess() {
                                 '&:hover': { borderColor: '#6366f1', bgcolor: 'rgba(99,102,241,0.05)' }
                             }}
                         >
-                            Actualiser
+                            {t('common.refresh')}
                         </Button>
                     </motion.div>
                 </Tooltip>
@@ -356,7 +358,7 @@ export default function IndexAccess() {
                                 '&:hover': { background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)', boxShadow: '0 6px 16px rgba(99,102,241,0.4)' }
                             }}
                         >
-                            Nouvel Accès
+                            {t('access.newAccess')}
                         </Button>
                     </motion.div>
                 )}
@@ -374,7 +376,7 @@ export default function IndexAccess() {
                             '&:hover': { borderColor: '#059669', bgcolor: 'rgba(16,185,129,0.05)' }
                         }}
                     >
-                        Exporter
+                        {t('common.export')}
                     </Button>
                 )}
             </Box>
@@ -412,7 +414,7 @@ export default function IndexAccess() {
     return (
         <Box >
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <Breadcrumd parent="Administration" />
+                <Breadcrumd parent={t('menu.ADMINISTRATION')} />
             </motion.div>
 
             <motion.div
@@ -428,7 +430,7 @@ export default function IndexAccess() {
                 content={{
                     style: 'ti ti-info-circle text text-danger',
                     icon: 'Warning',
-                    message: 'Voulez-vous supprimer cet accès ?'
+                    message: t('access.confirmDelete')
                 }}
                 onHandleDelete={handleDelete}
                 onHandleOpenDetail={() => setOpenDetailModal(false)}

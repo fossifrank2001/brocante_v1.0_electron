@@ -35,6 +35,9 @@ import StoreSettingAPI from '@/Data/Api/StoreSetting';
 import { IStoreSetting, IStoreSettingPayload } from '@/Data/Interfaces/StoreSetting';
 import Toast from '@/Data/Utilities/Toast';
 import constants from '@/Data/Utilities/constants';
+import DatabaseManagement from './DatabaseManagement';
+import { Storage as StorageTabIcon } from '@mui/icons-material';
+import {useTranslation} from "react-i18next";
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -62,6 +65,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
 };
 
 const StoreSettingsPage: React.FC = () => {
+    const {t} = useTranslation();
     const theme = useTheme();
     const [settings, setSettings] = useState<IStoreSetting | null>(null);
     const [loading, setLoading] = useState(true);
@@ -79,7 +83,7 @@ const StoreSettingsPage: React.FC = () => {
             setHasChanges(false);
         } catch (e) {
             console.error('Error fetching store settings:', e);
-            Toast.error('Impossible de charger les paramètres');
+            Toast.error(t('settings.loadError'));
         } finally {
             setLoading(false);
         }
@@ -101,9 +105,9 @@ const StoreSettingsPage: React.FC = () => {
             setSettings(response.data);
             setForm(response.data);
             setHasChanges(false);
-            Toast.success('Paramètres enregistrés avec succès');
+            Toast.success(t('settings.saveSuccess'));
         } catch (e: any) {
-            Toast.error(e?.message || 'Erreur lors de la sauvegarde');
+            Toast.error(e?.message || t('settings.saveError'));
         } finally {
             setSaving(false);
         }
@@ -121,13 +125,13 @@ const StoreSettingsPage: React.FC = () => {
             setSettings(response.data);
             if (type === 'logo') {
                 setForm(prev => ({ ...prev, logo_path: response.data.logo_path }));
-                Toast.success('Logo mis à jour');
+                Toast.success(t('settings.logoUpdated'));
             } else {
                 setForm(prev => ({ ...prev, signature_path: response.data.signature_path }));
-                Toast.success('Signature mise à jour');
+                Toast.success(t('settings.signatureUpdated'));
             }
         } catch (err: any) {
-            Toast.error(err?.message || `Erreur lors de l’upload du ${type}`);
+            Toast.error(err?.message || t('settings.uploadError', {type}));
         } finally {
             setSaving(false);
         }
@@ -163,11 +167,11 @@ const StoreSettingsPage: React.FC = () => {
                                 <SettingsIcon sx={{ color: '#fff', fontSize: 24 }} />
                             </Box>
                             <Typography variant="h4" fontWeight={800} sx={{ color: theme.palette.text.primary }}>
-                                Configuration
+                                {t('settings.title')}
                             </Typography>
                         </Box>
                         <Typography variant="body1" color="text.secondary">
-                            Gérez l'identité de votre magasin et personnalisez vos documents fiscaux.
+                            {t('settings.subtitle')}
                         </Typography>
                     </Box>
                     
@@ -190,7 +194,7 @@ const StoreSettingsPage: React.FC = () => {
                             }
                         }}
                     >
-                        {saving ? 'Sauvegarde...' : 'Enregistrer'}
+                        {saving ? t('settings.saving') : t('common.save')}
                     </Button>
                 </Box>
             </motion.div>
@@ -202,7 +206,7 @@ const StoreSettingsPage: React.FC = () => {
                         variant="outlined"
                         sx={{ mb: 3, borderRadius: '12px', fontWeight: 600 }}
                     >
-                        Vous avez des modifications non enregistrées.
+                        {t('settings.unsavedChanges')}
                     </Alert>
                 </motion.div>
             )}
@@ -242,9 +246,9 @@ const StoreSettingsPage: React.FC = () => {
                             }
                         }}
                     >
-                        <Tab icon={<StoreIcon />} iconPosition="start" label="Identité Store" />
-                        <Tab icon={<InventoryIcon />} iconPosition="start" label="Gestion Stock & POS" />
-                        <Tab icon={<LanguageIcon />} iconPosition="start" label="Régionalisation" />
+                        <Tab icon={<StoreIcon />} iconPosition="start" label={t('settings.tabs.identity')} />
+                        <Tab icon={<InventoryIcon />} iconPosition="start" label={t('settings.tabs.stockPos')} />
+                        <Tab icon={<StorageTabIcon />} iconPosition="start" label={t('settings.tabs.database')} />
                     </Tabs>
                 </Box>
 
@@ -253,9 +257,9 @@ const StoreSettingsPage: React.FC = () => {
                     <TabPanel value={tab} index={0}>
                         <Grid container spacing={4}>
                             <Grid item xs={12} md={4}>
-                                <Typography variant="h6" fontWeight={700} gutterBottom>Logo & Image de Marque</Typography>
+                                <Typography variant="h6" fontWeight={700} gutterBottom>{t('settings.logo.title')}</Typography>
                                 <Typography variant="body2" color="text.secondary" mb={3}>
-                                    Ce logo apparaîtra sur toutes vos factures, reçus et l'interface client.
+                                    {t('settings.logo.description')}
                                 </Typography>
                                 
                                 <Box sx={{ textAlign: 'center', p: 4, border: '2px dashed', borderColor: 'divider', borderRadius: '20px' }}>
@@ -280,12 +284,12 @@ const StoreSettingsPage: React.FC = () => {
                                         startIcon={<UploadIcon />}
                                         sx={{ borderRadius: '10px', textTransform: 'none' }}
                                     >
-                                        Télécharger Logo
+                                        {t('settings.logo.upload')}
                                         <input type="file" hidden accept="image/*" onChange={handleLogoUpload} />
                                     </Button>
 
                                     <Typography variant="subtitle2" fontWeight={700} sx={{ mt: 4, mb: 1.5, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <DescriptionIcon fontSize="small" color="primary" /> Signature / Cachet
+                                        <DescriptionIcon fontSize="small" color="primary" /> {t('settings.signature.title')}
                                     </Typography>
                                     <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: '12px', bgcolor: '#fcfcfc', mb: 2 }}>
                                         <Avatar
@@ -302,7 +306,7 @@ const StoreSettingsPage: React.FC = () => {
                                                 '& img': { objectFit: 'contain' }
                                             }}
                                         >
-                                            {!settings?.signature_path && <Typography variant="caption" color="text.secondary">Aucune signature</Typography>}
+                                            {!settings?.signature_path && <Typography variant="caption" color="text.secondary">{t('settings.signature.none')}</Typography>}
                                         </Avatar>
                                         <Button
                                             component="label"
@@ -312,36 +316,36 @@ const StoreSettingsPage: React.FC = () => {
                                             startIcon={<UploadIcon />}
                                             sx={{ borderRadius: '8px', textTransform: 'none' }}
                                         >
-                                            Changer Signature
+                                            {t('settings.signature.change')}
                                             <input type="file" hidden accept="image/*" onChange={(e) => handleLogoUpload(e, 'signature')} />
                                         </Button>
                                     </Box>
                                     <Typography variant="caption" color="text.secondary" display="block" mt={1}>
-                                        PNG ou JPG conseillé. Max 2Mb.
+                                        {t('settings.logo.fileHint')}
                                     </Typography>
 
                                     <Divider sx={{ my: 4 }} />
                                     
                                     <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <DescriptionIcon fontSize="small" color="primary" /> Préfixes de numérotation
+                                        <DescriptionIcon fontSize="small" color="primary" /> {t('settings.prefixes.title')}
                                     </Typography>
                                     <Box display="flex" flexDirection="column" gap={2}>
                                         <TextField
-                                            label="Préfixe Facture"
+                                            label={t('settings.prefixes.invoice')}
                                             value={form.invoice_prefix || ''}
                                             onChange={e => handleChange('invoice_prefix', e.target.value)}
                                             fullWidth
                                             size="small"
                                         />
                                         <TextField
-                                            label="Préfixe Reçu"
+                                            label={t('settings.prefixes.receipt')}
                                             value={form.receipt_prefix || ''}
                                             onChange={e => handleChange('receipt_prefix', e.target.value)}
                                             fullWidth
                                             size="small"
                                         />
                                         <TextField
-                                            label="Préfixe Vente"
+                                            label={t('settings.prefixes.sell')}
                                             value={form.sell_code_prefix || ''}
                                             onChange={e => handleChange('sell_code_prefix', e.target.value)}
                                             fullWidth
@@ -352,11 +356,11 @@ const StoreSettingsPage: React.FC = () => {
                             </Grid>
 
                             <Grid item xs={12} md={8}>
-                                <Typography variant="h6" fontWeight={700} mb={3}>Détails de l'entreprise</Typography>
+                                <Typography variant="h6" fontWeight={700} mb={3}>{t('settings.companyDetails.title')}</Typography>
                                 <Grid container spacing={3}>
                                     <Grid item xs={12} md={6}>
                                         <TextField
-                                            label="Nom Commercial"
+                                            label={t('settings.companyDetails.storeName')}
                                             value={form.store_name || ''}
                                             onChange={e => handleChange('store_name', e.target.value)}
                                             fullWidth
@@ -366,7 +370,7 @@ const StoreSettingsPage: React.FC = () => {
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <TextField
-                                            label="Slogan / Baseline"
+                                            label={t('settings.companyDetails.slogan')}
                                             value={form.store_slogan || ''}
                                             onChange={e => handleChange('store_slogan', e.target.value)}
                                             fullWidth
@@ -375,7 +379,7 @@ const StoreSettingsPage: React.FC = () => {
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <TextField
-                                            label="Gérant / Propriétaire"
+                                            label={t('settings.companyDetails.owner')}
                                             value={form.owner_name || ''}
                                             onChange={e => handleChange('owner_name', e.target.value)}
                                             fullWidth
@@ -384,7 +388,7 @@ const StoreSettingsPage: React.FC = () => {
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <TextField
-                                            label="Email Professionnel"
+                                            label={t('auth.email')}
                                             value={form.email || ''}
                                             onChange={e => handleChange('email', e.target.value)}
                                             fullWidth
@@ -393,7 +397,7 @@ const StoreSettingsPage: React.FC = () => {
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <TextField
-                                            label="N° Téléphone Principal"
+                                            label={t('user.phone')}
                                             value={form.phone || ''}
                                             onChange={e => handleChange('phone', e.target.value)}
                                             fullWidth
@@ -402,7 +406,7 @@ const StoreSettingsPage: React.FC = () => {
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <TextField
-                                            label="N° SIRET / Registre Commerce"
+                                            label={t('settings.companyDetails.registrationNumber')}
                                             value={form.registration_number || ''}
                                             onChange={e => handleChange('registration_number', e.target.value)}
                                             fullWidth
@@ -411,7 +415,7 @@ const StoreSettingsPage: React.FC = () => {
                                     </Grid>
                                     <Grid item xs={12}>
                                         <TextField
-                                            label="Adresse Physique"
+                                            label={t('settings.companyDetails.address')}
                                             value={form.address || ''}
                                             onChange={e => handleChange('address', e.target.value)}
                                             fullWidth
@@ -422,7 +426,7 @@ const StoreSettingsPage: React.FC = () => {
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <TextField
-                                            label="Ville"
+                                            label={t('settings.companyDetails.city')}
                                             value={form.city || ''}
                                             onChange={e => handleChange('city', e.target.value)}
                                             fullWidth
@@ -431,7 +435,7 @@ const StoreSettingsPage: React.FC = () => {
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <TextField
-                                            label="Site Web"
+                                            label={t('settings.companyDetails.website')}
                                             value={form.website || ''}
                                             onChange={e => handleChange('website', e.target.value)}
                                             fullWidth
@@ -441,40 +445,46 @@ const StoreSettingsPage: React.FC = () => {
                                 </Grid>
                                 
                                 <Box mt={4}>
-                                    <Typography variant="h6" fontWeight={700} mb={2}>En-tête & Pied de Page des Documents</Typography>
+                                    <Typography variant="h6" fontWeight={700} mb={3}>{t('settings.regional.title')}</Typography>
                                     <Grid container spacing={3}>
-                                        <Grid item xs={12}>
+                                        <Grid item xs={12} md={3}>
                                             <TextField
-                                                label="En-tête des Tickets (Receipt Header)"
-                                                value={form.receipt_header || ''}
-                                                onChange={e => handleChange('receipt_header', e.target.value)}
+                                                label={t('settings.regional.currency')}
+                                                value={form.currency || ''}
+                                                onChange={e => handleChange('currency', e.target.value)}
                                                 fullWidth
-                                                multiline
-                                                rows={2}
                                                 size="small"
-                                                placeholder="Bienvenue dans notre boutique !"
+                                                placeholder="XAF"
                                             />
                                         </Grid>
-                                        <Grid item xs={12} md={6}>
+                                        <Grid item xs={12} md={3}>
                                             <TextField
-                                                label="Pied de Page Tickets"
-                                                value={form.receipt_footer || ''}
-                                                onChange={e => handleChange('receipt_footer', e.target.value)}
+                                                label={t('settings.regional.currencySymbol')}
+                                                value={form.currency_symbol || ''}
+                                                onChange={e => handleChange('currency_symbol', e.target.value)}
                                                 fullWidth
-                                                multiline
-                                                rows={3}
                                                 size="small"
+                                                placeholder="FCFA"
                                             />
                                         </Grid>
-                                        <Grid item xs={12} md={6}>
+                                        <Grid item xs={12} md={3}>
                                             <TextField
-                                                label="Pied de Page Factures PDF"
-                                                value={form.invoice_footer || ''}
-                                                onChange={e => handleChange('invoice_footer', e.target.value)}
+                                                label={t('settings.regional.timezone')}
+                                                value={form.timezone || ''}
+                                                onChange={e => handleChange('timezone', e.target.value)}
                                                 fullWidth
-                                                multiline
-                                                rows={3}
                                                 size="small"
+                                                placeholder="Africa/Douala"
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={3}>
+                                            <TextField
+                                                label={t('settings.regional.language')}
+                                                value={form.locale || ''}
+                                                onChange={e => handleChange('locale', e.target.value)}
+                                                fullWidth
+                                                size="small"
+                                                placeholder="fr"
                                             />
                                         </Grid>
                                     </Grid>
@@ -491,7 +501,7 @@ const StoreSettingsPage: React.FC = () => {
                                     <CardContent>
                                         <Box display="flex" alignItems="center" gap={1.5} mb={2}>
                                             <InventoryIcon color="warning" />
-                                            <Typography variant="h6" fontWeight={700}>Politique de Stock</Typography>
+                                            <Typography variant="h6" fontWeight={700}>{t('settings.stockPolicy.title')}</Typography>
                                         </Box>
                                         <Divider sx={{ mb: 3 }} />
                                         <Box display="flex" flexDirection="column" gap={3}>
@@ -503,11 +513,11 @@ const StoreSettingsPage: React.FC = () => {
                                                         color="warning"
                                                     />
                                                 }
-                                                label={<Typography fontWeight={600}>Alertes stock critique</Typography>}
+                                                label={<Typography fontWeight={600}>{t('settings.stockPolicy.lowStockAlert')}</Typography>}
                                             />
                                             
                                             <TextField
-                                                label="Seuil d'alerte global"
+                                                label={t('settings.stockPolicy.threshold')}
                                                 type="number"
                                                 value={form.low_stock_threshold ?? 5}
                                                 onChange={e => handleChange('low_stock_threshold', parseInt(e.target.value) || 0)}
@@ -525,10 +535,10 @@ const StoreSettingsPage: React.FC = () => {
                                                         color="error"
                                                     />
                                                 }
-                                                label={<Typography fontWeight={600}>Autoriser stock négatif</Typography>}
+                                                label={<Typography fontWeight={600}>{t('settings.stockPolicy.negativeStock')}</Typography>}
                                             />
                                              <Typography variant="caption" color="text.secondary">
-                                                Attention : l'autorisation des stocks négatifs peut fausser vos rapports de rentabilité.
+                                                {t('settings.stockPolicy.negativeStockWarning')}
                                             </Typography>
                                         </Box>
                                     </CardContent>
@@ -540,7 +550,7 @@ const StoreSettingsPage: React.FC = () => {
                                     <CardContent>
                                         <Box display="flex" alignItems="center" gap={1.5} mb={2}>
                                             <PaymentsIcon color="primary" />
-                                            <Typography variant="h6" fontWeight={700}>Paramètres de Caisse</Typography>
+                                            <Typography variant="h6" fontWeight={700}>{t('settings.cashRegister.title')}</Typography>
                                         </Box>
                                         <Divider sx={{ mb: 3 }} />
                                         <Box display="flex" flexDirection="column" gap={3}>
@@ -552,10 +562,10 @@ const StoreSettingsPage: React.FC = () => {
                                                         color="primary"
                                                     />
                                                 }
-                                                label={<Typography fontWeight={600}>Sessions obligatoires</Typography>}
+                                                label={<Typography fontWeight={600}>{t('settings.cashRegister.requiredSessions')}</Typography>}
                                             />
                                             <Typography variant="body2" color="text.secondary">
-                                                Le caissier devra systématiquement ouvrir une session avec un fonds de roulement avant de pouvoir vendre.
+                                                {t('settings.cashRegister.sessionsDescription')}
                                             </Typography>
                                         </Box>
                                     </CardContent>
@@ -564,53 +574,9 @@ const StoreSettingsPage: React.FC = () => {
                         </Grid>
                     </TabPanel>
 
-                    {/* ── SECTION 2: RÉGIONALISATION ── */}
+                    {/* ── SECTION 2: BASE DE DONNÉES ── */}
                     <TabPanel value={tab} index={2}>
-                        <Grid container spacing={3}>
-                            <Grid item xs={12}>
-                                <Typography variant="h6" fontWeight={700} mb={3}>Préférences locales</Typography>
-                            </Grid>
-                            <Grid item xs={12} md={3}>
-                                <TextField
-                                    label="Devise (ISO)"
-                                    value={form.currency || ''}
-                                    onChange={e => handleChange('currency', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                    placeholder="XAF"
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={3}>
-                                <TextField
-                                    label="Symbole d’affichage"
-                                    value={form.currency_symbol || ''}
-                                    onChange={e => handleChange('currency_symbol', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                    placeholder="FCFA"
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={3}>
-                                <TextField
-                                    label="Fuseau Horaire"
-                                    value={form.timezone || ''}
-                                    onChange={e => handleChange('timezone', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                    placeholder="Africa/Douala"
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={3}>
-                                <TextField
-                                    label="Langue Défaut"
-                                    value={form.locale || ''}
-                                    onChange={e => handleChange('locale', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                    placeholder="fr"
-                                />
-                            </Grid>
-                        </Grid>
+                        <DatabaseManagement />
                     </TabPanel>
                 </Box>
             </Paper>

@@ -11,6 +11,8 @@ import "Styles/Navbar.less"
 import { setActivePage } from "Data/Slices/NavigationSlice.ts";
 import { Pages } from "Data/Objects/state.ts";
 import CashSessionBar from '@/Components/dashboard/pos/CashSessionBar';
+import LanguageSwitcher from '@/Components/utils/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 interface INavBarPropsInterface {
     onHandleChangeRole: (role?: IRole) => void;
@@ -18,6 +20,7 @@ interface INavBarPropsInterface {
     isSidebarOpen?: boolean;
 }
 const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSidebar, isSidebarOpen }) => {
+    const { t } = useTranslation();
     const context = useAppContext();
     const dispatch = useAppDispatch();
     const { authUser } = useAppSelector(state => state.user);
@@ -65,11 +68,14 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
         'SUPER_ADMIN': 'ti ti-crown',
     };
 
-    const roleDescriptions = {
-        'ADMIN': 'Manage the entire system',
-        'SELLER': 'Create and manage your shop',
-        'BUYER': 'Browse and purchase items',
-        'SUPER_ADMIN': 'Full system control',
+    const getRoleDescription = (code: string) => {
+        const descriptions: Record<string, string> = {
+            'ADMIN': t('navigation.roleAdmin'),
+            'SELLER': t('navigation.roleSeller'),
+            'BUYER': t('navigation.roleBuyer'),
+            'SUPER_ADMIN': t('navigation.roleSuperAdmin'),
+        };
+        return descriptions[code] || t('navigation.roleDefault');
     };
 
     const displayAccesses = authUser?.accesses?.map(access => {
@@ -95,7 +101,7 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
                         {access.role.label}
                     </span>
                     <small className="text-muted">
-                        {roleDescriptions[access.role.code] || 'Access to system'}
+                        {getRoleDescription(access.role.code)}
                     </small>
                 </div>
                 {isActual && (
@@ -181,16 +187,16 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
         const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
         let interval = Math.floor(seconds / 31536000);
 
-        if (interval > 1) return `${interval} years ago`;
+        if (interval > 1) return t('common.timeYearsAgo', { count: interval });
         interval = Math.floor(seconds / 2592000);
-        if (interval > 1) return `${interval} months ago`;
+        if (interval > 1) return t('common.timeMonthsAgo', { count: interval });
         interval = Math.floor(seconds / 86400);
-        if (interval > 1) return `${interval} days ago`;
+        if (interval > 1) return t('common.timeDaysAgo', { count: interval });
         interval = Math.floor(seconds / 3600);
-        if (interval > 1) return `${interval} hours ago`;
+        if (interval > 1) return t('common.timeHoursAgo', { count: interval });
         interval = Math.floor(seconds / 60);
-        if (interval > 1) return `${interval} minutes ago`;
-        return "Just now";
+        if (interval > 1) return t('common.timeMinutesAgo', { count: interval });
+        return t('common.timeJustNow');
     };
 
     const handleToggleOpening = () => {
@@ -230,12 +236,12 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
                                     style={{ width: '400px', zIndex: 800, maxHeight: '500px', overflowY: 'auto' }}
                                 >
                                     <div className="notification-header d-flex justify-content-between align-items-center mb-3">
-                                        <h6 className="mb-0">You have {count} new notification(s)</h6>
+                                        <h6 className="mb-0">{t('common.newNotifications', { count })}</h6>
                                     </div>
                                     {isLoading ? (
                                         <div className="text-center py-3">
                                             <div className="spinner-border text-primary" role="status">
-                                                <span className="visually-hidden">Loading...</span>
+                                                <span className="visually-hidden">{t('common.loading')}</span>
                                             </div>
                                         </div>
                                     ) : error ? (
@@ -244,11 +250,11 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
                                         </div>
                                     ) : !notifications ? (
                                         <div className="text-center py-3 text-muted">
-                                            Loading notifications...
+                                            {t('common.loadingNotifications')}
                                         </div>
                                     ) : notifications.length === 0 ? (
                                         <div className="text-center py-3 text-muted">
-                                            No notifications
+                                            {t('common.noNotifications')}
                                         </div>
                                     ) : (
                                         <ul className="notification-list list-unstyled">
@@ -265,7 +271,7 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
                                                                     <h6 className="notification-title mb-1 fw-bolder">
                                                                         {notifData.title}
                                                                         {!notification.read_at && (
-                                                                            <span className="badge bg-primary ms-2 rounded-pill">New</span>
+                                                                            <span className="badge bg-primary ms-2 rounded-pill">{t('common.new')}</span>
                                                                         )}
                                                                     </h6>
                                                                     <small className="text-muted">
@@ -291,7 +297,7 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
                                                 setHasClickToLoadNotif(false);
                                             }}
                                         >
-                                            Show all notifications
+                                            {t('common.showAllNotifications')}
                                         </Link>
                                     </div>
                                 </motion.div>
@@ -304,10 +310,13 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
                 </div>
                 <div className="navbar-collapse justify-content-end px-0" id="navbarNav">
                     <ul className="navbar-nav flex-row ms-auto align-items-center justify-content-end">
+                        <li className="nav-item me-2">
+                            <LanguageSwitcher />
+                        </li>
                         <li className="nav-item nav-icon-hover-bg rounded-circle">
                             <button className="btn btn-primary d-flex align-items-center" onClick={() => dispatch(setActivePage({ page: Pages.HOME }))} >
                                 <i className='ti ti-building-store me-1'></i>
-                                <span>Shop</span>
+                                <span>{t('navigation.shop')}</span>
                             </button>
                         </li>
                         <li className="nav-item nav-icon-hover-bg rounded-circle">
@@ -343,7 +352,7 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
                             >
                                 <div className="p-3">
                                     <h6 className="dropdown-header border-bottom pb-2 mb-2 text-primary">
-                                        Switch Role
+                                        {t('navigation.switchRole')}
                                     </h6>
                                     {displayAccesses}
                                 </div>
@@ -404,7 +413,7 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
                                         }}
                                     >
                                         <i className="ti ti-user-circle fs-6"></i>
-                                        <p className="mb-0 fs-3">My Profile</p>
+                                        <p className="mb-0 fs-3">{t('profile.profile')}</p>
                                     </a>
                                     <button
                                         onClick={() => {
@@ -417,7 +426,7 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
                                         className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger"
                                     >
                                         <i className="ti ti-logout fs-5"></i>
-                                        <span>Logout</span>
+                                        <span>{t('auth.logout')}</span>
                                     </button>
                                 </div>
                             </div>

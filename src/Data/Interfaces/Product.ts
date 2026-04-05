@@ -16,4 +16,6 @@ export interface IProductPayload {
     category?: string;
     unit_id?: number | null;
     price_per_unit?: number | null;
+    template_id?: number | null;
+    template_values?: Record<string, any> | null;
 }

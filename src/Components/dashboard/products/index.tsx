@@ -37,8 +37,10 @@ import ProductAPI from "@/Data/Api/Product";
 import SupplyAPI from "@/Data/Api/Suppliers";
 import dayjs from "dayjs";
 import { QRCodeCanvas } from 'qrcode.react';
+import { useTranslation } from 'react-i18next';
 
 export default function IndexProduct() {
+    const { t } = useTranslation();
     const context = useAppContext();
 
     const [isError, setIsError] = useState(false);
@@ -61,8 +63,8 @@ export default function IndexProduct() {
 
     useLayoutEffect(() => {
         context.togglePageLoading();
-        document.title = constants.APP_NAME + ' .:. Articles';
-    }, [context]);
+        document.title = constants.APP_NAME + ' .:. ' + t('navigation.products');
+    }, [context, t]);
 
     const resetScroll = () => {
         window.scrollTo(0, 0);
@@ -123,7 +125,7 @@ export default function IndexProduct() {
             status: product?.stock_quantity > 0 ? ProductAPI.STOCK : ProductAPI.OUT_OF_STOCK,
             actions: (
                 <Stack direction="row" spacing={0.5}>
-                    <Tooltip title="Voir les détails" TransitionComponent={Zoom} arrow>
+                    <Tooltip title={t('common.viewDetails')} TransitionComponent={Zoom} arrow>
                         <IconButton
                             size="small"
                             onClick={() => {
@@ -135,7 +137,7 @@ export default function IndexProduct() {
                             <Visibility sx={{ fontSize: '17px' }} />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Modifier" TransitionComponent={Zoom} arrow>
+                    <Tooltip title={t('common.edit')} TransitionComponent={Zoom} arrow>
                         <IconButton
                             size="small"
                             onClick={() => {
@@ -147,7 +149,7 @@ export default function IndexProduct() {
                             <Edit sx={{ fontSize: '17px' }} />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Supprimer" TransitionComponent={Zoom} arrow>
+                    <Tooltip title={t('common.delete')} TransitionComponent={Zoom} arrow>
                         <IconButton
                             size="small"
                             onClick={() => { setProductId(product.id); setOpenDetailModal(true); }}
@@ -164,7 +166,7 @@ export default function IndexProduct() {
     const columns: MRT_ColumnDef<IProductTableData>[] = useMemo(() => [
         {
             accessorKey: "name",
-            header: "Article",
+            header: t('common.product'),
             size: 220,
             Cell: ({ cell, row }) => {
                 const inStock = (row.original as any).stock_quantity > 0;
@@ -194,7 +196,7 @@ export default function IndexProduct() {
         },
         {
             accessorKey: "internal_reference",
-            header: "Réf. Interne",
+            header: t('product.internalRef'),
             size: 130,
             Cell: ({ cell }) => (
                 <Typography variant="caption" sx={{ fontWeight: 800, color: '#64748b', fontFamily: 'monospace' }}>
@@ -204,7 +206,7 @@ export default function IndexProduct() {
         },
         {
             accessorKey: "barcode",
-            header: "Code-barres",
+            header: t('product.barcode'),
             size: 130,
             Cell: ({ cell }) => (
                 <Typography variant="caption" sx={{ fontWeight: 800, color: '#64748b', fontFamily: 'monospace' }}>
@@ -253,13 +255,13 @@ export default function IndexProduct() {
                         </Box>
                     </Tooltip>
                 ) : (
-                    <Typography variant="caption" sx={{ color: '#cbd5e1', fontStyle: 'italic' }}>Non généré</Typography>
+                    <Typography variant="caption" sx={{ color: '#cbd5e1', fontStyle: 'italic' }}>{t('product.notGenerated')}</Typography>
                 )
             ),
         },
         {
             accessorKey: "price",
-            header: "Prix unitaire",
+            header: t('product.unitPrice'),
             size: 140,
             Cell: ({ cell, row }) => (
                 <Box>
@@ -268,7 +270,7 @@ export default function IndexProduct() {
                     </Typography>
                     {(row.original as any).unit?.abbreviation && (row.original as any).unit?.abbreviation !== 'pce' && (
                         <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
-                            par {(row.original as any).unit.abbreviation}
+                            {t('product.per')} {(row.original as any).unit.abbreviation}
                         </Typography>
                     )}
                 </Box>
@@ -303,7 +305,7 @@ export default function IndexProduct() {
         },
         {
             accessorKey: "status",
-            header: "Disponibilité",
+            header: t('product.availability'),
             size: 140,
             enableColumnFilter: false,
             Cell: ({ cell }) => {
@@ -312,7 +314,7 @@ export default function IndexProduct() {
                 return (
                     <Chip
                         icon={<Inventory2 sx={{ fontSize: '14px !important' }} />}
-                        label={inStock ? 'En stock' : 'Épuisé'}
+                        label={inStock ? t('product.inStock') : t('product.outOfStock')}
                         size="small"
                         sx={{
                             fontWeight: 900,
@@ -327,12 +329,12 @@ export default function IndexProduct() {
         },
         {
             accessorKey: "suppliers",
-            header: "Fournisseurs",
+            header: t('navigation.suppliers'),
             size: 180,
             Cell: ({ cell }) => {
                 const value = cell.getValue<ISupply[]>();
                 if (!value || value.length === 0) return (
-                    <Typography variant="caption" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>Aucun</Typography>
+                    <Typography variant="caption" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>{t('common.none')}</Typography>
                 );
                 return (
                     <Stack direction="row" spacing={0.5} flexWrap="wrap" gap={0.5}>
@@ -353,7 +355,7 @@ export default function IndexProduct() {
         },
         {
             accessorKey: "created_at",
-            header: "Créé le",
+            header: t('common.date'),
             size: 150,
             enableColumnFilter: false,
             Cell: ({ cell }) => {
@@ -367,7 +369,7 @@ export default function IndexProduct() {
         },
         {
             accessorKey: "actions",
-            header: "Actions",
+            header: t('common.actions'),
             size: 120,
             enableColumnFilter: false,
             enableSorting: false,
@@ -421,7 +423,7 @@ export default function IndexProduct() {
         },
         localization: MRT_Localization_EN,
         muiToolbarAlertBannerProps: isError
-            ? { color: "error", children: "Erreur lors du chargement des données" }
+            ? { color: "error", children: t('common.errorLoading') }
             : undefined,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
@@ -442,7 +444,7 @@ export default function IndexProduct() {
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: 2, p: 2, alignItems: 'center' }}>
                 <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
-                    Articles
+                    {t('navigation.products')}
                 </Typography>
                 <motion.div whileTap={{ scale: 0.93 }}>
                     <Button
@@ -456,7 +458,7 @@ export default function IndexProduct() {
                             '&:hover': { bgcolor: '#f8fafc', borderColor: '#cbd5e1' }
                         }}
                     >
-                        Actualiser
+                        {t('common.refresh')}
                     </Button>
                 </motion.div>
                 {UtilMethods.getHabilitations(authorizations, 'article').canCreate && (
@@ -475,7 +477,7 @@ export default function IndexProduct() {
                                 '&:hover': { transform: 'translateY(-1px)', boxShadow: '0 12px 20px -4px rgba(99,102,241,0.4)' }
                             }}
                         >
-                            Ajouter
+                            {t('common.add')}
                         </Button>
                     </motion.div>
                 )}

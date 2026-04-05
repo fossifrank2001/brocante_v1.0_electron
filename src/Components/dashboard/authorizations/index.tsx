@@ -24,8 +24,10 @@ import { IRole } from '@/Data/Interfaces';
 import RoleAPI from '@/Data/Api/Role';
 import AuthorizationAPI from '@/Data/Api/Authorizations';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const IndexAuthorization = () => {
+    const { t } = useTranslation();
     const context = useAppContext();
 
     const [isError, setIsError] = useState(false);
@@ -52,8 +54,8 @@ const IndexAuthorization = () => {
 
     useLayoutEffect(() => {
         context.togglePageLoading();
-        document.title = constants.APP_NAME + ' .:. Authorisations';
-    }, [context]);
+        document.title = constants.APP_NAME + ' .:. ' + t('authorization.authorizations');
+    }, [context, t]);
 
     const resetScroll = () => {
         window.scrollTo(0, 0);
@@ -119,7 +121,7 @@ const IndexAuthorization = () => {
             permission: habilitation?.permission?.label,
             actions: (
                 <Stack direction="row" spacing={1}>
-                    <Tooltip title="Modifier" TransitionComponent={Zoom} arrow>
+                    <Tooltip title={t('common.edit')} TransitionComponent={Zoom} arrow>
                         <IconButton
                             size="small"
                             onClick={() => {
@@ -135,7 +137,7 @@ const IndexAuthorization = () => {
                             <Edit fontSize="small" />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Supprimer" TransitionComponent={Zoom} arrow>
+                    <Tooltip title={t('common.delete')} TransitionComponent={Zoom} arrow>
                         <IconButton
                             size="small"
                             onClick={() => {
@@ -150,16 +152,16 @@ const IndexAuthorization = () => {
                 </Stack>
             ),
         })) : [];
-    }, [habilitations, context, dispatch]);
+    }, [habilitations, context, dispatch, t]);
 
     const columns: MRT_ColumnDef<IHabilitationTableData>[] = useMemo(
         () => [
             {
                 accessorKey: "menu",
-                header: "Menu",
+                header: t('authorization.menu'),
                 size: 150,
                 muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filtrer" },
+                    inputProps: { placeHolder: t('common.filter') },
                 }),
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>
@@ -169,10 +171,10 @@ const IndexAuthorization = () => {
             },
             {
                 accessorKey: "role",
-                header: "Rôle",
+                header: t('authorization.role'),
                 size: 150,
                 muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filtrer" },
+                    inputProps: { placeHolder: t('common.filter') },
                 }),
                 filterVariant: "select",
                 filterSelectOptions: roles?.map(role => ({
@@ -194,10 +196,10 @@ const IndexAuthorization = () => {
             },
             {
                 accessorKey: "permission",
-                header: "Permission",
+                header: t('authorization.permission'),
                 size: 150,
                 muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filtrer" },
+                    inputProps: { placeHolder: t('common.filter') },
                 }),
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#475569' }}>
@@ -207,14 +209,14 @@ const IndexAuthorization = () => {
             },
             {
                 accessorKey: "actions",
-                header: "Actions",
+                header: t('common.actions'),
                 size: 100,
                 unexport: true,
                 enableColumnFilter: false,
                 enableSorting: false,
             },
         ],
-        [roles],
+        [roles, t],
     );
 
     const mrTable: MRT_TableInstance<IHabilitationTableData> = useMaterialReactTable({
@@ -267,7 +269,7 @@ const IndexAuthorization = () => {
             sx: { px: 3, py: 2, borderBottom: '1px solid rgba(226, 232, 240, 0.5)' }
         },
         localization: MRT_Localization_EN,
-        muiToolbarAlertBannerProps: isError ? { color: "error", children: "Erreur lors du chargement des données" } : undefined,
+        muiToolbarAlertBannerProps: isError ? { color: "error", children: t('common.errorLoadingData') } : undefined,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
         onPaginationChange: setPagination,
@@ -287,7 +289,7 @@ const IndexAuthorization = () => {
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: 2.5, p: 3, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
-                    Authorisations
+                    {t('authorization.authorizations')}
                 </Typography>
 
                 <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
@@ -307,7 +309,7 @@ const IndexAuthorization = () => {
                             '&:hover': { bgcolor: '#f5f7ff', borderColor: '#6366f1' }
                         }}
                     >
-                        Rafraîchir
+                        {t('common.refresh')}
                     </Button>
 
                     {UtilMethods.isAdmin() && (
@@ -336,7 +338,7 @@ const IndexAuthorization = () => {
                                 }
                             }}
                         >
-                            Nouvelle Authorisation
+                            {t('authorization.newAuthorization')}
                         </Button>
                     )}
                 </Box>
@@ -349,7 +351,7 @@ const IndexAuthorization = () => {
                 <MRT_ShowHideColumnsButton table={table} />
                 <MRT_ToggleFullScreenButton table={table} />
                 {UtilMethods.getHabilitations(authorizations, 'authorization').canExport && (
-                    <Tooltip title="Exporter la liste" arrow TransitionComponent={Zoom}>
+                    <Tooltip title={t('common.export')} arrow TransitionComponent={Zoom}>
                         <IconButton
                             sx={{ color: '#64748b', '&:hover': { color: '#6366f1', bgcolor: 'rgba(99, 102, 241, 0.05)' } }}
                         >
@@ -382,7 +384,7 @@ const IndexAuthorization = () => {
         <Box>
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 <Box sx={{ mb: 4 }}>
-                    <Breadcrumd parent="Administration" />
+                    <Breadcrumd parent={t('menu.ADMINISTRATION')} />
                 </Box>
 
                 <MaterialReactTable table={mrTable} />
@@ -392,8 +394,8 @@ const IndexAuthorization = () => {
                 openDetailModal={openDetailModal}
                 content={{
                     style: 'ti ti-info-circle text text-danger',
-                    icon: 'Suppression d\'autorisation',
-                    message: 'Voulez-vous vraiment supprimer cette autorisation ?'
+                    icon: t('authorization.deleteAuthorization'),
+                    message: t('authorization.confirmDelete')
                 }}
                 onHandleDelete={handleDelete}
                 onHandleOpenDetail={() => setOpenDetailModal(false)}

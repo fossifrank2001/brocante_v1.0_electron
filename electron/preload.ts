@@ -19,6 +19,35 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
     return ipcRenderer.invoke(channel, ...omit)
   },
 
-  // You can expose other APTs you need here.
-  // ...
+  // API URL
+  getApiUrl: () => ipcRenderer.invoke('get-api-url'),
+
+  // Database Management
+  dbGetInfo: () => ipcRenderer.invoke('db:get-info'),
+  dbGetPaths: () => ipcRenderer.invoke('db:get-paths'),
+  dbReset: () => ipcRenderer.invoke('db:reset'),
+  dbSeedDemo: () => ipcRenderer.invoke('db:seed-demo'),
+  dbExport: () => ipcRenderer.invoke('db:export'),
+  dbImport: () => ipcRenderer.invoke('db:import'),
+
+  // Google Drive Sync
+  gdriveConfigure: (clientId: string, clientSecret: string) =>
+    ipcRenderer.invoke('gdrive:configure', { clientId, clientSecret }),
+  gdriveAuth: () => ipcRenderer.invoke('gdrive:auth'),
+  gdriveUpload: () => ipcRenderer.invoke('gdrive:upload'),
+  gdriveListBackups: () => ipcRenderer.invoke('gdrive:list-backups'),
+  gdriveDownload: (fileId: string) =>
+    ipcRenderer.invoke('gdrive:download', { fileId }),
+  gdriveDeleteBackup: (fileId: string) =>
+    ipcRenderer.invoke('gdrive:delete-backup', { fileId }),
+  gdriveSetAutoSync: (enabled: boolean, interval?: number) =>
+    ipcRenderer.invoke('gdrive:set-auto-sync', { enabled, interval }),
+  gdriveDisconnect: () => ipcRenderer.invoke('gdrive:disconnect'),
+  gdriveStatus: () => ipcRenderer.invoke('gdrive:status'),
+
+  // Printers
+  getPrinters: () => ipcRenderer.invoke('get-printers'),
+  printThermal: (printerName: string) =>
+    ipcRenderer.invoke('print-thermal', { printerName }),
 })
+

@@ -6,6 +6,8 @@ import { ToastContainer } from "react-toastify";
 import store from 'Data/Objects/store';
 import ErrorBoundary from "@/ErrorBoundary";
 import Loading from "Components/utils/Loading";
+import { initApiUrl } from 'Data/Utilities/constants';
+import './i18n/config';
 
 import 'Styles/index.less';
 import App from "Components/App.tsx";
@@ -15,8 +17,14 @@ const Root: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const timer = setTimeout(() => setIsLoading(false), 1000);
-        return () => clearTimeout(timer);
+        // Clear old API_BASE_URL from localStorage to prevent brocante.local issues
+        localStorage.removeItem('API_BASE_URL');
+        
+        // Initialize API URL from Electron main process before rendering
+        initApiUrl().finally(() => {
+            const timer = setTimeout(() => setIsLoading(false), 500);
+            return () => clearTimeout(timer);
+        });
     }, []);
 
     if (isLoading) return <Loading />;

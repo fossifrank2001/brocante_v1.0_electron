@@ -5,18 +5,19 @@ import { Link } from '@mui/material';
 import { IForgotPayload } from '@/Data/Interfaces';
 import { Pages } from '@/Data/Objects/state';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useAppDispatch } from '@/hooks';
 import { motion } from 'framer-motion';
 import "Styles/auth.less"
 import Logo from '@/Components/common/Logo';
+import {useTranslation} from "react-i18next";
 
 interface FormValues {
     username: string;
 }
 
 export default function ForgotComponent() {
+    const {t} = useTranslation();
     const [isLoading, setIsLoading] = useState(false);
-    const {reset_token, username: _username} = useAppSelector(state => state.forgot);
     const dispatch = useAppDispatch();
     const initialValues: FormValues = { username: '' };
     const context = useAppContext();
@@ -30,13 +31,8 @@ export default function ForgotComponent() {
         try {
             context.togglePageLoading(true);
             setIsLoading(true);
-            const result = await attemptForgot(values);
-                console.log("Result ::: ", result)
-            if (reset_token !== "") {
-                console.log(values.username)
-                context.updateUsername(_username);
-                dispatch(setActivePage({ page: Pages.RESET_PAGE }));
-            }
+            await attemptForgot(values);
+            context.updateUsername(values.username);
         } catch (e) {
             console.error('Error during password reset request:', e);
         } finally {
@@ -59,9 +55,9 @@ export default function ForgotComponent() {
         validate: (values: FormValues) => {
             const errors: Partial<FormValues> = {};
             if (!values.username) {
-                errors.username = 'Login field is required.';
+                errors.username = t('auth.loginRequired');
             } else if (!(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(values.username) || /^6[0-9]{8}$/i.test(values.username))) {
-                errors.username = 'Wrong email address or phone number.';
+                errors.username = t('auth.invalidLogin');
             }
             return errors;
         }
@@ -98,8 +94,8 @@ export default function ForgotComponent() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2 }}
                         >
-                            <h4>Password Reset</h4>
-                            <p>Enter your email to receive reset instructions</p>
+                            <h4>{t('auth.forgotPasswordTitle')}</h4>
+                            <p>{t('auth.forgotPasswordDescription')}</p>
                         </motion.div>
 
                         <form onSubmit={formik.handleSubmit} className="auth-form">
@@ -109,7 +105,7 @@ export default function ForgotComponent() {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.3 }}
                             >
-                                <label htmlFor="username">Email or Phone <span className="required">*</span></label>
+                                <label htmlFor="username">{t('auth.emailOrPhone')} <span className="required">*</span></label>
                                 <div className="input-group">
                                     <span className="input-group-text">
                                         <i className="ti ti-mail"></i>
@@ -119,7 +115,7 @@ export default function ForgotComponent() {
                                         className={`form-control ${formik.errors.username && formik.touched.username ? 'is-invalid' : ''}`}
                                         id="username"
                                         name="username"
-                                        placeholder="Enter your email or phone"
+                                        placeholder={t('auth.loginPlaceholder')}
                                         onChange={formik.handleChange}
                                         onBlur={formik.handleBlur}
                                         value={formik.values.username}
@@ -146,7 +142,7 @@ export default function ForgotComponent() {
                             >
                                 <motion.button
                                     type="submit"
-                                    className="btn btn-primary w-100"
+                                    className="btn btn-primary w-100 py-3"
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.95 }}
                                     disabled={isLoading || !formik.isValid || !formik.dirty}
@@ -154,10 +150,10 @@ export default function ForgotComponent() {
                                     {isLoading ? (
                                         <>
                                             <span className="spinner-grow spinner-grow-sm"></span>
-                                            <span>Sending Instructions...</span>
+                                            <span>{t('auth.sendingInstructions')}</span>
                                         </>
                                     ) : (
-                                        'Reset Password'
+                                        t('auth.resetPassword')
                                     )}
                                 </motion.button>
 
@@ -171,9 +167,14 @@ export default function ForgotComponent() {
                                         onClick={handleBackToLogin}
                                         className="btn-link"
                                         disabled={isLoading}
+                                        sx={{ textDecoration: 'none', bgcolor:'inherit', boxShadow: 'none',
+                                            '&:hover': {
+                                                bgcolor:'inherit', boxShadow: 'none'
+                                            }
+                                        }}
                                     >
                                         <i className="ti ti-arrow-left"></i>
-                                        <span>Back to Login</span>
+                                        <span>{t('auth.backToLogin')}</span>
                                     </Link>
                                 </motion.div>
                             </motion.div>

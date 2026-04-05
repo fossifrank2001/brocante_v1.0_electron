@@ -21,16 +21,11 @@ const forgotSlice = createSlice({
         forgotPassword: (state: ForgotState, action: PayloadAction<IApiResponseBase<{
             reset_token: string;
             username: string;
-            message: string;
-            data: {
-                reset_token: string
-                username: string;
-            };
         }>>) =>{
-            const { data: { reset_token, username }, message } = action.payload;
-            state.reset_token = reset_token;
+            const { data, message } = action.payload;
+            state.reset_token = data.reset_token;
             state.message = message;
-            state.username = username;
+            state.username = data.username;
         },
         updateToken: (state: ForgotState, action: PayloadAction<string>) =>{
             state.reset_token = action.payload;
@@ -43,11 +38,15 @@ export const updateToken = forgotSlice.actions.updateToken
 export const forgotAsync = (payload: IForgotPayload) => async (dispatch: AppDispatch) =>{
     try {
         const response  = await AuthAPI.forgot(payload);
+        console.log('Forgot API Response:', response);
         dispatch(forgotSlice.actions.forgotPassword(response));
-        Toast.success(response.message)
-        store.dispatch(setActivePage({page: Pages.RESET_PAGE}))
+        Toast.success(response.message);
+        store.dispatch(setActivePage({page: Pages.RESET_PAGE}));
+        return response;
     } catch (error) {
-        console.error(error)
+        console.error('Error in forgotAsync:', error);
+        Toast.error('Failed to send reset code. Please try again.');
+        throw error;
     }
 };
 

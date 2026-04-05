@@ -3,6 +3,7 @@ import { Box, Typography, Divider } from '@mui/material';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { ICashSession } from '@/Data/Interfaces/CashSession';
 import Constants from '@/Data/Utilities/constants';
+import { useTranslation } from 'react-i18next';
 
 interface ZReportProps {
     session: ICashSession;
@@ -13,9 +14,10 @@ interface ZReportProps {
 }
 
 const ZReportPrintable = forwardRef<HTMLDivElement, ZReportProps>(({ session, summary, actualCash, difference, closingNotes }, ref) => {
+    const { t } = useTranslation();
 
     const formatDate = (dateString: string | Date | null | undefined) => {
-        if (!dateString) return 'N/A';
+        if (!dateString) return t('common.notAvailable');
         const date = new Date(dateString);
         return date.toLocaleString('fr-FR', {
             day: '2-digit', month: '2-digit', year: 'numeric',
@@ -45,8 +47,8 @@ const ZReportPrintable = forwardRef<HTMLDivElement, ZReportProps>(({ session, su
                 <Typography sx={{ fontWeight: 900, fontSize: '18px', textTransform: 'uppercase' }}>
                     {Constants.APP_NAME}
                 </Typography>
-                <Typography sx={{ fontSize: '12px' }}>RAPPORT "Z" - FIN DE JOURNÉE</Typography>
-                <Typography sx={{ fontSize: '10px', color: '#666' }}>Document d'audit interne</Typography>
+                <Typography sx={{ fontSize: '12px' }}>{t('zReport.title')}</Typography>
+                <Typography sx={{ fontSize: '10px', color: '#666' }}>{t('zReport.auditDocument')}</Typography>
             </Box>
 
             <Divider sx={{ borderStyle: 'dashed', my: 1, borderColor: 'black' }} />
@@ -54,15 +56,15 @@ const ZReportPrintable = forwardRef<HTMLDivElement, ZReportProps>(({ session, su
             {/* Session Info */}
             <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography sx={{ fontSize: '11px', fontWeight: 'bold' }}>Session N°:</Typography>
+                    <Typography sx={{ fontSize: '11px', fontWeight: 'bold' }}>{t('cashSession.sessionNumber')}:</Typography>
                     <Typography sx={{ fontSize: '11px' }}>{session.session_code}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography sx={{ fontSize: '11px', fontWeight: 'bold' }}>Ouverture:</Typography>
+                    <Typography sx={{ fontSize: '11px', fontWeight: 'bold' }}>{t('cashSession.opening')}:</Typography>
                     <Typography sx={{ fontSize: '11px' }}>{formatDate(session.opened_at)}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography sx={{ fontSize: '11px', fontWeight: 'bold' }}>Fermeture:</Typography>
+                    <Typography sx={{ fontSize: '11px', fontWeight: 'bold' }}>{t('cashSession.closing')}:</Typography>
                     <Typography sx={{ fontSize: '11px' }}>{formatDate(new Date())}</Typography>
                 </Box>
             </Box>
@@ -71,13 +73,13 @@ const ZReportPrintable = forwardRef<HTMLDivElement, ZReportProps>(({ session, su
 
             {/* Sales Volume */}
             <Box sx={{ mb: 2 }}>
-                <Typography sx={{ fontSize: '13px', fontWeight: 'bold', mb: 1, textAlign: 'center' }}>VOLUMETRIE</Typography>
+                <Typography sx={{ fontSize: '13px', fontWeight: 'bold', mb: 1, textAlign: 'center' }}>{t('zReport.volumetry')}</Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography sx={{ fontSize: '11px' }}>Nb Ventes:</Typography>
+                    <Typography sx={{ fontSize: '11px' }}>{t('zReport.salesCount')}:</Typography>
                     <Typography sx={{ fontSize: '11px' }}>{summary?.stats?.sales_count ?? session?.sales_count ?? 0}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography sx={{ fontSize: '11px' }}>Nb Annulations:</Typography>
+                    <Typography sx={{ fontSize: '11px' }}>{t('zReport.canceledCount')}:</Typography>
                     <Typography sx={{ fontSize: '11px' }}>{summary?.stats?.canceled_count ?? 0}</Typography>
                 </Box>
             </Box>
@@ -86,25 +88,25 @@ const ZReportPrintable = forwardRef<HTMLDivElement, ZReportProps>(({ session, su
 
             {/* Financials */}
             <Box sx={{ mb: 2 }}>
-                <Typography sx={{ fontSize: '13px', fontWeight: 'bold', mb: 1, textAlign: 'center' }}>FLUX FINANCIERS (XAF)</Typography>
+                <Typography sx={{ fontSize: '13px', fontWeight: 'bold', mb: 1, textAlign: 'center' }}>{t('zReport.financialFlow')}</Typography>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography sx={{ fontSize: '11px' }}>Fond de Caisse Initial:</Typography>
+                    <Typography sx={{ fontSize: '11px' }}>{t('zReport.initialCash')}:</Typography>
                     <Typography sx={{ fontSize: '11px' }}>{UtilMethods.formatNumber(session?.opening_balance ?? 0)}</Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography sx={{ fontSize: '11px' }}>(+) Total Ventes (Cash):</Typography>
+                    <Typography sx={{ fontSize: '11px' }}>(+) {t('zReport.totalCashSales')}:</Typography>
                     <Typography sx={{ fontSize: '11px' }}>{UtilMethods.formatNumber(summary?.stats?.total_sales ?? session?.total_sales ?? 0)}</Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography sx={{ fontSize: '11px' }}>(-) Remboursements:</Typography>
+                    <Typography sx={{ fontSize: '11px' }}>(-) {t('zReport.refunds')}:</Typography>
                     <Typography sx={{ fontSize: '11px' }}>{UtilMethods.formatNumber(summary?.stats?.total_refunds ?? session?.total_refunds ?? 0)}</Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, pt: 1, borderTop: '1px solid black' }}>
-                    <Typography sx={{ fontSize: '13px', fontWeight: 'bold' }}>CASH ATTENDU:</Typography>
+                    <Typography sx={{ fontSize: '13px', fontWeight: 'bold' }}>{t('zReport.expectedCash')}:</Typography>
                     <Typography sx={{ fontSize: '13px', fontWeight: 'bold' }}>{UtilMethods.formatNumber(expectedCash)}</Typography>
                 </Box>
             </Box>
@@ -113,15 +115,15 @@ const ZReportPrintable = forwardRef<HTMLDivElement, ZReportProps>(({ session, su
 
             {/* Reconciliation */}
             <Box sx={{ mb: 2 }}>
-                <Typography sx={{ fontSize: '13px', fontWeight: 'bold', mb: 1, textAlign: 'center' }}>CLÔTURE & ÉCARTS</Typography>
+                <Typography sx={{ fontSize: '13px', fontWeight: 'bold', mb: 1, textAlign: 'center' }}>{t('zReport.closureAndDifferences')}</Typography>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography sx={{ fontSize: '12px', fontWeight: 'bold' }}>CASH RECOMPTÉ:</Typography>
+                    <Typography sx={{ fontSize: '12px', fontWeight: 'bold' }}>{t('zReport.cashRecounted')}:</Typography>
                     <Typography sx={{ fontSize: '12px', fontWeight: 'bold' }}>{UtilMethods.formatNumber(actualCash)}</Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography sx={{ fontSize: '12px', fontWeight: 'bold' }}>ÉCART CONSTATÉ:</Typography>
+                    <Typography sx={{ fontSize: '12px', fontWeight: 'bold' }}>{t('zReport.differenceFound')}:</Typography>
                     <Typography sx={{ fontSize: '12px', fontWeight: 'bold' }}>
                         {difference > 0 ? '+' : ''}{UtilMethods.formatNumber(difference)}
                     </Typography>
@@ -134,18 +136,18 @@ const ZReportPrintable = forwardRef<HTMLDivElement, ZReportProps>(({ session, su
             <Box sx={{ mt: 2 }}>
                 {closingNotes && (
                     <Box sx={{ mb: 2 }}>
-                        <Typography sx={{ fontSize: '11px', fontWeight: 'bold' }}>Observations:</Typography>
+                        <Typography sx={{ fontSize: '11px', fontWeight: 'bold' }}>{t('zReport.observations')}:</Typography>
                         <Typography sx={{ fontSize: '11px', fontStyle: 'italic' }}>"{closingNotes}"</Typography>
                     </Box>
                 )}
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, px: 2 }}>
                     <Box sx={{ textAlign: 'center' }}>
-                        <Typography sx={{ fontSize: '10px' }}>Signature Caissier</Typography>
+                        <Typography sx={{ fontSize: '10px' }}>{t('zReport.cashierSignature')}</Typography>
                         <Box sx={{ borderBottom: '1px solid black', width: '80px', mt: 4 }}></Box>
                     </Box>
                     <Box sx={{ textAlign: 'center' }}>
-                        <Typography sx={{ fontSize: '10px' }}>Signature Manager</Typography>
+                        <Typography sx={{ fontSize: '10px' }}>{t('zReport.managerSignature')}</Typography>
                         <Box sx={{ borderBottom: '1px solid black', width: '80px', mt: 4 }}></Box>
                     </Box>
                 </Box>
@@ -153,11 +155,11 @@ const ZReportPrintable = forwardRef<HTMLDivElement, ZReportProps>(({ session, su
 
             {/* Footer */}
             <Box sx={{ textAlign: 'center', mt: 4 }}>
-                <Typography sx={{ fontSize: '10px' }}>Généré par {Constants.APP_NAME}</Typography>
+                <Typography sx={{ fontSize: '10px' }}>{t('zReport.generatedBy', { appName: Constants.APP_NAME })}</Typography>
                 <Typography sx={{ fontSize: '9px' }}>{formatDate(new Date())}</Typography>
             </Box>
             <Box sx={{ textAlign: 'center', mt: 1 }}>
-                <Typography sx={{ fontSize: '16px', fontWeight: 'bold' }}>- FIN DU RAPPORT -</Typography>
+                <Typography sx={{ fontSize: '16px', fontWeight: 'bold' }}>- {t('zReport.endOfReport')} -</Typography>
             </Box>
         </Box>
     );

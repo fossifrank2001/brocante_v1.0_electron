@@ -32,15 +32,17 @@ import { IAppContext, IInvoice, IInvoiceTableData } from 'Interfaces'
 import dayjs from "dayjs";
 import SellAPI from "Data/Api/Sell.ts";
 import StreamedDocumentAPI from "Data/Api/StreamedDocument.ts";
+import { useTranslation } from 'react-i18next';
 
 export default function IndexInvoice() {
     const context: IAppContext = useAppContext()
-
-    const [isError, setIsError] = useState(false)
+    const { t } = useTranslation()
+    const dispatch = useAppDispatch()
     const [pagination, setPagination] = useState({
         pageIndex: 0,
         pageSize: 10,
     })
+    const [isError, setIsError] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [, setReady] = useState(false)
     const [isRefetching, setIsRefetching] = useState(false)
@@ -50,13 +52,12 @@ export default function IndexInvoice() {
     const [sorting, setSorting] = useState([])
     const [rowSelection, setRowSelection] = useState({})
     const [records, setRecords] = useState<IInvoice[] | null>(null)
-    const dispatch = useAppDispatch()
     const { authorizations } = useAppSelector(state => state.userAuthorizing)
 
     useLayoutEffect(() => {
         context.togglePageLoading()
-        document.title = constants.APP_NAME + ' .:. Factures'
-    }, [context])
+        document.title = constants.APP_NAME + ' .:. ' + t('navigation.invoices')
+    }, [context, t])
 
     const resetScroll = () => {
         window.scrollTo(0, 0)
@@ -130,18 +131,18 @@ export default function IndexInvoice() {
                         return;
                     }
                     
-                    throw new Error('Aucun receipt_number ou sell_id trouvé dans l\'invoice');
+                    throw new Error(t('invoice.noReceiptNumberOrSellId'));
                     
                 } catch (receiptError) {
                     console.error('Error getting receipt:', receiptError);
-                    throw new Error('Impossible de récupérer le reçu: ' + (receiptError as Error).message);
+                    throw new Error(t('invoice.unableToGetReceipt') + ': ' + (receiptError as Error).message);
                 }
             } else {
                 await StreamedDocumentAPI.generate('invoice', record.invoice_number);
             }
         } catch (error) {
             console.error('Error downloading document:', error);
-            alert('Erreur lors du téléchargement du document: ' + (error as Error).message);
+            alert(t('invoice.downloadError') + ': ' + (error as Error).message);
         } finally {
             context.togglePageLoading(false);
             setIsRefetching(false);
@@ -153,7 +154,7 @@ export default function IndexInvoice() {
             ..._record,
             actions: (
                 <Stack direction="row" spacing={0.5}>
-                    <Tooltip title="Voir les détails" TransitionComponent={Zoom} arrow>
+                    <Tooltip title={t('invoice.viewDetails')} TransitionComponent={Zoom} arrow>
                         <IconButton
                             size="small"
                             onClick={() => {
@@ -169,7 +170,7 @@ export default function IndexInvoice() {
                             <Visibility fontSize="small" />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title={_record.status === 'paid' ? "Télécharger Reçu" : "Télécharger Facture"} TransitionComponent={Zoom} arrow>
+                    <Tooltip title={_record.status === 'paid' ? t('invoice.downloadReceipt') : t('invoice.downloadInvoice')} TransitionComponent={Zoom} arrow>
                         <IconButton
                             size="small"
                             onClick={() => handleDownload(_record.status === 'paid' ? 'receipt' : 'invoice', _record)}
@@ -181,13 +182,13 @@ export default function IndexInvoice() {
                 </Stack>
             ),
         })) : [];
-    }, [records, context, dispatch]);
+    }, [records, context, dispatch, t]);
 
     const columns = useMemo<MRT_ColumnDef<IInvoiceTableData>[]>(
         () => [
             {
                 accessorKey: "invoice_number",
-                header: "N° Facture",
+                header: t('invoice.invoiceNumber'),
                 size: 140,
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b', letterSpacing: '0.05em' }}>
@@ -197,7 +198,7 @@ export default function IndexInvoice() {
             },
             {
                 id: "client",
-                header: "Client",
+                header: t('invoice.customer'),
                 size: 220,
                 Cell: ({ row }) => {
                     const customer = row.original.sell?.person;
@@ -241,7 +242,7 @@ export default function IndexInvoice() {
             },
             {
                 accessorKey: "sell_code",
-                header: "Code Vente",
+                header: t('invoice.sellCode'),
                 size: 120,
                 Cell: ({ cell }) => (
                     <Chip
@@ -253,7 +254,7 @@ export default function IndexInvoice() {
             },
             {
                 accessorKey: "total_amount",
-                header: "Montant Total",
+                header: t('invoice.totalAmount'),
                 size: 150,
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ fontWeight: 900, color: '#0f172a' }}>
@@ -263,7 +264,7 @@ export default function IndexInvoice() {
             },
             {
                 accessorKey: "amount_paid",
-                header: "Payé",
+                header: t('invoice.amountPaid'),
                 size: 130,
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ fontWeight: 800, color: '#10b981' }}>
@@ -273,7 +274,7 @@ export default function IndexInvoice() {
             },
             {
                 accessorKey: "remaining_balance",
-                header: "Reste",
+                header: t('invoice.remaining'),
                 size: 130,
                 Cell: ({ cell }) => {
                     const value = cell.getValue() as number;
@@ -286,14 +287,14 @@ export default function IndexInvoice() {
             },
             {
                 accessorKey: "status",
-                header: "Statut",
+                header: t('common.status'),
                 size: 120,
                 Cell: ({ cell }) => {
                     const value = cell.getValue() as string;
                     const isPaid = value === SellAPI.PAID;
                     return (
                         <Chip
-                            label={isPaid ? 'PAYÉ' : 'IMPAYÉ'}
+                            label={isPaid ? t('invoice.paid') : t('invoice.unpaid')}
                             size="small"
                             sx={{
                                 fontWeight: 900,
@@ -308,13 +309,13 @@ export default function IndexInvoice() {
                 },
                 filterVariant: "select",
                 filterSelectOptions: [
-                    { label: 'Impayé', value: SellAPI.UNPAID },
-                    { label: 'Payé', value: SellAPI.PAID }
+                    { label: t('invoice.unpaid'), value: SellAPI.UNPAID },
+                    { label: t('invoice.paid'), value: SellAPI.PAID }
                 ],
             },
             {
                 accessorKey: "date_to_pay",
-                header: "Échéance",
+                header: t('invoice.dueDate'),
                 size: 160,
                 Cell: ({ cell }) => {
                     const value = cell.getValue() as string;
@@ -330,13 +331,13 @@ export default function IndexInvoice() {
             },
             {
                 accessorKey: "actions",
-                header: "Actions",
+                header: t('common.actions'),
                 size: 100,
                 enableColumnFilter: false,
                 enableSorting: false,
             },
         ],
-        []
+        [t],
     )
 
     const mrTable = useMaterialReactTable({
@@ -404,7 +405,7 @@ export default function IndexInvoice() {
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: 2, p: 2, alignItems: 'center' }}>
                 <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b', mr: 2 }}>
-                    Gestion des Factures
+                    {t('invoice.invoiceManagement')}
                 </Typography>
                 <Button
                     onClick={handleRefresh}
@@ -421,7 +422,7 @@ export default function IndexInvoice() {
                         '&:hover': { bgcolor: '#f8fafc', borderColor: '#cbd5e1' }
                     }}
                 >
-                    Actualiser
+                    {t('common.refresh')}
                 </Button>
                 {UtilMethods.getHabilitations(authorizations, 'invoice').canExport && (
                     <Button
@@ -437,7 +438,7 @@ export default function IndexInvoice() {
                             '&:hover': { transform: 'translateY(-1px)', boxShadow: '0 12px 20px -4px rgba(99, 102, 241, 0.4)' }
                         }}
                     >
-                        Exporter
+                        {t('common.export')}
                     </Button>
                 )}
             </Box>
@@ -455,7 +456,7 @@ export default function IndexInvoice() {
 
     return (
         <Box>
-            <Breadcrumd parent="Invoices" />
+            <Breadcrumd parent={t('navigation.invoices')} />
             <MaterialReactTable table={mrTable} />
         </Box>
     )

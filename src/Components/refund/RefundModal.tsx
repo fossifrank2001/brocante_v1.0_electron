@@ -11,6 +11,7 @@ import RefundAPI from '@/Data/Api/Refund';
 import { ISell } from '@/Data/Interfaces/Sell';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import Toast from '@/Data/Utilities/Toast';
+import { useTranslation } from 'react-i18next';
 
 interface RefundModalProps {
     open: boolean;
@@ -20,6 +21,7 @@ interface RefundModalProps {
 }
 
 const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const { currentSession } = useAppSelector((state) => state.cashSession);
 
@@ -53,17 +55,17 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
 
         const refundAmount = parseFloat(amount);
         if (isNaN(refundAmount) || refundAmount <= 0) {
-            setError('Montant invalide');
+            setError(t('refund.invalidAmount'));
             return;
         }
 
         if (refundAmount > refundableAmount) {
-            setError(`Le montant ne peut pas dépasser ${UtilMethods.formatNumber(refundableAmount)}`);
+            setError(t('refund.amountExceeds', { amount: UtilMethods.formatNumber(refundableAmount) }));
             return;
         }
 
         if (!reason || reason.trim().length < 5) {
-            setError('Veuillez fournir une raison (minimum 5 caractères)');
+            setError(t('refund.reasonRequired'));
             return;
         }
 
@@ -85,7 +87,7 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
                 dispatch(addToTotalRefunds(refundAmount));
             }
 
-            Toast.success('Remboursement enregistré avec succès', 3000, 'top-right');
+            Toast.success(t('refund.refundSuccess'), 3000, 'top-right');
 
             if (onRefundCreated) {
                 onRefundCreated();
@@ -93,7 +95,7 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
 
             handleClose();
         } catch (err: any) {
-            setError(err.message || 'Erreur lors de la création du remboursement');
+            setError(err.message || t('refund.refundError'));
         } finally {
             setLoading(false);
         }
@@ -140,10 +142,10 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
                     </Box>
                     <Box>
                         <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                            Remboursement
+                            {t('refund.refundModal')}
                         </Typography>
                         <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                            Vente: {sell.sell_code}
+                            {t('refund.sale')}: {sell.sell_code}
                         </Typography>
                     </Box>
                 </Box>
@@ -170,16 +172,16 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
                             my: 3,
                         }}>
                             <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#334155', mb: 1 }}>
-                                Informations de la vente
+                                {t('refund.saleInfo')}
                             </Typography>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                <Typography variant="body2" color="text.secondary">Montant total</Typography>
+                                <Typography variant="body2" color="text.secondary">{t('refund.totalAmount')}</Typography>
                                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
                                     {UtilMethods.formatNumber(sell.total_amount)}
                                 </Typography>
                             </Box>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <Typography variant="body2" color="text.secondary">Montant remboursable</Typography>
+                                <Typography variant="body2" color="text.secondary">{t('refund.refundableAmount')}</Typography>
                                 <Typography variant="body2" sx={{ fontWeight: 700, color: '#10b981' }}>
                                     {UtilMethods.formatNumber(refundableAmount)}
                                 </Typography>
@@ -188,7 +190,7 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
 
                         <FormControl component="fieldset" sx={{ mb: 3 }}>
                             <FormLabel component="legend" sx={{ fontWeight: 700, color: '#334155' }}>
-                                Type de remboursement
+                                {t('refund.refundType')}
                             </FormLabel>
                             <RadioGroup
                                 row
@@ -201,14 +203,14 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
                                     }
                                 }}
                             >
-                                <FormControlLabel value="full" control={<Radio />} label="Complet" />
-                                <FormControlLabel value="partial" control={<Radio />} label="Partiel" />
+                                <FormControlLabel value="full" control={<Radio />} label={t('refund.full')} />
+                                <FormControlLabel value="partial" control={<Radio />} label={t('refund.partial')} />
                             </RadioGroup>
                         </FormControl>
 
                         <TextField
                             fullWidth
-                            label="Montant à rembourser"
+                            label={t('refund.amountToRefund')}
                             type="number"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
@@ -227,26 +229,26 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
 
                         <FormControl component="fieldset" sx={{ mb: 3 }}>
                             <FormLabel component="legend" sx={{ fontWeight: 700, color: '#334155' }}>
-                                Méthode de paiement
+                                {t('sale.paymentMethod')}
                             </FormLabel>
                             <RadioGroup
                                 value={paymentMethod}
                                 onChange={(e) => setPaymentMethod(e.target.value as any)}
                             >
-                                <FormControlLabel value="Cash" control={<Radio />} label="Espèces (Cash)" />
-                                <FormControlLabel value="Orange Money" control={<Radio />} label="Orange Money" />
-                                <FormControlLabel value="MTN Money" control={<Radio />} label="MTN Money" />
+                                <FormControlLabel value="Cash" control={<Radio />} label={t('refund.cash')} />
+                                <FormControlLabel value="Orange Money" control={<Radio />} label={t('refund.orangeMoney')} />
+                                <FormControlLabel value="MTN Money" control={<Radio />} label={t('refund.mtnMoney')} />
                             </RadioGroup>
                         </FormControl>
 
                         <TextField
                             fullWidth
-                            label="Raison du remboursement"
+                            label={t('refund.reason')}
                             multiline
                             rows={3}
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            placeholder="Ex: Produit défectueux, client insatisfait, erreur de commande..."
+                            placeholder={t('refund.reasonPlaceholder')}
                             InputProps={{
                                 sx: { borderRadius: '12px' }
                             }}
@@ -261,7 +263,7 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
                     onClick={handleClose}
                     sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700 }}
                 >
-                    Annuler
+                    {t('common.cancel')}
                 </Button>
                 <Button
                     onClick={handleSubmit}
@@ -279,7 +281,7 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
                         }
                     }}
                 >
-                    Confirmer le remboursement
+                    {t('refund.confirmRefund')}
                 </Button>
             </DialogActions>
         </Dialog>

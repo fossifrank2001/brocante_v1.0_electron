@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Formik, Form, FormikHelpers, FormikProps } from 'formik';
+import React, { useState, useEffect, useRef } from 'react';
+import { Formik, Form, FormikHelpers, FormikProps, useFormikContext } from 'formik';
 import * as Yup from 'yup';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
@@ -16,8 +16,80 @@ import { Pages } from "Data/Objects/state";
 import { useAppContext } from "@/contexts/appContext";
 import { IProduct } from "Data/Interfaces/Supply";
 import Toast from '@/Data/Utilities/Toast';
+import DynamicTemplateForm from "Components/dashboard/products/formSteps/DynamicTemplateForm";
 
 interface FormValues extends IProductPayload { }
+
+// Component to auto-generate QR code when barcode or reference changes
+const AutoQRCodeGenerator: React.FC<{ productId?: number }> = ({ productId }) => {
+    const { values } = useFormikContext<FormValues>();
+    const prevBarcode = useRef(values.barcode);
+    const prevReference = useRef(values.internal_reference);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        // Only auto-generate for existing products (update mode)
+        if (!productId) return;
+
+        const barcodeChanged = values.barcode !== prevBarcode.current;
+        const referenceChanged = values.internal_reference !== prevReference.current;
+
+        if (barcodeChanged || referenceChanged) {
+            // Update refs
+            prevBarcode.current = values.barcode;
+            prevReference.current = values.internal_reference;
+
+            // Clear previous timeout
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+
+            // Debounce: wait 1 second after user stops typing
+            timeoutRef.current = setTimeout(async () => {
+                try {
+                    // Only generate if we have at least a reference
+                    if (values.internal_reference) {
+                        await ProductAPI.generateQRCode(productId);
+                    }
+                } catch (error) {
+                    // Silent fail - don't disturb user experience
+                    console.log('Auto QR generation failed:', error);
+                }
+            }, 1000);
+        }
+
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, [values.barcode, values.internal_reference, productId]);
+
+    return null; // This component doesn't render anything
+};
+
+// Bridge component that connects Formik context to DynamicTemplateForm
+const TemplateFormBridge: React.FC = () => {
+    const { values, setFieldValue } = useFormikContext<FormValues>();
+
+    const subCategoryIds = (values.subcategory_ids || [])
+        .filter(sub => sub && sub.id)
+        .map(sub => sub.id as number);
+
+    return (
+        <Box>
+            <DynamicTemplateForm
+                subCategoryIds={subCategoryIds}
+                templateId={values.template_id || null}
+                templateValues={values.template_values || {}}
+                onTemplateChange={(templateId) => setFieldValue('template_id', templateId)}
+                onValuesChange={(templateValues) => setFieldValue('template_values', templateValues)}
+            />
+            {/* Keep legacy ProductDetails as fallback for products without a template */}
+            {subCategoryIds.length === 0 && <ProductDetails />}
+        </Box>
+    );
+};
 
 interface IMultiFormProps {
     record?: IProduct;
@@ -45,6 +117,8 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
         stock_quantity: record?.stock_quantity ?? 0,
         unit_id: record?.unit_id ?? null,
         price_per_unit: record?.price_per_unit ?? null,
+        template_id: (record as any)?.template_id ?? null,
+        template_values: (record as any)?.template_values ?? {},
         category: record?.subcategories && record.subcategories.length > 0 
             ? String(record.subcategories[0].category_id) 
             : '',
@@ -117,16 +191,7 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
             ).min(1, 'Au moins une sous-catégorie est requise'),
         }),
         Yup.object({
-            product_details: Yup.object({
-                size: Yup.string(),
-                quality_class: Yup.string(),
-                material: Yup.string(),
-                color: Yup.string(),
-                brand: Yup.string(),
-                model: Yup.string(),
-                weight: Yup.string(),
-                dimensions: Yup.string(),
-            }),
+            template_values: Yup.object(),
         }),
         Yup.object({
             suppliers: Yup.array().of(
@@ -161,7 +226,14 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
                 if (record && id) {
                     await ProductAPI.update(id, payload as any);
                 } else {
-                    await ProductAPI.create(payload as any);
+                    const response = await ProductAPI.create(payload as any);
+                    if (response.data?.id && values.internal_reference) {
+                        try {
+                            await ProductAPI.generateQRCode(response.data.id);
+                        } catch (qrError) {
+                            console.log('QR generation for new product failed:', qrError);
+                        }
+                    }
                 }
                 actions.resetForm();
                 context.togglePageLoading(true);
@@ -247,6 +319,7 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
             >
                 {(formik: FormikProps<FormValues>) => (
                     <Form>
+                        <AutoQRCodeGenerator productId={id} />
                         <Box sx={{
                             minHeight: '400px',
                             maxHeight: 'calc(100vh - 350px)',
@@ -266,7 +339,7 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
                                     transition={{ duration: 0.3, ease: 'easeInOut' }}
                                 >
                                     {step === 0 && <ProductInfo categoryRecord={record ? record.subcategories[0]?.category : null} />}
-                                    {step === 1 && <ProductDetails />}
+                                    {step === 1 && <TemplateFormBridge />}
                                     {step === 2 && <SupplierInfo suppliersRecord={record ? record.suppliers : null} />}
                                 </motion.div>
                             </AnimatePresence>

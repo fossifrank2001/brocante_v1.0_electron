@@ -7,6 +7,7 @@ import UtilMethods from '@/Data/Utilities/UtilMethods'
 import { setActivePage } from '@/Data/Slices/NavigationSlice'
 import { motion } from 'framer-motion'
 import Logo from '@/Components/common/Logo'
+import { useTranslation } from 'react-i18next'
 
 const iconOfMenus: Record<string, string> = {
     DASHBOARD: 'ti ti-layout-dashboard',
@@ -31,6 +32,7 @@ const iconOfMenus: Record<string, string> = {
     POS_EXPRESS: 'ti ti-cash-register',
     SETTINGS: 'ti ti-settings',
     STOCK_MOVEMENTS: 'ti ti-arrows-exchange',
+    PRODUCT_TEMPLATES: 'ti ti-template',
 }
 
 const getMenuIcon = (code: string): string => {
@@ -43,6 +45,7 @@ interface AsideProps {
 }
 
 export default function Aside({ role = null, isSidebarOpen = true }: AsideProps) {
+    const { t } = useTranslation()
     const context = useAppContext()
     const dispatch = useAppDispatch()
     const { auth_access_id } = useAppSelector(state => state.userAuthorizing)
@@ -81,7 +84,7 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
             }
         } catch (e) {
             console.error(e)
-            setError('Failed to load menus. Please try again.')
+            setError(t('aside.failedToLoadMenus'))
         } finally {
             setIsLoading(false)
         }
@@ -148,7 +151,7 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
                     >
                         <span className="d-flex align-items-center gap-2">
                             <i className={getMenuIcon(parent.code)}></i>
-                            <span className="hide-menu" style={{ userSelect: 'none' }}>{UtilMethods.capitalizeFirstLetter(String(parent.label))}</span>
+                            <span className="hide-menu" style={{ userSelect: 'none' }}>{t(`menu.${parent.code}`)}</span>
                         </span>
                         {hasChildren && (
                             <i className={`ti ${isOpen ? 'ti-chevron-up' : 'ti-chevron-down'}`}></i>
@@ -179,7 +182,7 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
                                             <span>
                                                 <i className={getMenuIcon(child.code)}></i>
                                             </span>
-                                            <span className="hide-menu" style={{ userSelect: 'none' }}>{UtilMethods.capitalizeFirstLetter(String(child.label))}</span>
+                                            <span className="hide-menu" style={{ userSelect: 'none' }}>{t(`menu.${child.code}`)}</span>
                                         </motion.div>
                                     </li>
                                 )
@@ -246,7 +249,7 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
                     {/* Reload button - always visible */}
                     <div className="d-flex align-items-center justify-content-between px-3 py-2">
                         <small className="text-muted fw-semibold" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            Navigation
+                            {t('navigation.title')}
                         </small>
                         <motion.button
                             whileTap={{ scale: 0.85 }}
@@ -254,7 +257,7 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
                             transition={isLoading ? { duration: 1, repeat: Infinity, ease: 'linear' } : { duration: 0.2 }}
                             onClick={getMenus}
                             disabled={isLoading}
-                            title="Recharger les menus"
+                            title={t('navigation.reloadMenus')}
                             style={{
                                 background: 'none',
                                 border: '1px solid rgba(99,102,241,0.25)',
@@ -287,7 +290,7 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
                         ) : (
                             <li className="sidebar-item">
                                 <div className="sidebar-link d-flex flex-column gap-3">
-                                    <span>No menus available</span>
+                                    <span>{t('aside.noMenusAvailable')}</span>
                                 </div>
                             </li>
                         )}
@@ -311,7 +314,7 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
                                 <img src={user} className="rounded-circle" width="40" height="40" alt="modernize-img" />
                             </div>
                             <div className="john-title">
-                                <h6 className="mb-0 fs-4 fw-semibold">{`${authUser.last_name?.split(' ')[0] || 'User'}...`}</h6>
+                                <h6 className="mb-0 fs-4 fw-semibold">{`${authUser.last_name?.split(' ')[0] || t('aside.user')}...`}</h6>
                                 <span className="fs-2">{UtilMethods.getAuthRole(auth_access_id)}</span>
                             </div>
                             <motion.button

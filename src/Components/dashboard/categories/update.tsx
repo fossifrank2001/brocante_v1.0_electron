@@ -10,7 +10,7 @@ import { useAppContext } from '@/contexts/appContext';
 import CategoryAPI from '@/Data/Api/Category';
 import { ICategoryPayload, ICategory } from '@/Data/Interfaces/Category';
 import { IApiResponseBase } from '@/Data/Utilities/axiosInstance';
-import {
+import { useTranslation } from 'react-i18next';import {
     Box,
     Card,
     CardContent,
@@ -46,33 +46,34 @@ interface CategoryFormValues extends ICategoryPayload {
     sub_categories: SubCategory[];
 }
 
-const validationSchema = Yup.object({
-    label: Yup.string()
-        .required('Le nom de la catégorie est requis')
-        .max(50, 'Maximum 50 caractères'),
-    description: Yup.string()
-        .max(300, 'Maximum 300 caractères'),
-    sub_categories: Yup.array()
-        .of(
-            Yup.object({
-                label: Yup.string()
-                    .required('Le nom de la sous-catégorie est requis')
-                    .max(50, 'Maximum 50 caractères'),
-                description: Yup.string()
-                    .max(300, 'Maximum 300 caractères'),
-            })
-        )
-        .min(1, 'Au moins une sous-catégorie est requise'),
-});
 
 const UpdateCategory = () => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const context = useAppContext();
     const { id } = useAppSelector((state) => state.navigaton);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [category, setCategory] = useState<CategoryFormValues | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);    
+    const validationSchema = Yup.object({
+        label: Yup.string()
+            .required(t('category.categoryNameRequired'))
+            .max(50, t('category.max50Characters')),
+        description: Yup.string()
+            .max(300, t('category.max300Characters')),
+        sub_categories: Yup.array()
+            .of(
+                Yup.object({
+                    label: Yup.string()
+                        .required(t('category.subCategoryNameRequired'))
+                        .max(50, t('category.max50Characters')),
+                    description: Yup.string()
+                        .max(300, t('category.max300Characters')),
+                })
+            )
+            .min(1, t('category.atLeastOneSubCategory')),
+    });
 
     useEffect(() => {
         const fetchCategory = async () => {
@@ -89,7 +90,7 @@ const UpdateCategory = () => {
                 });
             } catch (err) {
                 console.error('Failed to fetch category:', err);
-                setError('Impossible de récupérer les données de la catégorie');
+                setError(t('category.fetchError'));
             } finally {
                 setIsLoading(false);
             }
@@ -108,7 +109,7 @@ const UpdateCategory = () => {
             dispatch(setActivePage({ page: Pages.CATEGORY }));
         } catch (error: any) {
             console.error('Failed to update category:', error);
-            setError('Échec de la mise à jour de la catégorie');
+            setError(t('category.updateError'));
             if (error.response?.data) {
                 formik.setErrors(error.response.data);
             }
@@ -135,7 +136,7 @@ const UpdateCategory = () => {
                     <Box sx={{ textAlign: 'center' }}>
                         <CircularProgress size={60} thickness={4} sx={{ color: '#6366f1', mb: 2 }} />
                         <Typography variant="body1" sx={{ color: '#64748b', fontWeight: 600 }}>
-                            Chargement de la catégorie...
+                            {t('category.loadingCategory')}
                         </Typography>
                     </Box>
                 </Fade>
@@ -146,7 +147,7 @@ const UpdateCategory = () => {
     return (
         <Box>
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <Breadcrumd parent="Administration" url={Pages.CATEGORY} _child={id} />
+                <Breadcrumd parent={t('menu.ADMINISTRATION')} url={Pages.CATEGORY} _child={id} />
 
                 <Grid container spacing={4} justifyContent="center">
                     <Grid item xs={12}>
@@ -163,7 +164,7 @@ const UpdateCategory = () => {
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                         <Box>
                                             <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-                                                Modifier Catégorie
+                                                {t('category.updateCategory')}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -173,7 +174,7 @@ const UpdateCategory = () => {
                                         onClick={() => dispatch(setActivePage({ page: Pages.CATEGORY }))}
                                         sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
                                     >
-                                        Retour
+                                        {t('common.back')}
                                     </Button>
                                 </Box>
 
@@ -182,8 +183,8 @@ const UpdateCategory = () => {
                                         <Grid item xs={12} md={5}>
                                             <TextField
                                                 fullWidth
-                                                label="Nom de la catégorie"
-                                                placeholder="ex: Électronique"
+                                                label={t('category.categoryName')}
+                                                placeholder={t('category.categoryNamePlaceholder')}
                                                 {...formik.getFieldProps('label')}
                                                 error={formik.touched.label && Boolean(formik.errors.label)}
                                                 helperText={formik.touched.label && formik.errors.label}
@@ -196,8 +197,8 @@ const UpdateCategory = () => {
                                         <Grid item xs={12} md={7}>
                                             <TextField
                                                 fullWidth
-                                                label="Description globale"
-                                                placeholder="Brève description de ce que contient cette catégorie..."
+                                                label={t('category.globalDescription')}
+                                                placeholder={t('category.globalDescriptionPlaceholder')}
                                                 {...formik.getFieldProps('description')}
                                                 error={formik.touched.description && Boolean(formik.errors.description)}
                                                 helperText={formik.touched.description && formik.errors.description}
@@ -212,10 +213,10 @@ const UpdateCategory = () => {
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, mt: 2 }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                                     <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>
-                                                        Sous-catégories
+                                                        {t('category.subCategories')}
                                                     </Typography>
                                                     <Chip
-                                                        label={`${formik.values.sub_categories.length} item(s)`}
+                                                        label={`${formik.values.sub_categories.length} ${t('common.items')}`}
                                                         size="small"
                                                         sx={{ fontWeight: 700, bgcolor: '#6366f1', color: 'white', borderRadius: '8px' }}
                                                     />
@@ -229,7 +230,7 @@ const UpdateCategory = () => {
                                                     ])}
                                                     sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, color: '#6366f1', borderColor: 'rgba(99, 102, 241, 0.4)' }}
                                                 >
-                                                    Ajouter
+                                                    {t('common.add')}
                                                 </Button>
                                             </Box>
 
@@ -266,8 +267,8 @@ const UpdateCategory = () => {
                                                                     <Grid item xs={12} md={5}>
                                                                         <TextField
                                                                             fullWidth
-                                                                            label={`Nom de la sous-catégorie ${index + 1}`}
-                                                                            placeholder="ex: Smartphones"
+                                                                            label={`${t('category.subCategoryName')} ${index + 1}`}
+                                                                            placeholder={t('category.subCategoryNamePlaceholder')}
                                                                             {...formik.getFieldProps(`sub_categories.${index}.label`)}
                                                                             error={formik.touched.sub_categories?.[index]?.label && Boolean((formik.errors.sub_categories?.[index] as any)?.label)}
                                                                             helperText={formik.touched.sub_categories?.[index]?.label && (formik.errors.sub_categories?.[index] as any)?.label}
@@ -280,8 +281,8 @@ const UpdateCategory = () => {
                                                                     <Grid item xs={12} md={7}>
                                                                         <TextField
                                                                             fullWidth
-                                                                            label="Description spécifique"
-                                                                            placeholder="Qu'est-ce qui caractérise cette sous-catégorie ?"
+                                                                            label={t('category.specificDescription')}
+                                                                            placeholder={t('category.specificDescriptionPlaceholder')}
                                                                             {...formik.getFieldProps(`sub_categories.${index}.description`)}
                                                                             error={formik.touched.sub_categories?.[index]?.description && Boolean((formik.errors.sub_categories?.[index] as any)?.description)}
                                                                             helperText={formik.touched.sub_categories?.[index]?.description && (formik.errors.sub_categories?.[index] as any)?.description}
@@ -325,7 +326,7 @@ const UpdateCategory = () => {
                                                 }
                                             }}
                                         >
-                                            Mettre à jour la Catégorie
+                                            {t('category.updateCategory')}
                                         </Button>
                                     </Box>
                                 </form>

@@ -34,9 +34,11 @@ import CustomAlert from '@/Components/CustomAlert';
 import { IAppContext, ISupply } from 'Interfaces';
 import SupplyAPI from "Data/Api/Suppliers.ts";
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import SupplierForm from './SupplierForm';
 
 export default function IndexSupply() {
+    const { t } = useTranslation();
     const context: IAppContext = useAppContext();
 
     const [isError, setIsError] = useState(false);
@@ -62,8 +64,8 @@ export default function IndexSupply() {
 
     useLayoutEffect(() => {
         context.togglePageLoading();
-        document.title = constants.APP_NAME + ' .:. Suppliers';
-    }, [context]);
+        document.title = constants.APP_NAME + ' .:. ' + t('navigation.suppliers');
+    }, [context, t]);
 
     const resetScroll = () => {
         window.scrollTo(0, 0);
@@ -152,7 +154,7 @@ export default function IndexSupply() {
             ...user,
             actions: (
                 <Stack direction="row" spacing={0.5}>
-                    <Tooltip title="Modifier" arrow TransitionComponent={Zoom}>
+                    <Tooltip title={t('common.edit')} arrow TransitionComponent={Zoom}>
                         <IconButton
                             size="small"
                             onClick={() => handleOpenFormModal(user)}
@@ -161,7 +163,7 @@ export default function IndexSupply() {
                             <Edit sx={{ fontSize: '18px' }} />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Supprimer" arrow TransitionComponent={Zoom}>
+                    <Tooltip title={t('common.delete')} arrow TransitionComponent={Zoom}>
                         <IconButton
                             size="small"
                             onClick={() => {
@@ -182,7 +184,7 @@ export default function IndexSupply() {
         () => [
             {
                 accessorKey: "name",
-                header: "Fournisseur",
+                header: t('supplier.supplier'),
                 size: 250,
                 Cell: ({ cell }) => (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -202,7 +204,7 @@ export default function IndexSupply() {
             },
             {
                 accessorKey: "contact_info",
-                header: "Contact",
+                header: t('supplier.contact'),
                 size: 250,
                 Cell: ({ cell }) => (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -215,12 +217,12 @@ export default function IndexSupply() {
             },
             {
                 accessorKey: "products_count",
-                header: "Produits",
+                header: t('supplier.products'),
                 size: 150,
                 Cell: ({ cell }) => (
                     <Chip
                         icon={<Inventory sx={{ fontSize: '14px !important' }} />}
-                        label={`${cell.getValue() || 0} Produits`}
+                        label={`${cell.getValue() || 0} ${t('supplier.products')}`}
                         size="small"
                         sx={{
                             fontWeight: 800,
@@ -235,7 +237,7 @@ export default function IndexSupply() {
             },
             {
                 accessorKey: "actions",
-                header: "Actions",
+                header: t('common.actions'),
                 size: 120,
                 enableColumnFilter: false,
                 enableSorting: false,
@@ -309,7 +311,7 @@ export default function IndexSupply() {
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: 2, p: 2, alignItems: 'center' }}>
                 <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b', mr: 2, display: { xs: 'none', md: 'block' } }}>
-                    Fournisseurs
+                    {t('navigation.suppliers')}
                 </Typography>
                 <Button
                     onClick={handleRefresh}
@@ -326,7 +328,7 @@ export default function IndexSupply() {
                         '&:hover': { bgcolor: '#f8fafc', borderColor: '#cbd5e1' }
                     }}
                 >
-                    Actualiser
+                    {t('common.refresh')}
                 </Button>
                 {UtilMethods.getHabilitations(authorizations, 'supply').canCreate && (
                     <Button
@@ -343,7 +345,7 @@ export default function IndexSupply() {
                             '&:hover': { transform: 'translateY(-1px)', boxShadow: '0 12px 20px -4px rgba(99, 102, 241, 0.4)' }
                         }}
                     >
-                        Nouveau Fournisseur
+                        {t('supplier.newSupplier')}
                     </Button>
                 )}
                 {UtilMethods.getHabilitations(authorizations, 'supply').canExport && (
@@ -358,7 +360,7 @@ export default function IndexSupply() {
                             '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.05)', color: '#6366f1' }
                         }}
                     >
-                        Exporter
+                        {t('common.export')}
                     </Button>
                 )}
             </Box>
@@ -385,7 +387,7 @@ export default function IndexSupply() {
                 content={{
                     style: 'ti ti-info-circle text text-danger',
                     icon: 'Warning',
-                    message: 'Voulez-vous vraiment supprimer ce fournisseur ?'
+                    message: t('supplier.deleteConfirmMessage')
                 }}
                 onHandleDelete={handleDelete}
                 onHandleOpenDetail={() => setOpenDetailModal(false)}

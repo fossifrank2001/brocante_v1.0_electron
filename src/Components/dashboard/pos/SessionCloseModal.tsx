@@ -11,6 +11,7 @@ import { closeSession } from '@/Data/Slices/dashboard/cashSessionSlice';
 import CashSessionAPI from '@/Data/Api/CashSession';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import ZReportPrintable from './ZReportPrintable';
+import { useTranslation } from 'react-i18next';
 
 interface SessionCloseModalProps {
     open: boolean;
@@ -18,6 +19,7 @@ interface SessionCloseModalProps {
 }
 
 const SessionCloseModal = ({ open, onClose }: SessionCloseModalProps) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const { currentSession, isClosing, error } = useAppSelector((state) => state.cashSession);
     const [actualCash, setActualCash] = useState<string>('');
@@ -101,10 +103,10 @@ const SessionCloseModal = ({ open, onClose }: SessionCloseModalProps) => {
                     </Box>
                     <Box>
                         <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                            Fermeture de Caisse
+                            {t('cashSession.closingTitle')}
                         </Typography>
                         <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                            Session: {currentSession?.session_code}
+                            {t('cashSession.sessionLabel')}: {currentSession?.session_code}
                         </Typography>
                     </Box>
                 </Box>
@@ -131,19 +133,19 @@ const SessionCloseModal = ({ open, onClose }: SessionCloseModalProps) => {
                             mb: 3,
                         }}>
                             <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#334155', mb: 2 }}>
-                                Résumé de la session
+                                {t('cashSession.sessionSummary')}
                             </Typography>
 
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                                 <Chip
-                                    label={`${summary?.stats?.sales_count ?? currentSession?.sales_count ?? 0} ventes`}
+                                    label={`${summary?.stats?.sales_count ?? currentSession?.sales_count ?? 0} ${t('common.sales')}`}
                                     color="primary"
                                     size="small"
                                     sx={{ fontWeight: 700 }}
                                 />
                                 {(summary?.stats?.canceled_count ?? 0) > 0 && (
                                     <Chip
-                                        label={`${summary?.stats?.canceled_count} annulées`}
+                                        label={`${summary?.stats?.canceled_count} ${t('common.canceled')}`}
                                         color="error"
                                         size="small"
                                         sx={{ fontWeight: 700 }}
@@ -155,26 +157,26 @@ const SessionCloseModal = ({ open, onClose }: SessionCloseModalProps) => {
 
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <Typography variant="body2" color="text.secondary">Fonds de départ</Typography>
+                                    <Typography variant="body2" color="text.secondary">{t('cashSession.openingBalance')}</Typography>
                                     <Typography variant="body2" sx={{ fontWeight: 700 }}>
                                         {UtilMethods.formatNumber(currentSession?.opening_balance ?? 0)}
                                     </Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <Typography variant="body2" color="text.secondary">Total des ventes</Typography>
+                                    <Typography variant="body2" color="text.secondary">{t('cashSession.totalSales')}</Typography>
                                     <Typography variant="body2" sx={{ fontWeight: 700, color: '#10b981' }}>
                                         + {UtilMethods.formatNumber(summary?.stats?.total_sales ?? currentSession?.total_sales ?? 0)}
                                     </Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <Typography variant="body2" color="text.secondary">Remboursements</Typography>
+                                    <Typography variant="body2" color="text.secondary">{t('refund.title')}</Typography>
                                     <Typography variant="body2" sx={{ fontWeight: 700, color: '#ef4444' }}>
                                         - {UtilMethods.formatNumber(summary?.stats?.total_refunds ?? currentSession?.total_refunds ?? 0)}
                                     </Typography>
                                 </Box>
                                 <Divider />
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <Typography variant="body1" sx={{ fontWeight: 800 }}>Cash théorique attendu</Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 800 }}>{t('cashSession.expectedCash')}</Typography>
                                     <Typography variant="body1" sx={{ fontWeight: 900, color: '#1e293b' }}>
                                         {UtilMethods.formatNumber(expectedCash)}
                                     </Typography>
@@ -184,7 +186,7 @@ const SessionCloseModal = ({ open, onClose }: SessionCloseModalProps) => {
 
                         <TextField
                             fullWidth
-                            label="Cash réel compté"
+                            label={t('cashSession.actualCashCounted')}
                             type="number"
                             value={actualCash}
                             onChange={(e) => setActualCash(e.target.value)}
@@ -203,12 +205,12 @@ const SessionCloseModal = ({ open, onClose }: SessionCloseModalProps) => {
                                 sx={{ mb: 3, borderRadius: '12px' }}
                             >
                                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                                    Écart: {UtilMethods.formatNumber(difference ?? 0)}
+                                    {t('cashSession.difference')}: {UtilMethods.formatNumber(difference ?? 0)}
                                     {Math.abs(difference) < 100
-                                        ? ' — Caisse équilibrée'
+                                        ? ` — ${t('cashSession.balanced')}`
                                         : difference > 0
-                                            ? ' — Excédent de caisse'
-                                            : ' — Déficit de caisse'
+                                            ? ` — ${t('cashSession.surplus')}`
+                                            : ` — ${t('cashSession.deficit')}`
                                     }
                                 </Typography>
                             </Alert>
@@ -216,12 +218,12 @@ const SessionCloseModal = ({ open, onClose }: SessionCloseModalProps) => {
 
                         <TextField
                             fullWidth
-                            label="Notes de clôture (optionnel)"
+                            label={t('cashSession.closingNotesOptional')}
                             multiline
                             rows={2}
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Observations sur la session..."
+                            placeholder={t('cashSession.closingNotesPlaceholder')}
                             InputProps={{
                                 sx: { borderRadius: '12px' }
                             }}
@@ -238,14 +240,14 @@ const SessionCloseModal = ({ open, onClose }: SessionCloseModalProps) => {
                     color="primary"
                     sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700 }}
                 >
-                    Imprimer Rapport Z
+                    {t('cashSession.printZReport')}
                 </Button>
                 <Box sx={{ display: 'flex', gap: 2 }}>
                     <Button
                         onClick={onClose}
                         sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700 }}
                     >
-                        Annuler
+                        {t('common.cancel')}
                     </Button>
                     <Button
                         onClick={handleClose}
@@ -263,7 +265,7 @@ const SessionCloseModal = ({ open, onClose }: SessionCloseModalProps) => {
                             }
                         }}
                     >
-                        Fermer la Caisse
+                        {t('cashSession.closeCashRegister')}
                     </Button>
                 </Box>
             </DialogActions>

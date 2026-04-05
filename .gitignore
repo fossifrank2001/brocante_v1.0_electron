@@ -12,6 +12,7 @@ dist
 dist-ssr
 dist_electron/
 release
+resources-portable/
 *.local
 
 # Editor directories and files

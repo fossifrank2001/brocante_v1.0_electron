@@ -18,6 +18,7 @@ import ActivityLogService from '@/Services/ActivityLogService';
 import { TPayment, TTransactionType } from '@/Data/Interfaces/Sell';
 import PrintDialog from './PrintDialog';
 import { ISellWithDetails } from '@/Services/ReceiptTemplate';
+import { useTranslation } from 'react-i18next';
 
 interface PosCheckoutDrawerProps {
     open: boolean;
@@ -28,6 +29,7 @@ const paymentMethods = ['Cash', 'Orange Money', 'MTN Money'];
 const predefinedAmounts = [500, 1000, 2000, 5000, 10000];
 
 const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const cart = useAppSelector(state => state.cart);
     const { currentSession } = useAppSelector(state => state.cashSession);
@@ -123,22 +125,22 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
     const handlePay = async () => {
         if (cart.items.length === 0) return;
         if (!currentSession) {
-            Toast.error('Veuillez ouvrir une session de caisse.');
+            Toast.error(t('posCheckout.openSessionRequired'));
             return;
         }
 
         if (needsCustomer && !selectedPerson) {
-            Toast.error('Un client est requis pour ce type de transaction.');
+            Toast.error(t('posCheckout.customerRequired'));
             return;
         }
 
         if (transactionType === 'advance' && actualAmountPaidInt <= 0) {
-            Toast.error('Veuillez entrer un montant d\'avance valide.');
+            Toast.error(t('posCheckout.invalidAdvanceAmount'));
             return;
         }
 
         if (transactionType === 'total' && actualAmountPaidInt < priceAfterBalance) {
-            Toast.error('Le montant reçu est insuffisant pour un règlement total.');
+            Toast.error(t('posCheckout.insufficientAmount'));
             return;
         }
 
@@ -188,7 +190,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                 payload as any
             );
 
-            Toast.success('Transaction validée avec succès !');
+            Toast.success(t('posCheckout.transactionSuccess'));
             dispatch(clearCart());
 
             // Prepare for printing
@@ -214,7 +216,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
 
         } catch (error) {
             console.error(error);
-            Toast.error("Erreur lors de l'encaissement.");
+            Toast.error(t('posCheckout.paymentError'));
         } finally {
             setLoading(false);
         }
@@ -222,21 +224,21 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
 
     const handleAddCustomer = async () => {
         if (!newCustomer.firstname || !newCustomer.lastname || !newCustomer.phone) {
-            Toast.error('Veuillez remplir tous les champs obligatoires.');
+            Toast.error(t('posCheckout.fillRequiredFields'));
             return;
         }
 
         try {
             setSubmittingCustomer(true);
             const { data }: any = await CustomerAPI.create(newCustomer as any);
-            Toast.success('Client créé avec succès !');
+            Toast.success(t('posCheckout.customerCreated'));
             setPersons(prev => [data, ...prev]);
             setSelectedPerson(data);
             setOpenAddCustomer(false);
             setNewCustomer({ firstname: '', lastname: '', phone: '' });
         } catch (error) {
             console.error(error);
-            Toast.error('Erreur lors de la création du client.');
+            Toast.error(t('posCheckout.customerCreationError'));
         } finally {
             setSubmittingCustomer(false);
         }
@@ -261,7 +263,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                     <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#4f46e5' }}>
                         <PointOfSale />
                     </Box>
-                    Processus d'Encaissement
+                    {t('posCheckout.checkoutProcess')}
                 </Typography>
                 <IconButton onClick={onClose} sx={{ color: '#94a3b8', '&:hover': { color: '#ef4444', bgcolor: 'rgba(239, 68, 68, 0.1)' } }}>
                     <Close />
@@ -275,7 +277,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                             <AccountCircle sx={{ color: '#1976d2' }} />
-                            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>Client (Optionnel)</Typography>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>{t('posCheckout.customerOptional')}</Typography>
                         </Box>
                         <Button
                             variant="text"
@@ -284,7 +286,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                             onClick={() => setOpenAddCustomer(true)}
                             sx={{ fontWeight: 800, textTransform: 'none', borderRadius: '8px' }}
                         >
-                            Nouveau
+                            {t('common.new')}
                         </Button>
                     </Box>
                     <Autocomplete
@@ -303,7 +305,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                         renderInput={(params) => (
                             <TextField
                                 {...params}
-                                placeholder="Rechercher un client..."
+                                placeholder={t('posCheckout.searchCustomer')}
                                 variant="outlined"
                                 onChange={(e) => {
                                     getCustomers(e.target.value);
@@ -327,7 +329,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                                     border: '1px solid #fecaca'
                                 }}>
                                     <Typography variant="body2" sx={{ fontWeight: 800, color: '#991b1b' }}>
-                                        Dette totale impayée
+                                        {t('posCheckout.totalUnpaidDebt')}
                                     </Typography>
                                     <Typography variant="body2" sx={{ fontWeight: 900, color: '#b91c1c' }}>
                                         {UtilMethods.formatNumber(totalDebtAmount as any)}
@@ -350,7 +352,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                                     />
                                     <label htmlFor="use_bal" style={{ cursor: 'pointer', flex: 1, display: 'flex', justifyContent: 'space-between' }}>
                                         <Typography variant="body2" sx={{ fontWeight: 700, color: '#065f46' }}>
-                                            Utiliser le solde disponible
+                                            {t('posCheckout.useAvailableBalance')}
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 900, color: '#047857' }}>
                                             +{UtilMethods.formatNumber(companyBalance)}
@@ -370,14 +372,14 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                     position: 'relative', overflow: 'hidden'
                 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '1px', mb: 1 }}>
-                        Net à Payer
+                        {t('posCheckout.netToPay')}
                     </Typography>
                     <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-0.02em', color: '#ffffff' }}>
                         {UtilMethods.formatNumber(priceAfterBalance)}
                     </Typography>
                     {useCompanyBalance && companyBalanceToUse > 0 && (
                         <Typography variant="body2" sx={{ mt: 1, color: 'rgba(255,255,255,0.7)', textDecoration: 'line-through' }}>
-                            Avant déduction : {UtilMethods.formatNumber(cart.totalPrice)}
+                            {t('posCheckout.beforeDeduction')}: {UtilMethods.formatNumber(cart.totalPrice)}
                         </Typography>
                     )}
                 </Box>
@@ -385,13 +387,13 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                 {/* 2. Transaction Type */}
                 <Box sx={{ mb: 4 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#64748b', mb: 1.5, textTransform: 'uppercase' }}>
-                        Type de Transaction
+                        {t('posCheckout.transactionType')}
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1, p: 0.5, bgcolor: 'white', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
                         {[
-                            { value: 'total', label: 'Total', icon: '✅', color: '#10b981' },
-                            { value: 'advance', label: 'Avance', icon: '⏳', color: '#f59e0b' },
-                            { value: 'loan', label: 'Crédit', icon: '🤝', color: '#3b82f6' }
+                            { value: 'total', label: t('posCheckout.total'), icon: '✅', color: '#10b981' },
+                            { value: 'advance', label: t('posCheckout.advance'), icon: '⏳', color: '#f59e0b' },
+                            { value: 'loan', label: t('posCheckout.credit'), icon: '🤝', color: '#3b82f6' }
                         ].map((t) => (
                             <Button
                                 key={t.value}
@@ -417,7 +419,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                 {transactionType !== 'loan' && (
                     <Box sx={{ mb: 4, p: 3, bgcolor: 'white', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.05)' }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#64748b', mb: 1.5, textTransform: 'uppercase' }}>
-                            Moyen de Paiement
+                            {t('posCheckout.paymentMethod')}
                         </Typography>
                         <Grid container spacing={1.5} sx={{ mb: 3 }}>
                             {paymentMethods.map(method => (
@@ -440,7 +442,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                         </Grid>
 
                         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#64748b', mb: 1.5, textTransform: 'uppercase' }}>
-                            {transactionType === 'total' ? 'Montant Reçu' : 'Montant de l\'Avance'}
+                            {transactionType === 'total' ? t('posCheckout.amountReceived') : t('posCheckout.advanceAmount')}
                         </Typography>
                         <TextField
                             fullWidth
@@ -460,7 +462,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                             <>
                                 <Box sx={{ display: 'flex', gap: 1, mt: 1.5, flexWrap: 'wrap' }}>
                                     <Chip
-                                        label="Exact"
+                                        label={t('posCheckout.exact')}
                                         onClick={() => setAmountGiven(priceAfterBalance.toString())}
                                         sx={{ borderRadius: '8px', fontWeight: 800, bgcolor: '#e0e7ff', color: '#4f46e5' }}
                                     />
@@ -482,7 +484,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                                     display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                                 }}>
                                     <Typography sx={{ fontWeight: 800, color: expectedChange > 0 ? '#166534' : '#64748b' }}>
-                                        Monnaie à rendre
+                                        {t('posCheckout.changeToGive')}
                                     </Typography>
                                     <Typography sx={{ fontWeight: 900, fontSize: '1.2rem', color: expectedChange > 0 ? '#15803d' : '#94a3b8' }}>
                                         {UtilMethods.formatNumber(expectedChange)}
@@ -493,7 +495,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
 
                         {transactionType === 'advance' && (
                             <Box sx={{ mt: 2, p: 2, bgcolor: '#fffbed', borderRadius: '16px', border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between' }}>
-                                <Typography sx={{ fontWeight: 700, color: '#b45309' }}>Reste à payer (Dette)</Typography>
+                                <Typography sx={{ fontWeight: 700, color: '#b45309' }}>{t('posCheckout.remainingToPay')}</Typography>
                                 <Typography sx={{ fontWeight: 900, color: '#b45309' }}>{UtilMethods.formatNumber(remainingBalance)}</Typography>
                             </Box>
                         )}
@@ -505,11 +507,11 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                     <Box sx={{ mb: 4, p: 3, bgcolor: 'white', borderRadius: '20px', border: '1px solid #bfdbfe' }}>
                         {transactionType === 'loan' && (
                             <Alert severity="info" sx={{ mb: 2, borderRadius: '12px' }}>
-                                La totalité du montant ({UtilMethods.formatNumber(priceAfterBalance)}) sera classée en dette.
+                                {t('posCheckout.loanAlert', { amount: UtilMethods.formatNumber(priceAfterBalance) })}
                             </Alert>
                         )}
                         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#1e40af', mb: 1.5 }}>
-                            Date limite de règlement
+                            {t('posCheckout.paymentDueDate')}
                         </Typography>
                         <TextField
                             type="date"
@@ -543,7 +545,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                         '&.Mui-disabled': { bgcolor: '#e2e8f0', color: '#94a3b8' }
                     }}
                 >
-                    {loading ? 'Traitement...' : `Valider (${UtilMethods.formatNumber(priceAfterBalance)})`}
+                    {loading ? t('common.processing') : `${t('common.validate')} (${UtilMethods.formatNumber(priceAfterBalance)})`}
                 </Button>
             </Box>
 
@@ -555,12 +557,12 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
             >
                 <Box sx={{ p: 3 }}>
                     <Typography variant="h6" sx={{ fontWeight: 900, mb: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <PersonAdd color="primary" /> Nouveau Client
+                        <PersonAdd color="primary" /> {t('posCheckout.newCustomer')}
                     </Typography>
                     <Grid container spacing={2}>
                         <Grid item xs={6}>
                             <TextField
-                                label="Prénom"
+                                label={t('user.firstname')}
                                 fullWidth
                                 value={newCustomer.firstname}
                                 onChange={(e) => setNewCustomer(prev => ({ ...prev, firstname: e.target.value }))}
@@ -569,7 +571,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                         </Grid>
                         <Grid item xs={6}>
                             <TextField
-                                label="Nom"
+                                label={t('user.lastname')}
                                 fullWidth
                                 value={newCustomer.lastname}
                                 onChange={(e) => setNewCustomer(prev => ({ ...prev, lastname: e.target.value }))}
@@ -578,7 +580,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                         </Grid>
                         <Grid item xs={12}>
                             <TextField
-                                label="Téléphone"
+                                label={t('user.phone')}
                                 fullWidth
                                 value={newCustomer.phone}
                                 onChange={(e) => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
@@ -593,7 +595,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                             onClick={() => setOpenAddCustomer(false)}
                             sx={{ borderRadius: '12px', fontWeight: 800, textTransform: 'none' }}
                         >
-                            Annuler
+                            {t('common.cancel')}
                         </Button>
                         <Button
                             fullWidth
@@ -602,7 +604,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                             onClick={handleAddCustomer}
                             sx={{ borderRadius: '12px', fontWeight: 800, textTransform: 'none' }}
                         >
-                            {submittingCustomer ? <CircularProgress size={24} /> : 'Enregistrer'}
+                            {submittingCustomer ? <CircularProgress size={24} /> : t('common.save')}
                         </Button>
                     </Box>
                 </Box>

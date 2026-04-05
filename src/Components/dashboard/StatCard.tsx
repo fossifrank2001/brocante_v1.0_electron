@@ -7,6 +7,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import {useAppDispatch} from "@/hooks";
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from 'Data/Objects/state';
+import { useTranslation } from 'react-i18next';
 
 interface StatCardProps {
     title: string;
@@ -24,6 +25,7 @@ export const StatCard: React.FC<StatCardProps> = ({
 }) => {
     const theme = useTheme();
     const dispatch = useAppDispatch();
+    const { t } = useTranslation();
 
     const handleViewMore = () => {
         viewMorePath && dispatch(setActivePage({ page: viewMorePath, search: viewMoreParams || null }));
@@ -125,8 +127,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                                     backgroundColor: alpha(theme.palette[color].main, 0.1),
                                 }
                             }}
-                        >
-                            View more
+                        >{t('stats.viewMore')}
                         </Button>
                     </Box>
                 )}

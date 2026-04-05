@@ -241,5 +241,33 @@ export default class UtilMethods {
             currency: 'XAF',
         }).format(num);
     }
+
+    /**
+     * Format amount according to the current language/locale
+     * @param value - The number to format
+     * @param locale - Optional locale (e.g., 'fr', 'en'). If not provided, uses current i18n language
+     * @returns Formatted currency string
+     */
+    static formatAmount(value: number | string, locale?: string): string
+    {
+        if (value === undefined || value == null) {
+            return 'N/A';
+        }
+        const num: number = typeof value === 'string' ? parseFloat(value) : value;
+        if (isNaN(num)) {
+            return 'N/A';
+        }
+
+        // Determine locale based on language
+        const lang = locale || localStorage.getItem('i18nextLng') || 'fr';
+        const numLocale = lang === 'en' ? 'en-US' : 'fr-FR';
+
+        return new Intl.NumberFormat(numLocale, {
+            style: 'currency',
+            currency: 'XAF',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(num);
+    }
     
 }

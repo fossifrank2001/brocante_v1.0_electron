@@ -76,7 +76,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, imageUrl, name, price, ol
                     {/* Image Area */}
                     <Box sx={{ position: 'relative', overflow: 'hidden', height: '180px' }}>
                         <motion.img
-                            src={imageUrl ? Constants.URL + '/' + imageUrl : noImage as never}
+                            src={
+                                imageUrl 
+                                    ? (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') 
+                                        ? imageUrl 
+                                        : Constants.URL + '/' + imageUrl)
+                                    : noImage as never
+                            }
                             alt={name}
                             animate={{ scale: isHovered ? 1.05 : 1 }}
                             transition={{ duration: 0.6 }}

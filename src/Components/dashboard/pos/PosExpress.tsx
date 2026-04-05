@@ -21,10 +21,12 @@ import noImage from '@/assets/images/products/no_image.png';
 import Toast from '@/Data/Utilities/Toast';
 import QuantityDialog from './QuantityDialog';
 import PosCheckoutDrawer from './PosCheckoutDrawer';
+import { useTranslation } from 'react-i18next';
 
 const POS_PER_PAGE = 50;
 
 const PosExpress: React.FC = () => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const cart = useAppSelector((state) => state.cart);
     const { currentSession } = useAppSelector((state) => state.cashSession);
@@ -127,7 +129,7 @@ const PosExpress: React.FC = () => {
 
     const handleAddProduct = (product: IProduct) => {
         if (product.stock_quantity <= 0) {
-            Toast.error('Produit en rupture de stock');
+            Toast.error(t('product.outOfStock'));
             return;
         }
 
@@ -168,11 +170,11 @@ const PosExpress: React.FC = () => {
 
     const handleGoToCheckout = () => {
         if (!currentSession) {
-            Toast.error('Veuillez ouvrir une session de caisse.', 3000, 'top-center');
+            Toast.error(t('pos.openCashSessionRequired'), 3000, 'top-center');
             return;
         }
         if (cart.items.length === 0) {
-            Toast.error('Le panier est vide.');
+            Toast.error(t('pos.cartEmpty'));
             return;
         }
         setCheckoutDrawerOpen(true);
@@ -187,14 +189,14 @@ const PosExpress: React.FC = () => {
                 if (res && res.data) {
                     handleAddProduct(res.data);
                     setSearchTerm('');
-                    Toast.success(`${res.data.name} ajouté au panier`);
+                    Toast.success(t('pos.addedToCart', { name: res.data.name }));
                 }
             } catch (err: unknown) {
                 console.error(err);
                 if ((err as any).response?.status === 404) {
                     // Do nothing, maybe it's a partial text search
                 } else {
-                    Toast.error('Erreur lors de la recherche du code');
+                    Toast.error(t('pos.searchError'));
                 }
             } finally {
                 setIsScanning(false);
@@ -225,7 +227,7 @@ const PosExpress: React.FC = () => {
                             inputRef={searchRef}
                             sx={{ flex: 3 }}
                             size="small"
-                            placeholder="Rechercher ou scanner... (F3)"
+                            placeholder={t('pos.searchPlaceholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             onKeyDown={handleSearchKeyPress}
@@ -251,13 +253,13 @@ const PosExpress: React.FC = () => {
                         />
 
                         <FormControl sx={{ flex: 2 }} size="small">
-                            <InputLabel id="category-filter-label" sx={{ fontWeight: 700, color: '#64748b' }}>Filtrer par catégories</InputLabel>
+                            <InputLabel id="category-filter-label" sx={{ fontWeight: 700, color: '#64748b' }}>{t('pos.filterByCategory')}</InputLabel>
                             <Select
                                 labelId="category-filter-label"
                                 multiple
                                 value={selectedCategoryIds}
                                 onChange={(e) => setSelectedCategoryIds(typeof e.target.value === 'string' ? [] : (e.target.value as number[]))}
-                                input={<OutlinedInput label="Filtrer par catégories" sx={{ borderRadius: '16px', bgcolor: 'rgba(255,255,255,0.9)', fontWeight: 700 }} />}
+                                input={<OutlinedInput label={t('pos.filterByCategory')} sx={{ borderRadius: '16px', bgcolor: 'rgba(255,255,255,0.9)', fontWeight: 700 }} />}
                                 renderValue={(selected) => (
                                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                         {selected.map((id) => (
@@ -298,7 +300,7 @@ const PosExpress: React.FC = () => {
                             <Box sx={{ p: 3, bgcolor: 'rgba(255,255,255,0.5)', borderRadius: '50%', mb: 2 }}>
                                 <Category sx={{ fontSize: 64, opacity: 0.3 }} />
                             </Box>
-                            <Typography variant="h6" sx={{ fontWeight: 800, color: '#64748b' }}>Aucun produit trouvé</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 800, color: '#64748b' }}>{t('pos.noProductsFound')}</Typography>
                         </Box>
                     ) : (
                         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 1 }}>
@@ -329,13 +331,13 @@ const PosExpress: React.FC = () => {
                 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 800 }}>
-                            {products.length} résultat{products.length > 1 ? 's' : ''}
+                            {t('pos.results', { count: products.length })}
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 2 }}>
                             {[
-                                { key: 'F3', label: 'Recherche' },
-                                { key: 'F12', label: 'Payer' },
-                                { key: 'ESC', label: 'Effacer' },
+                                { key: 'F3', label: t('pos.search') },
+                                { key: 'F12', label: t('pos.pay') },
+                                { key: 'ESC', label: t('pos.clear') },
                             ].map(s => (
                                 <Box key={s.key} sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
                                     <Box sx={{
@@ -375,15 +377,15 @@ const PosExpress: React.FC = () => {
                             </Box>
                             <Box>
                                 <Typography variant="h6" sx={{ fontWeight: 900, fontSize: '1.1rem', color: '#1e293b', lineHeight: 1 }}>
-                                    Ticket
+                                    {t('pos.ticket')}
                                 </Typography>
                                 <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
-                                    Session active
+                                    {t('pos.activeSession')}
                                 </Typography>
                             </Box>
                         </Box>
                         {cart.items.length > 0 && (
-                            <Tooltip title="Vider le panier (Corbeille)">
+                            <Tooltip title={t('pos.clearCart')}>
                                 <IconButton size="small" onClick={() => dispatch(clearCart())} sx={{ color: '#ef4444', bgcolor: 'rgba(239, 68, 68, 0.1)', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.2)' } }}>
                                     <Delete fontSize="small" />
                                 </IconButton>
@@ -397,8 +399,8 @@ const PosExpress: React.FC = () => {
                             <Box sx={{ p: 3, bgcolor: 'rgba(241, 245, 249, 0.5)', borderRadius: '50%', width: 100, height: 100, mx: 'auto', mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <ShoppingCart sx={{ fontSize: 48, opacity: 0.5 }} />
                             </Box>
-                            <Typography variant="body1" sx={{ fontWeight: 800, color: '#94a3b8' }}>Ticket vierge</Typography>
-                            <Typography variant="caption" sx={{ color: '#cbd5e1', fontWeight: 600 }}>Prêt pour l'encaissement</Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 800, color: '#94a3b8' }}>{t('pos.emptyTicket')}</Typography>
+                            <Typography variant="caption" sx={{ color: '#cbd5e1', fontWeight: 600 }}>{t('pos.readyForPayment')}</Typography>
                         </Box>
                     ) : (
                         <AnimatePresence>
@@ -410,16 +412,16 @@ const PosExpress: React.FC = () => {
                 </Box>
                 <Box sx={{ p: 3, pt: 2, background: 'rgba(248, 250, 252, 0.5)', borderTop: '1px solid rgba(255, 255, 255, 0.8)' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 700 }}>Articles au total</Typography>
+                        <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 700 }}>{t('pos.totalItems')}</Typography>
                         <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>{cart.totalQuantity}</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
-                        <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b' }}>Total</Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b' }}>{t('common.total')}</Typography>
                         <Box sx={{ textAlign: 'right' }}>
                             <Typography variant="h4" sx={{ fontWeight: 900, color: '#4f46e5', letterSpacing: '-0.03em' }}>
                                 {UtilMethods.formatNumber(cart.totalPrice)}
                             </Typography>
-                            <Typography variant="caption" sx={{ color: '#10b981', fontWeight: 800 }}>TTC Inclus</Typography>
+                            <Typography variant="caption" sx={{ color: '#10b981', fontWeight: 800 }}>{t('pos.vatIncluded')}</Typography>
                         </Box>
                     </Box>
                     <Button
@@ -437,7 +439,7 @@ const PosExpress: React.FC = () => {
                             '&.Mui-disabled': { color: '#94a3b8' }
                         }}
                     >
-                        Payer (F12)
+                        {t('pos.payButton')}
                     </Button>
                 </Box>
             </Paper>
@@ -459,8 +461,13 @@ const PosExpress: React.FC = () => {
 
 /* ─── Compact Product Card for POS Grid - PREMIUM ─── */
 const PosProductCard: React.FC<{ product: IProduct; onAdd: (p: IProduct) => void }> = ({ product, onAdd }) => {
+    const { t } = useTranslation();
     const outOfStock = product.stock_quantity <= 0;
-    const thumbnail = product.thumbnail?.path ? `${Constants.URL}/${product.thumbnail.path}` : noImage;
+    const thumbnail = product.thumbnail?.path 
+        ? (product.thumbnail.path.startsWith('http://') || product.thumbnail.path.startsWith('https://') 
+            ? product.thumbnail.path 
+            : `${Constants.URL}/${product.thumbnail.path}`)
+        : noImage;
 
     return (
         <motion.div
@@ -519,7 +526,7 @@ const PosProductCard: React.FC<{ product: IProduct; onAdd: (p: IProduct) => void
                         zIndex: 2
                     }}>
                         <Chip
-                            label={outOfStock ? 'Épuisé' : `Stock: ${product.unit?.allows_decimal ? Number(product.stock_quantity).toFixed(3) : Number(product.stock_quantity).toFixed(0)}`}
+                            label={outOfStock ? t('product.outOfStockShort') : `${t('pos.stock')}: ${product.unit?.allows_decimal ? Number(product.stock_quantity).toFixed(3) : Number(product.stock_quantity).toFixed(0)}`}
                             size="small"
                             sx={{
                                 height: 22,

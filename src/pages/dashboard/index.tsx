@@ -32,6 +32,7 @@ import CategoryAPI from '@/Data/Api/Category';
 import { ICategory } from 'Data/Interfaces';
 import ReactApexChart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
+import { useTranslation } from 'react-i18next';
 
 const glassContainerStyle = {
     borderRadius: '24px',
@@ -91,6 +92,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export const DashboardIndicator: React.FC = () => {
+    const { t } = useTranslation();
     const [accountStats, setAccountStats] = useState<AccountStats | null>(null);
     const [salesStats, setSalesStats] = useState<SaleStats | null>(null);
     const [productStats, setProductStats] = useState<ProductStats | null>(null);
@@ -139,7 +141,7 @@ export const DashboardIndicator: React.FC = () => {
                 setAccountStats(accountResponse.data as AccountStats);
             }
         } catch (err) {
-            setError('Échec du chargement des données. Veuillez réessayer.');
+            setError(t('dashboard.errorLoadingData'));
             console.error('Dashboard error:', err);
         } finally {
             setLoading(false);
@@ -151,7 +153,7 @@ export const DashboardIndicator: React.FC = () => {
         const categories = chartsData?.sales_overview?.days ?? [];
 
         return {
-            series: [{ name: 'Ventes payées', data: seriesData }],
+            series: [{ name: t('dashboard.paidSales'), data: seriesData }],
             options: {
                 chart: {
                     type: 'bar',
@@ -184,14 +186,14 @@ export const DashboardIndicator: React.FC = () => {
                             fontWeight: 600,
                             fontSize: '12px'
                         },
-                        formatter: (value) => `${value} FCFA`,
+                        formatter: (value) => UtilMethods.formatAmount(value),
                     }
                 },
                 grid: { borderColor: 'rgba(226, 232, 240, 0.6)' },
                 colors: ['#6366f1'],
                 tooltip: {
                     theme: 'light',
-                    y: { formatter: (value) => `${value} FCFA` },
+                    y: { formatter: (value) => UtilMethods.formatAmount(value) },
                 },
             }
         };
@@ -216,7 +218,7 @@ export const DashboardIndicator: React.FC = () => {
                 dataLabels: { enabled: false },
                 tooltip: {
                     theme: 'light',
-                    y: { formatter: (value) => `${value} FCFA` },
+                    y: { formatter: (value) => UtilMethods.formatAmount(value) },
                 },
                 plotOptions: {
                     pie: {
@@ -226,9 +228,9 @@ export const DashboardIndicator: React.FC = () => {
                                 total: {
                                     show: true,
                                     showAlways: true,
-                                    label: 'Total',
+                                    label: t('dashboard.total'),
                                     formatter: function (w) {
-                                        return w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0) + ' FCFA';
+                                        return UtilMethods.formatAmount(w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0));
                                     }
                                 }
                             }
@@ -354,7 +356,7 @@ export const DashboardIndicator: React.FC = () => {
     }
 
     return <Box sx={{ position: 'relative' }}>
-        <Tooltip title="Rafraîchir" arrow>
+        <Tooltip title={t('dashboard.refresh')} arrow>
             <IconButton
                 onClick={handleRefresh}
                 disabled={loading}
@@ -415,7 +417,7 @@ export const DashboardIndicator: React.FC = () => {
                         >
                             <Tab
                                 icon={<TrendingUp />}
-                                label="Ventes"
+                                label={t('dashboard.sales')}
                                 iconPosition="start"
                                 sx={{
                                     textTransform: 'none',
@@ -430,7 +432,7 @@ export const DashboardIndicator: React.FC = () => {
                             {UtilMethods.isAdmin() && (
                                 <Tab
                                     icon={<AccountBalance />}
-                                    label="Comptes"
+                                    label={t('dashboard.accounts')}
                                     iconPosition="start"
                                     sx={{
                                         textTransform: 'none',
@@ -445,7 +447,7 @@ export const DashboardIndicator: React.FC = () => {
                             )}
                             <Tab
                                 icon={<Inventory />}
-                                label="Produits"
+                                label={t('dashboard.products')}
                                 iconPosition="start"
                                 sx={{
                                     textTransform: 'none',
@@ -462,7 +464,7 @@ export const DashboardIndicator: React.FC = () => {
                         <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
                             <TextField
                                 type="date"
-                                label="Date de début"
+                                label={t('dashboard.startDate')}
                                 value={startDate}
                                 onChange={(e) => handleDateChange('start', e.target.value)}
                                 InputLabelProps={{ shrink: true }}
@@ -481,7 +483,7 @@ export const DashboardIndicator: React.FC = () => {
                             />
                             <TextField
                                 type="date"
-                                label="Date de fin"
+                                label={t('dashboard.endDate')}
                                 value={endDate}
                                 onChange={(e) => handleDateChange('end', e.target.value)}
                                 InputLabelProps={{ shrink: true }}
@@ -502,7 +504,7 @@ export const DashboardIndicator: React.FC = () => {
                             {UtilMethods.isAdmin() && (
                                 <TextField
                                     select
-                                    label="Vendeur"
+                                    label={t('dashboard.seller')}
                                     value={selectedSellerId}
                                     onChange={(e) => setSelectedSellerId(e.target.value)}
                                     InputLabelProps={{ shrink: true }}
@@ -521,7 +523,7 @@ export const DashboardIndicator: React.FC = () => {
                                     }}
                                 >
                                     <MenuItem value="">
-                                        {isLoadingSellers ? 'Chargement...' : 'Tous les vendeurs'}
+                                        {isLoadingSellers ? t('common.loading') : t('dashboard.allSellers')}
                                     </MenuItem>
                                     {sellers.map(s => (
                                         <MenuItem key={s.id} value={String(s.id)}>{s.label}</MenuItem>
@@ -531,7 +533,7 @@ export const DashboardIndicator: React.FC = () => {
 
                             <TextField
                                 select
-                                label="Catégorie"
+                                label={t('dashboard.category')}
                                 value={selectedCategoryId}
                                 onChange={(e) => setSelectedCategoryId(e.target.value)}
                                 InputLabelProps={{ shrink: true }}
@@ -550,7 +552,7 @@ export const DashboardIndicator: React.FC = () => {
                                 }}
                             >
                                 <MenuItem value="">
-                                    {isLoadingCategories ? 'Chargement...' : 'Toutes les catégories'}
+                                    {isLoadingCategories ? t('common.loading') : t('dashboard.allCategories')}
                                 </MenuItem>
                                 {categories.map(c => (
                                     <MenuItem key={c.id} value={String(c.id)}>{c.label}</MenuItem>
@@ -583,7 +585,7 @@ export const DashboardIndicator: React.FC = () => {
                                             <Card sx={{ ...glassCardStyle }}>
                                                 <CardContent sx={{ p: 4 }}>
                                                     <Typography sx={{ fontWeight: 800, color: '#1e293b', mb: 2 }}>
-                                                        Aperçu des ventes
+                                                        {t('dashboard.salesOverview')}
                                                     </Typography>
                                                     <ReactApexChart options={salesChart.options} series={salesChart.series} type="bar" height={330} />
                                                 </CardContent>
@@ -593,7 +595,7 @@ export const DashboardIndicator: React.FC = () => {
                                             <Card sx={{ ...glassCardStyle }}>
                                                 <CardContent sx={{ p: 4 }}>
                                                     <Typography sx={{ fontWeight: 800, color: '#1e293b', mb: 2 }}>
-                                                        Répartition des revenus
+                                                        {t('dashboard.revenueDistribution')}
                                                     </Typography>
                                                     <ReactApexChart options={revenueChart.options} series={revenueChart.series} type="donut" height={330} />
                                                 </CardContent>

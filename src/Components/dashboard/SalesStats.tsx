@@ -8,12 +8,14 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import {Pages} from "Data/Objects/state.ts";
 import UtilMethods from "Data/Utilities/UtilMethods.ts";
 import {SaleStats} from "Data/Interfaces/dashboard.ts";
+import { useTranslation } from 'react-i18next';
 
 type SalesStatsProps = {
     stats: SaleStats;
 };
 
 export const SalesStats: React.FC<SalesStatsProps> = ({ stats }) => {
+    const { t } = useTranslation();
 
     const getStatusIcon = (status: string) => {
         switch (status.toLowerCase()) {
@@ -50,11 +52,11 @@ export const SalesStats: React.FC<SalesStatsProps> = ({ stats }) => {
             <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
                     <StatCard
-                        title="Total Sales"
+                        title={t('stats.totalSales')}
                         value={stats.sales.total.count}
                         subtitle={<>
                             <div>
-                                Total Amount: <strong>{UtilMethods.formatNumber(stats.sales.total.amount)}</strong>
+                                {t('stats.totalAmount')}: <strong>{UtilMethods.formatAmount(stats.sales.total.amount)}</strong>
                             </div>
                         </>}
                         icon={<ShoppingCartIcon />}
@@ -66,11 +68,11 @@ export const SalesStats: React.FC<SalesStatsProps> = ({ stats }) => {
                 {Object.entries(stats.sales.status).map(([status, data]) => (
                     <Grid item xs={12} sm={6} md={3} key={status}>
                         <StatCard
-                            title={`${status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}`}
+                            title={t(`sales.status.${status}`)}
                             value={data.count ?? 0}
                             subtitle={<>
                                 <div>
-                                    Amount: <strong>{UtilMethods.formatNumber(data.amount ?? 0)}</strong>
+                                    {t('stats.amount')}: <strong>{UtilMethods.formatAmount(data.amount ?? 0)}</strong>
                                 </div>
                             </>}
                             icon={getStatusIcon(status)}

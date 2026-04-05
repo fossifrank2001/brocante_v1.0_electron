@@ -16,13 +16,13 @@ import Layout from '@/layout';
 import LockScreen from "Components/LockScreen.tsx";
 
 const scripts = [
-  '@/assets/libs/jquery/dist/jquery.min.js',
-  '@/assets/js/sidebarmenu.js',
-  '@/assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js',
-  '@/assets/js/app.min.js',
-  '@/assets/libs/apexcharts/dist/apexcharts.min.js',
-  '@/assets/libs/simplebar/dist/simplebar.js',
-  '@/assets/js/dashboard.js'
+  '/assets/libs/jquery/dist/jquery.min.js',
+  '/assets/js/sidebarmenu.js',
+  '/assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js',
+  '/assets/js/app.min.js',
+  '/assets/libs/apexcharts/dist/apexcharts.min.js',
+  '/assets/libs/simplebar/dist/simplebar.js',
+  '/assets/js/dashboard.js'
 ];
 
 const loadScript = (src: string): Promise<void> => {
@@ -138,7 +138,7 @@ const App: React.FC = () => {
             await handleRedirectToDashboard(authUser.accesses[0].id, dispatch);
           }
         }
-      } else if (!token && currentPage !== Pages.LOGIN && currentPage !== Pages.ONBOARDING && currentPage !== Pages.HOME) {
+      } else if (!token && currentPage !== Pages.LOGIN && currentPage !== Pages.ONBOARDING && currentPage !== Pages.HOME && currentPage !== Pages.FORGOT_PAGE && currentPage !== Pages.RESET_PAGE) {
         // Si pas de token et qu'on est sur une page protégée, rediriger vers login
         dispatch(redirectToLogin());
       }

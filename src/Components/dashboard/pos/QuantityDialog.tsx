@@ -5,6 +5,7 @@ import {
 } from '@mui/material';
 import { IProduct } from '@/Data/Interfaces/Supply';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
     open: boolean;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 const QuantityDialog: React.FC<Props> = ({ open, product, onClose, onConfirm }) => {
+    const { t } = useTranslation();
     const [quantity, setQuantity] = useState<string>('');
 
     const handleConfirm = () => {
@@ -21,7 +23,10 @@ const QuantityDialog: React.FC<Props> = ({ open, product, onClose, onConfirm }) 
         if (isNaN(qty) || qty <= 0) return;
         
         if (product && qty > product.stock_quantity) {
-            alert(`Stock insuffisant. Disponible: ${product.stock_quantity} ${product.unit?.abbreviation || ''}`);
+            alert(t('quantityDialog.insufficientStock', { 
+                stock: product.stock_quantity, 
+                unit: product.unit?.abbreviation || '' 
+            }));
             return;
         }
 
@@ -51,17 +56,17 @@ const QuantityDialog: React.FC<Props> = ({ open, product, onClose, onConfirm }) 
             <DialogContent>
                 <Box sx={{ mb: 2 }}>
                     <Typography variant="body2" sx={{ color: '#64748b', mb: 0.5 }}>
-                        Prix unitaire: <strong>{UtilMethods.formatNumber(unitPrice)}</strong> / {unitLabel}
+                        {t('quantityDialog.unitPrice')}: <strong>{UtilMethods.formatNumber(unitPrice)}</strong> / {unitLabel}
                     </Typography>
                     <Typography variant="body2" sx={{ color: '#64748b' }}>
-                        Stock disponible: <strong>{product.stock_quantity} {unitLabel}</strong>
+                        {t('quantityDialog.availableStock')}: <strong>{product.stock_quantity} {unitLabel}</strong>
                     </Typography>
                 </Box>
                 <TextField
                     autoFocus
                     fullWidth
                     type="number"
-                    label={`Quantité (${unitLabel})`}
+                    label={`${t('quantityDialog.quantity')} (${unitLabel})`}
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
                     onKeyPress={handleKeyPress}
@@ -74,13 +79,13 @@ const QuantityDialog: React.FC<Props> = ({ open, product, onClose, onConfirm }) 
                 {quantity && !isNaN(parseFloat(quantity)) && parseFloat(quantity) > 0 && (
                     <Box sx={{ mt: 2, p: 1.5, bgcolor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                         <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                            Total: {UtilMethods.formatNumber((parseFloat(quantity) || 0) * unitPrice)}
+                            {t('common.total')}: {UtilMethods.formatNumber((parseFloat(quantity) || 0) * unitPrice)}
                         </Typography>
                     </Box>
                 )}
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button onClick={onClose} sx={{ color: '#64748b' }}>Annuler</Button>
+                <Button onClick={onClose} sx={{ color: '#64748b' }}>{t('common.cancel')}</Button>
                 <Button
                     onClick={handleConfirm}
                     variant="contained"
@@ -91,7 +96,7 @@ const QuantityDialog: React.FC<Props> = ({ open, product, onClose, onConfirm }) 
                         '&:hover': { bgcolor: '#4f46e5' }
                     }}
                 >
-                    Ajouter
+                    {t('common.add')}
                 </Button>
             </DialogActions>
         </Dialog>

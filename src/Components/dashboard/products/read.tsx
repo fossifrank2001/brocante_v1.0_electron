@@ -251,10 +251,36 @@ const ReadProduct = () => {
                                                 </Grid>
                                             </Paper>
 
+                                            {/* Template-based attributes (dynamic) */}
+                                            {(record as any).template && (record as any).template_values && Object.keys((record as any).template_values).length > 0 && (
+                                                <Paper elevation={0} sx={{ p: 4, borderRadius: '24px', backgroundColor: 'rgba(255, 255, 255, 0.5)', border: '1px solid rgba(79, 70, 229, 0.15)' }}>
+                                                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                                                        <ListAlt sx={{ color: '#4f46e5' }} />
+                                                        {(record as any).template.name}
+                                                    </Typography>
+
+                                                    <Grid container spacing={3}>
+                                                        {((record as any).template.fields || []).map((field: any) => {
+                                                            const val = (record as any).template_values[field.field_key];
+                                                            if (val === undefined || val === null || val === '') return null;
+                                                            let displayVal = String(val);
+                                                            if (field.field_type === 'boolean') displayVal = val === true || val === 'true' ? 'Oui' : 'Non';
+                                                            if (field.unit) displayVal = `${val} ${field.unit}`;
+                                                            return (
+                                                                <Grid item xs={12} sm={4} key={field.id || field.field_key}>
+                                                                    <InfoItem label={field.name} value={displayVal} />
+                                                                </Grid>
+                                                            );
+                                                        })}
+                                                    </Grid>
+                                                </Paper>
+                                            )}
+
+                                            {/* Legacy static characteristics */}
                                             <Paper elevation={0} sx={{ p: 4, borderRadius: '24px', backgroundColor: 'rgba(255, 255, 255, 0.5)', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
                                                 <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
                                                     <ListAlt sx={{ color: '#4f46e5' }} />
-                                                    Caractéristiques Technqiues
+                                                    Caractéristiques Techniques
                                                 </Typography>
 
                                                 <Grid container spacing={3}>
@@ -311,7 +337,11 @@ const ReadProduct = () => {
                                                     }}>
                                                         <Zoom>
                                                             <img
-                                                                src={`${constants.URL}/${record.thumbnail.path}`}
+                                                                src={
+                                                                    record.thumbnail.path.startsWith('http://') || record.thumbnail.path.startsWith('https://')
+                                                                        ? record.thumbnail.path
+                                                                        : `${constants.URL}/${record.thumbnail.path}`
+                                                                }
                                                                 alt={record.name}
                                                                 style={{
                                                                     width: '100%',
@@ -339,6 +369,39 @@ const ReadProduct = () => {
                                                         <Typography variant="body2" sx={{ fontWeight: 600 }}>Aucune image disponible</Typography>
                                                     </Box>
                                                 )}
+                                            </Paper>
+
+                                            {/* QR Code */}
+                                            {record.barcode && (
+                                                <Paper elevation={0} sx={{ p: 3, borderRadius: '24px', backgroundColor: 'rgba(248, 250, 252, 0.6)', border: '1px solid rgba(226, 232, 240, 0.8)', textAlign: 'center' }}>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#64748b', mb: 2 }}>
+                                                        Code-barres
+                                                    </Typography>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+                                                        <img
+                                                            src={`https://barcode.tec-it.com/barcode.ashx?data=${encodeURIComponent(record.barcode)}&code=Code128&translate-esc=on`}
+                                                            alt={`Barcode ${record.barcode}`}
+                                                            style={{ maxWidth: '100%', height: 'auto' }}
+                                                        />
+                                                    </Box>
+                                                    <Typography variant="caption" sx={{ color: '#94a3b8', fontFamily: 'monospace' }}>
+                                                        {record.barcode}
+                                                    </Typography>
+                                                </Paper>
+                                            )}
+                                            
+                                            {/* QR Code for product ID */}
+                                            <Paper elevation={0} sx={{ p: 3, borderRadius: '24px', backgroundColor: 'rgba(248, 250, 252, 0.6)', border: '1px solid rgba(226, 232, 240, 0.8)', textAlign: 'center' }}>
+                                                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#64748b', mb: 2 }}>
+                                                    QR Code Produit
+                                                </Typography>
+                                                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                                    <img
+                                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`PRODUCT:${record.id}`)}`}
+                                                        alt={`QR Code ${record.id}`}
+                                                        style={{ width: 150, height: 150 }}
+                                                    />
+                                                </Box>
                                             </Paper>
 
                                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

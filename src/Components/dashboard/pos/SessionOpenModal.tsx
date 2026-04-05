@@ -7,6 +7,7 @@ import {
 import { PointOfSale, PlayArrow } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { openSession } from '@/Data/Slices/dashboard/cashSessionSlice';
+import { useTranslation } from 'react-i18next';
 
 interface SessionOpenModalProps {
     open: boolean;
@@ -14,6 +15,7 @@ interface SessionOpenModalProps {
 }
 
 const SessionOpenModal = ({ open, onClose }: SessionOpenModalProps) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const { isLoading, error } = useAppSelector((state) => state.cashSession);
     const [openingBalance, setOpeningBalance] = useState<string>('0');
@@ -67,10 +69,10 @@ const SessionOpenModal = ({ open, onClose }: SessionOpenModalProps) => {
                     </Box>
                     <Box>
                         <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                            Ouverture de Caisse
+                            {t('cashSession.openingTitle')}
                         </Typography>
                         <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                            Déclarez votre fonds de caisse pour démarrer
+                            {t('cashSession.openingSubtitle')}
                         </Typography>
                     </Box>
                 </Box>
@@ -84,12 +86,12 @@ const SessionOpenModal = ({ open, onClose }: SessionOpenModalProps) => {
                 )}
 
                 <Alert severity="info" sx={{ mb: 3, borderRadius: '12px' }}>
-                    Comptez votre caisse physique avant de démarrer la session.
+                    {t('cashSession.countCashBeforeStart')}
                 </Alert>
 
                 <TextField
                     fullWidth
-                    label="Fonds de départ"
+                    label={t('cashSession.openingBalance')}
                     type="number"
                     value={openingBalance}
                     onChange={(e) => setOpeningBalance(e.target.value)}
@@ -103,12 +105,12 @@ const SessionOpenModal = ({ open, onClose }: SessionOpenModalProps) => {
 
                 <TextField
                     fullWidth
-                    label="Notes (optionnel)"
+                    label={t('cashSession.notesOptional')}
                     multiline
                     rows={2}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Ex: Reprise après pause déjeuner..."
+                    placeholder={t('cashSession.notesPlaceholder')}
                     InputProps={{
                         sx: { borderRadius: '12px' }
                     }}
@@ -120,7 +122,7 @@ const SessionOpenModal = ({ open, onClose }: SessionOpenModalProps) => {
                     onClick={onClose}
                     sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700 }}
                 >
-                    Annuler
+                    {t('common.cancel')}
                 </Button>
                 <Button
                     onClick={handleOpen}
@@ -138,7 +140,7 @@ const SessionOpenModal = ({ open, onClose }: SessionOpenModalProps) => {
                         }
                     }}
                 >
-                    Ouvrir la Caisse
+                    {t('cashSession.openCashRegister')}
                 </Button>
             </DialogActions>
         </Dialog>

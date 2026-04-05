@@ -1,4 +1,5 @@
 import {Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack, Typography} from "@mui/material";
+import { useTranslation } from 'react-i18next';
 
 interface IAlert{
     openDetailModal: boolean;
@@ -15,6 +16,7 @@ interface IAlert{
 }
 
 const CustomAlert = (props: IAlert) => {
+  const { t } = useTranslation();
   return <Dialog
             open={props.openDetailModal}
             onClose={() => props.onHandleOpenDetail()}
@@ -35,10 +37,10 @@ const CustomAlert = (props: IAlert) => {
         </DialogContent>
         <DialogActions>
             <button disabled={props.inProgress} className='btn btn-light text-dark' onClick={() => props.onHandleOpenDetail()}>
-                cancel
+                {t('common.cancel')}
             </button>
             <button disabled={props.inProgress} className={`btn  btn-${props.iconClasseBtn?? 'danger'}`} onClick={() => props.onHandleDelete()}>
-                {props.successMessageButton??'delete'}
+                {props.successMessageButton ?? t('common.delete')}
             </button>
         </DialogActions>
     </Dialog>

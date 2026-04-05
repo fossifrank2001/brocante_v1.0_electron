@@ -1,7 +1,10 @@
-import { app, BrowserWindow, Menu, MenuItemConstructorOptions, ipcMain } from 'electron';
+import { app, BrowserWindow, Menu, MenuItemConstructorOptions, ipcMain, dialog } from 'electron';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import fs from 'fs';
 import installExtension, { REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } from 'electron-devtools-installer';
+import { startPhpServer, stopPhpServer, getApiBaseUrl, getApiPort, waitForApiPort, getDatabaseInfo, resetDatabase, seedDemoData, importDatabase, getAppPaths } from './php-server.js';
+import { GoogleDriveSync } from './google-drive-sync.js';
 
 const isDev = process.env.NODE_ENV === 'development';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -21,7 +24,8 @@ function createWindow() {
     icon: path.join(VITE_PUBLIC, 'favicon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
-      devTools: isDev,
+      devTools: true,
+      webSecurity: false,
     }
   });
 
@@ -103,8 +107,13 @@ function createWindow() {
       submenu: [
         {
           label: 'Toggle DevTools',
-          accelerator: 'CmdOrCtrl+I',
-          click: () => mainWindow?.webContents.toggleDevTools()
+          accelerator: 'F12',
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) {
+              win.webContents.toggleDevTools();
+            }
+          }
         },
         {
           label: 'Reload',
@@ -147,11 +156,14 @@ function createWindow() {
         console.log('Added Extensions: ', extensionNames.join(', '));
       } catch (error) {
         console.error('Failed to install extensions:', error);
-      } finally {
-        mainWindow?.webContents.openDevTools();
       }
     });
   }
+
+  // Open DevTools in both dev and production for debugging
+  mainWindow.webContents.once('dom-ready', () => {
+    mainWindow?.webContents.openDevTools();
+  });
 }
 
 app.on('window-all-closed', () => {
@@ -167,17 +179,44 @@ app.on('activate', () => {
 });
 
 app.whenReady().then(async () => {
+  if (isDev) {
+    try {
+      await Promise.all([
+        installExtension(REDUX_DEVTOOLS),
+        installExtension(REACT_DEVELOPER_TOOLS)
+      ]);
+      console.log('Extensions installed successfully');
+    } catch (error) {
+      console.error('Failed to install extensions:', error);
+    }
+  }
+
+  // Start the embedded PHP server (in production) or use existing one (in dev)
   try {
-    await Promise.all([
-      installExtension(REDUX_DEVTOOLS),
-      installExtension(REACT_DEVELOPER_TOOLS)
-    ]);
-    console.log('Extensions installed successfully');
-  } catch (error) {
-    console.error('Failed to install extensions:', error);
+    const port = await startPhpServer();
+    console.log(`[Main] API server available on port ${port}`);
+  } catch (error: any) {
+    const errMsg = error?.message || String(error);
+    console.error('[Main] Failed to start PHP server:', errMsg);
+    dialog.showErrorBox('Erreur serveur API', 
+      `Le serveur PHP n'a pas pu démarrer.\n\n${errMsg}\n\nresourcesPath: ${process.resourcesPath}`
+    );
   }
 
   createWindow();
+});
+
+// ─── IPC Handler: Get API Base URL ───
+ipcMain.handle('get-api-url', async () => {
+  try {
+    // Wait for the PHP server to be ready (port assigned)
+    const port = await waitForApiPort(30000);
+    return { baseUrl: `http://127.0.0.1:${port}/api/v1`, port };
+  } catch (error: any) {
+    console.error('[IPC] Error waiting for API port:', error);
+    // Fallback to current values
+    return { baseUrl: getApiBaseUrl(), port: getApiPort() };
+  }
 });
 
 // ─── IPC Handlers for Thermal Printing ───
@@ -236,8 +275,139 @@ ipcMain.handle('print-thermal-raw', async (_event, { printerName, escposData }: 
   }
 });
 
+// ─── Google Drive Sync Instance ───
+const gdriveSync = new GoogleDriveSync();
+
+// ─── IPC Handlers: Database Management ───
+
+ipcMain.handle('db:get-info', async () => {
+  return getDatabaseInfo();
+});
+
+ipcMain.handle('db:get-paths', async () => {
+  return getAppPaths();
+});
+
+ipcMain.handle('db:reset', async () => {
+  const success = resetDatabase();
+  return { success };
+});
+
+ipcMain.handle('db:seed-demo', async () => {
+  const success = seedDemoData();
+  return { success };
+});
+
+ipcMain.handle('db:export', async () => {
+  const dbInfo = getDatabaseInfo();
+  if (!dbInfo.exists) return { success: false, error: 'Base de données introuvable.' };
+
+  const result = await dialog.showSaveDialog({
+    title: 'Exporter la base de données',
+    defaultPath: `brocante-backup-${new Date().toISOString().slice(0, 10)}.sqlite`,
+    filters: [{ name: 'SQLite Database', extensions: ['sqlite', 'db'] }],
+  });
+
+  if (result.canceled || !result.filePath) return { success: false, error: 'Annulé' };
+
+  try {
+    fs.copyFileSync(dbInfo.path, result.filePath);
+    return { success: true, path: result.filePath };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('db:import', async () => {
+  const result = await dialog.showOpenDialog({
+    title: 'Importer une base de données',
+    filters: [{ name: 'SQLite Database', extensions: ['sqlite', 'db'] }],
+    properties: ['openFile'],
+  });
+
+  if (result.canceled || result.filePaths.length === 0) return { success: false, error: 'Annulé' };
+
+  const success = importDatabase(result.filePaths[0]);
+  return { success };
+});
+
+// ─── IPC Handlers: Google Drive Sync ───
+
+ipcMain.handle('gdrive:configure', async (_event, { clientId, clientSecret }: { clientId: string; clientSecret: string }) => {
+  gdriveSync.configure(clientId, clientSecret);
+  return { success: true };
+});
+
+ipcMain.handle('gdrive:auth', async () => {
+  try {
+    const success = await gdriveSync.authenticate();
+    return { success };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('gdrive:upload', async () => {
+  try {
+    const dbInfo = getDatabaseInfo();
+    if (!dbInfo.exists) return { success: false, error: 'Base de données introuvable.' };
+    const result = await gdriveSync.uploadBackup(dbInfo.path);
+    return result;
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('gdrive:list-backups', async () => {
+  try {
+    const files = await gdriveSync.listBackups();
+    return { success: true, files };
+  } catch (e: any) {
+    return { success: false, error: e.message, files: [] };
+  }
+});
+
+ipcMain.handle('gdrive:download', async (_event, { fileId }: { fileId: string }) => {
+  try {
+    const dbInfo = getDatabaseInfo();
+    const success = await gdriveSync.downloadBackup(fileId, dbInfo.path);
+    return { success };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('gdrive:delete-backup', async (_event, { fileId }: { fileId: string }) => {
+  try {
+    await gdriveSync.deleteBackup(fileId);
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle('gdrive:set-auto-sync', async (_event, { enabled, interval }: { enabled: boolean; interval?: number }) => {
+  gdriveSync.setAutoSync(enabled, interval);
+  return { success: true };
+});
+
+ipcMain.handle('gdrive:disconnect', async () => {
+  gdriveSync.disconnect();
+  return { success: true };
+});
+
+ipcMain.handle('gdrive:status', async () => {
+  return gdriveSync.getStatus();
+});
+
 // Cleanup to prevent memory leaks
 app.on('before-quit', () => {
+  stopPhpServer();
+  gdriveSync.stopAutoSync();
   mainWindow?.removeAllListeners();
   ipcMain.removeAllListeners();
+});
+
+app.on('will-quit', () => {
+  stopPhpServer();
 });

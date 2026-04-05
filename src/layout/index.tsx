@@ -43,6 +43,7 @@ import PosExpress from "@/Components/dashboard/pos/PosExpress";
 import SuccessSellPage from "@/pages/Home/SuccessSellPage";
 import StoreSettingsPage from "@/Components/dashboard/settings/StoreSettingsPage";
 import StockMovementsPage from "@/Components/dashboard/stock/StockMovementsPage";
+import TemplateBuilder from "@/Components/dashboard/templates/TemplateBuilder";
 
 const renderContent = (currentPage, id, param) => {
   switch (currentPage) {
@@ -76,7 +77,7 @@ const renderContent = (currentPage, id, param) => {
       if (param.sub_page === 'UPDATE') return <AuthorizationUpdatePage />;
       return <AuthorizationCreatePage />;
     case Pages.NOTIFICATION:
-      return <NotificationPage />;
+      return <NotificationPage />; 
     case Pages.CUSTOMER:
       return <IndexCustomer />;
     case Pages.SUPPLIER:
@@ -99,6 +100,8 @@ const renderContent = (currentPage, id, param) => {
       return <StoreSettingsPage />;
     case Pages.STOCK_MOVEMENTS:
       return <StockMovementsPage />;
+    case Pages.PRODUCT_TEMPLATES:
+      return <TemplateBuilder />;
     case Pages.SUCCESS_ORDER:
       return <SuccessSellPage />;
     case Pages.DASHBOARD:

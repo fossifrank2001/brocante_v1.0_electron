@@ -10,8 +10,10 @@ import { Pages } from '@/Data/Objects/state';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import SessionOpenModal from './SessionOpenModal';
 import SessionCloseModal from './SessionCloseModal';
+import { useTranslation } from 'react-i18next';
 
 const CashSessionBar = () => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const { currentSession, isLoading, error } = useAppSelector((state) => state.cashSession);
     const [openModal, setOpenModal] = useState(false);
@@ -48,12 +50,12 @@ const CashSessionBar = () => {
                 border: '1px solid rgba(239, 68, 68, 0.25)',
             }}>
                 <Typography variant="caption" sx={{ fontWeight: 800, color: '#b91c1c' }}>
-                    Session: erreur
+                    {t('cashSession.sessionError')}
                 </Typography>
                 <Tooltip title={String(error)} arrow>
                     <Chip
                         size="small"
-                        label="Détails"
+                        label={t('common.details')}
                         variant="outlined"
                         sx={{
                             borderColor: 'rgba(239, 68, 68, 0.4)',
@@ -81,7 +83,7 @@ const CashSessionBar = () => {
                         }
                     }}
                 >
-                    Réessayer
+                    {t('common.retry')}
                 </Button>
             </Box>
         );
@@ -100,7 +102,7 @@ const CashSessionBar = () => {
                 border: '1px solid rgba(245, 158, 11, 0.25)',
             }}>
                 <Typography variant="caption" sx={{ fontWeight: 800, color: '#92400e' }}>
-                    Session: attente API...
+                    {t('cashSession.waitingForAPI')}
                 </Typography>
                 <Button
                     onClick={() => dispatch(fetchCurrentSession())}
@@ -120,7 +122,7 @@ const CashSessionBar = () => {
                         }
                     }}
                 >
-                    Réessayer
+                    {t('common.retry')}
                 </Button>
             </Box>
         );
@@ -139,7 +141,7 @@ const CashSessionBar = () => {
             }}>
                 <CircularProgress size={16} />
                 <Typography variant="caption" sx={{ fontWeight: 600, color: '#64748b' }}>
-                    Chargement session...
+                    {t('cashSession.loadingSession')}
                 </Typography>
             </Box>
         );
@@ -148,7 +150,7 @@ const CashSessionBar = () => {
     if (!currentSession) {
         return (
             <>
-                <Tooltip title="Ouvrez une session de caisse pour commencer les ventes" arrow>
+                <Tooltip title={t('cashSession.openSessionTooltip')} arrow>
                     <Button
                         onClick={() => setOpenModal(true)}
                         variant="contained"
@@ -171,7 +173,7 @@ const CashSessionBar = () => {
                             }
                         }}
                     >
-                        Ouvrir la Caisse
+                        {t('cashSession.openCashRegister')}
                     </Button>
                 </Tooltip>
                 <SessionOpenModal open={openModal} onClose={() => setOpenModal(false)} />
@@ -199,7 +201,7 @@ const CashSessionBar = () => {
             }}>
                 <Chip
                     icon={<PointOfSale sx={{ fontSize: '14px !important' }} />}
-                    label="Caisse ouverte"
+                    label={t('cashSession.cashRegisterOpen')}
                     size="small"
                     sx={{
                         fontWeight: 800,
@@ -211,7 +213,7 @@ const CashSessionBar = () => {
                     }}
                 />
 
-                <Tooltip title="Durée de la session" arrow>
+                <Tooltip title={t('cashSession.sessionDuration')} arrow>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <AccessTime sx={{ fontSize: 14, color: '#64748b' }} />
                         <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b' }}>
@@ -220,7 +222,7 @@ const CashSessionBar = () => {
                     </Box>
                 </Tooltip>
 
-                <Tooltip title="Nombre de ventes" arrow>
+                <Tooltip title={t('cashSession.salesCount')} arrow>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <ShoppingCart sx={{ fontSize: 14, color: '#64748b' }} />
                         <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b' }}>
@@ -229,13 +231,13 @@ const CashSessionBar = () => {
                     </Box>
                 </Tooltip>
 
-                <Tooltip title="Total des ventes" arrow>
+                <Tooltip title={t('cashSession.totalSales')} arrow>
                     <Typography variant="caption" sx={{ fontWeight: 800, color: '#1e293b' }}>
                         {UtilMethods.formatNumber(currentSession.total_sales)}
                     </Typography>
                 </Tooltip>
 
-                <Tooltip title="Mode Caisse Express" arrow>
+                <Tooltip title={t('cashSession.expressMode')} arrow>
                     <Button
                         onClick={() => dispatch(setActivePage({ page: Pages.POS_EXPRESS }))}
                         size="small"
@@ -256,7 +258,7 @@ const CashSessionBar = () => {
                     </Button>
                 </Tooltip>
 
-                <Tooltip title="Fermer la caisse" arrow>
+                <Tooltip title={t('cashSession.closeCashRegister')} arrow>
                     <Button
                         onClick={() => setCloseModal(true)}
                         size="small"
@@ -276,7 +278,7 @@ const CashSessionBar = () => {
                             }
                         }}
                     >
-                        Fermer
+                        {t('common.close')}
                     </Button>
                 </Tooltip>
             </Box>

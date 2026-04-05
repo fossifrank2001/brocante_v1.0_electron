@@ -41,29 +41,31 @@ import StockMovementAPI from '@/Data/Api/StockMovement';
 import { IStockMovement, StockMovementType, IStockMovementPayload } from '@/Data/Interfaces/StockMovement';
 import Toast from '@/Data/Utilities/Toast';
 import {motion} from "framer-motion";
-
-const typeConfig: Record<StockMovementType, { label: string; color: any; icon: React.ReactNode }> = {
-    sale: { label: 'Vente', color: 'error', icon: <TrendingDown fontSize="small" /> },
-    sale_cancel: { label: 'Annul. vente', color: 'warning', icon: <TrendingUp fontSize="small" /> },
-    refund: { label: 'Remboursement', color: 'warning', icon: <TrendingUp fontSize="small" /> },
-    adjustment: { label: 'Ajustement', color: 'info', icon: <SwapVert fontSize="small" /> },
-    purchase: { label: 'Achat/Entrée', color: 'success', icon: <TrendingUp fontSize="small" /> },
-    transfer_in: { label: 'Transfert +', color: 'success', icon: <TrendingUp fontSize="small" /> },
-    transfer_out: { label: 'Transfert -', color: 'error', icon: <TrendingDown fontSize="small" /> },
-    loss: { label: 'Perte', color: 'error', icon: <TrendingDown fontSize="small" /> },
-    return: { label: 'Retour', color: 'success', icon: <TrendingUp fontSize="small" /> },
-    initial: { label: 'Stock initial', color: 'default', icon: <InventoryIcon fontSize="small" /> },
-};
-
-const manualTypes = [
-    { value: 'purchase', label: 'Achat / Entrée de stock' },
-    { value: 'adjustment', label: 'Ajustement manuel' },
-    { value: 'loss', label: 'Perte / Casse' },
-    { value: 'return', label: 'Retour fournisseur' },
-    { value: 'initial', label: 'Stock initial' },
-];
+import {useTranslation} from "react-i18next";
 
 const StockMovementsPage: React.FC = () => {
+    const {t} = useTranslation();
+    
+    const typeConfig: Record<StockMovementType, { label: string; color: any; icon: React.ReactNode }> = {
+        sale: { label: t('stockMovement.types.sale'), color: 'error', icon: <TrendingDown fontSize="small" /> },
+        sale_cancel: { label: t('stockMovement.types.sale_cancel'), color: 'warning', icon: <TrendingUp fontSize="small" /> },
+        refund: { label: t('stockMovement.types.refund'), color: 'warning', icon: <TrendingUp fontSize="small" /> },
+        adjustment: { label: t('stockMovement.types.adjustment'), color: 'info', icon: <SwapVert fontSize="small" /> },
+        purchase: { label: t('stockMovement.types.purchase'), color: 'success', icon: <TrendingUp fontSize="small" /> },
+        transfer_in: { label: t('stockMovement.types.transfer_in'), color: 'success', icon: <TrendingUp fontSize="small" /> },
+        transfer_out: { label: t('stockMovement.types.transfer_out'), color: 'error', icon: <TrendingDown fontSize="small" /> },
+        loss: { label: t('stockMovement.types.loss'), color: 'error', icon: <TrendingDown fontSize="small" /> },
+        return: { label: t('stockMovement.types.return'), color: 'success', icon: <TrendingUp fontSize="small" /> },
+        initial: { label: t('stockMovement.types.initial'), color: 'default', icon: <InventoryIcon fontSize="small" /> },
+    };
+
+    const manualTypes = [
+        { value: 'purchase', label: t('stockMovement.types.purchase') },
+        { value: 'adjustment', label: t('stockMovement.types.adjustment') },
+        { value: 'loss', label: t('stockMovement.types.loss') },
+        { value: 'return', label: t('stockMovement.types.return') },
+        { value: 'initial', label: t('stockMovement.types.initial') },
+    ];
     const [movements, setMovements] = useState<IStockMovement[]>([]);
     const [isError, setIsError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -143,8 +145,8 @@ const StockMovementsPage: React.FC = () => {
     }, [fetchMovements]);
 
     useLayoutEffect(() => {
-        document.title = constants.APP_NAME + ' .:. Mouvements de stock';
-    }, []);
+        document.title = constants.APP_NAME + ' .:. ' + t('stockMovement.pageTitle');
+    }, [t]);
 
     const handleOpenDialog = () => {
         fetchProducts();
@@ -154,17 +156,17 @@ const StockMovementsPage: React.FC = () => {
 
     const handleSubmit = async () => {
         if (!newMovement.product_id || !newMovement.quantity || !newMovement.reason) {
-            Toast.error('Veuillez remplir tous les champs obligatoires', 2000, 'top-right');
+            Toast.error(t('stockMovement.fillRequiredFields'), 2000, 'top-right');
             return;
         }
         try {
             setSubmitting(true);
             await StockMovementAPI.store(newMovement);
-            Toast.success('Mouvement de stock enregistré', 2000, 'top-right');
+            Toast.success(t('stockMovement.movementSaved'), 2000, 'top-right');
             setDialogOpen(false);
             fetchMovements();
         } catch (e: any) {
-            Toast.error(e?.message || 'Erreur', 2000, 'top-right');
+            Toast.error(e?.message || t('stockMovement.error'), 2000, 'top-right');
         } finally {
             setSubmitting(false);
         }
@@ -184,7 +186,7 @@ const StockMovementsPage: React.FC = () => {
         () => [
             {
                 accessorKey: 'created_at',
-                header: 'Date',
+                header: t('stockMovement.date'),
                 size: 170,
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap' }}>
@@ -194,7 +196,7 @@ const StockMovementsPage: React.FC = () => {
             },
             {
                 id: 'product',
-                header: 'Produit',
+                header: t('stockMovement.product'),
                 size: 260,
                 Cell: ({ row }) => (
                     <Box>
@@ -211,7 +213,7 @@ const StockMovementsPage: React.FC = () => {
             },
             {
                 accessorKey: 'type',
-                header: 'Type',
+                header: t('stockMovement.type'),
                 size: 150,
                 filterVariant: 'select',
                 filterSelectOptions: Object.entries(typeConfig).map(([key, v]) => ({
@@ -219,8 +221,8 @@ const StockMovementsPage: React.FC = () => {
                     value: key,
                 })),
                 Cell: ({ cell }) => {
-                    const t = cell.getValue<StockMovementType>();
-                    const config = typeConfig[t] || typeConfig.adjustment;
+                    const typeValue = cell.getValue<StockMovementType>();
+                    const config = typeConfig[typeValue] || typeConfig.adjustment || { label: typeValue, color: 'default', icon: <SwapVert fontSize="small" /> };
                     return (
                         <Chip
                             icon={config.icon as any}
@@ -235,7 +237,7 @@ const StockMovementsPage: React.FC = () => {
             },
             {
                 accessorKey: 'quantity',
-                header: 'Qté',
+                header: t('stockMovement.quantity'),
                 size: 90,
                 Cell: ({ cell }) => {
                     const qty = Number(cell.getValue());
@@ -255,7 +257,7 @@ const StockMovementsPage: React.FC = () => {
             },
             {
                 accessorKey: 'stock_before',
-                header: 'Avant',
+                header: t('stockMovement.before'),
                 size: 100,
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ textAlign: 'right', color: '#334155', fontWeight: 700 }}>
@@ -265,7 +267,7 @@ const StockMovementsPage: React.FC = () => {
             },
             {
                 accessorKey: 'stock_after',
-                header: 'Après',
+                header: t('stockMovement.after'),
                 size: 100,
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ textAlign: 'right', color: '#0f172a', fontWeight: 900 }}>
@@ -275,7 +277,7 @@ const StockMovementsPage: React.FC = () => {
             },
             {
                 accessorKey: 'reference',
-                header: 'Référence',
+                header: t('stockMovement.reference'),
                 size: 180,
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ color: '#64748b' }}>
@@ -285,7 +287,7 @@ const StockMovementsPage: React.FC = () => {
             },
             {
                 accessorKey: 'reason',
-                header: 'Motif',
+                header: t('stockMovement.reason'),
                 size: 280,
                 Cell: ({ cell }) => (
                     <Typography
@@ -304,7 +306,7 @@ const StockMovementsPage: React.FC = () => {
             },
             {
                 id: 'user',
-                header: 'Utilisateur',
+                header: t('stockMovement.user'),
                 size: 200,
                 Cell: ({ row }) => (
                     <Typography variant="body2" sx={{ color: '#334155', fontWeight: 700 }}>
@@ -385,15 +387,15 @@ const StockMovementsPage: React.FC = () => {
         muiToolbarAlertBannerProps: isError
         ? {
             color: "error",
-            children: "Erreur lors du chargement des données",
+            children: t('stockMovement.errorLoadingData'),
         }
         : undefined,
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: 2, p: 2, alignItems: 'center' }}>
                 <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
-                    Stock movements
+                    {t('stockMovement.title')}
                 </Typography>
-                <Tooltip title="Rafraîchir" TransitionComponent={Zoom} arrow>
+                <Tooltip title={t('stockMovement.refresh')} TransitionComponent={Zoom} arrow>
                     <motion.div whileTap={{ scale: 0.93 }}>
                         <Button
                             onClick={handleRefresh}
@@ -406,7 +408,7 @@ const StockMovementsPage: React.FC = () => {
                                 '&:hover': { bgcolor: '#f8fafc', borderColor: '#cbd5e1' }
                             }}
                         >
-                            Actualiser
+                            {t('stockMovement.refresh')}
                         </Button>
                     </motion.div>
                 </Tooltip>
@@ -422,7 +424,7 @@ const StockMovementsPage: React.FC = () => {
                         '&:hover': { transform: 'translateY(-1px)', boxShadow: '0 12px 20px -4px rgba(99,102,241,0.4)' }
                     }}
                 >
-                    Nouveau mouvement
+                    {t('stockMovement.newMovement')}
                 </Button>
             </Box>
         ),
@@ -439,31 +441,31 @@ const StockMovementsPage: React.FC = () => {
 
     return (
         <Box>
-            <Breadcrumd parent="Stock movements" />
+            <Breadcrumd parent={t('stockMovement.title')} />
             <MaterialReactTable table={mrTable} />
 
             {/* Dialog: New Movement */}
             <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
                 <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <InventoryIcon color="primary" />
-                    Nouveau mouvement de stock
+                    {t('stockMovement.newMovement')}
                 </DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2} sx={{ mt: 0.5 }}>
                         <Grid item xs={12}>
                             <TextField
                                 select
-                                label="Produit"
+                                label={t('stockMovement.product')}
                                 value={newMovement.product_id || ''}
                                 onChange={e => setNewMovement(prev => ({ ...prev, product_id: Number(e.target.value) }))}
                                 fullWidth
                                 size="small"
                                 required
                             >
-                                <MenuItem value="" disabled>Sélectionner un produit</MenuItem>
+                                <MenuItem value="" disabled>{t('stockMovement.selectProduct')}</MenuItem>
                                 {products.map(p => (
                                     <MenuItem key={p.id} value={p.id}>
-                                        {p.name} — stock: {p.stock_quantity}
+                                        {p.name} — {t('common.quantity').toLowerCase()}: {p.stock_quantity}
                                     </MenuItem>
                                 ))}
                             </TextField>
@@ -471,7 +473,7 @@ const StockMovementsPage: React.FC = () => {
                         <Grid item xs={12} md={6}>
                             <TextField
                                 select
-                                label="Type de mouvement"
+                                label={t('stockMovement.movementType')}
                                 value={newMovement.type}
                                 onChange={e => setNewMovement(prev => ({ ...prev, type: e.target.value as any }))}
                                 fullWidth
@@ -485,19 +487,19 @@ const StockMovementsPage: React.FC = () => {
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <TextField
-                                label="Quantité"
+                                label={t('stockMovement.quantityLabel')}
                                 type="number"
                                 value={newMovement.quantity || ''}
                                 onChange={e => setNewMovement(prev => ({ ...prev, quantity: parseFloat(e.target.value) || 0 }))}
                                 fullWidth
                                 size="small"
                                 required
-                                helperText={newMovement.type === 'loss' ? 'Sera soustrait du stock' : 'Sera ajouté au stock'}
+                                helperText={newMovement.type === 'loss' ? t('stockMovement.subtractFromStock') : t('stockMovement.addToStock')}
                             />
                         </Grid>
                         <Grid item xs={12}>
                             <TextField
-                                label="Motif / Raison"
+                                label={t('stockMovement.reasonLabel')}
                                 value={newMovement.reason}
                                 onChange={e => setNewMovement(prev => ({ ...prev, reason: e.target.value }))}
                                 fullWidth
@@ -505,23 +507,23 @@ const StockMovementsPage: React.FC = () => {
                                 required
                                 multiline
                                 rows={2}
-                                placeholder="Expliquez la raison de ce mouvement..."
+                                placeholder={t('stockMovement.reasonPlaceholder')}
                             />
                         </Grid>
                         <Grid item xs={12}>
                             <TextField
-                                label="Référence (optionnel)"
+                                label={t('stockMovement.referenceLabel')}
                                 value={newMovement.reference || ''}
                                 onChange={e => setNewMovement(prev => ({ ...prev, reference: e.target.value }))}
                                 fullWidth
                                 size="small"
-                                placeholder="N° bon de livraison, N° facture fournisseur..."
+                                placeholder={t('stockMovement.referencePlaceholder')}
                             />
                         </Grid>
                     </Grid>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 2 }}>
-                    <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: 'none' }}>Annuler</Button>
+                    <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: 'none' }}>{t('stockMovement.cancel')}</Button>
                     <Button
                         variant="contained"
                         onClick={handleSubmit}
@@ -529,7 +531,7 @@ const StockMovementsPage: React.FC = () => {
                         startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <AddIcon />}
                         sx={{ textTransform: 'none', borderRadius: 2 }}
                     >
-                        Enregistrer
+                        {t('stockMovement.save')}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -37,8 +37,10 @@ import { IPerson, IPersonTableData } from 'Interfaces';
 import UseCustomerBalance from './UseCustomerBalance';
 import CustomerForm from './CustomerForm';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 export default function IndexCustomer() {
+    const { t } = useTranslation();
     const context = useAppContext();
 
     const [isError, setIsError] = useState(false);
@@ -65,8 +67,8 @@ export default function IndexCustomer() {
 
     useLayoutEffect(() => {
         context.togglePageLoading();
-        document.title = constants.APP_NAME + ' .:. Customers';
-    }, [context]);
+        document.title = constants.APP_NAME + ' .:. ' + t('navigation.customers');
+    }, [context, t]);
 
     const resetScroll = () => {
         window.scrollTo(0, 0);
@@ -157,7 +159,7 @@ export default function IndexCustomer() {
             ...person,
             actions: (
                 <Stack direction="row" spacing={0.5}>
-                    <Tooltip title="Utiliser le solde" arrow TransitionComponent={Zoom}>
+                    <Tooltip title={t('customer.useBalance')} arrow TransitionComponent={Zoom}>
                         <IconButton
                             size="small"
                             onClick={() => handleOpenBalanceModal(person)}
@@ -171,7 +173,7 @@ export default function IndexCustomer() {
                             <Wallet sx={{ fontSize: '18px' }} />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Modifier" arrow TransitionComponent={Zoom}>
+                    <Tooltip title={t('common.edit')} arrow TransitionComponent={Zoom}>
                         <IconButton
                             size="small"
                             onClick={() => handleOpenFormModal(person)}
@@ -180,7 +182,7 @@ export default function IndexCustomer() {
                             <Edit sx={{ fontSize: '18px' }} />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Supprimer" arrow TransitionComponent={Zoom}>
+                    <Tooltip title={t('common.delete')} arrow TransitionComponent={Zoom}>
                         <IconButton
                             size="small"
                             onClick={() => {
@@ -195,13 +197,13 @@ export default function IndexCustomer() {
                 </Stack>
             ),
         })) : [];
-    }, [customers, context]);
+    }, [customers, context, t]);
 
     const columns: MRT_ColumnDef<IPerson>[] = useMemo(
         () => [
             {
                 accessorKey: "lastname",
-                header: "Client",
+                header: t('customer.customer'),
                 size: 200,
                 Cell: ({ row }) => (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -226,17 +228,17 @@ export default function IndexCustomer() {
             },
             {
                 accessorKey: "phone",
-                header: "Téléphone",
+                header: t('customer.customerPhone'),
                 size: 150,
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500 }}>
-                        {cell.getValue() as string || 'N/A'}
+                        {cell.getValue() as string || t('common.notAvailable')}
                     </Typography>
                 ),
             },
             {
                 accessorKey: "company_balance",
-                header: "Solde Disponible",
+                header: t('customer.availableBalance'),
                 size: 180,
                 Cell: ({ cell }) => {
                     const value = cell.getValue() as number;
@@ -260,7 +262,7 @@ export default function IndexCustomer() {
             },
             {
                 accessorKey: "remaining_balance",
-                header: "Dettes Totales",
+                header: t('customer.totalDebts'),
                 size: 180,
                 Cell: ({ cell }) => {
                     const data = cell.getValue() as any;
@@ -295,13 +297,13 @@ export default function IndexCustomer() {
             },
             {
                 accessorKey: "actions",
-                header: "Actions",
+                header: t('common.actions'),
                 size: 150,
                 enableColumnFilter: false,
                 enableSorting: false,
             }
         ],
-        [],
+        [t],
     );
 
     const mrTable = useMaterialReactTable({
@@ -369,7 +371,7 @@ export default function IndexCustomer() {
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: 2, p: 2, alignItems: 'center' }}>
                 <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b', mr: 2, display: { xs: 'none', md: 'block' } }}>
-                    Gestion Clients
+                    {t('customer.customerManagement')}
                 </Typography>
                 <Button
                     onClick={handleRefresh}
@@ -386,7 +388,7 @@ export default function IndexCustomer() {
                         '&:hover': { bgcolor: '#f8fafc', borderColor: '#cbd5e1' }
                     }}
                 >
-                    Actualiser
+                    {t('common.refresh')}
                 </Button>
                 {UtilMethods.getHabilitations(authorizations, 'customer').canCreate && (
                     <Button
@@ -403,7 +405,7 @@ export default function IndexCustomer() {
                             '&:hover': { transform: 'translateY(-1px)', boxShadow: '0 12px 20px -4px rgba(99, 102, 241, 0.4)' }
                         }}
                     >
-                        Nouveau Client
+                        {t('customer.newCustomer')}
                     </Button>
                 )}
                 {UtilMethods.getHabilitations(authorizations, 'customer').canExport && (
@@ -418,7 +420,7 @@ export default function IndexCustomer() {
                             '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.05)', color: '#6366f1' }
                         }}
                     >
-                        Exporter
+                        {t('common.export')}
                     </Button>
                 )}
             </Box>
@@ -436,7 +438,7 @@ export default function IndexCustomer() {
     return (
         <Box>
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <Breadcrumd parent="Administration" />
+                <Breadcrumd parent={t('menu.ADMINISTRATION')} />
                 <MaterialReactTable table={mrTable} />
             </motion.div>
 
@@ -444,8 +446,8 @@ export default function IndexCustomer() {
                 openDetailModal={openDetailModal}
                 content={{
                     style: 'ti ti-info-circle text text-danger',
-                    icon: 'Warning',
-                    message: 'Voulez-vous vraiment supprimer ce client ?'
+                    icon: t('common.permanentDelete'),
+                    message: t('customer.deleteConfirmMessage')
                 }}
                 onHandleDelete={handleDelete}
                 onHandleOpenDetail={() => setOpenDetailModal(false)}
