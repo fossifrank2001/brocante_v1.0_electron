@@ -24,6 +24,7 @@ import {
 } from '@mui/icons-material';
 import { IPerson } from 'Interfaces';
 import CustomerAPI from '@/Data/Api/Customer';
+import { useTranslation } from 'react-i18next';
 
 interface CustomerFormProps {
     open: boolean;
@@ -33,6 +34,7 @@ interface CustomerFormProps {
 }
 
 export default function CustomerForm({ open, onClose, onSuccess, customer }: CustomerFormProps) {
+    const { t } = useTranslation();
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState<Partial<IPerson>>({
         firstname: '',
@@ -62,9 +64,9 @@ export default function CustomerForm({ open, onClose, onSuccess, customer }: Cus
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
-        if (!formData.firstname) newErrors.firstname = 'Le prénom est requis';
-        if (!formData.lastname) newErrors.lastname = 'Le nom est requis';
-        if (!formData.phone) newErrors.phone = 'Le téléphone est requis';
+        if (!formData.firstname) newErrors.firstname = t('customer.firstnameRequired');
+        if (!formData.lastname) newErrors.lastname = t('customer.lastnameRequired');
+        if (!formData.phone) newErrors.phone = t('customer.phoneRequired');
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -84,11 +86,15 @@ export default function CustomerForm({ open, onClose, onSuccess, customer }: Cus
     const handleSubmit = async () => {
         if (!validate()) return;
 
+        console.log('Submit - isEdit:', isEdit, 'customer?.id:', customer?.id, 'customer:', customer, 'formData:', formData);
+
         setIsLoading(true);
         try {
-            if (isEdit && customer?.id) {
+            if (isEdit && customer?.id && typeof customer.id === 'number' && customer.id > 0) {
+                console.log('Updating customer with ID:', customer.id);
                 await CustomerAPI.update(customer.id, formData as IPerson);
             } else {
+                console.log('Creating new customer - isEdit:', isEdit, 'customer?.id:', customer?.id);
                 await CustomerAPI.create(formData as IPerson);
             }
             onSuccess();
@@ -150,10 +156,10 @@ export default function CustomerForm({ open, onClose, onSuccess, customer }: Cus
                     </Box>
                     <Box>
                         <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
-                            {isEdit ? 'Modifier Client' : 'Nouveau Client'}
+                            {isEdit ? t('customer.editCustomer') : t('customer.newCustomer')}
                         </Typography>
                         <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
-                            {isEdit ? 'Mettez à jour les détails du client' : 'Enregistrez un nouveau client'}
+                            {isEdit ? t('customer.updateDetails') : t('customer.saveNewCustomer')}
                         </Typography>
                     </Box>
                 </Box>
@@ -164,7 +170,7 @@ export default function CustomerForm({ open, onClose, onSuccess, customer }: Cus
                     <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
                         <Grid item xs={12} sm={6}>
                             <TextField
-                                label="Prénom"
+                                label={t('customer.firstname')}
                                 name="firstname"
                                 value={formData.firstname}
                                 onChange={handleChange}
@@ -180,7 +186,7 @@ export default function CustomerForm({ open, onClose, onSuccess, customer }: Cus
                         </Grid>
                         <Grid item xs={12} sm={6}>
                             <TextField
-                                label="Nom"
+                                label={t('customer.lastname')}
                                 name="lastname"
                                 value={formData.lastname}
                                 onChange={handleChange}
@@ -195,7 +201,7 @@ export default function CustomerForm({ open, onClose, onSuccess, customer }: Cus
                         </Grid>
                         <Grid item xs={12}>
                             <TextField
-                                label="Téléphone"
+                                label={t('customer.phone')}
                                 name="phone"
                                 value={formData.phone}
                                 onChange={handleChange}
@@ -240,7 +246,7 @@ export default function CustomerForm({ open, onClose, onSuccess, customer }: Cus
                         transition: 'all 0.2s'
                     }}
                 >
-                    {isEdit ? 'Enregistrer les modifications' : 'Créer le client'}
+                    {isEdit ? t('customer.saveChanges') : t('customer.createCustomer')}
                 </Button>
             </DialogActions>
         </Dialog>

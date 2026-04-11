@@ -124,6 +124,7 @@ export default function IndexCustomer() {
             setInProgress(true)
             const { message } = await CustomerAPI.delete(customerId!)
             Toast.success(message)
+            handleRefresh()
         } catch (error) {
             console.error(error)
         } finally {

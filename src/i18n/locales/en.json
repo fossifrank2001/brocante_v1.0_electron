@@ -342,7 +342,15 @@
     "supplierName": "Supplier Name",
     "namePlaceholder": "e.g. Global Furniture Co.",
     "contactInfo": "Contact Info",
-    "contactInfoPlaceholder": "Email, phone, etc."
+    "contactInfoPlaceholder": "Email, phone, etc.",
+    "editSupplier": "Edit Supplier",
+    "updateDetails": "Update supplier details",
+    "saveNewSupplier": "Register a new supplier",
+    "name": "Company / Supplier Name",
+    "nameRequired": "Supplier name is required",
+    "contactRequired": "Contact information is required",
+    "saveChanges": "Save Changes",
+    "createSupplier": "Create Supplier"
   },
   "template": {
     "newTemplate": "New Template",
@@ -1078,7 +1086,23 @@
     "totalDebtsTitle": "TOTAL DEBTS",
     "invoice": "Invoice",
     "balanceSummary": "BALANCE SUMMARY",
-    "errorUsingBalance": "Error using balance. Please try again."
+    "errorUsingBalance": "Error using balance. Please try again.",
+    "updateDetails": "Update customer details",
+    "saveNewCustomer": "Register a new customer",
+    "firstname": "First Name",
+    "lastname": "Last Name",
+    "phone": "Phone",
+    "firstnameRequired": "First name is required",
+    "lastnameRequired": "Last name is required",
+    "phoneRequired": "Phone is required",
+    "saveChanges": "Save Changes",
+    "createCustomer": "Create Customer",
+    "list": "Customer List",
+    "phoneAlreadyExists": "A customer already exists with this phone number: {{name}}",
+    "created": "Customer created successfully",
+    "updated": "Customer updated successfully",
+    "deleted": "Customer deleted successfully",
+    "cannotDeleteWithSales": "Cannot delete customer with sales. Please delete all sales first."
   },
   "dashboard": {
     "errorLoadingData": "Failed to load data. Please try again.",
@@ -1204,5 +1228,16 @@
     "updated": "Template updated",
     "created": "Template created",
     "deleted": "Template deleted"
+  },
+  "successSell": {
+    "pageTitle": "Successful Transaction",
+    "title": "Payment Successful",
+    "message": "The transaction has been successfully recorded.",
+    "ticketNumber": "Ticket No.",
+    "loading": "Loading...",
+    "cashTicket": "Cash Ticket",
+    "pdfInvoice": "PDF Invoice",
+    "closeAndReturn": "Close and return to POS",
+    "loadError": "Error loading sell data"
   }
 }

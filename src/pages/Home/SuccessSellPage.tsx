@@ -2,6 +2,7 @@ import { useLayoutEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Box, Typography, Button, Paper, CircularProgress, Container } from '@mui/material';
 import { ArrowBack, Print, Download, CheckCircle } from '@mui/icons-material';
+import { useTranslation } from "react-i18next";
 import PageLoadingIndicator from "Components/PageLoadingIndicator";
 import { useAppContext } from "@/contexts/appContext";
 import { useAppDispatch, useAppSelector } from "@/hooks";
@@ -17,6 +18,7 @@ import { ISellWithDetails } from "@/Services/ReceiptTemplate";
  * @returns {JSX.Element}
  */
 function SuccessSellPage(): JSX.Element {
+    const { t } = useTranslation();
     const context = useAppContext();
     const dispatch = useAppDispatch();
     const navigation = useAppSelector(state => state.navigaton);
@@ -25,7 +27,7 @@ function SuccessSellPage(): JSX.Element {
     const [sellData, setSellData] = useState<ISellWithDetails | null>(null);
 
     useLayoutEffect(() => {
-        document.title = constants.APP_NAME + " .:. Transaction Réussie";
+        document.title = constants.APP_NAME + " .:. " + t('successSell.pageTitle');
         context.togglePageLoading(false);
         // Load sell data for printing
         if (navigation.param?.number) {
@@ -38,7 +40,7 @@ function SuccessSellPage(): JSX.Element {
             const { data } = await SellAPI.show(sellId as unknown as number);
             setSellData(data as unknown as ISellWithDetails);
         } catch (error) {
-            console.error('Failed to load sell data:', error);
+            console.error(t('successSell.loadError'), error);
         }
     };
 
@@ -67,7 +69,7 @@ function SuccessSellPage(): JSX.Element {
         damping: 30
     };
 
-    const displayCode = sellData?.sell_code || navigation.param?.code || 'Chargement...';
+    const displayCode = sellData?.sell_code || navigation.param?.code || t('successSell.loading');
 
     return (
         <Box sx={{
@@ -108,10 +110,10 @@ function SuccessSellPage(): JSX.Element {
                         >
                             <CheckCircle sx={{ fontSize: 72, color: '#10b981', mb: 1 }} />
                             <Typography variant="h5" sx={{ fontWeight: 700, color: '#0f172a', mb: 1 }}>
-                                Paiement Réussi
+                                {t('successSell.title')}
                             </Typography>
                             <Typography variant="body2" sx={{ color: '#64748b' }}>
-                                La transaction a été enregistrée avec succès.
+                                {t('successSell.message')}
                             </Typography>
                         </motion.div>
 
@@ -131,7 +133,7 @@ function SuccessSellPage(): JSX.Element {
                                 alignItems: 'center'
                             }}>
                                 <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500 }}>
-                                    Ticket N°
+                                    {t('successSell.ticketNumber')}
                                 </Typography>
                                 <Typography variant="subtitle1" sx={{ color: '#0f172a', fontWeight: 700, fontFamily: 'monospace' }}>
                                     {displayCode}
@@ -163,7 +165,7 @@ function SuccessSellPage(): JSX.Element {
                                             color: '#475569'
                                         }}
                                     >
-                                        Ticket Cash
+                                        {t('successSell.cashTicket')}
                                     </Button>
 
                                     <Button
@@ -180,7 +182,7 @@ function SuccessSellPage(): JSX.Element {
                                             fontWeight: 600
                                         }}
                                     >
-                                        Facture PDF
+                                        {t('successSell.pdfInvoice')}
                                     </Button>
                                 </Box>
 
@@ -204,7 +206,7 @@ function SuccessSellPage(): JSX.Element {
                                         }
                                     }}
                                 >
-                                    Fermer et retourner au POS
+                                    {t('successSell.closeAndReturn')}
                                 </Button>
                             </Box>
                         </motion.div>

@@ -24,6 +24,7 @@ import {
 } from '@mui/icons-material';
 import { ISupply } from 'Interfaces';
 import SupplyAPI from '@/Data/Api/Suppliers';
+import { useTranslation } from 'react-i18next';
 
 interface SupplierFormProps {
     open: boolean;
@@ -33,6 +34,7 @@ interface SupplierFormProps {
 }
 
 export default function SupplierForm({ open, onClose, onSuccess, supplier }: SupplierFormProps) {
+    const { t } = useTranslation();
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState<Partial<ISupply>>({
         name: '',
@@ -59,8 +61,8 @@ export default function SupplierForm({ open, onClose, onSuccess, supplier }: Sup
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
-        if (!formData.name) newErrors.name = 'Le nom du fournisseur est requis';
-        if (!formData.contact_info) newErrors.contact_info = 'Les informations de contact sont requises';
+        if (!formData.name) newErrors.name = t('supplier.nameRequired');
+        if (!formData.contact_info) newErrors.contact_info = t('supplier.contactRequired');
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -146,10 +148,10 @@ export default function SupplierForm({ open, onClose, onSuccess, supplier }: Sup
                     </Box>
                     <Box>
                         <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
-                            {isEdit ? 'Modifier Fournisseur' : 'Nouveau Fournisseur'}
+                            {isEdit ? t('supplier.editSupplier') : t('supplier.newSupplier')}
                         </Typography>
                         <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
-                            {isEdit ? 'Mettez à jour les détails du fournisseur' : 'Enregistrez un nouveau fournisseur'}
+                            {isEdit ? t('supplier.updateDetails') : t('supplier.saveNewSupplier')}
                         </Typography>
                     </Box>
                 </Box>
@@ -160,7 +162,7 @@ export default function SupplierForm({ open, onClose, onSuccess, supplier }: Sup
                     <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
                         <Grid item xs={12}>
                             <TextField
-                                label="Nom de l'entreprise / Fournisseur"
+                                label={t('supplier.name')}
                                 name="name"
                                 value={formData.name}
                                 onChange={handleChange}
@@ -176,7 +178,7 @@ export default function SupplierForm({ open, onClose, onSuccess, supplier }: Sup
                         </Grid>
                         <Grid item xs={12}>
                             <TextField
-                                label="Contact (Téléphone, Email, etc.)"
+                                label={t('supplier.contactInfo')}
                                 name="contact_info"
                                 value={formData.contact_info}
                                 onChange={handleChange}
@@ -223,7 +225,7 @@ export default function SupplierForm({ open, onClose, onSuccess, supplier }: Sup
                         transition: 'all 0.2s'
                     }}
                 >
-                    {isEdit ? 'Enregistrer les modifications' : 'Créer le fournisseur'}
+                    {isEdit ? t('supplier.saveChanges') : t('supplier.createSupplier')}
                 </Button>
             </DialogActions>
         </Dialog>

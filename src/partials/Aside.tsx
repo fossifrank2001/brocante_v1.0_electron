@@ -111,8 +111,8 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
     const renderMenus = () => {
         if (!menus || menus.length === 0) return null
 
-        // Filter out BILL menu
-        const filteredMenus = menus.filter((m) => m.code !== 'BILL')
+        // Masquer le menu 'bill'
+        const filteredMenus = menus.filter((m: any) => m.code !== 'BILL')
         const parents = filteredMenus.filter((m) => m.parent_id === null)
         const childrenByParent = filteredMenus.reduce((acc: Record<number, any[]>, m: any) => {
             if (m.parent_id !== null) {

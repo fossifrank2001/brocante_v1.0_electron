@@ -351,20 +351,6 @@
     "noTemplate": "Aucune fiche type",
     "noTemplateDefinedForSubcategory": "Aucune fiche type n'est définie pour cette sous-catégorie. Les champs de spécification classiques sont disponibles ci-dessous."
   },
-  "supplier": {
-    "supplier": "Fournisseur",
-    "suppliers": "Fournisseurs",
-    "contact": "Contact",
-    "products": "Produits",
-    "newSupplier": "Nouveau Fournisseur",
-    "deleteConfirmMessage": "Voulez-vous vraiment supprimer ce fournisseur ?",
-    "existingSuppliers": "Fournisseurs Existants",
-    "searchPlaceholder": "Rechercher un fournisseur...",
-    "supplierName": "Nom du Fournisseur",
-    "namePlaceholder": "ex: Global Furniture Co.",
-    "contactInfo": "Info Contact",
-    "contactInfoPlaceholder": "Email, téléphone, etc."
-  },
   "invoice": {
     "invoice": "Facture",
     "unpaid": "Impayé",
@@ -1038,7 +1024,23 @@
     "totalDebtsTitle": "TOTAL DES DETTES",
     "invoice": "Facture",
     "balanceSummary": "RÉSUMÉ SOLDE",
-    "errorUsingBalance": "Erreur lors de l'utilisation du solde. Veuillez réessayer."
+    "errorUsingBalance": "Erreur lors de l'utilisation du solde. Veuillez réessayer.",
+    "updateDetails": "Mettez à jour les détails du client",
+    "saveNewCustomer": "Enregistrez un nouveau client",
+    "firstname": "Prénom",
+    "lastname": "Nom",
+    "phone": "Téléphone",
+    "firstnameRequired": "Le prénom est requis",
+    "lastnameRequired": "Le nom est requis",
+    "phoneRequired": "Le téléphone est requis",
+    "saveChanges": "Enregistrer les modifications",
+    "createCustomer": "Créer le client",
+    "list": "Liste des clients",
+    "phoneAlreadyExists": "Un client existe déjà avec ce numéro de téléphone : {{name}}",
+    "created": "Client créé avec succès",
+    "updated": "Client mis à jour avec succès",
+    "deleted": "Client supprimé avec succès",
+    "cannotDeleteWithSales": "Impossible de supprimer un client ayant des ventes. Veuillez d'abord supprimer toutes les ventes."
   },
   "stats": {
     "totalAccounts": "Total Comptes",
@@ -1147,5 +1149,38 @@
     "updated": "Modèle mis à jour",
     "created": "Modèle créé",
     "deleted": "Modèle supprimé"
+  },
+  "supplier": {
+    "editSupplier": "Modifier Fournisseur",
+    "newSupplier": "Nouveau Fournisseur",
+    "updateDetails": "Mettez à jour les détails du fournisseur",
+    "saveNewSupplier": "Enregistrez un nouveau fournisseur",
+    "name": "Nom de l'entreprise / Fournisseur",
+    "contactInfo": "Contact (Téléphone, Email, etc.)",
+    "nameRequired": "Le nom du fournisseur est requis",
+    "contactRequired": "Les informations de contact sont requises",
+    "saveChanges": "Enregistrer les modifications",
+    "createSupplier": "Créer le fournisseur",
+    "supplier": "Fournisseur",
+    "suppliers": "Fournisseurs",
+    "contact": "Contact",
+    "products": "Produits",
+    "deleteConfirmMessage": "Voulez-vous vraiment supprimer ce fournisseur ?",
+    "existingSuppliers": "Fournisseurs Existants",
+    "searchPlaceholder": "Rechercher un fournisseur...",
+    "supplierName": "Nom du Fournisseur",
+    "namePlaceholder": "ex: Global Furniture Co.",
+    "contactInfoPlaceholder": "Email, téléphone, etc."
+  },
+  "successSell": {
+    "pageTitle": "Transaction Réussie",
+    "title": "Paiement Réussi",
+    "message": "La transaction a été enregistrée avec succès.",
+    "ticketNumber": "Ticket N°",
+    "loading": "Chargement...",
+    "cashTicket": "Ticket Cash",
+    "pdfInvoice": "Facture PDF",
+    "closeAndReturn": "Fermer et retourner au POS",
+    "loadError": "Erreur lors du chargement des données de vente"
   }
 }
