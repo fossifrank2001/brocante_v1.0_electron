@@ -1,13 +1,17 @@
 import { motion } from 'framer-motion';
 import Logo from '@/Components/common/Logo';
+import { useTranslation } from 'react-i18next';
 
 const Loading = () => {
+    const { t } = useTranslation();
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-vh-100 d-flex flex-column align-items-center justify-content-center bg-white"
+            className="min-vh-100 d-flex flex-column align-items-center justify-content-center"
+            style={{ backgroundColor: 'var(--bg-primary)' }}
         >
             <div className="text-center mb-5">
                 <Logo 
@@ -16,7 +20,7 @@ const Loading = () => {
                     fontSize="2.5rem"
                     imageSize={40}
                 />
-                <p className="text-muted" style={{ fontFamily: "'Inter', sans-serif" }}>Votre marché aux trésors</p>
+                <p className="text-muted" style={{ fontFamily: "'Inter', sans-serif" }}>{t('common.loadingMessage')}</p>
             </div>
 
             <motion.div
@@ -30,7 +34,7 @@ const Loading = () => {
                             width: '12px',
                             height: '12px',
                             borderRadius: '50%',
-                            backgroundColor: '#0d6efd',
+                            backgroundColor: 'var(--accent-primary)',
                         }}
                         animate={{
                             y: ['0%', '-100%', '0%'],
@@ -53,10 +57,11 @@ const Loading = () => {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
             >
-                Chargement en cours...
+                {t('common.loading')}
             </motion.p>
         </motion.div>
     );
 };
 
 export default Loading;
+

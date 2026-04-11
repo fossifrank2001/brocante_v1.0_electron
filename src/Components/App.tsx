@@ -1,5 +1,6 @@
 import 'Styles/App.less'
 import { AppContextProvider } from '@/contexts/appContext'
+import { ThemeContextProvider } from '@/contexts/ThemeContext'
 import '@/assets/css/styles.min.css';
 
 import { Pages } from 'Data/Objects/state'
@@ -138,8 +139,8 @@ const App: React.FC = () => {
             await handleRedirectToDashboard(authUser.accesses[0].id, dispatch);
           }
         }
-      } else if (!token && currentPage !== Pages.LOGIN && currentPage !== Pages.ONBOARDING && currentPage !== Pages.HOME && currentPage !== Pages.FORGOT_PAGE && currentPage !== Pages.RESET_PAGE) {
-        // Si pas de token et qu'on est sur une page protégée, rediriger vers login
+      } else if (!token && currentPage !== Pages.LOGIN && currentPage !== Pages.ONBOARDING && currentPage !== Pages.FORGOT_PAGE && currentPage !== Pages.RESET_PAGE) {
+        // Si pas de token, rediriger vers login (même sur HOME/marketplace)
         dispatch(redirectToLogin());
       }
     })()
@@ -175,28 +176,30 @@ const App: React.FC = () => {
   }
 
   // Pages où le LockScreen ne doit PAS apparaître
-  const publicPages = [Pages.HOME, Pages.LOGIN, Pages.FORGOT_PAGE, Pages.RESET_PAGE, Pages.ONBOARDING];
+  const publicPages = [Pages.LOGIN, Pages.FORGOT_PAGE, Pages.RESET_PAGE, Pages.ONBOARDING];
   const shouldShowLockScreen = isAuth && !publicPages.includes(currentPage);
 
   return (
-    <AppContextProvider>
-      {shouldShowLockScreen && <LockScreen />}
-      {renderMainContent()}
+    <ThemeContextProvider>
+      <AppContextProvider>
+        {shouldShowLockScreen && <LockScreen />}
+        {renderMainContent()}
 
-      {isOk && <CustomAlert
-        openDetailModal={openDetailModal}
-        content={{
-          style: 'ti ti-info-circle text text-info',
-          icon: 'Info',
-          message: 'This is your first connexion so you should change your generated password for more security.'
-        }}
-        onHandleDelete={handleRedirectToResetPage}
-        onHandleOpenDetail={() => setOpenDetailModal(false)}
-        inProgress={false}
-        successMessageButton="ok"
-        iconClasseBtn="info"
-      />}
-    </AppContextProvider>
+        {isOk && <CustomAlert
+          openDetailModal={openDetailModal}
+          content={{
+            style: 'ti ti-info-circle text text-info',
+            icon: 'Info',
+            message: 'This is your first connexion so you should change your generated password for more security.'
+          }}
+          onHandleDelete={handleRedirectToResetPage}
+          onHandleOpenDetail={() => setOpenDetailModal(false)}
+          inProgress={false}
+          successMessageButton="ok"
+          iconClasseBtn="info"
+        />}
+      </AppContextProvider>
+    </ThemeContextProvider>
   );
 }
 

@@ -7,6 +7,7 @@ import { ISupply } from "Data/Interfaces/Supply.ts";
 import { IProductPayload } from 'Data/Interfaces/Product';
 import { Box, Typography, Button, TextField, Card, IconButton, Tooltip, Grid, InputAdornment } from '@mui/material';
 import { TbUsers, TbSearch, TbTrash, TbBuildingStore, TbPhone, TbUserPlus } from 'react-icons/tb';
+import { useTranslation } from 'react-i18next';
 import './SupplierInfo.scss';
 
 interface Supplier extends ISupply { }
@@ -16,6 +17,7 @@ interface ISupplyInfoProps {
 }
 
 const SupplierInfo: React.FC<ISupplyInfoProps> = ({ suppliersRecord }) => {
+    const { t } = useTranslation();
     const { values, handleChange, setFieldValue, handleBlur } = useFormikContext<IProductPayload>();
     const [loading, setLoading] = useState(false);
     const [suppliers, setSuppliers] = useState<ISupply[] | null>(null);
@@ -56,12 +58,12 @@ const SupplierInfo: React.FC<ISupplyInfoProps> = ({ suppliersRecord }) => {
 
     return (
         <Box className="supplier-info-modern">
-            <Box sx={{ p: 4, borderRadius: '24px', bgcolor: 'rgba(255, 255, 255, 0.4)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.5)', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' }}>
+            <Box sx={{ p: 4, borderRadius: '24px', bgcolor: 'var(--bg-surface)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
                     <Box sx={{ p: 1.5, borderRadius: '14px', bgcolor: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}>
                         <TbUsers size={24} />
                     </Box>
-                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>Gestion des Fournisseurs</Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--text-primary)' }}>{t('product.manageSuppliers')}</Typography>
                 </Box>
 
                 <FieldArray name="suppliers">
@@ -69,11 +71,11 @@ const SupplierInfo: React.FC<ISupplyInfoProps> = ({ suppliersRecord }) => {
                         <Box>
                             <Grid container spacing={3} sx={{ mb: 4 }}>
                                 <Grid item xs={12} md={8}>
-                                    <Box sx={{ p: 2, borderRadius: '16px', border: '1px solid #e2e8f0', bgcolor: '#fff' }}>
+                                    <Box sx={{ p: 2, borderRadius: '16px', border: '1px solid var(--border-color)', bgcolor: 'var(--bg-surface)' }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                                             <TbSearch size={18} color="#4f46e5" />
                                             <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                                Fournisseurs Existants
+                                                {t('supplier.existingSuppliers')}
                                             </Typography>
                                         </Box>
                                         <Multiselect
@@ -83,11 +85,11 @@ const SupplierInfo: React.FC<ISupplyInfoProps> = ({ suppliersRecord }) => {
                                             onRemove={handleSupplierSelect}
                                             displayValue="name"
                                             loading={loading}
-                                            placeholder="Rechercher un fournisseur..."
+                                            placeholder={t('supplier.searchPlaceholder')}
                                             style={{
                                                 chips: { background: '#4f46e5', borderRadius: '8px', fontWeight: 600 },
                                                 searchBox: { border: 'none', background: 'transparent', padding: '0' },
-                                                inputField: { color: '#1e293b' }
+                                                inputField: { color: 'var(--text-primary)' }
                                             }}
                                         />
                                     </Box>
@@ -109,7 +111,7 @@ const SupplierInfo: React.FC<ISupplyInfoProps> = ({ suppliersRecord }) => {
                                             '&:hover': { borderWidth: '2px', borderColor: '#4f46e5', bgcolor: 'rgba(79, 70, 229, 0.05)' }
                                         }}
                                     >
-                                        Nouveau Fournisseur
+                                        {t('supplier.newSupplier')}
                                     </Button>
                                 </Grid>
                             </Grid>
@@ -128,7 +130,7 @@ const SupplierInfo: React.FC<ISupplyInfoProps> = ({ suppliersRecord }) => {
                                                     <Card sx={{
                                                         p: 3,
                                                         borderRadius: '20px',
-                                                        border: '1px solid #e2e8f0',
+                                                        border: '1px solid var(--border-color)',
                                                         boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
                                                         position: 'relative',
                                                         overflow: 'visible',
@@ -139,7 +141,7 @@ const SupplierInfo: React.FC<ISupplyInfoProps> = ({ suppliersRecord }) => {
                                                             transform: 'translateY(-4px)'
                                                         }
                                                     }}>
-                                                        <Tooltip title="Retirer" arrow>
+                                                        <Tooltip title={t('common.remove')} arrow>
                                                             <IconButton
                                                                 size="small"
                                                                 onClick={() => remove(index)}
@@ -147,10 +149,10 @@ const SupplierInfo: React.FC<ISupplyInfoProps> = ({ suppliersRecord }) => {
                                                                     position: 'absolute',
                                                                     top: -12,
                                                                     right: -12,
-                                                                    bgcolor: '#fff',
+                                                                    bgcolor: 'var(--bg-surface)',
                                                                     color: '#ef4444',
-                                                                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-                                                                    border: '1px solid #fee2e2',
+                                                                    boxShadow: 'var(--shadow-sm)',
+                                                                    border: '1px solid var(--border-color)',
                                                                     '&:hover': { bgcolor: '#ef4444', color: '#fff' }
                                                                 }}
                                                             >
@@ -161,12 +163,12 @@ const SupplierInfo: React.FC<ISupplyInfoProps> = ({ suppliersRecord }) => {
                                                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                                                             <TextField
                                                                 fullWidth
-                                                                label="Nom du Fournisseur"
+                                                                label={t('supplier.supplierName')}
                                                                 name={`suppliers[${index}].name`}
                                                                 value={supplier.name}
                                                                 onChange={handleChange}
                                                                 onBlur={handleBlur}
-                                                                placeholder="ex: Global Furniture Co."
+                                                                placeholder={t('supplier.namePlaceholder')}
                                                                 variant="outlined"
                                                                 size="small"
                                                                 InputProps={{
@@ -180,12 +182,12 @@ const SupplierInfo: React.FC<ISupplyInfoProps> = ({ suppliersRecord }) => {
                                                             />
                                                             <TextField
                                                                 fullWidth
-                                                                label="Contact Info"
+                                                                label={t('supplier.contactInfo')}
                                                                 name={`suppliers[${index}].contact_info`}
                                                                 value={supplier.contact_info}
                                                                 onChange={handleChange}
                                                                 onBlur={handleBlur}
-                                                                placeholder="Email, téléphone, etc."
+                                                                placeholder={t('supplier.contactInfoPlaceholder')}
                                                                 variant="outlined"
                                                                 size="small"
                                                                 InputProps={{

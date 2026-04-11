@@ -3,6 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import ImageAPI from 'Data/Api/Image.ts';
 import {IImage} from "Data/Interfaces/Image.ts";
 import Toast from "Data/Utilities/Toast.ts";
+import { useTranslation } from 'react-i18next';
 
 
 interface IThumbnailDropzoneProps {
@@ -18,6 +19,7 @@ const ThumbnailDropzone: React.FC<IThumbnailDropzoneProps> = ({
                                                                   existingImageId,
                                                                   imageable
 }) => {
+    const { t } = useTranslation();
     const [preview, setPreview] = useState<string | null>(existingImageUrl || null);
     const [uploadProgress, setUploadProgress] = useState<number>(0);
 
@@ -69,12 +71,12 @@ const ThumbnailDropzone: React.FC<IThumbnailDropzoneProps> = ({
     return (
         <div className="card">
             <div className="card-body">
-                <h4 className="card-title mb-7">Thumbnail</h4>
+                <h4 className="card-title mb-7">{t('common.thumbnail')}</h4>
                 <div {...getRootProps()} className="dropzone dz-clickable mb-2">
                     <input {...getInputProps()} />
                     <div className="dz-default dz-message">
                         <button className="dz-button" type="button">
-                            {isDragActive ? 'Drop the file here ...' : 'Drop Thumbnail here to upload or click to select'}
+                            {isDragActive ? t('common.dropHere') : t('common.dropToSelect')}
                         </button>
                         {preview && (
                             <>
@@ -96,7 +98,7 @@ const ThumbnailDropzone: React.FC<IThumbnailDropzoneProps> = ({
                                     className="btn btn-danger mt-2"
                                     onClick={handleDeleteImage}
                                 >
-                                    Remove Image
+                                    {t('common.delete')}
                                 </button>
                             </>
                         )}
@@ -106,5 +108,6 @@ const ThumbnailDropzone: React.FC<IThumbnailDropzoneProps> = ({
         </div>
     );
 };
+
 
 export default ThumbnailDropzone;

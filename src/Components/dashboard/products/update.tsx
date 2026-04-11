@@ -14,8 +14,10 @@ import constants from "Data/Utilities/constants";
 import Toast from '@/Data/Utilities/Toast';
 import { Box, Card, CardContent, Button, Typography, Grid, CircularProgress, Paper, Fade } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, AutoAwesome } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 const ProductUpdate: React.FC = () => {
+    const { t } = useTranslation();
     const { id } = useAppSelector((state) => state.navigaton);
     const dispatch = useAppDispatch();
     const context = useAppContext();
@@ -29,7 +31,7 @@ const ProductUpdate: React.FC = () => {
 
     const handleUploadSuccess = (uploadedImagePath: IImage) => {
         setImage(uploadedImagePath);
-        Toast.success("Image mise à jour avec succès");
+        Toast.success(t('product.imageUpdated'));
     };
 
     const getRecord = useCallback(
@@ -41,11 +43,12 @@ const ProductUpdate: React.FC = () => {
                 setImage(__product.thumbnail);
             } catch (e) {
                 console.error(e);
-                Toast.error("Impossible de récupérer les données de l'article");
+                Toast.error(t('product.fetchError'));
             } finally {
                 setIsDataLoading(false);
             }
         },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [id],
     );
 
@@ -60,7 +63,7 @@ const ProductUpdate: React.FC = () => {
                     <Box sx={{ textAlign: 'center' }}>
                         <CircularProgress size={60} thickness={4} sx={{ color: '#6366f1', mb: 2 }} />
                         <Typography variant="body1" sx={{ color: '#64748b', fontWeight: 600 }}>
-                            Chargement de l'article...
+                            {t('product.loadingArticle')}
                         </Typography>
                     </Box>
                 </Fade>
@@ -71,24 +74,23 @@ const ProductUpdate: React.FC = () => {
     return (
         <Box>
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <Breadcrumd parent="Articles" url={Pages.ARTICLE} _child={id} />
+                <Breadcrumd parent={t('menu.ARTICLE')} url={Pages.ARTICLE} _child={id} />
 
                 <Grid container spacing={4} justifyContent="center">
                     <Grid item xs={12}>
                         <Card sx={{
                             borderRadius: '24px',
-                            border: '1px solid rgba(255, 255, 255, 0.4)',
-                            background: 'rgba(255, 255, 255, 0.8)',
-                            backdropFilter: 'blur(16px)',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-surface)',
+                            boxShadow: 'var(--shadow-lg)',
                             p: 2
                         }}>
                             <CardContent sx={{ p: 4 }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, justifyContent: 'space-between' }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                         <Box>
-                                            <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-                                                Modifier l'Article
+                                            <Typography variant="h5" sx={{ fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                                                {t('product.editProduct')}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -98,7 +100,7 @@ const ProductUpdate: React.FC = () => {
                                         onClick={() => dispatch(setActivePage({ page: Pages.ARTICLE }))}
                                         sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
                                     >
-                                        Retour
+                                        {t('product.back')}
                                     </Button>
                                 </Box>
 
@@ -111,8 +113,8 @@ const ProductUpdate: React.FC = () => {
                                             <Paper elevation={0} sx={{
                                                 p: 4,
                                                 borderRadius: '24px',
-                                                backgroundColor: 'rgba(248, 250, 252, 0.6)',
-                                                border: '1px solid rgba(226, 232, 240, 0.8)',
+                                                backgroundColor: 'var(--bg-surface)',
+                                                border: '1px solid var(--border-color)',
                                                 textAlign: 'center',
                                                 display: 'flex',
                                                 flexDirection: 'column',
@@ -133,7 +135,7 @@ const ProductUpdate: React.FC = () => {
                                                 <Box sx={{ mt: 4, pt: 4, borderTop: '1px solid rgba(226, 232, 240, 0.8)', width: '100%' }}>
                                                     <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                                                         <AutoAwesome sx={{ fontSize: 14 }} />
-                                                        Aperçu de l'image de couverture
+                                                        {t('product.coverImagePreview')}
                                                     </Typography>
                                                 </Box>
                                             </Paper>

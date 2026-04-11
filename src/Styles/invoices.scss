@@ -3,14 +3,16 @@
     .card {
         transition: all 0.3s ease;
         border: none;
+        background-color: var(--card-bg);
+        border: 1px solid var(--card-border);
         
         &:hover {
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+            box-shadow: var(--shadow-lg) !important;
         }
     }
 
     .text-muted {
-        color: #6c757d !important;
+        color: var(--text-muted) !important;
     }
 
     .fw-medium {
@@ -23,34 +25,41 @@
         padding: 0.5rem 0.75rem;
         
         &.bg-success {
-            background-color: #28a745 !important;
+            background-color: #10b981 !important;
         }
         
         &.bg-warning {
-            background-color: #ffc107 !important;
+            background-color: #f59e0b !important;
             color: #000;
         }
         
         &.bg-danger {
-            background-color: #dc3545 !important;
+            background-color: #ef4444 !important;
         }
     }
 
     .modal {
         .modal-content {
             border-radius: 0.5rem;
+            background-color: var(--bg-surface);
+            border-color: var(--border-color);
             
             .modal-header {
-                background-color: #f8f9fa;
+                background-color: var(--bg-secondary);
+                border-bottom-color: var(--border-color);
             }
         }
         
         .form-control, .form-select {
             border-radius: 0.375rem;
             padding: 0.5rem 0.75rem;
+            background-color: var(--input-bg);
+            border-color: var(--input-border);
+            color: var(--text-primary);
             
             &:focus {
-                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+                box-shadow: 0 0 0 0.2rem var(--accent-primary-muted);
+                border-color: var(--accent-primary);
             }
         }
         
@@ -64,17 +73,18 @@
         border: none !important;
         
         .MuiDataGrid-columnHeaders {
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
         }
         
         .MuiDataGrid-cell {
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-primary);
         }
         
         .MuiDataGrid-row {
             &:hover {
-                background-color: #f8f9fa;
+                background-color: var(--bg-secondary);
             }
         }
     }
@@ -93,9 +103,9 @@
             border-radius: 0.375rem;
             
             &.alert-info {
-                background-color: #cff4fc;
-                border-color: #b6effb;
-                color: #055160;
+                background-color: rgba(96, 165, 250, 0.1);
+                border-color: rgba(96, 165, 250, 0.2);
+                color: #60a5fa;
             }
         }
     }
@@ -111,7 +121,8 @@
 
     // Tooltips
     .MuiTooltip-tooltip {
-        background-color: rgba(0, 0, 0, 0.9);
+        background-color: var(--bg-elevated);
+        color: var(--text-primary);
         font-size: 0.75rem;
         padding: 0.5rem 0.75rem;
         border-radius: 0.25rem;

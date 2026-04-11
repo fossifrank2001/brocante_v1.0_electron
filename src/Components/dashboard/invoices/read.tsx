@@ -296,10 +296,9 @@ const ReadInvoice = () => {
                             <Grid item xs={12}>
                                 <Card sx={{
                                     borderRadius: '24px',
-                                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                                    background: 'rgba(255, 255, 255, 0.8)',
-                                    backdropFilter: 'blur(12px)',
-                                    boxShadow: '0 10px 30px rgba(0,0,0,0.03)'
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-surface)',
+                                    boxShadow: 'var(--shadow-sm)'
                                 }}>
                                     <CardContent sx={{ p: 4 }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
@@ -319,7 +318,7 @@ const ReadInvoice = () => {
                                             </Grid>
                                             <Grid item xs={6}>
                                                 <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('sellRead.totalAmount')}</Typography>
-                                                <Typography variant="h6" sx={{ fontWeight: 900, color: '#0f172a' }}>{UtilMethods.formatNumber(record.total_amount)}</Typography>
+                                                <Typography variant="h6" sx={{ fontWeight: 900, color: '#0f172a' }}>{UtilMethods.formatAmount(record.total_amount)}</Typography>
                                             </Grid>
                                             <Grid item xs={6}>
                                                 <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('sellRead.issueDate')}</Typography>
@@ -334,10 +333,9 @@ const ReadInvoice = () => {
                             <Grid item xs={12}>
                                 <Card sx={{
                                     borderRadius: '24px',
-                                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                                    background: 'rgba(255, 255, 255, 0.8)',
-                                    backdropFilter: 'blur(12px)',
-                                    boxShadow: '0 10px 30px rgba(0,0,0,0.03)'
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-surface)',
+                                    boxShadow: 'var(--shadow-sm)'
                                 }}>
                                     <CardContent sx={{ p: 4 }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
@@ -368,7 +366,7 @@ const ReadInvoice = () => {
                                                     <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('sellRead.availableBalance')}</Typography>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                                                         <AccountBalanceWallet sx={{ fontSize: 18, color: '#10b981' }} />
-                                                        <Typography variant="h6" sx={{ fontWeight: 900, color: '#10b981' }}>{UtilMethods.formatNumber(companyBalance)}</Typography>
+                                                        <Typography variant="h6" sx={{ fontWeight: 900, color: '#10b981' }}>{UtilMethods.formatAmount(companyBalance)}</Typography>
                                                     </Box>
                                                 </Grid>
                                             </Grid>
@@ -386,10 +384,9 @@ const ReadInvoice = () => {
                         <Card sx={{
                             height: '100%',
                             borderRadius: '24px',
-                            border: '1px solid rgba(255, 255, 255, 0.3)',
-                            background: 'rgba(255, 255, 255, 0.8)',
-                            backdropFilter: 'blur(12px)',
-                            boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-surface)',
+                            boxShadow: 'var(--shadow-sm)',
                             overflow: 'hidden'
                         }}>
                             <Box sx={{ p: 3, borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -402,12 +399,12 @@ const ReadInvoice = () => {
                                 <Box sx={{ p: 3, bgcolor: 'rgba(99, 102, 241, 0.03)', mb: 0 }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                         <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 700 }}>{t('sellRead.totalPaid')}</Typography>
-                                        <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 900 }}>{UtilMethods.formatNumber(record.amount_paid)}</Typography>
+                                        <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 900 }}>{UtilMethods.formatAmount(record.amount_paid)}</Typography>
                                     </Box>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 700 }}>{t('sellRead.remaining')}</Typography>
                                         <Typography variant="body2" sx={{ color: record.remaining_balance > 0 ? '#ef4444' : '#64748b', fontWeight: 900 }}>
-                                            {UtilMethods.formatNumber(record.remaining_balance)}
+                                            {UtilMethods.formatAmount(record.remaining_balance)}
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -438,7 +435,7 @@ const ReadInvoice = () => {
                                                         border: '3px solid white',
                                                         boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
                                                     }} />
-                                                    <Box sx={{ p: 2, bgcolor: 'white', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                                                    <Box sx={{ p: 2, bgcolor: 'var(--bg-surface)', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
                                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                                             <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700 }}>
                                                                 {dayjs(payment.created_at).format('DD/MM/YY HH:mm')}
@@ -450,7 +447,7 @@ const ReadInvoice = () => {
                                                             />
                                                         </Box>
                                                         <Typography variant="body2" sx={{ fontWeight: 950, color: '#10b981', fontSize: '1rem' }}>
-                                                            + {UtilMethods.formatNumber(payment.amount)}
+                                                            + {UtilMethods.formatAmount(payment.amount)}
                                                         </Typography>
                                                     </Box>
                                                 </motion.div>
@@ -477,10 +474,9 @@ const ReadInvoice = () => {
                 PaperProps={{
                     sx: {
                         borderRadius: '32px',
-                        bgcolor: 'rgba(255, 255, 255, 0.9)',
-                        backdropFilter: 'blur(24px)',
-                        border: '1px solid rgba(255, 255, 255, 0.4)',
-                        boxShadow: '0 40px 100px -20px rgba(0, 0, 0, 0.2)',
+                        bgcolor: 'var(--bg-surface)',
+                        border: '1px solid var(--border-color)',
+                        boxShadow: 'var(--shadow-xl)',
                         p: 1
                     }
                 }}
@@ -502,28 +498,28 @@ const ReadInvoice = () => {
                                     control={<Checkbox checked={formik.values.useCompanyBalance} onChange={formik.handleChange} name="useCompanyBalance" color="success" />}
                                     label={
                                         <Typography variant="body2" sx={{ fontWeight: 700, color: '#065f46' }}>
-                                            {t('invoice.deductFromBalance', {amount: UtilMethods.formatNumber(companyBalance)})}
+                                            {t('invoice.deductFromBalance', {amount: UtilMethods.formatAmount(companyBalance)})}
                                         </Typography>
                                     }
                                 />
                             </Paper>
                         )}
 
-                        <Paper elevation={0} sx={{ p: 2, borderRadius: '20px', bgcolor: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                        <Paper elevation={0} sx={{ p: 2, borderRadius: '20px', bgcolor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                 <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b' }}>{t('sellRead.remaining')}:</Typography>
-                                <Typography variant="caption" sx={{ fontWeight: 800 }}>{UtilMethods.formatNumber(record.remaining_balance)}</Typography>
+                                <Typography variant="caption" sx={{ fontWeight: 800 }}>{UtilMethods.formatAmount(record.remaining_balance)}</Typography>
                             </Box>
                             {formik.values.useCompanyBalance && (
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, color: '#10b981' }}>
                                     <Typography variant="caption" sx={{ fontWeight: 700 }}>{t('sellRead.deductBalance')}:</Typography>
-                                    <Typography variant="caption" sx={{ fontWeight: 800 }}>-{UtilMethods.formatNumber(Math.min(companyBalance, record.remaining_balance))}</Typography>
+                                    <Typography variant="caption" sx={{ fontWeight: 800 }}>-{UtilMethods.formatAmount(Math.min(companyBalance, record.remaining_balance))}</Typography>
                                 </Box>
                             )}
                             <Divider sx={{ my: 1, borderStyle: 'dashed' }} />
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <Typography variant="body1" sx={{ fontWeight: 800 }}>{t('sellRead.toPay')}:</Typography>
-                                <Typography variant="h6" sx={{ fontWeight: 900, color: '#6366f1' }}>{UtilMethods.formatNumber(calculatedAmountToPay)}</Typography>
+                                <Typography variant="h6" sx={{ fontWeight: 900, color: '#6366f1' }}>{UtilMethods.formatAmount(calculatedAmountToPay)}</Typography>
                             </Box>
                         </Paper>
 
@@ -537,7 +533,7 @@ const ReadInvoice = () => {
                             variant="outlined"
                             disabled={formik.values.useCompanyBalance && calculatedAmountToPay === 0}
                             InputProps={{
-                                sx: { borderRadius: '16px', bgcolor: 'white', fontWeight: 800 },
+                                sx: { borderRadius: '16px', bgcolor: 'var(--input-bg)', fontWeight: 800 },
                                 startAdornment: <AttachMoney sx={{ mr: 1, color: '#94a3b8' }} />
                             }}
                         />
@@ -549,7 +545,7 @@ const ReadInvoice = () => {
                                 value={formik.values.paymentMethod}
                                 onChange={formik.handleChange}
                                 label={t('sellRead.paymentMethod')}
-                                sx={{ borderRadius: '16px', bgcolor: 'white', fontWeight: 800 }}
+                                sx={{ borderRadius: '16px', bgcolor: 'var(--input-bg)', fontWeight: 800 }}
                             >
                                 <MenuItem value="Cash">{t('refund.cash')}</MenuItem>
                                 <MenuItem value="Orange Money">{t('refund.orangeMoney')}</MenuItem>
@@ -596,14 +592,14 @@ const ReadInvoice = () => {
                 <DialogContent sx={{ p: 3, pt: 0 }}>
                     {paymentResponse && (
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <Paper variant="outlined" sx={{ p: 3, borderRadius: '20px', bgcolor: '#f8fafc' }}>
+                            <Paper variant="outlined" sx={{ p: 3, borderRadius: '20px', bgcolor: 'var(--bg-surface)', border: '1px solid var(--border-color)' }}>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                     <Typography sx={{ color: '#64748b' }}>{t('sellRead.amountPaid')}:</Typography>
-                                    <Typography sx={{ fontWeight: 800, color: '#10b981' }}>{UtilMethods.formatNumber(paymentResponse.payment_details.amount_paid)}</Typography>
+                                    <Typography sx={{ fontWeight: 800, color: '#10b981' }}>{UtilMethods.formatAmount(paymentResponse.payment_details.amount_paid)}</Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <Typography sx={{ color: '#64748b' }}>{t('sellRead.newBalance')}:</Typography>
-                                    <Typography sx={{ fontWeight: 800 }}>{UtilMethods.formatNumber(paymentResponse.payment_details.remaining_balance)}</Typography>
+                                    <Typography sx={{ fontWeight: 800 }}>{UtilMethods.formatAmount(paymentResponse.payment_details.remaining_balance)}</Typography>
                                 </Box>
                             </Paper>
                             {paymentResponse.debt_coverage.covered_debts.length > 0 && (
@@ -613,7 +609,7 @@ const ReadInvoice = () => {
                                         {paymentResponse.debt_coverage.covered_debts.map(debt => (
                                             <Chip
                                                 key={debt.sale_id}
-                                                label={`${t('sellRead.sale')} #${debt.sale_id}: ${UtilMethods.formatNumber(debt.amount_covered)}`}
+                                                label={`${t('sellRead.sale')} #${debt.sale_id}: ${UtilMethods.formatAmount(debt.amount_covered)}`}
                                                 size="small"
                                                 variant="outlined"
                                                 sx={{ fontWeight: 700, borderColor: '#10b981', color: '#10b981' }}

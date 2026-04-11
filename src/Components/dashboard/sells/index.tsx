@@ -189,7 +189,7 @@ export default function IndexSell() {
                 size: 150,
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>
-                        {UtilMethods.formatNumber(cell.getValue() as number)}
+                        {UtilMethods.formatAmount(cell.getValue() as number)}
                     </Typography>
                 ),
             },
@@ -199,16 +199,17 @@ export default function IndexSell() {
                 size: 130,
                 Cell: ({ cell }) => (
                     <Chip
-                        label={String(cell.getValue()).toUpperCase()}
+                        label={t('sell.transactionType.' + String(cell.getValue()))}
                         size="small"
                         sx={{ fontWeight: 700, fontSize: '0.65rem' }}
                     />
                 ),
                 filterVariant: "select",
-                filterSelectOptions: ['Total', 'Advance', 'Loan']?.map(_type => ({
-                    label: _type,
-                    value: _type.toLowerCase()
-                })) ?? [],
+                filterSelectOptions: [
+                    { label: t('sell.transactionType.total'), value: 'total' },
+                    { label: t('sell.transactionType.advance'), value: 'advance' },
+                    { label: t('sell.transactionType.loan'), value: 'loan' }
+                ],
             },
             {
                 accessorKey: "person_id",
@@ -278,7 +279,7 @@ export default function IndexSell() {
                     const value = String(cell.getValue())
                     return (
                         <Chip
-                            label={value.toUpperCase()}
+                            label={t(`sales.status.${value}`)}
                             size="small"
                             sx={{
                                 fontWeight: 800,
@@ -294,27 +295,27 @@ export default function IndexSell() {
                 },
                 filterVariant: "select",
                 filterSelectOptions: [{
-                    label: 'Pending',
+                    label: t('sales.status.pending'),
                     value: SellAPI.PENDING
                 }, {
-                    label: 'Paid',
+                    label: t('sales.status.paid'),
                     value: SellAPI.PAID
                 }, {
-                    label: 'Partially paid',
+                    label: t('sales.status.partially_paid'),
                     value: SellAPI.PARTIALLY_PAID
                 }, {
-                    label: 'Canceled',
+                    label: t('sales.status.canceled'),
                     value: SellAPI.CANCELLED
                 }],
             },
             {
                 accessorKey: "actions",
-                header: "Actions",
+                header: t('common.actions'),
                 size: 100,
                 enableColumnFilter: false,
             },
         ],
-        [customers, selectedCustomer, isLoadingCustomers, getCustomers]
+        [customers, selectedCustomer, isLoadingCustomers, getCustomers, t]
     )
 
     const mrTable = useMaterialReactTable({
@@ -362,7 +363,7 @@ export default function IndexSell() {
         muiToolbarAlertBannerProps: isError
             ? {
                 color: "error",
-                children: "Erreur lors du chargement des données",
+                children: t('template.loadError'),
             }
             : undefined,
         onColumnFiltersChange: setColumnFilters,
@@ -384,7 +385,7 @@ export default function IndexSell() {
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: 2, p: 2, alignItems: 'center' }}>
                 <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b', mr: 2 }}>
-                    Ventes
+                    {t('navigation.sales')}
                 </Typography>
                 <Button
                     variant="outlined"
@@ -393,7 +394,7 @@ export default function IndexSell() {
                     disabled={isLoading || isRefetching}
                     sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
                 >
-                    Actualiser
+                    {t('common.refresh')}
                 </Button>
                 <Button
                     variant="outlined"
@@ -430,7 +431,7 @@ export default function IndexSell() {
                     disabled={isLoading || isRefetching || rowCount === 0}
                     sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
                 >
-                    Export CSV
+                    {t('sell.exportCsv')}
                 </Button>
                 {UtilMethods.getHabilitations(authorizations, 'sell').canCreate && (
                     <Button
@@ -453,7 +454,7 @@ export default function IndexSell() {
                             boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
                         }}
                     >
-                        Nouvelle Vente
+                        {t('sale.newSale')}
                     </Button>
                 )}
             </Box>

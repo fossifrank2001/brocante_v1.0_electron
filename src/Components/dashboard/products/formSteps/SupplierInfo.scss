@@ -37,9 +37,11 @@
 
         .form-control {
             transition: all 0.2s ease;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--input-border);
             border-radius: 8px;
             padding: 8px 12px;
+            background-color: var(--input-bg);
+            color: var(--text-primary);
 
             &:focus {
                 border-color: #4318FF;
@@ -88,7 +90,8 @@
         overflow: hidden;
 
         .card-header {
-            background-color: #f8fafc;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
             padding: 16px 20px;
         }
 

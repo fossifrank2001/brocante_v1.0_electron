@@ -252,14 +252,14 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
             PaperProps={{
                 sx: {
                     width: { xs: '100%', sm: 550, md: 600 },
-                    bgcolor: '#f8fafc',
-                    boxShadow: '-10px 0 40px rgba(0,0,0,0.1)'
+                    bgcolor: 'var(--bg-primary)',
+                    boxShadow: 'var(--shadow-xl)'
                 }
             }}
         >
             {/* Header */}
-            <Box sx={{ p: 3, bgcolor: 'white', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
-                <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ p: 3, bgcolor: 'var(--bg-surface)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
+                <Typography variant="h6" sx={{ fontWeight: 900, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#4f46e5' }}>
                         <PointOfSale />
                     </Box>
@@ -273,7 +273,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
             <Box sx={{ p: 3, flex: 1, overflowY: 'auto' }}>
 
                 {/* 1. Customer Selection */}
-                <Box sx={{ mb: 4, p: 3, bgcolor: 'white', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.05)' }}>
+                <Box sx={{ mb: 4, p: 3, bgcolor: 'var(--bg-surface)', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                             <AccountCircle sx={{ color: '#1976d2' }} />
@@ -312,7 +312,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                                 }}
                                 InputProps={{
                                     ...params.InputProps,
-                                    sx: { borderRadius: '12px', bgcolor: '#f8fafc' }
+                                    sx: { borderRadius: '12px', bgcolor: 'var(--input-bg)' }
                                 }}
                             />
                         )}
@@ -389,7 +389,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                     <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#64748b', mb: 1.5, textTransform: 'uppercase' }}>
                         {t('posCheckout.transactionType')}
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, p: 0.5, bgcolor: 'white', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+                    <Box sx={{ display: 'flex', gap: 1, p: 0.5, bgcolor: 'var(--bg-surface)', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
                         {[
                             { value: 'total', label: t('posCheckout.total'), icon: '✅', color: '#10b981' },
                             { value: 'advance', label: t('posCheckout.advance'), icon: '⏳', color: '#f59e0b' },
@@ -417,7 +417,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
 
                 {/* 3. Amounts & Payment Methods context */}
                 {transactionType !== 'loan' && (
-                    <Box sx={{ mb: 4, p: 3, bgcolor: 'white', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.05)' }}>
+                    <Box sx={{ mb: 4, p: 3, bgcolor: 'var(--bg-surface)', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#64748b', mb: 1.5, textTransform: 'uppercase' }}>
                             {t('posCheckout.paymentMethod')}
                         </Typography>
@@ -429,9 +429,9 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                                         sx={{
                                             p: 1.5, borderRadius: '12px', textAlign: 'center', cursor: 'pointer',
                                             border: '2px solid',
-                                            borderColor: paymentMethod === method ? '#6366f1' : 'rgba(0,0,0,0.05)',
-                                            bgcolor: paymentMethod === method ? 'rgba(99, 102, 241, 0.05)' : 'transparent',
-                                            color: paymentMethod === method ? '#4f46e5' : '#64748b',
+                                            borderColor: paymentMethod === method ? '#6366f1' : 'var(--border-color)',
+                                            bgcolor: paymentMethod === method ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-elevated)',
+                                            color: paymentMethod === method ? '#4f46e5' : 'var(--text-secondary)',
                                             fontWeight: paymentMethod === method ? 800 : 600,
                                         }}
                                     >
@@ -453,7 +453,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                                 startAdornment: <AttachMoney sx={{ color: '#94a3b8', mr: 1 }} />,
                                 endAdornment: <Typography sx={{ fontWeight: 800, color: '#64748b' }}>XAF</Typography>,
                                 sx: {
-                                    borderRadius: '16px', bgcolor: '#f8fafc', fontWeight: 900, fontSize: '1.2rem',
+                                    borderRadius: '16px', bgcolor: 'var(--input-bg)', color: 'var(--text-primary)', fontWeight: 900, fontSize: '1.2rem',
                                 }
                             }}
                         />
@@ -464,29 +464,29 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                                     <Chip
                                         label={t('posCheckout.exact')}
                                         onClick={() => setAmountGiven(priceAfterBalance.toString())}
-                                        sx={{ borderRadius: '8px', fontWeight: 800, bgcolor: '#e0e7ff', color: '#4f46e5' }}
+                                        sx={{ borderRadius: '8px', fontWeight: 800, bgcolor: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}
                                     />
                                     {predefinedAmounts.map(amt => (
                                         <Chip
                                             key={amt}
                                             label={`+${UtilMethods.formatNumber(amt)}`}
                                             onClick={() => setAmountGiven((parseInt(amountGiven || '0') + amt).toString())}
-                                            sx={{ borderRadius: '8px', fontWeight: 700, bgcolor: 'white', border: '1px solid rgba(0,0,0,0.1)' }}
+                                            sx={{ borderRadius: '8px', fontWeight: 700, bgcolor: 'var(--input-bg)', border: '1px solid var(--border-color)' }}
                                         />
                                     ))}
                                 </Box>
 
                                 <Box sx={{
                                     mt: 3, p: 2, borderRadius: '16px',
-                                    bgcolor: expectedChange > 0 ? '#dcfce7' : '#f8fafc',
+                                    bgcolor: expectedChange > 0 ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-secondary)',
                                     border: '1px solid',
-                                    borderColor: expectedChange > 0 ? '#86efac' : 'rgba(0,0,0,0.05)',
+                                    borderColor: expectedChange > 0 ? 'rgba(16, 185, 129, 0.3)' : 'var(--border-color)',
                                     display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                                 }}>
-                                    <Typography sx={{ fontWeight: 800, color: expectedChange > 0 ? '#166534' : '#64748b' }}>
+                                    <Typography sx={{ fontWeight: 800, color: expectedChange > 0 ? '#10b981' : 'var(--text-secondary)' }}>
                                         {t('posCheckout.changeToGive')}
                                     </Typography>
-                                    <Typography sx={{ fontWeight: 900, fontSize: '1.2rem', color: expectedChange > 0 ? '#15803d' : '#94a3b8' }}>
+                                    <Typography sx={{ fontWeight: 900, fontSize: '1.2rem', color: expectedChange > 0 ? '#10b981' : 'var(--text-secondary)' }}>
                                         {UtilMethods.formatNumber(expectedChange)}
                                     </Typography>
                                 </Box>
@@ -494,9 +494,9 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                         )}
 
                         {transactionType === 'advance' && (
-                            <Box sx={{ mt: 2, p: 2, bgcolor: '#fffbed', borderRadius: '16px', border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between' }}>
-                                <Typography sx={{ fontWeight: 700, color: '#b45309' }}>{t('posCheckout.remainingToPay')}</Typography>
-                                <Typography sx={{ fontWeight: 900, color: '#b45309' }}>{UtilMethods.formatNumber(remainingBalance)}</Typography>
+                            <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(245, 158, 11, 0.1)', borderRadius: '16px', border: '1px solid rgba(245, 158, 11, 0.3)', display: 'flex', justifyContent: 'space-between' }}>
+                                <Typography sx={{ fontWeight: 700, color: '#f59e0b' }}>{t('posCheckout.remainingToPay')}</Typography>
+                                <Typography sx={{ fontWeight: 900, color: '#f59e0b' }}>{UtilMethods.formatNumber(remainingBalance)}</Typography>
                             </Box>
                         )}
                     </Box>
@@ -504,13 +504,13 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
 
                 {/* Loan & Advance extras */}
                 {(transactionType === 'loan' || transactionType === 'advance') && (
-                    <Box sx={{ mb: 4, p: 3, bgcolor: 'white', borderRadius: '20px', border: '1px solid #bfdbfe' }}>
+                    <Box sx={{ mb: 4, p: 3, bgcolor: 'var(--bg-surface)', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
                         {transactionType === 'loan' && (
                             <Alert severity="info" sx={{ mb: 2, borderRadius: '12px' }}>
                                 {t('posCheckout.loanAlert', { amount: UtilMethods.formatNumber(priceAfterBalance) })}
                             </Alert>
                         )}
-                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#1e40af', mb: 1.5 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'var(--text-primary)', mb: 1.5 }}>
                             {t('posCheckout.paymentDueDate')}
                         </Typography>
                         <TextField
@@ -525,7 +525,7 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
             </Box>
 
             {/* Footer */}
-            <Box sx={{ p: 3, bgcolor: 'white', borderTop: '1px solid rgba(0,0,0,0.06)', position: 'sticky', bottom: 0, zIndex: 10 }}>
+            <Box sx={{ p: 3, bgcolor: 'var(--bg-surface)', borderTop: '1px solid var(--border-color)', position: 'sticky', bottom: 0, zIndex: 10 }}>
                 <Button
                     fullWidth variant="contained" size="large"
                     disabled={

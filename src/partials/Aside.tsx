@@ -111,8 +111,10 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
     const renderMenus = () => {
         if (!menus || menus.length === 0) return null
 
-        const parents = menus.filter((m) => m.parent_id === null)
-        const childrenByParent = menus.reduce((acc: Record<number, any[]>, m: any) => {
+        // Filter out BILL menu
+        const filteredMenus = menus.filter((m) => m.code !== 'BILL')
+        const parents = filteredMenus.filter((m) => m.parent_id === null)
+        const childrenByParent = filteredMenus.reduce((acc: Record<number, any[]>, m: any) => {
             if (m.parent_id !== null) {
                 acc[m.parent_id] = acc[m.parent_id] || []
                 acc[m.parent_id].push(m)
@@ -226,7 +228,8 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
             className="left-sidebar"
             style={{
                 transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-275px)',
-                transition: 'transform 0.2s ease-in-out'
+                transition: 'transform 0.2s ease-in-out, background-color 0.3s ease',
+                backgroundColor: 'var(--sidebar-bg)',
             }}
         >
             <div>
@@ -248,7 +251,7 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
                 }}>
                     {/* Reload button - always visible */}
                     <div className="d-flex align-items-center justify-content-between px-3 py-2">
-                        <small className="text-muted fw-semibold" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <small className="text-muted fw-semibold" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
                             {t('navigation.title')}
                         </small>
                         <motion.button
@@ -260,9 +263,9 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
                             title={t('navigation.reloadMenus')}
                             style={{
                                 background: 'none',
-                                border: '1px solid rgba(99,102,241,0.25)',
+                                border: '1px solid var(--border-color)',
                                 borderRadius: '8px',
-                                color: '#6366f1',
+                                color: 'var(--accent-primary)',
                                 cursor: 'pointer',
                                 padding: '3px 8px',
                                 fontSize: '0.75rem',

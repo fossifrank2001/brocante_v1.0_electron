@@ -36,7 +36,11 @@ const PosExpress: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const searchRef = useRef<HTMLInputElement>(null);
+    const loadMoreRef = useRef<HTMLDivElement>(null);
     const [quantityDialogOpen, setQuantityDialogOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
     const [checkoutDrawerOpen, setCheckoutDrawerOpen] = useState(false);
@@ -53,9 +57,13 @@ const PosExpress: React.FC = () => {
     }, []);
 
     // Load products with debounce
-    const loadProducts = useCallback(async () => {
+    const loadProducts = useCallback(async (resetPage = true) => {
         try {
             setLoading(true);
+            if (resetPage) {
+                setPage(1);
+                setHasMore(true);
+            }
             
             // Get all sub-categories for all selected main categories
             let subCategoryIdsToFilter: number[] = [];
@@ -78,15 +86,78 @@ const PosExpress: React.FC = () => {
             const { data: res } = await ProductAPI.index(searchTerm, 1, subCats, '', 'stock', POS_PER_PAGE);
             if ('data' in res && Array.isArray(res.data)) {
                 setProducts(res.data);
+                setHasMore(res.data.length === POS_PER_PAGE);
             }
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
     }, [searchTerm, selectedCategoryIds, categories]);
 
+    // Load more products for infinite scroll
+    const loadMoreProducts = useCallback(async () => {
+        if (isLoadingMore || !hasMore) return;
+        
+        try {
+            setIsLoadingMore(true);
+            const nextPage = page + 1;
+            
+            // Get all sub-categories for all selected main categories
+            let subCategoryIdsToFilter: number[] = [];
+            
+            if (selectedCategoryIds.length > 0) {
+                selectedCategoryIds.forEach(catId => {
+                    const cat:any = categories.find((c:any) => c.id === catId);
+                    if (cat) {
+                        const subCats = (cat.sub_categories ?? cat.subCategories ?? []);
+                        if (Array.isArray(subCats)) {
+                            subCategoryIdsToFilter.push(...subCats.map((sc: any) => sc.id));
+                        }
+                    }
+                });
+            }
+
+            const subCats = subCategoryIdsToFilter.length > 0
+                ? subCategoryIdsToFilter.join(',')
+                : '';
+            const { data: res } = await ProductAPI.index(searchTerm, nextPage, subCats, '', 'stock', POS_PER_PAGE);
+            if ('data' in res && Array.isArray(res.data)) {
+                setProducts(prev => [...prev, ...res.data]);
+                setPage(nextPage);
+                setHasMore(res.data.length === POS_PER_PAGE);
+            }
+        } catch (e) { console.error(e); }
+        finally { setIsLoadingMore(false); }
+    }, [page, isLoadingMore, hasMore, searchTerm, selectedCategoryIds, categories]);
+
     useEffect(() => {
-        const t = setTimeout(() => loadProducts(), 350);
+        const t = setTimeout(() => loadProducts(true), 350);
         return () => clearTimeout(t);
-    }, [loadProducts]);
+    }, [searchTerm, selectedCategoryIds, categories]);
+
+    // Infinite scroll observer
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !loading && !isLoadingMore) {
+                    loadMoreProducts();
+                }
+            },
+            { 
+                threshold: 0,
+                rootMargin: '200px'
+            }
+        );
+
+        const currentRef = loadMoreRef.current;
+        if (currentRef) {
+            observer.observe(currentRef);
+        }
+
+        return () => {
+            if (currentRef) {
+                observer.unobserve(currentRef);
+            }
+        };
+    }, [hasMore, loading, isLoadingMore, loadMoreProducts]);
 
     // Remove the reset effect since we handle multiple categories now
     /*
@@ -210,15 +281,15 @@ const PosExpress: React.FC = () => {
             height: '100%',
             width: '100%',
             overflow: 'hidden',
-            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)'
+            background: 'var(--bg-primary)'
         }}>
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
                 {/* Search + Filters bar - GLASSMORPHISM */}
                 <Box sx={{
                     p: 2, pb: 1.5,
-                    background: 'rgba(255, 255, 255, 0.7)',
+                    background: 'var(--bg-glass)',
                     backdropFilter: 'blur(20px)',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderBottom: '1px solid var(--glass-border)',
                     boxShadow: '0 4px 20px -10px rgba(0,0,0,0.05)',
                     zIndex: 10
                 }}>
@@ -239,10 +310,11 @@ const PosExpress: React.FC = () => {
                                 ),
                                 sx: {
                                     borderRadius: '16px',
-                                    bgcolor: 'rgba(255,255,255,0.9)',
+                                    bgcolor: 'var(--input-bg)',
+                                    color: 'var(--text-primary)',
                                     fontWeight: 700,
                                     fontSize: '0.9rem',
-                                    border: '1px solid rgba(79, 70, 229, 0.1)',
+                                    border: '1px solid var(--input-border)',
                                     transition: 'all 0.3s',
                                     '&.Mui-focused': {
                                         boxShadow: '0 0 0 3px rgba(99, 102, 241, 0.2)',
@@ -291,7 +363,7 @@ const PosExpress: React.FC = () => {
 
                 {/* Product Grid */}
                 <Box sx={{ flex: 1, overflowY: 'auto', p: { xs: 1.5, md: 3 } }}>
-                    {loading ? (
+                    {loading && products.length === 0 ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                             <CircularProgress sx={{ color: '#6366f1' }} size={48} thickness={4} />
                         </Box>
@@ -303,29 +375,43 @@ const PosExpress: React.FC = () => {
                             <Typography variant="h6" sx={{ fontWeight: 800, color: '#64748b' }}>{t('pos.noProductsFound')}</Typography>
                         </Box>
                     ) : (
-                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 1 }}>
-                            <AnimatePresence>
-                                {products.map((product, index) => (
-                                    <motion.div
-                                        key={product.id}
-                                        initial={{ opacity: 0, y: 15 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.3, delay: index * 0.02 }}
-                                    >
-                                        <PosProductCard product={product} onAdd={handleAddProduct} />
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        </Box>
+                        <>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 1 }}>
+                                <AnimatePresence>
+                                    {products.map((product, index) => (
+                                        <motion.div
+                                            key={product.id}
+                                            initial={{ opacity: 0, y: 15 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3, delay: index * 0.02 }}
+                                        >
+                                            <PosProductCard product={product} onAdd={handleAddProduct} />
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
+                            </Box>
+                            
+                            {/* Infinite scroll trigger */}
+                            <Box ref={loadMoreRef} sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
+                                {isLoadingMore && (
+                                    <CircularProgress sx={{ color: '#6366f1' }} size={32} thickness={4} />
+                                )}
+                                {!hasMore && products.length > 0 && (
+                                    <Typography variant="body2" sx={{ color: '#94a3b8', fontWeight: 700 }}>
+                                        {t('pos.allProductsLoaded')}
+                                    </Typography>
+                                )}
+                            </Box>
+                        </>
                     )}
                 </Box>
 
                 {/* Bottom status + shortcuts - GLASSMORPHISM */}
                 <Box sx={{
                     px: 3, py: 1.5,
-                    background: 'rgba(255, 255, 255, 0.8)',
+                    background: 'var(--bg-glass)',
                     backdropFilter: 'blur(20px)',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.6)',
+                    borderTop: '1px solid var(--glass-border)',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     boxShadow: '0 -10px 30px -10px rgba(0,0,0,0.05)'
                 }}>
@@ -342,7 +428,7 @@ const PosExpress: React.FC = () => {
                                 <Box key={s.key} sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
                                     <Box sx={{
                                         px: 1, py: 0.2,
-                                        background: 'linear-gradient(to bottom, #ffffff, #f1f5f9)',
+                                        background: 'linear-gradient(to bottom, var(--bg-surface), var(--bg-secondary))',
                                         borderRadius: '6px',
                                         border: '1px solid #cbd5e1',
                                         boxShadow: '0 2px 0 #cbd5e1'
@@ -354,7 +440,7 @@ const PosExpress: React.FC = () => {
                             ))}
                         </Box>
                     </Box>
-                    <IconButton size="small" onClick={loadProducts} disabled={loading} sx={{ bgcolor: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                    <IconButton size="small" onClick={() => loadProducts(true)} disabled={loading} sx={{ bgcolor: 'var(--bg-surface)', boxShadow: 'var(--shadow-sm)' }}>
                         <Refresh fontSize="small" sx={{ color: '#6366f1' }} />
                     </IconButton>
                 </Box>
@@ -363,9 +449,9 @@ const PosExpress: React.FC = () => {
             <Paper elevation={0} sx={{
                 width: 380, minWidth: 380,
                 display: 'flex', flexDirection: 'column',
-                background: 'rgba(255, 255, 255, 0.85)',
+                background: 'var(--bg-glass-dark)',
                 backdropFilter: 'blur(24px)',
-                borderLeft: '1px solid rgba(255, 255, 255, 0.6)',
+                borderLeft: '1px solid var(--border-color)',
                 zIndex: 20,
                 boxShadow: '-10px 0 40px rgba(0,0,0,0.03)'
             }}>
@@ -376,10 +462,10 @@ const PosExpress: React.FC = () => {
                                 <PointOfSale sx={{ color: '#fff', fontSize: 24 }} />
                             </Box>
                             <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 900, fontSize: '1.1rem', color: '#1e293b', lineHeight: 1 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--text-primary)', lineHeight: 1 }}>
                                     {t('pos.ticket')}
                                 </Typography>
-                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+                                <Typography variant="caption" sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
                                     {t('pos.activeSession')}
                                 </Typography>
                             </Box>
@@ -410,16 +496,16 @@ const PosExpress: React.FC = () => {
                         </AnimatePresence>
                     )}
                 </Box>
-                <Box sx={{ p: 3, pt: 2, background: 'rgba(248, 250, 252, 0.5)', borderTop: '1px solid rgba(255, 255, 255, 0.8)' }}>
+                <Box sx={{ p: 3, pt: 2, background: 'var(--bg-elevated)', borderTop: '1px solid var(--border-color)' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 700 }}>{t('pos.totalItems')}</Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>{cart.totalQuantity}</Typography>
+                        <Typography variant="body2" sx={{ color: 'var(--text-secondary)', fontWeight: 700 }}>{t('pos.totalItems')}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 800, color: 'var(--text-primary)' }}>{cart.totalQuantity}</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
                         <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b' }}>{t('common.total')}</Typography>
                         <Box sx={{ textAlign: 'right' }}>
                             <Typography variant="h4" sx={{ fontWeight: 900, color: '#4f46e5', letterSpacing: '-0.03em' }}>
-                                {UtilMethods.formatNumber(cart.totalPrice)}
+                                {UtilMethods.formatAmount(cart.totalPrice)}
                             </Typography>
                             <Typography variant="caption" sx={{ color: '#10b981', fontWeight: 800 }}>{t('pos.vatIncluded')}</Typography>
                         </Box>
@@ -484,12 +570,12 @@ const PosProductCard: React.FC<{ product: IProduct; onAdd: (p: IProduct) => void
                     flexDirection: 'column',
                     borderRadius: '24px',
                     overflow: 'hidden',
-                    bgcolor: 'white',
-                    border: '1px solid rgba(0,0,0,0.05)',
+                    bgcolor: 'var(--bg-surface)',
+                    border: '1px solid var(--border-color)',
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                     position: 'relative',
                     '&:hover': {
-                        boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.1)',
+                        boxShadow: 'var(--shadow-md)',
                         borderColor: 'transparent',
                         '& .add-icon': { opacity: 1, transform: 'scale(1)' }
                     }
@@ -499,7 +585,7 @@ const PosProductCard: React.FC<{ product: IProduct; onAdd: (p: IProduct) => void
                 <Box sx={{
                     position: 'relative',
                     height: 150,
-                    bgcolor: '#f8fafc',
+                    bgcolor: 'var(--bg-secondary)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -588,7 +674,7 @@ const PosProductCard: React.FC<{ product: IProduct; onAdd: (p: IProduct) => void
                     <Typography sx={{
                         fontWeight: 800,
                         fontSize: '0.9rem',
-                        color: '#1e293b',
+                        color: 'var(--text-primary)',
                         lineHeight: 1.3,
                         mb: 1,
                         display: '-webkit-box',
@@ -602,7 +688,7 @@ const PosProductCard: React.FC<{ product: IProduct; onAdd: (p: IProduct) => void
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
                             <Typography sx={{ fontWeight: 900, fontSize: '.9rem', color: '#4f46e5' }}>
-                                {UtilMethods.formatNumber(product.price)}
+                                {UtilMethods.formatAmount(product.price)}
                             </Typography>
                             {product.unit && (
                                 <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>
@@ -630,11 +716,11 @@ const PosCartItem: React.FC<{ item: CartItem }> = ({ item }) => {
         >
             <Box sx={{
                 display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, mb: 1.5,
-                borderRadius: '16px', bgcolor: 'rgba(255,255,255,0.9)',
-                border: '1px solid rgba(79, 70, 229, 0.1)',
-                boxShadow: '0 2px 8px -2px rgba(0,0,0,0.05)',
+                borderRadius: '16px', bgcolor: 'var(--bg-surface)',
+                border: '1px solid var(--border-subtle)',
+                boxShadow: 'var(--shadow-sm)',
                 position: 'relative', overflow: 'hidden',
-                '&:hover': { borderColor: '#6366f1', boxShadow: '0 4px 12px -2px rgba(99, 102, 241, 0.15)' }, transition: 'all 0.2s'
+                '&:hover': { borderColor: '#6366f1', boxShadow: 'var(--shadow-md)' }, transition: 'all 0.2s'
             }}>
                 <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: 'linear-gradient(to bottom, #6366f1, #4338ca)' }} />
 
@@ -647,29 +733,29 @@ const PosCartItem: React.FC<{ item: CartItem }> = ({ item }) => {
                     </Typography>
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography sx={{ fontWeight: 800, fontSize: '0.85rem', color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <Typography sx={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {item.product.name}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                         <Typography sx={{ fontWeight: 900, fontSize: '0.9rem', color: '#6366f1' }}>
-                            {UtilMethods.formatNumber(item?.subtotal ?? 0)}
+                            {UtilMethods.formatAmount(item?.subtotal ?? 0)}
                         </Typography>
                         <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>
                             ({item?.product?.allowsDecimal ? Number(item?.quantity || 0).toFixed(3) : (item?.quantity || 0)} {item?.product?.unitAbbreviation || 'pce'})
                         </Typography>
                     </Box>
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0, bgcolor: '#f8fafc', borderRadius: '10px', p: 0.5, border: '1px solid #e2e8f0' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0, bgcolor: 'var(--bg-elevated)', borderRadius: '10px', p: 0.5, border: '1px solid var(--border-color)' }}>
                     <IconButton size="small" onClick={() => dispatch(decreaseQuantity({ id: item.product.id, price: item.product.price }))}
-                        sx={{ width: 24, height: 24, bgcolor: 'white', border: '1px solid rgba(0,0,0,0.05)', '&:hover': { color: '#ef4444', bgcolor: '#fee2e2' } }}>
+                        sx={{ width: 24, height: 24, bgcolor: 'var(--bg-surface)', border: '1px solid var(--border-color)', '&:hover': { color: '#ef4444', bgcolor: 'var(--bg-secondary)' } }}>
                         <Remove sx={{ fontSize: 14 }} />
                     </IconButton>
-                    <Typography sx={{ minWidth: 24, textAlign: 'center', fontWeight: 900, fontSize: '0.85rem', color: '#1e293b' }}>
+                    <Typography sx={{ minWidth: 24, textAlign: 'center', fontWeight: 900, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
                         {item?.product?.allowsDecimal ? Number(item?.quantity || 0).toFixed(3) : (item?.quantity || 0)}
                     </Typography>
                     <IconButton size="small" onClick={() => dispatch(addToCart({ ...item.product }))}
                         disabled={item.product.quantity <= 0}
-                        sx={{ width: 24, height: 24, bgcolor: 'white', border: '1px solid rgba(0,0,0,0.05)', '&:hover': { color: '#10b981', bgcolor: '#dcfce7' } }}>
+                        sx={{ width: 24, height: 24, bgcolor: 'var(--bg-surface)', border: '1px solid var(--border-color)', '&:hover': { color: '#10b981', bgcolor: 'var(--bg-secondary)' } }}>
                         <Add sx={{ fontSize: 14 }} />
                     </IconButton>
                 </Box>

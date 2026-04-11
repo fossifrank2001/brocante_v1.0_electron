@@ -2,17 +2,25 @@
   max-height: 400px;
   overflow-y: auto;
   left: 0!important;
+  background-color: var(--bg-surface);
+  border-color: var(--border-color) !important;
 }
 
 .notification-header {
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 10px;
   margin-bottom: 10px;
+  color: var(--text-primary);
 }
 
 .notification-item {
   padding: 10px;
-  border-bottom: 1px solid #f1f1f1;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: var(--bg-secondary);
+  }
 }
 
 .notification-item:last-child {
@@ -23,4 +31,5 @@
   font-size: 0.9rem;
   text-align: center;
   text-decoration: underline!important;
+  color: var(--accent-primary);
 }

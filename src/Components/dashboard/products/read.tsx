@@ -13,8 +13,10 @@ import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
 import { motion } from 'framer-motion';
 import { ArrowBack, Edit, Inventory2, ListAlt, LocalShipping, ImageNotSupported, Warning } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 const ReadProduct = () => {
+    const { t } = useTranslation();
     const { currentPage, id } = useAppSelector((state) => state.navigaton);
     const [record, setRecord] = useState<IProduct | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -37,27 +39,27 @@ const ReadProduct = () => {
     }, [getRecord]);
 
     const getStatusOfProduct = (_stock_quantity: number): string => {
-        return (_stock_quantity && _stock_quantity > 0) ? ProductAPI.STOCK : ProductAPI.OUT_OF_STOCK;
+        return (_stock_quantity && _stock_quantity > 0) ? t('product.inStock') : t('product.outOfStock');
     }
 
     if (isLoading) {
         return (
             <Box>
-                <Breadcrumd parent="Articles" url={currentPage} _child={id} />
+                <Breadcrumd parent={t('menu.ARTICLE')} url={currentPage} _child={id} />
                 <Grid container spacing={4} justifyContent="center">
                     <Grid item xs={12}>
                         <Card sx={{
                             borderRadius: '24px',
-                            border: '1px solid rgba(255, 255, 255, 0.4)',
-                            background: 'rgba(255, 255, 255, 0.8)',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-glass)',
                             backdropFilter: 'blur(16px)',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
+                            boxShadow: 'var(--shadow-lg)',
                             p: 2
                         }}>
                             <CardContent sx={{ p: 4, textAlign: 'center' }}>
                                 <CircularProgress size={60} thickness={4} sx={{ color: '#4f46e5', mb: 2 }} />
                                 <Typography variant="body1" sx={{ color: '#64748b', fontWeight: 600 }}>
-                                    Chargement des détails de l'article...
+                                    {t('product.loadingDetails')}
                                 </Typography>
                             </CardContent>
                         </Card>
@@ -70,24 +72,24 @@ const ReadProduct = () => {
     if (!record) {
         return (
             <Box>
-                <Breadcrumd parent="Articles" url={currentPage} _child={id} />
+                <Breadcrumd parent={t('menu.ARTICLE')} url={currentPage} _child={id} />
                 <Grid container spacing={4} justifyContent="center">
                     <Grid item xs={12}>
                         <Card sx={{
                             borderRadius: '24px',
-                            border: '1px solid rgba(255, 255, 255, 0.4)',
-                            background: 'rgba(255, 255, 255, 0.8)',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-glass)',
                             backdropFilter: 'blur(16px)',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
+                            boxShadow: 'var(--shadow-lg)',
                             p: 2
                         }}>
                             <CardContent sx={{ p: 8, textAlign: 'center' }}>
                                 <Warning sx={{ fontSize: 60, color: '#f59e0b', mb: 2 }} />
-                                <Typography variant="h5" sx={{ fontWeight: 800, color: '#1e293b', mb: 1 }}>
-                                    Article introuvable
+                                <Typography variant="h5" sx={{ fontWeight: 800, color: 'var(--text-primary)', mb: 1 }}>
+                                    {t('product.notFound')}
                                 </Typography>
                                 <Typography variant="body1" sx={{ color: '#64748b', mb: 4 }}>
-                                    L'article que vous avez demandé n'existe pas ou la requête a échoué.
+                                    {t('product.notFoundDesc')}
                                 </Typography>
                                 <Button
                                     variant="outlined"
@@ -95,7 +97,7 @@ const ReadProduct = () => {
                                     onClick={() => dispatch(setActivePage({ page: Pages.ARTICLE }))}
                                     sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700 }}
                                 >
-                                    Retour à la liste
+                                    {t('product.returnToList')}
                                 </Button>
                             </CardContent>
                         </Card>
@@ -108,329 +110,335 @@ const ReadProduct = () => {
     return (
         <Box>
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <Breadcrumd parent="Articles" url={currentPage} _child={id} />
+                <Breadcrumd parent={t('menu.ARTICLE')} url={currentPage} _child={id} />
 
-                <Grid container spacing={4} justifyContent="center">
-                    <Grid item xs={12}>
+                {/* Header Actions */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, mt: 2 }}>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Button
+                            variant="outlined"
+                            startIcon={<ArrowBack />}
+                            onClick={() => dispatch(setActivePage({ page: Pages.ARTICLE }))}
+                            sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
+                        >
+                            {t('product.back')}
+                        </Button>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Button
+                            variant="contained"
+                            startIcon={<Edit />}
+                            onClick={() => {
+                                dispatch(setActivePage({
+                                    page: Pages.ARTICLE,
+                                    id,
+                                    param: { sub_page: 'UPDATE' }
+                                }))
+                            }}
+                            sx={{
+                                borderRadius: '15px',
+                                textTransform: 'none',
+                                fontWeight: 800,
+                                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                                boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3)'
+                            }}
+                        >
+                            {t('product.editProduct')}
+                        </Button>
+                    </Box>
+                </Box>
+
+                <Grid container spacing={4}>
+                    {/* Left Column: Info Cards */}
+                    <Grid item xs={12} md={7}>
+                        <Grid container spacing={3}>
+                            {/* Product Info Card */}
+                            <Grid item xs={12}>
+                                <Card sx={{
+                                    borderRadius: '24px',
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-surface)',
+                                    boxShadow: 'var(--shadow-sm)'
+                                }}>
+                                    <CardContent sx={{ p: 4 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                                            <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
+                                                <Inventory2 />
+                                            </Box>
+                                            <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b' }}>{record.name}</Typography>
+                                        </Box>
+                                        <Grid container spacing={3}>
+                                            <Grid item xs={6}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('common.reference')}</Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 800, color: '#1e293b' }}>{record.internal_reference || 'N/A'}</Typography>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.barcode')}</Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 800, color: '#6366f1' }}>{record.barcode || '-'}</Typography>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.sellingPrice')}</Typography>
+                                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+                                                    <Typography variant="h6" sx={{ fontWeight: 900, color: '#0f172a' }}>{UtilMethods.formatAmount(record.price)}</Typography>
+                                                    {record.unit?.abbreviation && record.unit.abbreviation !== 'pce' && (
+                                                        <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700 }}>/ {record.unit.abbreviation}</Typography>
+                                                    )}
+                                                </Box>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('common.status')}</Typography>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                                    <Chip
+                                                        label={getStatusOfProduct(record.stock_quantity)}
+                                                        size="small"
+                                                        sx={{
+                                                            borderRadius: '6px',
+                                                            fontWeight: 800,
+                                                            bgcolor: record.stock_quantity > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                                            color: record.stock_quantity > 0 ? '#10b981' : '#ef4444'
+                                                        }}
+                                                    />
+                                                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#334155' }}>
+                                                        {record.stock_quantity} {record.unit?.abbreviation || 'unité(s)'}
+                                                    </Typography>
+                                                </Box>
+                                            </Grid>
+                                            <Grid item xs={12}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('common.description')}</Typography>
+                                                <Typography variant="body2" sx={{ color: '#475569', mt: 0.5 }}>
+                                                    {record.description || t('product.noDescription')}
+                                                </Typography>
+                                            </Grid>
+                                            <Grid item xs={12}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase', display: 'block', mb: 1 }}>{t('product.subCategories')}</Typography>
+                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                                    {record.subcategories.map(cat => (
+                                                        <Chip
+                                                            key={cat.label}
+                                                            label={cat.label}
+                                                            size="small"
+                                                            sx={{ borderRadius: '6px', fontWeight: 600, bgcolor: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}
+                                                        />
+                                                    ))}
+                                                    {record.subcategories.length === 0 && <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>{t('common.none')}</Typography>}
+                                                </Box>
+                                            </Grid>
+                                        </Grid>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+
+                            {/* Template-based attributes */}
+                            {(record as any).template && (record as any).template_values && Object.keys((record as any).template_values).length > 0 && (
+                                <Grid item xs={12}>
+                                    <Card sx={{
+                                        borderRadius: '24px',
+                                        border: '1px solid rgba(79, 70, 229, 0.2)',
+                                        background: 'var(--bg-surface)',
+                                        boxShadow: 'var(--shadow-sm)'
+                                    }}>
+                                        <CardContent sx={{ p: 4 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                                                <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}>
+                                                    <ListAlt />
+                                                </Box>
+                                                <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b' }}>{(record as any).template.name}</Typography>
+                                            </Box>
+                                            <Grid container spacing={3}>
+                                                {((record as any).template.fields || []).map((field: any) => {
+                                                    const val = (record as any).template_values[field.field_key];
+                                                    if (val === undefined || val === null || val === '') return null;
+                                                    let displayVal = String(val);
+                                                    if (field.field_type === 'boolean') displayVal = val === true || val === 'true' ? t('common.yes') : t('common.no');
+                                                    if (field.unit) displayVal = `${val} ${field.unit}`;
+                                                    return (
+                                                        <Grid item xs={12} sm={6} key={field.id || field.field_key}>
+                                                            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{field.name}</Typography>
+                                                            <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{displayVal}</Typography>
+                                                        </Grid>
+                                                    );
+                                                })}
+                                            </Grid>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+                            )}
+
+                            {/* Technical Specs */}
+                            <Grid item xs={12}>
+                                <Card sx={{
+                                    borderRadius: '24px',
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-surface)',
+                                    boxShadow: 'var(--shadow-sm)'
+                                }}>
+                                    <CardContent sx={{ p: 4 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                                            <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                                                <ListAlt />
+                                            </Box>
+                                            <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b' }}>{t('product.technicalSpecs')}</Typography>
+                                        </Box>
+                                        <Grid container spacing={3}>
+                                            <Grid item xs={6}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.brand')}</Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.brand || "-"}</Typography>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.model')}</Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.model || "-"}</Typography>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.dimensions')}</Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.size || record.details?.dimensions || "-"}</Typography>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.weight')}</Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.weight || "-"}</Typography>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.material')}</Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.material || "-"}</Typography>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.color')}</Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.color || "-"}</Typography>
+                                            </Grid>
+                                        </Grid>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+
+                            {/* Suppliers */}
+                            <Grid item xs={12}>
+                                <Card sx={{
+                                    borderRadius: '24px',
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-surface)',
+                                    boxShadow: 'var(--shadow-sm)'
+                                }}>
+                                    <CardContent sx={{ p: 4 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                                            <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(236, 72, 153, 0.1)', color: '#ec4899' }}>
+                                                <LocalShipping />
+                                            </Box>
+                                            <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b' }}>{t('navigation.suppliers')}</Typography>
+                                        </Box>
+                                        {record.suppliers.length > 0 ? (
+                                            <Grid container spacing={2}>
+                                                {record.suppliers.map((supplier, idx) => (
+                                                    <Grid item xs={12} sm={6} key={idx}>
+                                                        <Box sx={{ p: 2, border: '1px solid var(--border-color)', borderRadius: '12px', bgcolor: 'var(--bg-secondary)' }}>
+                                                            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e293b', mb: 0.5 }}>{supplier.name}</Typography>
+                                                            <Typography variant="body2" sx={{ color: '#64748b' }}>{supplier.contact_info || t('product.noContact')}</Typography>
+                                                        </Box>
+                                                    </Grid>
+                                                ))}
+                                            </Grid>
+                                        ) : (
+                                            <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>{t('product.noSupplier')}</Typography>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+
+                    {/* Right Column: Image & QR Codes */}
+                    <Grid item xs={12} md={5}>
                         <Card sx={{
+                            height: '100%',
                             borderRadius: '24px',
-                            border: '1px solid rgba(255, 255, 255, 0.4)',
-                            background: 'rgba(255, 255, 255, 0.8)',
-                            backdropFilter: 'blur(16px)',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
-                            p: 2,
-                            position: 'relative',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-surface)',
+                            boxShadow: 'var(--shadow-sm)',
                             overflow: 'hidden'
                         }}>
-                            {/* Decorative Background */}
-                            <Box sx={{
-                                position: 'absolute',
-                                top: -100,
-                                right: -100,
-                                width: 300,
-                                height: 300,
-                                background: 'radial-gradient(circle, rgba(79, 70, 229, 0.05) 0%, rgba(255,255,255,0) 70%)',
-                                borderRadius: '50%',
-                                pointerEvents: 'none'
-                            }} />
-
-                            <CardContent sx={{ p: { xs: 3, md: 5 } }}>
-                                {/* Header */}
-                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4, flexWrap: 'wrap', gap: 2 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Box sx={{ p: 3, borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
+                                    <ImageNotSupported />
+                                </Box>
+                                <Typography variant="h6" sx={{ fontWeight: 900 }}>{t('product.visualIdentity')}</Typography>
+                            </Box>
+                            <CardContent sx={{ p: 0 }}>
+                                {/* Product Image */}
+                                <Box sx={{ p: 3, textAlign: 'center' }}>
+                                    {record.thumbnail ? (
                                         <Box sx={{
-                                            width: 56,
-                                            height: 56,
                                             borderRadius: '16px',
+                                            overflow: 'hidden',
+                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                            bgcolor: 'var(--input-bg)',
+                                            p: 1
+                                        }}>
+                                            <Zoom>
+                                                <img
+                                                    src={
+                                                        record.thumbnail.path.startsWith('http://') || record.thumbnail.path.startsWith('https://')
+                                                            ? record.thumbnail.path
+                                                            : `${constants.URL}/${record.thumbnail.path}`
+                                                    }
+                                                    alt={record.name}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: 'auto',
+                                                        maxHeight: '300px',
+                                                        objectFit: 'contain',
+                                                        borderRadius: '8px'
+                                                    }}
+                                                />
+                                            </Zoom>
+                                        </Box>
+                                    ) : (
+                                        <Box sx={{
+                                            py: 8,
                                             display: 'flex',
+                                            flexDirection: 'column',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
-                                            color: 'white',
-                                            boxShadow: '0 10px 15px -3px rgba(79, 70, 229, 0.3)'
+                                            color: '#94a3b8',
+                                            bgcolor: 'rgba(255,255,255,0.5)',
+                                            borderRadius: '16px',
+                                            border: '2px dashed #e2e8f0'
                                         }}>
-                                            <Inventory2 fontSize="large" />
+                                            <ImageNotSupported sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />
+                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{t('product.noImage')}</Typography>
                                         </Box>
-                                        <Box>
-                                            <Typography variant="h4" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em', mb: 0.5 }}>
-                                                {record.name}
-                                            </Typography>
-                                            <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                Réf: <Box component="span" sx={{ color: '#4f46e5', bgcolor: 'rgba(79, 70, 229, 0.1)', px: 1, py: 0.2, borderRadius: '4px' }}>{record.internal_reference || 'N/A'}</Box>
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-
-                                    <Box sx={{ display: 'flex', gap: 2 }}>
-                                        <Button
-                                            variant="outlined"
-                                            startIcon={<ArrowBack />}
-                                            onClick={() => dispatch(setActivePage({ page: Pages.ARTICLE }))}
-                                            sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b', '&:hover': { bgcolor: '#f8fafc' } }}
-                                        >
-                                            Retour
-                                        </Button>
-                                    </Box>
+                                    )}
                                 </Box>
 
-                                <Grid container spacing={4}>
-                                    {/* Primary Info & Details */}
-                                    <Grid item xs={12} lg={8}>
-                                        <Stack spacing={4}>
-                                            <Paper elevation={0} sx={{ p: 4, borderRadius: '24px', backgroundColor: 'rgba(255, 255, 255, 0.5)', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
-                                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-                                                    <Inventory2 sx={{ color: '#4f46e5' }} />
-                                                    Informations Principales
-                                                </Typography>
+                                {/* Barcode */}
+                                {record.barcode && (
+                                    <Box sx={{ p: 3, bgcolor: 'rgba(99, 102, 241, 0.03)', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#64748b', mb: 2, textAlign: 'center' }}>
+                                            {t('product.barcode')}
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+                                            <img
+                                                src={`https://barcode.tec-it.com/barcode.ashx?data=${encodeURIComponent(record.barcode)}&code=Code128&translate-esc=on`}
+                                                alt={`Barcode ${record.barcode}`}
+                                                style={{ maxWidth: '100%', height: 'auto' }}
+                                            />
+                                        </Box>
+                                        <Typography variant="caption" sx={{ color: '#94a3b8', fontFamily: 'monospace', display: 'block', textAlign: 'center' }}>
+                                            {record.barcode}
+                                        </Typography>
+                                    </Box>
+                                )}
 
-                                                <Grid container spacing={3}>
-                                                    <Grid item xs={12} sm={6}>
-                                                        <InfoItem
-                                                            label="Prix de vente"
-                                                            value={
-                                                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                                                    <Typography variant="h6" sx={{ color: '#10b981', fontWeight: 800 }}>{UtilMethods.formatNumber(record.price)}</Typography>
-                                                                    {record.unit?.abbreviation && record.unit.abbreviation !== 'pce' && (
-                                                                        <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700 }}>/ {record.unit.abbreviation}</Typography>
-                                                                    )}
-                                                                </Box>
-                                                            }
-                                                        />
-                                                    </Grid>
-                                                    <Grid item xs={12} sm={6}>
-                                                        <InfoItem
-                                                            label="Code Barre"
-                                                            value={record.barcode || '-'}
-                                                        />
-                                                    </Grid>
-                                                    <Grid item xs={12} sm={6}>
-                                                        <Box sx={{ mb: 2 }}>
-                                                            <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
-                                                                Statut & Stock
-                                                            </Typography>
-                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                                                <Chip
-                                                                    label={getStatusOfProduct(record.stock_quantity)}
-                                                                    sx={{
-                                                                        borderRadius: '8px',
-                                                                        fontWeight: 800,
-                                                                        bgcolor: record.stock_quantity > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                                                        color: record.stock_quantity > 0 ? '#10b981' : '#ef4444'
-                                                                    }}
-                                                                />
-                                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#334155' }}>
-                                                                    {record.stock_quantity} {record.unit?.abbreviation || 'unité(s)'}
-                                                                </Typography>
-                                                            </Box>
-                                                        </Box>
-                                                    </Grid>
-                                                    <Grid item xs={12} sm={6}>
-                                                        <Box sx={{ mb: 2 }}>
-                                                            <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
-                                                                Sous-catégories
-                                                            </Typography>
-                                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                                                {record.subcategories.map(cat => (
-                                                                    <Chip
-                                                                        key={cat.label}
-                                                                        label={cat.label}
-                                                                        size="small"
-                                                                        sx={{ borderRadius: '6px', fontWeight: 600, bgcolor: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}
-                                                                    />
-                                                                ))}
-                                                                {record.subcategories.length === 0 && <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>Aucune</Typography>}
-                                                            </Box>
-                                                        </Box>
-                                                    </Grid>
-                                                    <Grid item xs={12}>
-                                                        <InfoItem
-                                                            label="Description"
-                                                            value={record.description || "Aucune description fournie."}
-                                                        />
-                                                    </Grid>
-                                                </Grid>
-                                            </Paper>
-
-                                            {/* Template-based attributes (dynamic) */}
-                                            {(record as any).template && (record as any).template_values && Object.keys((record as any).template_values).length > 0 && (
-                                                <Paper elevation={0} sx={{ p: 4, borderRadius: '24px', backgroundColor: 'rgba(255, 255, 255, 0.5)', border: '1px solid rgba(79, 70, 229, 0.15)' }}>
-                                                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-                                                        <ListAlt sx={{ color: '#4f46e5' }} />
-                                                        {(record as any).template.name}
-                                                    </Typography>
-
-                                                    <Grid container spacing={3}>
-                                                        {((record as any).template.fields || []).map((field: any) => {
-                                                            const val = (record as any).template_values[field.field_key];
-                                                            if (val === undefined || val === null || val === '') return null;
-                                                            let displayVal = String(val);
-                                                            if (field.field_type === 'boolean') displayVal = val === true || val === 'true' ? 'Oui' : 'Non';
-                                                            if (field.unit) displayVal = `${val} ${field.unit}`;
-                                                            return (
-                                                                <Grid item xs={12} sm={4} key={field.id || field.field_key}>
-                                                                    <InfoItem label={field.name} value={displayVal} />
-                                                                </Grid>
-                                                            );
-                                                        })}
-                                                    </Grid>
-                                                </Paper>
-                                            )}
-
-                                            {/* Legacy static characteristics */}
-                                            <Paper elevation={0} sx={{ p: 4, borderRadius: '24px', backgroundColor: 'rgba(255, 255, 255, 0.5)', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
-                                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-                                                    <ListAlt sx={{ color: '#4f46e5' }} />
-                                                    Caractéristiques Techniques
-                                                </Typography>
-
-                                                <Grid container spacing={3}>
-                                                    <Grid item xs={12} sm={4}>
-                                                        <InfoItem label="Marque" value={record.details?.brand || "-"} />
-                                                        <InfoItem label="Modèle" value={record.details?.model || "-"} />
-                                                    </Grid>
-                                                    <Grid item xs={12} sm={4}>
-                                                        <InfoItem label="Taille / Dimensions" value={record.details?.size || record.details?.dimensions || "-"} />
-                                                        <InfoItem label="Poids" value={record.details?.weight || "-"} />
-                                                    </Grid>
-                                                    <Grid item xs={12} sm={4}>
-                                                        <InfoItem label="Matière" value={record.details?.material || "-"} />
-                                                        <InfoItem label="Couleur" value={record.details?.color || "-"} />
-                                                    </Grid>
-                                                </Grid>
-                                            </Paper>
-
-                                            <Paper elevation={0} sx={{ p: 4, borderRadius: '24px', backgroundColor: 'rgba(255, 255, 255, 0.5)', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
-                                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-                                                    <LocalShipping sx={{ color: '#4f46e5' }} />
-                                                    Fournisseurs
-                                                </Typography>
-
-                                                <Grid container spacing={3}>
-                                                    {record.suppliers.length > 0 ? record.suppliers.map((supplier, idx) => (
-                                                        <Grid item xs={12} sm={6} key={idx}>
-                                                            <Box sx={{ p: 2, border: '1px solid #e2e8f0', borderRadius: '12px', bgcolor: '#f8fafc' }}>
-                                                                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e293b', mb: 0.5 }}>{supplier.name}</Typography>
-                                                                <Typography variant="body2" sx={{ color: '#64748b' }}>{supplier.contact_info || "Pas de contact"}</Typography>
-                                                            </Box>
-                                                        </Grid>
-                                                    )) : (
-                                                        <Grid item xs={12}>
-                                                            <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>Aucun fournisseur associé.</Typography>
-                                                        </Grid>
-                                                    )}
-                                                </Grid>
-                                            </Paper>
-                                        </Stack>
-                                    </Grid>
-
-                                    {/* Right Sidebar: Image & Actions */}
-                                    <Grid item xs={12} lg={4}>
-                                        <Stack spacing={4}>
-                                            <Paper elevation={0} sx={{ p: 4, borderRadius: '24px', backgroundColor: 'rgba(248, 250, 252, 0.6)', border: '1px solid rgba(226, 232, 240, 0.8)', textAlign: 'center' }}>
-                                                {record.thumbnail ? (
-                                                    <Box sx={{
-                                                        borderRadius: '16px',
-                                                        overflow: 'hidden',
-                                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                                                        bgcolor: 'white',
-                                                        p: 1
-                                                    }}>
-                                                        <Zoom>
-                                                            <img
-                                                                src={
-                                                                    record.thumbnail.path.startsWith('http://') || record.thumbnail.path.startsWith('https://')
-                                                                        ? record.thumbnail.path
-                                                                        : `${constants.URL}/${record.thumbnail.path}`
-                                                                }
-                                                                alt={record.name}
-                                                                style={{
-                                                                    width: '100%',
-                                                                    height: 'auto',
-                                                                    maxHeight: '300px',
-                                                                    objectFit: 'contain',
-                                                                    borderRadius: '8px'
-                                                                }}
-                                                            />
-                                                        </Zoom>
-                                                    </Box>
-                                                ) : (
-                                                    <Box sx={{
-                                                        py: 8,
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        color: '#94a3b8',
-                                                        bgcolor: 'rgba(255,255,255,0.5)',
-                                                        borderRadius: '16px',
-                                                        border: '2px dashed #e2e8f0'
-                                                    }}>
-                                                        <ImageNotSupported sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />
-                                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>Aucune image disponible</Typography>
-                                                    </Box>
-                                                )}
-                                            </Paper>
-
-                                            {/* QR Code */}
-                                            {record.barcode && (
-                                                <Paper elevation={0} sx={{ p: 3, borderRadius: '24px', backgroundColor: 'rgba(248, 250, 252, 0.6)', border: '1px solid rgba(226, 232, 240, 0.8)', textAlign: 'center' }}>
-                                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#64748b', mb: 2 }}>
-                                                        Code-barres
-                                                    </Typography>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-                                                        <img
-                                                            src={`https://barcode.tec-it.com/barcode.ashx?data=${encodeURIComponent(record.barcode)}&code=Code128&translate-esc=on`}
-                                                            alt={`Barcode ${record.barcode}`}
-                                                            style={{ maxWidth: '100%', height: 'auto' }}
-                                                        />
-                                                    </Box>
-                                                    <Typography variant="caption" sx={{ color: '#94a3b8', fontFamily: 'monospace' }}>
-                                                        {record.barcode}
-                                                    </Typography>
-                                                </Paper>
-                                            )}
-                                            
-                                            {/* QR Code for product ID */}
-                                            <Paper elevation={0} sx={{ p: 3, borderRadius: '24px', backgroundColor: 'rgba(248, 250, 252, 0.6)', border: '1px solid rgba(226, 232, 240, 0.8)', textAlign: 'center' }}>
-                                                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#64748b', mb: 2 }}>
-                                                    QR Code Produit
-                                                </Typography>
-                                                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                                    <img
-                                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`PRODUCT:${record.id}`)}`}
-                                                        alt={`QR Code ${record.id}`}
-                                                        style={{ width: 150, height: 150 }}
-                                                    />
-                                                </Box>
-                                            </Paper>
-
-                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                                <Button
-                                                    variant="contained"
-                                                    startIcon={<Edit />}
-                                                    onClick={() => {
-                                                        dispatch(setActivePage({
-                                                            page: Pages.ARTICLE,
-                                                            id,
-                                                            param: { sub_page: 'UPDATE' }
-                                                        }))
-                                                    }}
-                                                    sx={{
-                                                        borderRadius: '16px',
-                                                        py: 1.5,
-                                                        textTransform: 'none',
-                                                        fontWeight: 800,
-                                                        background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
-                                                        boxShadow: '0 10px 15px -3px rgba(79, 70, 229, 0.3)',
-                                                        '&:hover': { background: 'linear-gradient(135deg, #4338ca 0%, #312e81 100%)' }
-                                                    }}
-                                                >
-                                                    Modifier cet Article
-                                                </Button>
-                                            </Box>
-                                        </Stack>
-                                    </Grid>
-                                </Grid>
+                                {/* QR Code */}
+                                <Box sx={{ p: 3, bgcolor: 'rgba(16, 185, 129, 0.03)', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#64748b', mb: 2, textAlign: 'center' }}>
+                                        {t('product.qrCodeTitle')}
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                        <img
+                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`PRODUCT:${record.id}`)}`}
+                                            alt={`QR Code ${record.id}`}
+                                            style={{ width: 150, height: 150 }}
+                                        />
+                                    </Box>
+                                </Box>
                             </CardContent>
                         </Card>
                     </Grid>

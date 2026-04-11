@@ -36,8 +36,8 @@ import { useTranslation } from 'react-i18next';
 
 const glassContainerStyle = {
     borderRadius: '24px',
-    border: '1px solid rgba(255, 255, 255, 0.45)',
-    bgcolor: 'rgba(255, 255, 255, 0.8)',
+    border: '1px solid var(--glass-border)',
+    bgcolor: 'var(--bg-glass)',
     backdropFilter: 'blur(20px) saturate(180%)',
     boxShadow: '0 25px 50px -12px rgba(0,0,0,0.08)',
     overflow: 'hidden',
@@ -47,8 +47,8 @@ const glassContainerStyle = {
 
 const glassCardStyle = {
     borderRadius: '24px',
-    border: '1px solid rgba(255, 255, 255, 0.4)',
-    background: 'rgba(255, 255, 255, 0.8)',
+    border: '1px solid var(--glass-border)',
+    background: 'var(--bg-glass)',
     backdropFilter: 'blur(16px)',
     boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
     transition: 'all 0.3s ease-in-out',
@@ -192,7 +192,6 @@ export const DashboardIndicator: React.FC = () => {
                 grid: { borderColor: 'rgba(226, 232, 240, 0.6)' },
                 colors: ['#6366f1'],
                 tooltip: {
-                    theme: 'light',
                     y: { formatter: (value) => UtilMethods.formatAmount(value) },
                 },
             }
@@ -217,7 +216,6 @@ export const DashboardIndicator: React.FC = () => {
                 },
                 dataLabels: { enabled: false },
                 tooltip: {
-                    theme: 'light',
                     y: { formatter: (value) => UtilMethods.formatAmount(value) },
                 },
                 plotOptions: {
@@ -584,7 +582,7 @@ export const DashboardIndicator: React.FC = () => {
                                         <Grid item xs={12} md={7}>
                                             <Card sx={{ ...glassCardStyle }}>
                                                 <CardContent sx={{ p: 4 }}>
-                                                    <Typography sx={{ fontWeight: 800, color: '#1e293b', mb: 2 }}>
+                                                    <Typography sx={{ fontWeight: 800, color: 'var(--text-primary)', mb: 2 }}>
                                                         {t('dashboard.salesOverview')}
                                                     </Typography>
                                                     <ReactApexChart options={salesChart.options} series={salesChart.series} type="bar" height={330} />
@@ -594,7 +592,7 @@ export const DashboardIndicator: React.FC = () => {
                                         <Grid item xs={12} md={5}>
                                             <Card sx={{ ...glassCardStyle }}>
                                                 <CardContent sx={{ p: 4 }}>
-                                                    <Typography sx={{ fontWeight: 800, color: '#1e293b', mb: 2 }}>
+                                                    <Typography sx={{ fontWeight: 800, color: 'var(--text-primary)', mb: 2 }}>
                                                         {t('dashboard.revenueDistribution')}
                                                     </Typography>
                                                     <ReactApexChart options={revenueChart.options} series={revenueChart.series} type="donut" height={330} />

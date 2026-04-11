@@ -17,6 +17,7 @@ import { useAppContext } from "@/contexts/appContext";
 import { IProduct } from "Data/Interfaces/Supply";
 import Toast from '@/Data/Utilities/Toast';
 import DynamicTemplateForm from "Components/dashboard/products/formSteps/DynamicTemplateForm";
+import { useTranslation } from 'react-i18next';
 
 interface FormValues extends IProductPayload { }
 
@@ -97,11 +98,12 @@ interface IMultiFormProps {
 }
 
 const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
+    const { t } = useTranslation();
     const [step, setStep] = useState(0);
     const steps = [
-        { label: 'Informations', icon: <TbPackage size={20} /> },
-        { label: 'Spécifications', icon: <TbSettings size={20} /> },
-        { label: 'Fournisseurs', icon: <TbTruck size={20} /> }
+        { label: t('product.steps.info'), icon: <TbPackage size={20} /> },
+        { label: t('product.steps.specs'), icon: <TbSettings size={20} /> },
+        { label: t('product.steps.suppliers'), icon: <TbTruck size={20} /> }
     ];
     const isLastStep = step === steps.length - 1;
     const dispatch = useAppDispatch()
@@ -178,17 +180,17 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
 
     const validationSchema = [
         Yup.object({
-            name: Yup.string().required('Le nom est requis'),
-            internal_reference: Yup.string().required('La référence interne est requise'),
+            name: Yup.string().required(t('validation.required')),
+            internal_reference: Yup.string().required(t('validation.required')),
             description: Yup.string(),
-            price: Yup.number().required('Le prix est requis').positive('Doit être positif'),
-            stock_quantity: Yup.number().required('La quantité est requise').positive('Doit être positive'),
+            price: Yup.number().required(t('validation.required')).positive(t('validation.positiveNumber')),
+            stock_quantity: Yup.number().required(t('validation.required')).positive(t('validation.positiveNumber')),
             subcategory_ids: Yup.array().of(
                 Yup.object().shape({
                     id: Yup.number().required(),
                     label: Yup.string().required(),
                 })
-            ).min(1, 'Au moins une sous-catégorie est requise'),
+            ).min(1, t('category.atLeastOneSubCategory')),
         }),
         Yup.object({
             template_values: Yup.object(),
@@ -196,10 +198,10 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
         Yup.object({
             suppliers: Yup.array().of(
                 Yup.object({
-                    name: Yup.string().required('Le nom du fournisseur est requis'),
-                    contact_info: Yup.string().required('Les infos de contact sont requises'),
+                    name: Yup.string().required(t('validation.required')),
+                    contact_info: Yup.string().required(t('validation.required')),
                 })
-            ).min(1, 'Au moins un fournisseur est requis'),
+            ).min(1, t('product.atLeastOneSupplier')),
         }),
     ];
 
@@ -277,10 +279,10 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
                                 <motion.div
                                     initial={false}
                                     animate={{
-                                        backgroundColor: index <= step ? '#4f46e5' : '#fff',
-                                        borderColor: index <= step ? '#4f46e5' : '#e2e8f0',
+                                        backgroundColor: index <= step ? 'var(--primary-color, #4f46e5)' : 'var(--bg-surface)',
+                                        borderColor: index <= step ? 'var(--primary-color, #4f46e5)' : 'var(--border-color)',
                                         scale: index === step ? 1.1 : 1,
-                                        color: index <= step ? '#fff' : '#64748b'
+                                        color: index <= step ? '#fff' : 'var(--text-secondary, #64748b)'
                                     }}
                                     style={{
                                         width: '48px',
@@ -291,7 +293,7 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        backgroundColor: '#fff',
+                                        backgroundColor: 'var(--bg-surface)',
                                         boxShadow: index === step ? '0 10px 15px -3px rgba(79, 70, 229, 0.3)' : 'none',
                                     }}
                                     onClick={() => index < step && setStep(index)}
@@ -352,9 +354,8 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
                             mt: 4,
                             p: 2,
                             borderRadius: '20px',
-                            backgroundColor: 'rgba(255,255,255,0.7)',
-                            backdropFilter: 'blur(10px)',
-                            border: '1px solid rgba(226, 232, 240, 0.8)'
+                            backgroundColor: 'var(--bg-surface)',
+                            border: '1px solid var(--border-color)'
                         }}>
                             <Button
                                 onClick={() => setStep(step - 1)}
@@ -369,7 +370,7 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
                                     '&:hover': { bgcolor: 'rgba(241, 245, 249, 0.8)' }
                                 }}
                             >
-                                Précédent
+                                {t('common.previous')}
                             </Button>
 
                             <Box sx={{ display: 'flex', gap: 2 }}>
@@ -389,7 +390,7 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
                                         '&:hover': { background: 'linear-gradient(135deg, #4338ca 0%, #312e81 100%)' }
                                     }}
                                 >
-                                    {formik.isSubmitting ? <CircularProgress size={20} color="inherit" /> : isLastStep ? "Enregistrer l'article" : 'Continuer'}
+                                    {formik.isSubmitting ? <CircularProgress size={20} color="inherit" /> : isLastStep ? t('product.saveArticle') : t('common.next')}
                                 </Button>
                             </Box>
                         </Box>

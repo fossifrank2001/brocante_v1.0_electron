@@ -23,6 +23,7 @@ import {
 import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
 import ProductAPI from '@/Data/Api/Product';
 import { IProduct } from '@/Data/Interfaces/Supply';
+import { useTranslation } from 'react-i18next';
 
 interface BarcodeScannerProps {
     open: boolean;
@@ -31,6 +32,7 @@ interface BarcodeScannerProps {
 }
 
 const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ open, onClose, onProductFound }) => {
+    const { t } = useTranslation();
     const [manualInput, setManualInput] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -69,25 +71,22 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ open, onClose, onProduc
             setScannerInitialized(true);
         } catch (err) {
             console.error('Failed to initialize scanner:', err);
-            setError('Impossible d\'initialiser le scanner. Utilisez la saisie manuelle.');
+            setError(t('product.scannerInitError'));
         }
     };
 
     const onScanSuccess = async (decodedText: string) => {
         try {
-            // Essayer de parser comme JSON (QR code)
             const data = JSON.parse(decodedText);
             if (data.type === 'product' && data.internal_reference) {
                 await searchProduct(data.internal_reference, 'internal');
             }
         } catch {
-            // Si ce n'est pas du JSON, traiter comme barcode
             await searchProduct(decodedText, 'auto');
         }
     };
 
     const onScanError = (errorMessage: string) => {
-        // Ignorer les erreurs de scan continues
         if (!errorMessage.includes('NotFoundException')) {
             console.warn('Scan error:', errorMessage);
         }
@@ -106,7 +105,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ open, onClose, onProduc
                 handleClose();
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Produit non trouvé avec cette référence.');
+            setError(err.response?.data?.message || t('product.productNotFound'));
         } finally {
             setIsSearching(false);
         }
@@ -136,14 +135,17 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ open, onClose, onProduc
             onClose={handleClose}
             maxWidth="sm"
             fullWidth
+            PaperProps={{
+                sx: { bgcolor: 'var(--bg-surface)', color: 'var(--text-primary)' }
+            }}
         >
             <DialogTitle>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <QrCodeScannerIcon color="primary" />
-                        <Typography variant="h6">Scanner QR Code / Code-barres</Typography>
+                        <QrCodeScannerIcon sx={{ color: 'var(--accent-primary)' }} />
+                        <Typography variant="h6">{t('product.scannerTitle')}</Typography>
                     </Box>
-                    <IconButton onClick={handleClose} size="small">
+                    <IconButton onClick={handleClose} size="small" sx={{ color: 'var(--text-secondary)' }}>
                         <CloseIcon />
                     </IconButton>
                 </Box>
@@ -158,24 +160,24 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ open, onClose, onProduc
                     )}
 
                     {/* Scanner QR/Barcode */}
-                    <Paper elevation={2} sx={{ p: 2, borderRadius: 2 }}>
-                        <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <BarcodeIcon />
-                            Scanner le code
+                    <Paper elevation={2} sx={{ p: 2, borderRadius: 2, bgcolor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
+                        <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'var(--text-secondary)' }}>
+                            <BarcodeIcon sx={{ color: 'var(--accent-primary)' }} />
+                            {t('product.scanCode')}
                         </Typography>
-                        <Box id="qr-reader" sx={{ width: '100%' }} />
+                        <Box id="qr-reader" sx={{ width: '100%', '& video': { borderRadius: '8px' } }} />
                     </Paper>
 
                     {/* Manual Input */}
                     <Box>
-                        <Typography variant="subtitle2" gutterBottom>
-                            Ou saisir manuellement
+                        <Typography variant="subtitle2" gutterBottom color="var(--text-secondary)">
+                            {t('product.manualInput')}
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1 }}>
                             <TextField
                                 fullWidth
                                 size="small"
-                                placeholder="Référence interne ou code-barres"
+                                placeholder={t('product.referenceOrBarcode')}
                                 value={manualInput}
                                 onChange={(e) => setManualInput(e.target.value)}
                                 onKeyPress={(e) => {
@@ -184,25 +186,36 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ open, onClose, onProduc
                                     }
                                 }}
                                 disabled={isSearching}
+                                sx={{ 
+                                    '& .MuiOutlinedInput-root': {
+                                        bgcolor: 'var(--bg-elevated)',
+                                        color: 'var(--text-primary)',
+                                        '& fieldset': { borderColor: 'var(--border-color)' },
+                                        '&:hover fieldset': { borderColor: 'var(--accent-primary)' },
+                                    },
+                                    '& .MuiInputBase-input::placeholder': { color: 'var(--text-muted)' }
+                                }}
                             />
                             <Button
                                 variant="contained"
                                 onClick={handleManualSearch}
                                 disabled={isSearching || !manualInput.trim()}
-                                startIcon={isSearching ? <CircularProgress size={20} /> : <SearchIcon />}
+                                startIcon={isSearching ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
+                                sx={{ bgcolor: 'var(--accent-primary)', '&:hover': { bgcolor: 'var(--accent-primary)', opacity: 0.9 } }}
                             >
-                                {isSearching ? 'Recherche...' : 'Chercher'}
+                                {isSearching ? t('common.searching') : t('common.search')}
                             </Button>
                         </Box>
                     </Box>
                 </Stack>
             </DialogContent>
 
-            <DialogActions>
-                <Button onClick={handleClose}>Fermer</Button>
+            <DialogActions sx={{ p: 2 }}>
+                <Button onClick={handleClose} sx={{ color: 'var(--text-secondary)' }}>{t('common.close')}</Button>
             </DialogActions>
         </Dialog>
     );
 };
+
 
 export default BarcodeScanner;

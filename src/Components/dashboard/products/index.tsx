@@ -161,7 +161,7 @@ export default function IndexProduct() {
                 </Stack>
             ),
         })) : [];
-    }, [products, context, dispatch]);
+    }, [products, context, dispatch, t]);
 
     const columns: MRT_ColumnDef<IProductTableData>[] = useMemo(() => [
         {
@@ -266,7 +266,7 @@ export default function IndexProduct() {
             Cell: ({ cell, row }) => (
                 <Box>
                     <Typography variant="body2" sx={{ fontWeight: 900, color: '#0f172a', fontSize: '0.95rem' }}>
-                        {UtilMethods.formatNumber(cell.getValue<number>())}
+                        {UtilMethods.formatAmount(cell.getValue<number>())}
                     </Typography>
                     {(row.original as any).unit?.abbreviation && (row.original as any).unit?.abbreviation !== 'pce' && (
                         <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
@@ -278,7 +278,7 @@ export default function IndexProduct() {
         },
         {
             accessorKey: "stock_quantity",
-            header: "Stock",
+            header: t('product.productStock'),
             size: 110,
             Cell: ({ cell, row }) => {
                 const qty = cell.getValue<number>();
@@ -374,7 +374,7 @@ export default function IndexProduct() {
             enableColumnFilter: false,
             enableSorting: false,
         },
-    ], [suppliers]);
+    ], [suppliers, t]);
 
     const table = useMaterialReactTable({
         columns,
@@ -491,7 +491,7 @@ export default function IndexProduct() {
                             '&:hover': { borderColor: '#059669', bgcolor: 'rgba(16,185,129,0.05)' }
                         }}
                     >
-                        Exporter
+                        {t('product.export')}
                     </Button>
                 )}
             </Box>
@@ -525,14 +525,14 @@ export default function IndexProduct() {
 
     return (
         <Box>
-            <Breadcrumd parent="Articles" />
+            <Breadcrumd parent={t('menu.ARTICLE')} />
             <MaterialReactTable table={table} />
             <CustomAlert
                 openDetailModal={openDetailModal}
                 content={{
                     style: 'ti ti-info-circle text text-danger',
                     icon: 'Warning',
-                    message: 'Voulez-vous supprimer cet article ?'
+                    message: t('product.deleteConfirm')
                 }}
                 onHandleDelete={handleDelete}
                 onHandleOpenDetail={() => setOpenDetailModal(false)}

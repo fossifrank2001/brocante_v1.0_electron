@@ -168,7 +168,7 @@ export default function IndexMenu() {
                 ),
             },
         ],
-        [],
+        [t],
     );
 
     const mrTable: MRT_TableInstance<IMenu> = useMaterialReactTable({

@@ -1,22 +1,24 @@
 .form-container {
     .form-card {
-        background-color: #fff;
+        background-color: var(--bg-surface);
         border-radius: 16px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-sm);
         padding: 1.5rem;
         margin-bottom: 1rem;
+        border: 1px solid var(--card-border);
+        transition: var(--transition-theme);
 
         .card-title {
             font-size: 1.125rem;
             font-weight: 600;
-            color: #1e293b;
+            color: var(--text-primary);
             margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
 
             i {
-                color: #4318FF;
+                color: var(--accent-primary);
             }
         }
 
@@ -32,11 +34,11 @@
                 align-items: center;
                 gap: 0.5rem;
                 margin-bottom: 0.5rem;
-                color: #64748b;
+                color: var(--text-secondary);
                 font-weight: 500;
 
                 i {
-                    color: #4318FF;
+                    color: var(--accent-primary);
                 }
 
                 .required-star {
@@ -47,25 +49,27 @@
 
             .form-control, 
             .form-select {
-                border: 1px solid #e2e8f0;
+                border: 1px solid var(--input-border);
                 border-radius: 8px;
                 padding: 0.75rem 1rem;
                 transition: all 0.2s ease;
-                background-color: #fff;
+                background-color: var(--input-bg);
+                color: var(--text-primary);
                 width: 100%;
 
                 &:focus {
-                    border-color: #4318FF;
-                    box-shadow: 0 0 0 2px rgba(67, 24, 255, 0.1);
+                    border-color: var(--accent-primary);
+                    box-shadow: 0 0 0 2px var(--accent-primary-muted);
                 }
 
                 &::placeholder {
-                    color: #a0aec0;
+                    color: var(--input-placeholder);
                 }
 
                 &:disabled {
-                    background-color: #f8fafc;
+                    background-color: var(--bg-secondary);
                     cursor: not-allowed;
+                    color: var(--text-muted);
                 }
             }
 
@@ -88,7 +92,7 @@
             }
 
             .help-text {
-                color: #64748b;
+                color: var(--text-secondary);
                 font-size: 0.875rem;
                 margin-top: 0.25rem;
             }
@@ -102,21 +106,21 @@
                 width: 1.125rem;
                 height: 1.125rem;
                 margin-left: -1.75rem;
-                border-color: #cbd5e1;
+                border-color: var(--input-border);
                 
                 &:checked {
-                    background-color: #4318FF;
-                    border-color: #4318FF;
+                    background-color: var(--accent-primary);
+                    border-color: var(--accent-primary);
                 }
 
                 &:focus {
-                    border-color: #4318FF;
-                    box-shadow: 0 0 0 2px rgba(67, 24, 255, 0.1);
+                    border-color: var(--accent-primary);
+                    box-shadow: 0 0 0 2px var(--accent-primary-muted);
                 }
             }
 
             .form-check-label {
-                color: #1e293b;
+                color: var(--text-primary);
                 font-weight: normal;
             }
         }
@@ -135,13 +139,13 @@
             transition: all 0.2s ease;
 
             &.btn-primary {
-                background-color: #4318FF;
-                border-color: #4318FF;
+                background-color: var(--accent-primary);
+                border-color: var(--accent-primary);
                 color: #fff;
 
                 &:hover {
-                    background-color: #3311CC;
-                    border-color: #3311CC;
+                    background-color: var(--accent-primary-hover);
+                    border-color: var(--accent-primary-hover);
                     transform: translateY(-1px);
                 }
 
@@ -151,12 +155,12 @@
             }
 
             &.btn-secondary {
-                background-color: #f1f5f9;
-                border-color: #e2e8f0;
-                color: #64748b;
+                background-color: var(--bg-secondary);
+                border-color: var(--border-color);
+                color: var(--text-secondary);
 
                 &:hover {
-                    background-color: #e2e8f0;
+                    background-color: var(--bg-elevated);
                     transform: translateY(-1px);
                 }
 

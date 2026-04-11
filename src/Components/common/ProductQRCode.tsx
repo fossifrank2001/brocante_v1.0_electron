@@ -22,6 +22,7 @@ import {
 } from '@mui/icons-material';
 import ProductAPI from '@/Data/Api/Product';
 import { IProduct } from '@/Data/Interfaces/Supply';
+import { useTranslation } from 'react-i18next';
 
 interface ProductQRCodeProps {
     product: IProduct;
@@ -31,22 +32,19 @@ interface ProductQRCodeProps {
 }
 
 const ProductQRCode: React.FC<ProductQRCodeProps> = ({ product, open, onClose, onQRCodeGenerated }) => {
+    const { t } = useTranslation();
     const [isGenerating, setIsGenerating] = useState(false);
     const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     React.useEffect(() => {
         if (open && product.qrcode_data) {
-            // Si le produit a déjà un QR code, essayer de construire l'URL
-            // Supposons que qrcode_data contient le chemin relatif ou les données
             try {
                 const data = JSON.parse(product.qrcode_data);
                 if (data.internal_reference) {
-                    // QR code existe probablement
                     setQrCodeUrl(`${import.meta.env.VITE_API_URL}/images/qrcodes/qrcode_${product.internal_reference}.svg`);
                 }
             } catch {
-                // qrcode_data n'est pas JSON, peut-être juste un chemin
                 setQrCodeUrl(null);
             }
         }
@@ -65,7 +63,7 @@ const ProductQRCode: React.FC<ProductQRCodeProps> = ({ product, open, onClose, o
                 onQRCodeGenerated(generatedUrl);
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Erreur lors de la génération du QR code.');
+            setError(err.response?.data?.message || t('product.qrCodeError'));
         } finally {
             setIsGenerating(false);
         }
@@ -88,14 +86,17 @@ const ProductQRCode: React.FC<ProductQRCodeProps> = ({ product, open, onClose, o
             onClose={onClose}
             maxWidth="sm"
             fullWidth
+            PaperProps={{
+                sx: { bgcolor: 'var(--bg-surface)', color: 'var(--text-primary)' }
+            }}
         >
             <DialogTitle>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <QrCode2Icon color="primary" />
-                        <Typography variant="h6">QR Code du Produit</Typography>
+                        <Typography variant="h6">{t('product.qrCodeTitle')}</Typography>
                     </Box>
-                    <IconButton onClick={onClose} size="small">
+                    <IconButton onClick={onClose} size="small" sx={{ color: 'var(--text-secondary)' }}>
                         <CloseIcon />
                     </IconButton>
                 </Box>
@@ -110,9 +111,9 @@ const ProductQRCode: React.FC<ProductQRCodeProps> = ({ product, open, onClose, o
                     )}
 
                     {/* Product Info */}
-                    <Paper elevation={1} sx={{ p: 2, borderRadius: 2, bgcolor: '#f5f5f5' }}>
-                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                            Produit
+                    <Paper elevation={1} sx={{ p: 2, borderRadius: 2, bgcolor: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
+                        <Typography variant="subtitle2" color="var(--text-secondary)" gutterBottom>
+                            {t('product.product')}
                         </Typography>
                         <Typography variant="h6" gutterBottom>
                             {product.name}
@@ -123,12 +124,14 @@ const ProductQRCode: React.FC<ProductQRCodeProps> = ({ product, open, onClose, o
                                 size="small" 
                                 color="primary" 
                                 variant="outlined" 
+                                sx={{ color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }}
                             />
                             {product.barcode && (
                                 <Chip 
                                     label={`Barcode: ${product.barcode}`} 
                                     size="small" 
                                     variant="outlined" 
+                                    sx={{ color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
                                 />
                             )}
                         </Box>
@@ -136,14 +139,16 @@ const ProductQRCode: React.FC<ProductQRCodeProps> = ({ product, open, onClose, o
 
                     {/* QR Code Display */}
                     {qrCodeUrl ? (
-                        <Paper elevation={2} sx={{ p: 3, borderRadius: 2, textAlign: 'center' }}>
+                        <Paper elevation={2} sx={{ p: 3, borderRadius: 2, textAlign: 'center', bgcolor: 'var(--bg-elevated)' }}>
                             <Box 
                                 sx={{ 
                                     display: 'flex', 
                                     justifyContent: 'center', 
                                     alignItems: 'center',
                                     minHeight: 300,
-                                    bgcolor: 'white'
+                                    bgcolor: '#ffffff', // QR code background is usually best in white for scanability
+                                    p: 2,
+                                    borderRadius: 1
                                 }}
                             >
                                 <img 
@@ -151,43 +156,44 @@ const ProductQRCode: React.FC<ProductQRCodeProps> = ({ product, open, onClose, o
                                     alt="QR Code"
                                     style={{ maxWidth: '100%', maxHeight: 300 }}
                                     onError={() => {
-                                        setError('Impossible de charger le QR code. Veuillez le générer.');
+                                        setError(t('product.qrCodeLoadError'));
                                         setQrCodeUrl(null);
                                     }}
                                 />
                             </Box>
-                            <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-                                Scannez ce code pour identifier rapidement le produit
+                            <Typography variant="caption" color="var(--text-secondary)" sx={{ mt: 2, display: 'block' }}>
+                                {t('product.qrCodeScanInfo')}
                             </Typography>
                         </Paper>
                     ) : (
-                        <Paper elevation={2} sx={{ p: 4, borderRadius: 2, textAlign: 'center' }}>
-                            <QrCode2Icon sx={{ fontSize: 80, color: 'action.disabled', mb: 2 }} />
-                            <Typography variant="body1" color="text.secondary" gutterBottom>
-                                Aucun QR code généré pour ce produit
+                        <Paper elevation={2} sx={{ p: 4, borderRadius: 2, textAlign: 'center', bgcolor: 'var(--bg-elevated)' }}>
+                            <QrCode2Icon sx={{ fontSize: 80, color: 'var(--text-muted)', mb: 2 }} />
+                            <Typography variant="body1" color="var(--text-secondary)" gutterBottom>
+                                {t('product.noQrCode')}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                                Cliquez sur "Générer QR Code" pour créer un code unique
+                            <Typography variant="caption" color="var(--text-secondary)">
+                                {t('product.generateQrCodeInfo')}
                             </Typography>
                         </Paper>
                     )}
 
                     {/* Info Box */}
-                    <Alert severity="info" icon={<QrCode2Icon />}>
-                        Le QR code contient la référence interne du produit et permet une identification rapide via scanner.
+                    <Alert severity="info" icon={<QrCode2Icon />} sx={{ bgcolor: 'rgba(99, 102, 241, 0.1)', color: 'var(--text-primary)' }}>
+                        {t('product.qrCodeUsageInfo')}
                     </Alert>
                 </Stack>
             </DialogContent>
 
             <DialogActions sx={{ p: 2, gap: 1 }}>
-                <Button onClick={onClose}>Fermer</Button>
+                <Button onClick={onClose} sx={{ color: 'var(--text-secondary)' }}>{t('common.close')}</Button>
                 {qrCodeUrl && (
                     <Button
                         variant="outlined"
                         startIcon={<DownloadIcon />}
                         onClick={handleDownload}
+                        sx={{ color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }}
                     >
-                        Télécharger
+                        {t('common.download')}
                     </Button>
                 )}
                 <Button
@@ -195,12 +201,14 @@ const ProductQRCode: React.FC<ProductQRCodeProps> = ({ product, open, onClose, o
                     startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon />}
                     onClick={handleGenerateQRCode}
                     disabled={isGenerating}
+                    sx={{ bgcolor: 'var(--accent-primary)', '&:hover': { bgcolor: 'var(--accent-primary)', opacity: 0.9 } }}
                 >
-                    {qrCodeUrl ? 'Régénérer' : 'Générer'} QR Code
+                    {qrCodeUrl ? t('common.regenerate') : t('common.generate')} QR Code
                 </Button>
             </DialogActions>
         </Dialog>
     );
 };
+
 
 export default ProductQRCode;

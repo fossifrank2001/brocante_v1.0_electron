@@ -3,22 +3,65 @@
   line-height: 1.6;
   font-weight: 400;
 
-  // Premium Color Palette
-  --primary-color: #4f46e5;
-  --primary-hover: #4338ca;
+  // ─── Design Tokens — Light Theme (default) ────────────────────
+  --accent-primary: #4f46e5;
+  --accent-primary-hover: #4338ca;
+  --accent-primary-muted: rgba(79, 70, 229, 0.1);
+
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
   --bg-glass: rgba(255, 255, 255, 0.7);
   --bg-glass-dark: rgba(36, 36, 36, 0.7);
   --glass-border: rgba(255, 255, 255, 0.125);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
 
-  --surface-color: #ffffff;
-  --body-bg: #f8fafc;
-  --text-main: #1e293b;
-  --text-muted: #64748b;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
+
+  --border-color: #e2e8f0;
+  --border-subtle: #f1f5f9;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  --input-bg: #ffffff;
+  --input-border: #e2e8f0;
+  --input-focus-border: #4f46e5;
+  --input-placeholder: #a0aec0;
+
+  --sidebar-bg: #ffffff;
+  --navbar-bg: #ffffff;
+
+  --scrollbar-track: #f1f1f1;
+  --scrollbar-thumb: #888;
+  --scrollbar-thumb-hover: #555;
+
+  --card-bg: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.05);
+  --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+
+  --dropdown-bg: #ffffff;
+  --dropdown-hover: #f8fafc;
+
+  --badge-bg: #f0f0f0;
+
+  --transition-theme: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+
+  // Legacy aliases
+  --primary-color: var(--accent-primary);
+  --primary-hover: var(--accent-primary-hover);
+  --surface-color: var(--bg-surface);
+  --body-bg: var(--bg-primary);
+  --text-main: var(--text-primary);
 
   color-scheme: light;
-  color: var(--text-main);
-  background-color: var(--body-bg);
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -26,6 +69,92 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+// ─── Dark Theme ──────────────────────────────────────────────────
+[data-theme="dark"] {
+  --accent-primary: #818cf8;
+  --accent-primary-hover: #6366f1;
+  --accent-primary-muted: rgba(129, 140, 248, 0.15);
+
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-surface: #1e293b;
+  --bg-elevated: #334155;
+  --bg-glass: rgba(30, 41, 59, 0.8);
+  --bg-glass-dark: rgba(15, 23, 42, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.08);
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-inverse: #0f172a;
+
+  --border-color: #334155;
+  --border-subtle: #1e293b;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+
+  --input-bg: #1e293b;
+  --input-border: #334155;
+  --input-focus-border: #818cf8;
+  --input-placeholder: #64748b;
+
+  --sidebar-bg: #1e293b;
+  --navbar-bg: #1e293b;
+
+  --scrollbar-track: #1e293b;
+  --scrollbar-thumb: #475569;
+  --scrollbar-thumb-hover: #64748b;
+
+  --card-bg: #1e293b;
+  --card-border: rgba(255, 255, 255, 0.06);
+  --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+
+  --dropdown-bg: #1e293b;
+  --dropdown-hover: #334155;
+
+  --badge-bg: #334155;
+
+  color-scheme: dark;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+
+  // ─── Override Bootstrap 5.3 CSS variables ───────────────────
+  --bs-body-bg: #0f172a;
+  --bs-body-bg-rgb: 15, 23, 42;
+  --bs-body-color: #94a3b8;
+  --bs-body-color-rgb: 148, 163, 184;
+  --bs-heading-color: #f1f5f9;
+  --bs-emphasis-color: #f1f5f9;
+  --bs-emphasis-color-rgb: 241, 245, 249;
+  --bs-secondary-color: rgba(148, 163, 184, 0.75);
+  --bs-secondary-bg: #1e293b;
+  --bs-secondary-bg-rgb: 30, 41, 59;
+  --bs-tertiary-bg: #334155;
+  --bs-tertiary-bg-rgb: 51, 65, 85;
+  --bs-border-color: #334155;
+  --bs-border-color-translucent: rgba(255, 255, 255, 0.1);
+  --bs-link-color: #818cf8;
+  --bs-link-color-rgb: 129, 140, 248;
+  --bs-link-hover-color: #a5b4fc;
+  --bs-link-hover-color-rgb: 165, 180, 252;
+  --bs-card-bg: #1e293b;
+  --bs-card-border-color: #334155;
+  --bs-card-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --bs-card-title-color: #f1f5f9;
+  --bs-card-subtitle-color: #94a3b8;
+  --bs-card-cap-bg: rgba(255, 255, 255, 0.03);
+}
+
+
+// ─── Transition on theme change ──────────────────────────────────
+*, *::before, *::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+// ─── Glass Effect ────────────────────────────────────────────────
 .glass-effect {
   background: var(--bg-glass);
   backdrop-filter: blur(12px);
@@ -34,31 +163,32 @@
 }
 
 .premium-shadow {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-md);
   transition: box-shadow 0.3s ease;
 
   &:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-lg);
   }
 }
 
 a {
   font-weight: 500;
-  color: var(--primary-color);
+  color: var(--accent-primary);
   text-decoration: inherit;
   transition: color 0.2s;
 }
 
 a:hover {
-  color: var(--primary-hover);
+  color: var(--accent-primary-hover);
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--body-bg);
-  color: var(--text-main);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   overflow-x: hidden;
+  transition: var(--transition-theme);
 }
 
 h1,
@@ -68,7 +198,7 @@ h4,
 h5,
 h6 {
   font-family: 'Outfit', sans-serif;
-  color: var(--text-main);
+  color: var(--text-primary);
   font-weight: 700;
   margin-bottom: 0.5em;
   line-height: 1.2;
@@ -85,14 +215,14 @@ button {
   font-size: 0.95rem;
   font-weight: 600;
   font-family: inherit;
-  background-color: var(--primary-color);
+  background-color: var(--accent-primary);
   color: white;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
 
   &:hover {
-    background-color: var(--primary-hover);
+    background-color: var(--accent-primary-hover);
     transform: translateY(-1px);
     box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
   }
@@ -110,21 +240,22 @@ button {
 }
 
 .premium-card {
-  background: white;
+  background: var(--card-bg);
   border-radius: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
   overflow: hidden;
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-xl);
   }
 }
 
 .page-wrapper {
-  background-color: rgba(208, 208, 208, 0.08) !important;
+  background-color: var(--bg-primary) !important;
+  transition: var(--transition-theme);
 
   .css-1xylxj1-MuiTypography-root-MuiLink-root:not(.footer) {
     text-decoration: none !important;
@@ -132,6 +263,9 @@ button {
 }
 
 .body-wrapper {
+  background-color: var(--bg-primary) !important;
+  transition: var(--transition-theme);
+
   .container-fluid {
     min-height: 100vh;
     display: flex;
@@ -140,7 +274,6 @@ button {
   }
 
   .__table-expandable {
-    //z-index: 9999 !important;
     border-radius: 12px !important;
     position: relative;
   }
@@ -221,7 +354,7 @@ button {
   height: 70px;
   padding: 0 15px;
   font-size: 14px;
-  color: var(--bs-link-color);
+  color: var(--text-secondary);
 }
 
 .__item-separator {
@@ -237,12 +370,12 @@ button {
     flex-shrink: 0;
     border-width: 0;
     border-style: solid;
-    border-color: rgba(0, 0, 0, 0.12);
+    border-color: var(--border-color);
     border-right-width: thin;
     background-color: transparent;
     border-bottom: none;
     opacity: 0.25;
-    background-image: linear-gradient(to bottom, rgba(31, 40, 62, 0), rgba(31, 40, 62, 0.4), rgba(31, 40, 62, 0)) !important;
+    background-image: linear-gradient(to bottom, transparent, var(--border-color), transparent) !important;
     width: 0.0625rem;
     height: 100%;
     margin: 0 1rem;
@@ -280,21 +413,6 @@ button {
   }
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-
-  a:hover {
-    color: #747bff;
-  }
-
-  button {
-    background-color: #f9f9f9;
-  }
-}
-
 #left-sidebar.visible {
   transform: translateX(-275px);
 }
@@ -305,8 +423,8 @@ button {
 
 .dropzone {
   min-height: 150px;
-  border: 2px solid rgba(0, 0, 0, .3);
-  background: #fff;
+  border: 2px solid var(--border-color);
+  background: var(--bg-surface);
   padding: 20px 20px;
 }
 
@@ -314,28 +432,567 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px dashed var(--bs-primary) !important;
+  border: 1px dashed var(--accent-primary) !important;
   border-radius: 7px;
-  background-color: var(--bs-primary-bg-subtle) !important;
+  background-color: var(--accent-primary-muted) !important;
 }
 
-/* Pour les navigateurs WebKit (Chrome, Safari, etc.) */
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 3px;
-  /* Largeur de la barre de défilement */
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  /* Couleur de fond de la piste de défilement */
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
-  /* Couleur de la barre de défilement */
+  background: var(--scrollbar-thumb);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
-  /* Couleur de la barre de défilement lorsqu'elle est survolée */
+  background: var(--scrollbar-thumb-hover);
+}
+
+// ─── Dark mode overrides for Bootstrap & vendor classes ──────────
+[data-theme="dark"] {
+  // Bootstrap backgrounds
+  .bg-white {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+  }
+  .bg-light {
+    background-color: var(--bg-secondary) !important;
+  }
+  .bg-light-primary {
+    background-color: var(--accent-primary-muted) !important;
+  }
+  .bg-secondary-subtle {
+    background-color: var(--bg-elevated) !important;
+  }
+
+  // Text utilities
+  .text-dark {
+    color: var(--text-primary) !important;
+  }
+  .text-muted {
+    color: var(--text-muted) !important;
+  }
+
+  // Borders
+  .border, .border-bottom, .border-top {
+    border-color: var(--border-color) !important;
+  }
+
+  // Cards & paper — catch all cards including Bootstrap
+  .card {
+    background-color: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-primary);
+    box-shadow: var(--card-shadow) !important;
+  }
+  .card-body {
+    color: var(--text-primary);
+  }
+  .card-title {
+    color: var(--text-primary) !important;
+  }
+  .card-header {
+    background-color: var(--bg-secondary) !important;
+    border-bottom-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+  }
+  .card-footer {
+    background-color: var(--bg-secondary) !important;
+    border-top-color: var(--border-color) !important;
+  }
+
+  // Navbar
+  .app-header {
+    background-color: var(--navbar-bg) !important;
+    border-bottom-color: var(--border-color) !important;
+  }
+  .navbar {
+    border-bottom-color: var(--border-color) !important;
+  }
+  .navbar .nav-link {
+    color: var(--text-secondary) !important;
+  }
+
+  // Sidebar
+  .left-sidebar {
+    background-color: var(--sidebar-bg) !important;
+    border-right-color: var(--border-color) !important;
+  }
+  .sidebar-link {
+    color: var(--text-secondary) !important;
+    &:hover {
+      background-color: var(--bg-elevated) !important;
+      color: var(--text-primary) !important;
+    }
+    // When the link is active (has bg-primary or text-white)
+    &.bg-primary {
+      background-color: var(--accent-primary) !important;
+      color: #ffffff !important;
+      
+      i, span {
+        color: #ffffff !important;
+      }
+    }
+    &.bg-primary-subtle {
+      background-color: rgba(99, 102, 241, 0.15) !important;
+      color: var(--text-primary) !important;
+    }
+  }
+
+  // Dropdown menus
+  .dropdown-menu {
+    background-color: var(--dropdown-bg) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+  }
+  .dropdown-item {
+    color: var(--text-primary) !important;
+    &:hover, &:focus {
+      background-color: var(--dropdown-hover) !important;
+    }
+  }
+  .dropdown-header {
+    color: var(--text-secondary) !important;
+  }
+
+  // Tables
+  .table {
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--border-color);
+    --bs-table-hover-bg: var(--bg-elevated);
+    --bs-table-striped-bg: var(--bg-secondary);
+    th {
+      background-color: var(--bg-secondary) !important;
+      color: var(--text-secondary) !important;
+      border-color: var(--border-color) !important;
+    }
+    td {
+      border-color: var(--border-color) !important;
+      color: var(--text-primary) !important;
+    }
+    tbody tr:hover {
+      background-color: var(--bg-elevated) !important;
+    }
+  }
+
+  // MUI DataGrid — comprehensive
+  .MuiDataGrid-root {
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+    background-color: var(--bg-surface) !important;
+
+    .MuiDataGrid-main {
+      background-color: var(--bg-surface) !important;
+    }
+    .MuiDataGrid-columnHeaders {
+      background-color: var(--bg-secondary) !important;
+      border-color: var(--border-color) !important;
+      color: var(--text-secondary) !important;
+    }
+    .MuiDataGrid-columnHeader {
+      background-color: var(--bg-secondary) !important;
+      color: var(--text-secondary) !important;
+    }
+    .MuiDataGrid-columnHeaderTitle {
+      color: var(--text-secondary) !important;
+    }
+    .MuiDataGrid-columnSeparator {
+      color: var(--border-color) !important;
+    }
+    .MuiDataGrid-cell {
+      border-color: var(--border-color) !important;
+      color: var(--text-primary) !important;
+    }
+    .MuiDataGrid-row {
+      &:hover {
+        background-color: var(--bg-elevated) !important;
+      }
+      &.Mui-selected {
+        background-color: var(--accent-primary-muted) !important;
+      }
+    }
+    .MuiDataGrid-footerContainer {
+      border-color: var(--border-color) !important;
+      background-color: var(--bg-secondary) !important;
+      color: var(--text-secondary) !important;
+    }
+    .MuiTablePagination-root {
+      color: var(--text-secondary) !important;
+    }
+    .MuiDataGrid-toolbarContainer {
+      background-color: var(--bg-secondary) !important;
+      color: var(--text-secondary) !important;
+      button {
+        color: var(--text-secondary) !important;
+      }
+    }
+    .MuiDataGrid-overlay {
+      background-color: rgba(15, 23, 42, 0.7) !important;
+      color: var(--text-primary) !important;
+    }
+  }
+
+  // (Removed redundant specific sidebar-link selectors)
+
+  // MUI DataGrid Portals (Panels, Filters, Menus)
+  .MuiDataGrid-panelWrapper, .MuiDataGrid-panel {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+  }
+  .MuiDataGrid-filterForm {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+  }
+  .MuiDataGrid-panelContent {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+  }
+  .MuiDataGrid-menuList {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+  }
+  .MuiDataGrid-paper {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+  }
+
+  // MUI Paper (catches popovers, dialogs, cards)
+  .MuiPaper-root {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+  }
+  // MUI Menu/Popover
+  .MuiMenu-paper, .MuiPopover-paper {
+    background-color: var(--bg-surface) !important;
+  }
+  .MuiMenuItem-root {
+    color: var(--text-primary) !important;
+    &:hover {
+      background-color: var(--bg-elevated) !important;
+    }
+  }
+
+  // MUI Inputs (extra specificity)
+  .MuiOutlinedInput-root {
+    background-color: var(--input-bg) !important;
+    color: var(--text-primary) !important;
+    .MuiOutlinedInput-notchedOutline {
+      border-color: var(--input-border) !important;
+    }
+    &:hover .MuiOutlinedInput-notchedOutline {
+      border-color: var(--text-muted) !important;
+    }
+    &.Mui-focused .MuiOutlinedInput-notchedOutline {
+      border-color: var(--accent-primary) !important;
+    }
+  }
+  .MuiInputLabel-root {
+    color: var(--text-secondary) !important;
+  }
+  .MuiInputBase-input {
+    color: var(--text-primary) !important;
+  }
+  .MuiFilledInput-root {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    &:hover {
+      background-color: var(--bg-elevated) !important;
+    }
+  }
+  .MuiSelect-select {
+    color: var(--text-primary) !important;
+  }
+  .MuiSelect-icon {
+    color: var(--text-muted) !important;
+  }
+
+  // MUI Typography forced color
+  .MuiTypography-root {
+    color: inherit;
+  }
+  .MuiTypography-h1, .MuiTypography-h2, .MuiTypography-h3,
+  .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 {
+    color: var(--text-primary);
+  }
+
+  // MUI Button text variant
+  .MuiButton-root.MuiButton-text {
+    color: var(--accent-primary) !important;
+  }
+
+  // MUI IconButton
+  .MuiIconButton-root {
+    color: var(--text-secondary) !important;
+  }
+
+  // MUI Avatar
+  .MuiAvatar-root {
+    border-color: var(--border-color) !important;
+  }
+
+  // MUI Divider
+  .MuiDivider-root {
+    border-color: var(--border-color) !important;
+  }
+
+  // Form controls (bootstrap)
+  .form-control, .form-select {
+    background-color: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+    &::placeholder {
+      color: var(--input-placeholder) !important;
+    }
+    &:focus {
+      border-color: var(--input-focus-border) !important;
+      box-shadow: 0 0 0 2px var(--accent-primary-muted) !important;
+    }
+  }
+  .form-label {
+    color: var(--text-secondary) !important;
+  }
+  .input-group-text {
+    background-color: var(--bg-elevated) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-secondary) !important;
+  }
+
+  // h tags in cards — override heading-color from Bootstrap
+  .card h1, .card h2, .card h3, .card h4, .card h5, .card h6,
+  .card .h1, .card .h2, .card .h3, .card .h4, .card .h5, .card .h6 {
+    color: var(--text-primary) !important;
+  }
+
+  // Modals
+  .modal-content {
+    background-color: var(--bg-surface) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+  }
+  .modal-header {
+    border-bottom-color: var(--border-color) !important;
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+  }
+  .modal-footer {
+    border-top-color: var(--border-color) !important;
+  }
+  .modal-title {
+    color: var(--text-primary) !important;
+  }
+
+  // Alerts
+  .alert-info {
+    background-color: rgba(96, 165, 250, 0.1) !important;
+    border-color: rgba(96, 165, 250, 0.2) !important;
+    color: #60a5fa !important;
+  }
+
+  // Toast
+  .Toastify__toast {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+  }
+
+  // MUI tabs
+  .MuiTab-root {
+    color: var(--text-secondary) !important;
+    &.Mui-selected {
+      color: var(--accent-primary) !important;
+    }
+  }
+  .MuiTabs-indicator {
+    background-color: var(--accent-primary) !important;
+  }
+
+  // MUI chip
+  .MuiChip-root {
+    border-color: var(--border-color);
+    // Allow MuiChip to retain custom sx inline colors (like status chips)
+    // We only provide fallbacks if they are default
+    
+    &.MuiChip-colorPrimary {
+      background-color: var(--accent-primary) !important;
+      color: white !important;
+    }
+  }
+
+  // MUI Dialog
+  .MuiDialog-paper {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+  }
+  .MuiDialogTitle-root {
+    color: var(--text-primary) !important;
+  }
+  .MuiDialogContent-root {
+    color: var(--text-primary) !important;
+  }
+
+  // MUI Tooltip
+  .MuiTooltip-tooltip {
+    background-color: var(--bg-elevated) !important;
+    color: var(--text-primary) !important;
+  }
+
+  // HR
+  hr {
+    border-color: var(--border-color);
+    opacity: 0.3;
+  }
+
+  // Breadcrumb
+  .breadcrumb-item {
+    color: var(--text-secondary);
+    &.active {
+      color: var(--text-primary);
+    }
+  }
+
+  // Badge
+  .badge {
+    &.bg-light {
+      background-color: var(--bg-elevated) !important;
+      color: var(--text-primary) !important;
+    }
+  }
+
+  // Offcanvas
+  .offcanvas {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+  }
+
+  // Pagination
+  .page-link {
+    background-color: var(--bg-surface) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-secondary) !important;
+    &:hover {
+      background-color: var(--bg-elevated) !important;
+      color: var(--text-primary) !important;
+    }
+  }
+  .page-item.active .page-link {
+    background-color: var(--accent-primary) !important;
+    border-color: var(--accent-primary) !important;
+    color: white !important;
+  }
+
+  // Search wrapper / multiselect
+  .search-wrapper.searchWrapper {
+    background-color: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+  }
+  .optionListContainer {
+    background-color: var(--bg-surface) !important;
+    .option {
+      color: var(--text-primary) !important;
+      &:hover {
+        background-color: var(--bg-elevated) !important;
+      }
+    }
+  }
+
+  // Label / small text
+  label {
+    color: var(--text-secondary);
+  }
+  small {
+    color: var(--text-muted);
+  }
+  p {
+    color: var(--text-secondary);
+  }
+
+  // ─── ApexCharts Dark overrides ───
+  .apexcharts-text tspan {
+    fill: var(--text-secondary);
+  }
+  .apexcharts-legend-text {
+    color: var(--text-secondary) !important;
+  }
+  .apexcharts-tooltip {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: var(--shadow-lg) !important;
+    color: var(--text-primary) !important;
+  }
+  .apexcharts-tooltip-title {
+    background: var(--bg-secondary) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    font-weight: bold;
+    color: var(--text-primary) !important;
+  }
+  .apexcharts-tooltip-text {
+    color: var(--text-primary) !important;
+  }
+  .apexcharts-xaxistooltip, .apexcharts-yaxistooltip {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+  }
+  .apexcharts-xaxistooltip-bottom:before {
+    border-bottom-color: var(--border-color) !important;
+  }
+  .apexcharts-xaxistooltip-bottom:after {
+    border-bottom-color: var(--bg-surface) !important;
+  }
+  .apexcharts-gridline {
+    stroke: var(--border-color);
+  }
+
+  // ─── Deep overrides for any remaining inline white backgrounds ─
+  // Catch-all for Bootstrap bg-white used in components
+  .notification-box {
+    background-color: var(--bg-surface) !important;
+  }
+
+  // Lock screen (used in LockScreen.tsx)
+  .modal-content.bg-white {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+  }
+
+  // Sticky bottom cart
+  .sticky-bottom.bg-white {
+    background-color: var(--bg-surface) !important;
+  }
+
+  // Profile component
+  .rounded-circle.bg-white {
+    background-color: var(--bg-surface) !important;
+  }
+
+  // MUI Backdrop
+  .MuiBackdrop-root {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+  }
+
+  // Dropzone
+  .dropzone {
+    background-color: var(--accent-primary-muted) !important;
+    border-color: var(--accent-primary) !important;
+    color: var(--text-secondary) !important;
+  }
+
+  // fw-semibold / misc text
+  .fw-semibold, .fw-bold, .fw-medium {
+    color: inherit;
+  }
+  .fs-3, .fs-4, .fs-5, .fs-6 {
+    color: inherit;
+  }
 }

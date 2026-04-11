@@ -12,6 +12,7 @@ import { setActivePage } from "Data/Slices/NavigationSlice.ts";
 import { Pages } from "Data/Objects/state.ts";
 import CashSessionBar from '@/Components/dashboard/pos/CashSessionBar';
 import LanguageSwitcher from '@/Components/utils/LanguageSwitcher';
+import ThemeToggle from '@/Components/utils/ThemeToggle';
 import { useTranslation } from 'react-i18next';
 
 interface INavBarPropsInterface {
@@ -208,7 +209,7 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
         <header className="app-header" style={{
             zIndex: 100
         }}>
-            <nav className="navbar navbar-expand-lg navbar-light" style={{ borderBottom: "1px solid lightgray" }}>
+            <nav className="navbar navbar-expand-lg navbar-light" style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--navbar-bg)' }}>
                 <ul className="navbar-nav">
                     <li className="nav-item">
                         <Link
@@ -313,11 +314,8 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
                         <li className="nav-item me-2">
                             <LanguageSwitcher />
                         </li>
-                        <li className="nav-item nav-icon-hover-bg rounded-circle">
-                            <button className="btn btn-primary d-flex align-items-center" onClick={() => dispatch(setActivePage({ page: Pages.HOME }))} >
-                                <i className='ti ti-building-store me-1'></i>
-                                <span>{t('navigation.shop')}</span>
-                            </button>
+                        <li className="nav-item me-2">
+                            <ThemeToggle />
                         </li>
                         <li className="nav-item nav-icon-hover-bg rounded-circle">
                             <Link className="nav-link position-relative" href="#"
@@ -347,7 +345,7 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
                                     border: 'none',
                                     borderRadius: '0.5rem',
                                     zIndex: 800,
-                                    backgroundColor: '#fff'
+                                    backgroundColor: 'var(--dropdown-bg)'
                                 }}
                             >
                                 <div className="p-3">
@@ -384,7 +382,7 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
                                     border: 'none',
                                     borderRadius: '0.5rem',
                                     zIndex: 800,
-                                    backgroundColor: '#fff'
+                                    backgroundColor: 'var(--dropdown-bg)'
                                 }}
                             >
                                 <div className="p-3">

@@ -289,7 +289,7 @@ const ReadSell = () => {
             <div className="container">
                 <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
                     <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
+                        <span className="visually-hidden">{t('common.loading')}</span>
                     </div>
                 </div>
             </div>
@@ -310,167 +310,109 @@ const ReadSell = () => {
     const companyBalance = record.customer?.company_balance || 0;
 
     return (
-        <div className="container">
-            <Breadcrumd parent={t('navigation.sales')} url={Pages.SELL} _child={id}  />
-            <div className="row g-4">
-                <div className="col-lg-8">
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <Card sx={{
-                            borderRadius: '24px',
-                            border: '1px solid rgba(0,0,0,0.08)',
-                            boxShadow: '0 10px 40px rgba(0,0,0,0.04)',
-                            overflow: 'hidden'
-                        }}>
-                            <Box sx={{
-                                p: 3,
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                background: 'linear-gradient(90deg, #f8fafc 0%, #ffffff 100%)',
-                                borderBottom: '1px solid rgba(0,0,0,0.05)'
-                            }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                    <Box sx={{
-                                        p: 1.5,
-                                        borderRadius: '12px',
-                                        background: 'rgba(79, 70, 229, 0.1)',
-                                        color: '#4f46e5'
-                                    }}>
-                                        <ShoppingCart />
-                                    </Box>
-                                    <Typography variant="h5" sx={{ fontWeight: 800, color: '#1e293b' }}>
-                                        {t('sellRead.saleDetails')}
-                                    </Typography>
-                                </Box>
-                                <Box sx={{ display: 'flex', gap: 1.5 }}>
-                                    <Tooltip title={t('sellRead.back')}>
-                                        <IconButton
-                                            onClick={() => dispatch(setActivePage({ page: Pages.SELL }))}
-                                            sx={{ borderRadius: '12px', bgcolor: '#f1f5f9' }}
-                                        >
-                                            <ArrowBack />
-                                        </IconButton>
-                                    </Tooltip>
-                                    <Stack direction="row" spacing={1}>
-                                        <Tooltip title={t('sellRead.downloadReceipt')} arrow>
-                                            <IconButton
-                                                onClick={() => handleDownloadDocument('receipt')}
-                                                disabled={downloading === 'receipt'}
-                                                sx={{ 
-                                                    borderRadius: '15px',
-                                                    bgcolor: 'rgba(30, 41, 59, 0.05)',
-                                                    color: '#64748b',
-                                                    border: '1px solid rgba(30, 41, 59, 0.1)',
-                                                    '&:hover': { 
-                                                        bgcolor: 'rgba(30, 41, 59, 0.1)',
-                                                        color: '#1e293b'
-                                                    }
-                                                }}
-                                            >
-                                                {downloading === 'receipt' ? <CircularProgress size={20} color="inherit" /> : <Receipt />}
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title={t('sellRead.downloadInvoice')} arrow>
-                                            <IconButton
-                                                onClick={() => handleDownloadDocument('invoice')}
-                                                disabled={downloading === 'invoice'}
-                                                sx={{ 
-                                                    borderRadius: '15px',
-                                                    bgcolor: 'rgba(30, 41, 59, 0.05)',
-                                                    color: '#64748b',
-                                                    border: '1px solid rgba(30, 41, 59, 0.1)',
-                                                    '&:hover': { 
-                                                        bgcolor: 'rgba(30, 41, 59, 0.1)',
-                                                        color: '#1e293b'
-                                                    }
-                                                }}
-                                            >
-                                                {downloading === 'invoice' ? <CircularProgress size={20} color="inherit" /> : <FilePresent />}
-                                            </IconButton>
-                                        </Tooltip>
-                                    </Stack>
-                                </Box>
-                            </Box>
+        <Box>
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                <Breadcrumd parent={t('navigation.sales')} url={Pages.SELL} _child={id} />
 
-                            <CardContent sx={{ p: 4 }}>
-                                <Grid container spacing={4}>
-                                    <Grid item xs={12} md={6}>
-                                        <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Person sx={{ color: '#64748b' }} />
-                                            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#334155' }}>{t('sellRead.customerInfo')}</Typography>
-                                        </Box>
+                {/* Header Actions */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, mt: 2 }}>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Button
+                            variant="outlined"
+                            startIcon={<ArrowBack />}
+                            onClick={() => dispatch(setActivePage({ page: Pages.SELL }))}
+                            sx={{ borderRadius: '15px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
+                        >
+                            {t('sellRead.back')}
+                        </Button>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Stack direction="row" spacing={1}>
+                            <Tooltip title={t('sellRead.downloadReceipt')} arrow>
+                                <IconButton
+                                    onClick={() => handleDownloadDocument('receipt')}
+                                    disabled={downloading === 'receipt'}
+                                    sx={{ 
+                                        borderRadius: '15px',
+                                        bgcolor: 'rgba(30, 41, 59, 0.05)',
+                                        color: '#64748b',
+                                        border: '1px solid rgba(30, 41, 59, 0.1)',
+                                        '&:hover': { 
+                                            bgcolor: 'rgba(30, 41, 59, 0.1)',
+                                            color: '#1e293b'
+                                        }
+                                    }}
+                                >
+                                    {downloading === 'receipt' ? <CircularProgress size={20} color="inherit" /> : <Receipt />}
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title={t('sellRead.downloadInvoice')} arrow>
+                                <IconButton
+                                    onClick={() => handleDownloadDocument('invoice')}
+                                    disabled={downloading === 'invoice'}
+                                    sx={{ 
+                                        borderRadius: '15px',
+                                        bgcolor: 'rgba(30, 41, 59, 0.05)',
+                                        color: '#64748b',
+                                        border: '1px solid rgba(30, 41, 59, 0.1)',
+                                        '&:hover': { 
+                                            bgcolor: 'rgba(30, 41, 59, 0.1)',
+                                            color: '#1e293b'
+                                        }
+                                    }}
+                                >
+                                    {downloading === 'invoice' ? <CircularProgress size={20} color="inherit" /> : <FilePresent />}
+                                </IconButton>
+                            </Tooltip>
+                        </Stack>
+                        {record.status !== 'cancelled' && record.remaining_balance > 0 && (
+                            <Button
+                                variant="contained"
+                                startIcon={<PointOfSale />}
+                                onClick={handleOpenPaymentModal}
+                                sx={{
+                                    borderRadius: '15px',
+                                    textTransform: 'none',
+                                    fontWeight: 800,
+                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                    boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.3)'
+                                }}
+                            >
+                                {t('sellRead.makePayment')}
+                            </Button>
+                        )}
+                    </Box>
+                </Box>
 
-                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                            <Box sx={{ p: 2, borderRadius: '16px', bgcolor: '#f8fafc', border: '1px solid #f1f5f9' }}>
-                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, display: 'block', mb: 0.5 }}>{t('user.name').toUpperCase()}</Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                                                    {record.customer ? `${record.customer.lastname} ${record.customer.firstname}` : '-'}
-                                                </Typography>
+                <Grid container spacing={4}>
+                    {/* Left Column: Info Cards */}
+                    <Grid item xs={12} md={7}>
+                        <Grid container spacing={3}>
+                            {/* Sale Info Card */}
+                            <Grid item xs={12}>
+                                <Card sx={{
+                                    borderRadius: '24px',
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-surface)',
+                                    boxShadow: 'var(--shadow-sm)'
+                                }}>
+                                    <CardContent sx={{ p: 4 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                                            <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
+                                                <Receipt />
                                             </Box>
-
-                                            {record.customer && (
-                                                <Grid container spacing={2}>
-                                                    <Grid item xs={6}>
-                                                        <Box sx={{ p: 2, borderRadius: '16px', bgcolor: '#f8fafc', border: '1px solid #f1f5f9' }}>
-                                                            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, display: 'block', mb: 0.5 }}>{t('auth.email').toUpperCase()}</Typography>
-                                                            <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                                {record.customer.email || 'N/A'}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Grid>
-                                                    <Grid item xs={6}>
-                                                        <Box sx={{ p: 2, borderRadius: '16px', bgcolor: '#f8fafc', border: '1px solid #f1f5f9' }}>
-                                                            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, display: 'block', mb: 0.5 }}>{t('user.phone').toUpperCase()}</Typography>
-                                                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                                                                {record.customer.phone || 'N/A'}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Grid>
-                                                </Grid>
-                                            )}
-
-                                            {companyBalance > 0 && (
-                                                <Paper elevation={0} sx={{
-                                                    p: 2,
-                                                    borderRadius: '16px',
-                                                    bgcolor: 'rgba(16, 185, 129, 0.05)',
-                                                    border: '1px solid rgba(16, 185, 129, 0.1)',
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    alignItems: 'center'
-                                                }}>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                        <AccountBalanceWallet sx={{ color: '#10b981' }} />
-                                                        <Typography sx={{ fontWeight: 700, color: '#065f46' }}>{t('sellRead.availableBalance')}</Typography>
-                                                    </Box>
-                                                    <Typography sx={{ fontWeight: 900, color: '#10b981' }}>
-                                                        {UtilMethods.formatNumber(companyBalance ?? 0)}
-                                                    </Typography>
-                                                </Paper>
-                                            )}
+                                            <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b' }}>{t('sellRead.saleDetails')}</Typography>
                                         </Box>
-                                    </Grid>
-
-                                    <Grid item xs={12} md={6}>
-                                        <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Receipt sx={{ color: '#64748b' }} />
-                                            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#334155' }}>{t('sellRead.transactionSummary')}</Typography>
-                                        </Box>
-
-                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 2, borderRadius: '16px', bgcolor: '#f8fafc' }}>
-                                                <Box>
-                                                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, display: 'block' }}>{t('common.reference').toUpperCase()}</Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 800 }}>#{record.sell_code}</Typography>
-                                                </Box>
-                                                <Box sx={{ textAlign: 'right' }}>
-                                                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, display: 'block' }}>{t('common.status').toUpperCase()}</Typography>
+                                        <Grid container spacing={3}>
+                                            <Grid item xs={6}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('common.reference')}</Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 800, color: '#1e293b' }}>#{record.sell_code}</Typography>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('common.status')}</Typography>
+                                                <Box sx={{ mt: 0.5 }}>
                                                     <Chip
-                                                        label={record.status.toUpperCase()}
+                                                        label={t(`sales.status.${record.status}`)}
                                                         size="small"
                                                         sx={{
                                                             fontWeight: 800,
@@ -483,86 +425,159 @@ const ReadSell = () => {
                                                         }}
                                                     />
                                                 </Box>
-                                            </Box>
-
-                                            <Box sx={{ p: 2, borderRadius: '16px', bgcolor: '#f8fafc', display: 'flex', alignItems: 'center', gap: 2 }}>
-                                                <Event sx={{ color: '#64748b' }} />
-                                                <Box>
-                                                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, display: 'block' }}>{t('sellRead.saleDate').toUpperCase()}</Typography>
-                                                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                                                        {dayjs(record.created_at).format('DD MMMM YYYY à HH:mm')}
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-                                        </Box>
-                                    </Grid>
-                                </Grid>
-
-                                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#334155', mt: 5, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <ShoppingCart sx={{ fontSize: '20px' }} /> {t('sellRead.products')}
-                                </Typography>
-
-                                <Box sx={{
-                                    border: '1px solid #f1f5f9',
-                                    borderRadius: '16px',
-                                    overflow: 'hidden'
-                                }}>
-                                    <table className="table border-0 mb-0">
-                                        <thead style={{ backgroundColor: '#f8fafc' }}>
-                                            <tr>
-                                                <th className="border-0 px-4 py-3" style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700 }}>{t('sellRead.product')}</th>
-                                                <th className="border-0 px-4 py-3 text-center" style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700 }}>{t('sellRead.quantity')}</th>
-                                                <th className="border-0 px-4 py-3 text-end" style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700 }}>{t('sellRead.price')}</th>
-                                                <th className="border-0 px-4 py-3 text-end" style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700 }}>{t('sellRead.subtotal')}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {record.sell_items.map((item) => (
-                                                <tr key={item.id} style={{ borderBottom: '1px solid #f8fafc' }}>
-                                                    <td className="px-4 py-3">
-                                                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b' }}>{item.product.name}</Typography>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-center">
-                                                        <Chip label={`x${item.quantity}`} size="small" sx={{ fontWeight: 700, bgcolor: '#f1f5f9' }} />
-                                                    </td>
-                                                    <td className="px-4 py-3 text-end">
-                                                        <Typography variant="body2" sx={{ color: '#64748b' }}>{UtilMethods.formatNumber(item?.price ?? 0)}</Typography>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-end">
-                                                        <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>{UtilMethods.formatNumber((item?.price ?? 0) * (item?.quantity ?? 0))}</Typography>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-
-                                    <Box sx={{ p: 4, bgcolor: '#f8fafc', borderTop: '2px solid #ffffff' }}>
-                                        <Grid container spacing={2} justifyContent="flex-end">
-                                            <Grid item xs={12} sm={6} md={4}>
-                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                        <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>{t('sellRead.subtotal')}</Typography>
-                                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{UtilMethods.formatNumber(record?.total_amount ?? 0)}</Typography>
-                                                    </Box>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                        <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 600 }}>{t('sellRead.amountPaid')}</Typography>
-                                                        <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 700 }}>{UtilMethods.formatNumber(record?.paid_amount ?? 0)}</Typography>
-                                                    </Box>
-                                                    <Divider sx={{ my: 1 }} />
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>{t('sellRead.remaining')}</Typography>
-                                                        <Typography variant="h6" sx={{ fontWeight: 900, color: record?.remaining_balance > 0 ? '#ef4444' : '#10b981' }}>
-                                                            {UtilMethods.formatNumber(record?.remaining_balance ?? 0)}
-                                                        </Typography>
-                                                    </Box>
-                                                </Box>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('sellRead.totalAmount')}</Typography>
+                                                <Typography variant="h6" sx={{ fontWeight: 900, color: '#0f172a' }}>{UtilMethods.formatAmount(record.total_amount)}</Typography>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('sellRead.saleDate')}</Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 700 }}>{dayjs(record.created_at).format('DD MMMM YYYY HH:mm')}</Typography>
                                             </Grid>
                                         </Grid>
-                                    </Box>
-                                </Box>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
 
-                                {record.status !== 'cancelled' && (
-                                    <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                            {/* Customer Info Card */}
+                            <Grid item xs={12}>
+                                <Card sx={{
+                                    borderRadius: '24px',
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-surface)',
+                                    boxShadow: 'var(--shadow-sm)'
+                                }}>
+                                    <CardContent sx={{ p: 4 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                                            <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(236, 72, 153, 0.1)', color: '#ec4899' }}>
+                                                <Person />
+                                            </Box>
+                                            <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b' }}>{t('sellRead.customerInfo')}</Typography>
+                                        </Box>
+                                        {record.customer ? (
+                                            <Grid container spacing={3}>
+                                                <Grid item xs={12} sm={6}>
+                                                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('common.client')}</Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 800 }}>
+                                                        {`${record.customer.lastname || ""} ${record.customer.firstname || ""}`.trim() || "N/A"}
+                                                    </Typography>
+                                                    {record.customer.phone && (
+                                                        <Typography variant="body2" sx={{ color: '#6b7280', mt: 0.5 }}>
+                                                            {record.customer.phone}
+                                                        </Typography>
+                                                    )}
+                                                </Grid>
+                                                <Grid item xs={12} sm={6}>
+                                                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('auth.email')}</Typography>
+                                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 600 }}>
+                                                        {record.customer.email || 'N/A'}
+                                                    </Typography>
+                                                </Grid>
+                                                {companyBalance > 0 && (
+                                                    <Grid item xs={12}>
+                                                        <Paper elevation={0} sx={{
+                                                            p: 2,
+                                                            borderRadius: '16px',
+                                                            bgcolor: 'rgba(16, 185, 129, 0.05)',
+                                                            border: '1px solid rgba(16, 185, 129, 0.1)',
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center'
+                                                        }}>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                                                <AccountBalanceWallet sx={{ color: '#10b981' }} />
+                                                                <Typography sx={{ fontWeight: 700, color: '#065f46' }}>{t('sellRead.availableBalance')}</Typography>
+                                                            </Box>
+                                                            <Typography sx={{ fontWeight: 900, color: '#10b981' }}>
+                                                                {UtilMethods.formatAmount(companyBalance)}
+                                                            </Typography>
+                                                        </Paper>
+                                                    </Grid>
+                                                )}
+                                            </Grid>
+                                        ) : (
+                                            <Typography sx={{ color: '#64748b', fontStyle: 'italic' }}>{t('sellRead.anonymousClient')}</Typography>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+
+                            {/* Products Card */}
+                            <Grid item xs={12}>
+                                <Card sx={{
+                                    borderRadius: '24px',
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-surface)',
+                                    boxShadow: 'var(--shadow-sm)'
+                                }}>
+                                    <CardContent sx={{ p: 4 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                                            <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                                                <ShoppingCart />
+                                            </Box>
+                                            <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b' }}>{t('sellRead.products')}</Typography>
+                                        </Box>
+                                        <Box sx={{ border: '1px solid var(--border-color)', borderRadius: '16px', overflow: 'hidden' }}>
+                                            <table className="table border-0 mb-0">
+                                                <thead style={{ backgroundColor: 'var(--bg-secondary)' }}>
+                                                    <tr>
+                                                        <th className="border-0 px-4 py-3" style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700 }}>{t('sellRead.product')}</th>
+                                                        <th className="border-0 px-4 py-3 text-center" style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700 }}>{t('sellRead.quantity')}</th>
+                                                        <th className="border-0 px-4 py-3 text-end" style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700 }}>{t('sellRead.price')}</th>
+                                                        <th className="border-0 px-4 py-3 text-end" style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700 }}>{t('sellRead.subtotal')}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {record.sell_items.map((item) => (
+                                                        <tr key={item.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                                            <td className="px-4 py-3">
+                                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b' }}>{item.product.name}</Typography>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-center">
+                                                                <Chip label={`x${item.quantity}`} size="small" sx={{ fontWeight: 700, bgcolor: 'var(--bg-secondary)' }} />
+                                                            </td>
+                                                            <td className="px-4 py-3 text-end">
+                                                                <Typography variant="body2" sx={{ color: '#64748b' }}>{UtilMethods.formatAmount(item?.price ?? 0)}</Typography>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-end">
+                                                                <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>{UtilMethods.formatAmount((item?.price ?? 0) * (item?.quantity ?? 0))}</Typography>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                            <Box sx={{ p: 3, bgcolor: 'var(--bg-secondary)', borderTop: '1px solid var(--border-color)' }}>
+                                                <Grid container spacing={2} justifyContent="flex-end">
+                                                    <Grid item xs={12} sm={6} md={5}>
+                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>{t('sellRead.subtotal')}</Typography>
+                                                                <Typography variant="body2" sx={{ fontWeight: 700 }}>{UtilMethods.formatAmount(record?.total_amount ?? 0)}</Typography>
+                                                            </Box>
+                                                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                                <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 600 }}>{t('sellRead.amountPaid')}</Typography>
+                                                                <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 700 }}>{UtilMethods.formatAmount(record?.paid_amount ?? 0)}</Typography>
+                                                            </Box>
+                                                            <Divider sx={{ my: 0.5 }} />
+                                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#1e293b' }}>{t('sellRead.remaining')}</Typography>
+                                                                <Typography variant="h6" sx={{ fontWeight: 900, color: record?.remaining_balance > 0 ? '#ef4444' : '#10b981' }}>
+                                                                    {UtilMethods.formatAmount(record?.remaining_balance ?? 0)}
+                                                                </Typography>
+                                                            </Box>
+                                                        </Box>
+                                                    </Grid>
+                                                </Grid>
+                                            </Box>
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+
+                            {/* Actions */}
+                            {record.status !== 'cancelled' && (
+                                <Grid item xs={12}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                                         <Button
                                             variant="outlined"
                                             color="error"
@@ -581,115 +596,101 @@ const ReadSell = () => {
                                         >
                                             {t('refund.refund')}
                                         </Button>
-                                        {record.remaining_balance > 0 && (
-                                            <Button
-                                                variant="contained"
-                                                startIcon={<AttachMoney />}
-                                                onClick={handleOpenPaymentModal}
-                                                sx={{
-                                                    borderRadius: '14px',
-                                                    textTransform: 'none',
-                                                    fontWeight: 700,
-                                                    px: 4,
-                                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                                    boxShadow: '0 8px 16px rgba(16, 185, 129, 0.2)',
-                                                    '&:hover': { background: 'linear-gradient(135deg, #059669 0%, #047857 100%)' }
-                                                }}
-                                            >
-                                                {t('sellRead.makePayment')}
-                                            </Button>
-                                        )}
                                     </Box>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-                </div>
+                                </Grid>
+                            )}
+                        </Grid>
+                    </Grid>
 
-                <div className="col-lg-4">
-                    <motion.div
-                        initial={{ opacity: 0, x: 30 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
-                    >
+                    {/* Right Column: Payment Timeline */}
+                    <Grid item xs={12} md={5}>
                         <Card sx={{
+                            height: '100%',
                             borderRadius: '24px',
-                            border: '1px solid rgba(0,0,0,0.08)',
-                            boxShadow: '0 10px 40px rgba(0,0,0,0.04)',
-                            height: '100%'
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-surface)',
+                            boxShadow: 'var(--shadow-sm)',
+                            overflow: 'hidden'
                         }}>
-                            <Box sx={{
-                                p: 3,
-                                borderBottom: '1px solid rgba(0,0,0,0.05)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1.5
-                            }}>
-                                <History sx={{ color: '#4f46e5' }} />
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>
-                                    {t('sellRead.paymentHistory')}
-                                </Typography>
+                            <Box sx={{ p: 3, borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
+                                    <History />
+                                </Box>
+                                <Typography variant="h6" sx={{ fontWeight: 900 }}>{t('sellRead.paymentHistory')}</Typography>
                             </Box>
-
-                            <CardContent sx={{ p: 3 }}>
-                                <div className="timeline-container">
-                                    {record.invoice?.payments?.length > 0 ? (
-                                        record.invoice.payments.map((payment, idx) => (
-                                            <motion.div
-                                                key={payment.id}
-                                                className="timeline-item"
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.1 * idx }}
-                                            >
-                                                <div className="timeline-dot" style={{ background: '#4f46e5' }}>
-                                                    <PointOfSale sx={{ fontSize: '14px', color: 'white' }} />
-                                                </div>
-                                                <div className="timeline-content" style={{
-                                                    background: '#f8fafc',
-                                                    borderRadius: '16px',
-                                                    padding: '16px',
-                                                    border: '1px solid #f1f5f9'
-                                                }}>
-                                                    <div className="d-flex justify-content-between align-items-center mb-1">
-                                                        <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>
-                                                            {t('sellRead.payment')} #{payment.invoice_number}
-                                                        </Typography>
-                                                        <Typography variant="caption" sx={{ color: '#64748b' }}>
-                                                            {dayjs(payment.created_at).format('DD/MM/YY')}
-                                                        </Typography>
+                            <CardContent sx={{ p: 0 }}>
+                                <Box sx={{ p: 3, bgcolor: 'rgba(99, 102, 241, 0.03)', mb: 0 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                        <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 700 }}>{t('sellRead.totalPaid')}</Typography>
+                                        <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 900 }}>{UtilMethods.formatAmount(record.paid_amount)}</Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 700 }}>{t('sellRead.remaining')}</Typography>
+                                        <Typography variant="body2" sx={{ color: record.remaining_balance > 0 ? '#ef4444' : '#64748b', fontWeight: 900 }}>
+                                            {UtilMethods.formatAmount(record.remaining_balance)}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                                <Box sx={{ p: 3, maxHeight: '500px', overflowY: 'auto' }}>
+                                    <div className="timeline-container">
+                                        {record.invoice?.payments?.length > 0 ? (
+                                            record.invoice.payments.map((payment, idx) => (
+                                                <motion.div
+                                                    key={payment.id}
+                                                    className="timeline-item"
+                                                    initial={{ opacity: 0, x: 20 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: idx * 0.1 }}
+                                                >
+                                                    <div className="timeline-dot" style={{ background: '#6366f1' }}>
+                                                        <PointOfSale sx={{ fontSize: '14px', color: 'white' }} />
                                                     </div>
-                                                    <div className="d-flex justify-content-between align-items-center">
-                                                        <Chip
-                                                            label={payment.payment_method}
-                                                            size="small"
-                                                            sx={{
-                                                                height: '20px',
-                                                                fontSize: '0.65rem',
-                                                                fontWeight: 700,
-                                                                bgcolor: '#ffffff',
-                                                                border: '1px solid #e2e8f0'
-                                                            }}
-                                                        />
-                                                        <Typography variant="h6" sx={{ fontWeight: 900, color: '#10b981', fontSize: '1rem' }}>
-                                                            {UtilMethods.formatNumber(payment?.amount ?? 0)}
-                                                        </Typography>
+                                                    <div className="timeline-content" style={{
+                                                        background: 'var(--bg-secondary)',
+                                                        borderRadius: '16px',
+                                                        padding: '16px',
+                                                        border: '1px solid var(--border-color)'
+                                                    }}>
+                                                        <div className="d-flex justify-content-between align-items-center mb-1">
+                                                            <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                                                                {t('sellRead.payment')} #{payment.invoice_number}
+                                                            </Typography>
+                                                            <Typography variant="caption" sx={{ color: '#64748b' }}>
+                                                                {dayjs(payment.created_at).format('DD/MM/YY HH:mm')}
+                                                            </Typography>
+                                                        </div>
+                                                        <div className="d-flex justify-content-between align-items-center">
+                                                            <Chip
+                                                                label={payment.payment_method}
+                                                                size="small"
+                                                                sx={{
+                                                                    height: '20px',
+                                                                    fontSize: '0.65rem',
+                                                                    fontWeight: 700,
+                                                                    bgcolor: 'var(--bg-surface)',
+                                                                    border: '1px solid #e2e8f0'
+                                                                }}
+                                                            />
+                                                            <Typography variant="h6" sx={{ fontWeight: 950, color: '#10b981', fontSize: '1rem' }}>
+                                                                + {UtilMethods.formatAmount(payment?.amount ?? 0)}
+                                                            </Typography>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </motion.div>
-                                        ))
-                                    ) : (
-                                        <Box sx={{ textAlign: 'center', py: 6, color: '#94a3b8' }}>
-                                            <Info sx={{ fontSize: '40px', mb: 2, opacity: 0.3 }} />
-                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{t('sellRead.noPaymentHistory')}</Typography>
-                                        </Box>
-                                    )}
-                                </div>
+                                                </motion.div>
+                                            ))
+                                        ) : (
+                                            <Box sx={{ textAlign: 'center', py: 6, color: '#94a3b8' }}>
+                                                <Info sx={{ fontSize: '40px', mb: 2, opacity: 0.3 }} />
+                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>{t('sellRead.noPaymentHistory')}</Typography>
+                                            </Box>
+                                        )}
+                                    </div>
+                                </Box>
                             </CardContent>
                         </Card>
-                    </motion.div>
-                </div>
-            </div>
+                    </Grid>
+                </Grid>
+            </motion.div>
 
             {/* Add Payment Modal (Glassmorphism) */}
             <Dialog
@@ -701,10 +702,9 @@ const ReadSell = () => {
                 PaperProps={{
                     sx: {
                         borderRadius: '28px',
-                        bgcolor: 'rgba(255, 255, 255, 0.9)',
-                        backdropFilter: 'blur(16px)',
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                        bgcolor: 'var(--bg-surface)',
+                        border: '1px solid var(--border-color)',
+                        boxShadow: 'var(--shadow-xl)',
                     }
                 }}
             >
@@ -724,7 +724,7 @@ const ReadSell = () => {
                         }}>
                             <AttachMoney />
                         </Box>
-                        <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b' }}>
+                        <Typography variant="h5" sx={{ fontWeight: 900, color: 'var(--text-primary)' }}>
                             {t('sellRead.makePayment')}
                         </Typography>
                     </Box>
@@ -762,7 +762,7 @@ const ReadSell = () => {
                                             {t('sellRead.customerBalance')}
                                         </Typography>
                                         <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b' }}>
-                                            {UtilMethods.formatNumber(companyBalance ?? 0)}
+                                            {UtilMethods.formatAmount(companyBalance ?? 0)}
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -785,22 +785,22 @@ const ReadSell = () => {
                             </Paper>
                         )}
 
-                        <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: '#f8fafc', borderRadius: '20px', border: '1px solid #f1f5f9' }}>
+                        <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: 'var(--bg-secondary)', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
                                 <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>{t('sellRead.remaining')}:</Typography>
-                                <Typography variant="body1" sx={{ fontWeight: 800 }}>{UtilMethods.formatNumber(record?.remaining_balance ?? 0)}</Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 800 }}>{UtilMethods.formatAmount(record?.remaining_balance ?? 0)}</Typography>
                             </Box>
                             {formik.values.useCompanyBalance && (
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, color: '#10b981' }}>
                                     <Typography variant="body2" sx={{ fontWeight: 600 }}>{t('sellRead.deductBalance')}:</Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 800 }}>-{UtilMethods.formatNumber(Math.min(companyBalance ?? 0, record?.remaining_balance ?? 0))}</Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 800 }}>-{UtilMethods.formatAmount(Math.min(companyBalance ?? 0, record?.remaining_balance ?? 0))}</Typography>
                                 </Box>
                             )}
                             <Divider sx={{ my: 2, borderStyle: 'dashed' }} />
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <Typography variant="h6" sx={{ fontWeight: 800 }}>{t('sellRead.toPay')}:</Typography>
                                 <Typography variant="h5" sx={{ fontWeight: 900, color: '#4f46e5' }}>
-                                    {UtilMethods.formatNumber(calculatedAmountToPay ?? 0)}
+                                    {UtilMethods.formatAmount(calculatedAmountToPay ?? 0)}
                                 </Typography>
                             </Box>
                         </Paper>
@@ -821,7 +821,7 @@ const ReadSell = () => {
                                     disabled={formik.values.useCompanyBalance && calculatedAmountToPay === 0}
                                     InputProps={{
                                         startAdornment: <AttachMoney sx={{ mr: 1, color: '#64748b' }} />,
-                                        sx: { borderRadius: '16px', bgcolor: 'white', fontWeight: 700 }
+                                        sx: { borderRadius: '16px', bgcolor: 'var(--input-bg)', fontWeight: 700 }
                                     }}
                                 />
                             </Grid>
@@ -835,7 +835,7 @@ const ReadSell = () => {
                                         onBlur={formik.handleBlur}
                                         label={t('sellRead.paymentMethod')}
                                         disabled={formik.values.useCompanyBalance && calculatedAmountToPay === 0}
-                                        sx={{ borderRadius: '16px', bgcolor: 'white', fontWeight: 700 }}
+                                        sx={{ borderRadius: '16px', bgcolor: 'var(--input-bg)', fontWeight: 700 }}
                                     >
                                         <MenuItem value="Cash" sx={{ fontWeight: 600 }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -897,9 +897,9 @@ const ReadSell = () => {
                 PaperProps={{
                     sx: {
                         borderRadius: '28px',
-                        bgcolor: 'rgba(255, 255, 255, 0.95)',
-                        backdropFilter: 'blur(20px)',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.2)',
+                        bgcolor: 'var(--bg-surface)',
+                        border: '1px solid var(--border-color)',
+                        boxShadow: 'var(--shadow-xl)',
                     }
                 }}
             >
@@ -908,7 +908,7 @@ const ReadSell = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 2,
-                    borderBottom: '1px solid #f1f5f9'
+                    borderBottom: '1px solid var(--border-color)'
                 }}>
                     <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
                         <Receipt />
@@ -924,7 +924,7 @@ const ReadSell = () => {
                                     <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#64748b', mb: 2, textTransform: 'uppercase' }}>
                                         {t('sellRead.paymentDetails')}
                                     </Typography>
-                                    <Paper elevation={0} sx={{ p: 3, bgcolor: '#f8fafc', borderRadius: '20px', border: '1px solid #f1f5f9' }}>
+                                    <Paper elevation={0} sx={{ p: 3, bgcolor: 'var(--bg-secondary)', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                                             <Typography sx={{ color: '#64748b', fontWeight: 600 }}>{t('sellRead.invoiceNumber')}:</Typography>
                                             <Typography sx={{ fontWeight: 800 }}>#{paymentResponse.payment_details.invoice_number}</Typography>
@@ -932,14 +932,14 @@ const ReadSell = () => {
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                                             <Typography sx={{ color: '#64748b', fontWeight: 600 }}>{t('sellRead.amountPaid')}:</Typography>
                                             <Typography variant="h6" sx={{ fontWeight: 900, color: '#10b981' }}>
-                                                {UtilMethods.formatNumber(paymentResponse?.payment_details?.amount_paid ?? 0)}
+                                                {UtilMethods.formatAmount(paymentResponse?.payment_details?.amount_paid ?? 0)}
                                             </Typography>
                                         </Box>
                                         {paymentResponse?.payment_details?.excess_amount > 0 && (
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1.5, bgcolor: 'white', borderRadius: '12px', border: '1px dashed #f59e0b' }}>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1.5, bgcolor: 'var(--bg-elevated)', borderRadius: '12px', border: '1px dashed #f59e0b' }}>
                                                 <Typography sx={{ color: '#f59e0b', fontWeight: 700 }}>{t('sellRead.excessGenerated')}:</Typography>
                                                 <Typography sx={{ color: '#f59e0b', fontWeight: 900 }}>
-                                                    {UtilMethods.formatNumber(paymentResponse?.payment_details?.excess_amount ?? 0)}
+                                                    {UtilMethods.formatAmount(paymentResponse?.payment_details?.excess_amount ?? 0)}
                                                 </Typography>
                                             </Box>
                                         )}
@@ -950,11 +950,11 @@ const ReadSell = () => {
                                     <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#64748b', mb: 2, textTransform: 'uppercase' }}>
                                         {t('sellRead.fileStatus')}
                                     </Typography>
-                                    <Paper elevation={0} sx={{ p: 3, bgcolor: '#f8fafc', borderRadius: '20px', border: '1px solid #f1f5f9' }}>
+                                    <Paper elevation={0} sx={{ p: 3, bgcolor: 'var(--bg-secondary)', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, alignItems: 'center' }}>
                                             <Typography sx={{ color: '#64748b', fontWeight: 600 }}>{t('sellRead.saleStatus')}:</Typography>
                                             <Chip
-                                                label={paymentResponse.current_sell.status.toUpperCase()}
+                                                label={t(`sales.status.${paymentResponse.current_sell.status}`)}
                                                 size="small"
                                                 sx={{
                                                     fontWeight: 800,
@@ -966,7 +966,7 @@ const ReadSell = () => {
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                             <Typography sx={{ color: '#64748b', fontWeight: 600 }}>{t('sellRead.remainingBalance')}:</Typography>
                                             <Typography variant="h6" sx={{ fontWeight: 900, color: '#ef4444' }}>
-                                                {UtilMethods.formatNumber(paymentResponse.payment_details.remaining_balance)}
+                                                {UtilMethods.formatAmount(paymentResponse.payment_details.remaining_balance)}
                                             </Typography>
                                         </Box>
                                     </Paper>
@@ -988,10 +988,10 @@ const ReadSell = () => {
                                                     alignItems: 'center',
                                                     borderRadius: '16px',
                                                     border: '1px solid #e2e8f0',
-                                                    '&:hover': { bgcolor: '#f8fafc' }
+                                                    '&:hover': { bgcolor: 'var(--bg-elevated)' }
                                                 }}>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                                        <Box sx={{ p: 1, borderRadius: '8px', bgcolor: '#f1f5f9' }}>
+                                                        <Box sx={{ p: 1, borderRadius: '8px', bgcolor: 'var(--bg-secondary)' }}>
                                                             <Receipt sx={{ fontSize: '18px', color: '#64748b' }} />
                                                         </Box>
                                                         <Box>
@@ -1002,7 +1002,7 @@ const ReadSell = () => {
                                                         </Box>
                                                     </Box>
                                                     <Typography sx={{ fontWeight: 900, color: '#10b981' }}>
-                                                        +{UtilMethods.formatNumber(debt.amount_covered)}
+                                                        +{UtilMethods.formatAmount(debt.amount_covered)}
                                                     </Typography>
                                                 </Paper>
                                             </Grid>
@@ -1042,8 +1042,7 @@ const ReadSell = () => {
                 PaperProps={{
                     sx: {
                         borderRadius: '28px',
-                        background: 'rgba(255, 255, 255, 0.9)',
-                        backdropFilter: 'blur(16px)',
+                        bgcolor: 'var(--bg-surface)',
                         border: '1px solid rgba(239, 68, 68, 0.2)',
                     }
                 }}
@@ -1052,7 +1051,7 @@ const ReadSell = () => {
                     <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
                         <Warning />
                     </Box>
-                    <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b' }}>{t('sellRead.cancelSale')}</Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 900, color: 'var(--text-primary)' }}>{t('sellRead.cancelSale')}</Typography>
                 </DialogTitle>
 
                 <DialogContent sx={{ p: 4 }}>
@@ -1071,7 +1070,7 @@ const ReadSell = () => {
                         sx={{
                             '& .MuiOutlinedInput-root': {
                                 borderRadius: '16px',
-                                bgcolor: 'white',
+                                bgcolor: 'var(--input-bg)',
                                 fontWeight: 600
                             }
                         }}
@@ -1114,7 +1113,7 @@ const ReadSell = () => {
                 sell={record as any}
                 onRefundCreated={fetchRecord}
             />
-        </div>
+        </Box>
     );
 };
 

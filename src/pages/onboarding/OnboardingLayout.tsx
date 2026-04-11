@@ -4,13 +4,14 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useDispatch } from "react-redux"
 import { setActivePage } from "Data/Slices/NavigationSlice.ts"
 import { Pages } from "Data/Objects/state.ts"
+import ThemeToggle from "@/Components/utils/ThemeToggle"
 
 const slides = [
   {
     emoji: "🏺",
     title: "Bienvenue sur BrocanteApp",
     description: "Une solution complète pour gérer votre boutique — stocks, ventes, clients et fournisseurs en un seul endroit.",
-    accent: "#4f46e5",
+    accent: "var(--accent-primary)",
   },
   {
     emoji: "📦",
@@ -48,27 +49,31 @@ const OnboardingLayout: React.FC = () => {
   return (
     <div style={{
       minHeight: "100vh",
-      background: "#f8fafc",
+      background: "var(--bg-primary)",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
       fontFamily: "'Inter', 'Segoe UI', sans-serif",
       padding: "24px",
+      transition: "background-color 0.3s ease",
     }}>
-      {/* Skip button */}
-      <div style={{ position: "fixed", top: 20, right: 24 }}>
+      {/* Top bar: theme toggle + skip */}
+      <div style={{ position: "fixed", top: 20, left: 24, right: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <ThemeToggle compact />
         <button
           onClick={skip}
           style={{
             background: "transparent",
-            border: "1px solid #e2e8f0",
+            border: "1px solid var(--border-color)",
             borderRadius: 8,
             padding: "6px 16px",
             cursor: "pointer",
             fontWeight: 600,
             fontSize: "0.82rem",
-            color: "#94a3b8",
+            color: "var(--text-muted)",
+            boxShadow: "none",
+            transform: "none",
           }}
         >
           Passer
@@ -84,14 +89,15 @@ const OnboardingLayout: React.FC = () => {
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3 }}
           style={{
-            background: "white",
+            background: "var(--bg-surface)",
             borderRadius: 24,
             padding: "48px 40px",
             maxWidth: 460,
             width: "100%",
             textAlign: "center",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.06)",
-            border: "1px solid #f1f5f9",
+            boxShadow: "var(--shadow-lg)",
+            border: "1px solid var(--border-color)",
+            transition: "background-color 0.3s ease, border-color 0.3s ease",
           }}
         >
           {/* Emoji icon */}
@@ -99,8 +105,8 @@ const OnboardingLayout: React.FC = () => {
             width: 80,
             height: 80,
             borderRadius: 24,
-            background: `${slide.accent}12`,
-            border: `2px solid ${slide.accent}25`,
+            background: "var(--accent-primary-muted)",
+            border: "2px solid var(--border-color)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -113,7 +119,7 @@ const OnboardingLayout: React.FC = () => {
           <h1 style={{
             fontSize: "1.6rem",
             fontWeight: 800,
-            color: "#0f172a",
+            color: "var(--text-primary)",
             margin: "0 0 12px",
             letterSpacing: "-0.02em",
             lineHeight: 1.3,
@@ -123,7 +129,7 @@ const OnboardingLayout: React.FC = () => {
 
           <p style={{
             fontSize: "1rem",
-            color: "#64748b",
+            color: "var(--text-secondary)",
             fontWeight: 500,
             lineHeight: 1.7,
             margin: "0 0 36px",
@@ -163,9 +169,11 @@ const OnboardingLayout: React.FC = () => {
                 cursor: "pointer",
                 fontWeight: 600,
                 fontSize: "0.85rem",
-                color: "#94a3b8",
+                color: "var(--text-muted)",
                 width: "100%",
                 padding: "8px",
+                boxShadow: "none",
+                transform: "none",
               }}
             >
               ← Retour
@@ -183,7 +191,7 @@ const OnboardingLayout: React.FC = () => {
             style={{
               height: 8,
               borderRadius: 4,
-              background: i === current ? slide.accent : "#e2e8f0",
+              background: i === current ? slide.accent : "var(--border-color)",
               cursor: "pointer",
             }}
             onClick={() => setCurrent(i)}
@@ -195,7 +203,7 @@ const OnboardingLayout: React.FC = () => {
       <p style={{
         marginTop: 24,
         fontSize: "0.75rem",
-        color: "#cbd5e1",
+        color: "var(--text-muted)",
         fontWeight: 600,
       }}>
         © 2026 BrocanteApp · Tous droits réservés

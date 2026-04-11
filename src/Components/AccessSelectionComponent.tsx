@@ -111,7 +111,8 @@ export default function AccessSelectionComponent() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     p: 3,
-                    background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+                    background: 'var(--bg-primary)',
+                    backgroundSize: 'cover',
                     position: 'relative',
                     overflow: 'hidden'
                 }}
@@ -133,10 +134,10 @@ export default function AccessSelectionComponent() {
                             </Box>
                         </Box>
 
-                        <Typography variant="h3" sx={{ fontWeight: 900, color: '#1e293b', mb: 2, letterSpacing: '-0.03em' }}>
+                        <Typography variant="h3" sx={{ fontWeight: 900, color: 'var(--text-primary)', mb: 2, letterSpacing: '-0.03em' }}>
                             Bienvenue, <Box component="span" sx={{ color: '#6366f1' }}>{currentUser?.first_name}</Box> !
                         </Typography>
-                        <Typography variant="subtitle1" sx={{ color: '#64748b', mb: 6, fontWeight: 600, fontSize: '1.1rem', maxWidth: 500, mx: 'auto' }}>
+                        <Typography variant="subtitle1" sx={{ color: 'var(--text-secondary)', mb: 6, fontWeight: 600, fontSize: '1.1rem', maxWidth: 500, mx: 'auto' }}>
                             Veuillez sélectionner le rôle avec lequel vous souhaitez accéder au système.
                         </Typography>
                     </motion.div>
@@ -160,14 +161,14 @@ export default function AccessSelectionComponent() {
                                                 sx={{
                                                     cursor: isLoading ? 'default' : 'pointer',
                                                     borderRadius: '24px',
-                                                    border: `1px solid ${isSelected ? color : 'rgba(255, 255, 255, 0.4)'}`,
+                                                    border: `1px solid ${isSelected ? color : 'var(--border-color)'}`,
                                                     background: isSelected
                                                         ? alpha(color, 0.08)
-                                                        : 'rgba(255, 255, 255, 0.7)',
+                                                        : 'var(--bg-surface)',
                                                     backdropFilter: 'blur(16px)',
                                                     boxShadow: isSelected
                                                         ? `0 20px 40px ${alpha(color, 0.2)}`
-                                                        : '0 10px 30px rgba(0,0,0,0.05)',
+                                                        : 'var(--shadow-md)',
                                                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                                     position: 'relative',
                                                     overflow: 'hidden',
@@ -175,7 +176,7 @@ export default function AccessSelectionComponent() {
                                                         border: `1px solid ${isSelected ? color : alpha(color, 0.5)}`,
                                                         background: isSelected
                                                             ? alpha(color, 0.08)
-                                                            : 'rgba(255, 255, 255, 0.9)',
+                                                            : 'var(--bg-elevated)',
                                                         boxShadow: `0 20px 40px ${alpha(color, 0.15)}`,
                                                     }
                                                 }}

@@ -1,6 +1,7 @@
 import { IPaginationData } from "Interfaces";
 import { motion } from 'framer-motion';
 import {Select, MenuItem, FormControl, InputLabel, SelectChangeEvent} from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface PaginationProps {
     paginationData: IPaginationData;
@@ -22,6 +23,7 @@ const circleButtonStyles = {
 };
 
 export default function PaginationComponent({ paginationData, onPageChange, onPerPageChange, perPage }: PaginationProps) {
+    const { t } = useTranslation();
     const { links, current_page, last_page, total } = paginationData;
 
     const handlePageChange = (page: number) => {
@@ -55,27 +57,28 @@ export default function PaginationComponent({ paginationData, onPageChange, onPe
                 padding: '10px 14px',
                 borderRadius: '12px',
                 zIndex: 1100,
-                backgroundColor: 'rgba(255,255,255,0.9)',
+                backgroundColor: 'var(--bg-surface)',
                 backdropFilter: 'saturate(180%) blur(8px)',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                boxShadow: '0 8px 24px var(--card-shadow)',
+                border: '1px solid var(--border-color)',
                 gap: '12px'
             }}
         >
             <div className="d-flex align-items-center">
                 <FormControl variant="outlined" size="small" style={{ minWidth: 120 }}>
-                    <InputLabel id="per-page-select-label">Per page</InputLabel>
+                    <InputLabel id="per-page-select-label">{t('common.perPage')}</InputLabel>
                     <Select
                         labelId="per-page-select-label"
                         id="per-page-select"
                         value={perPage}
                         onChange={handlePerPageChange}
-                        label="Per page"
+                        label={t('common.perPage')}
                         variant="outlined"
                     >
                         <MenuItem value={10}>10</MenuItem>
                         <MenuItem value={25}>25</MenuItem>
                         <MenuItem value={50}>50</MenuItem>
-                        <MenuItem value={total}>All</MenuItem>
+                        <MenuItem value={total}>{t('common.all')}</MenuItem>
                     </Select>
                 </FormControl>
             </div>
@@ -84,9 +87,9 @@ export default function PaginationComponent({ paginationData, onPageChange, onPe
                     <button
                         style={{
                             ...circleButtonStyles,
-                            backgroundColor: 'white',
-                            color: '#1976d2',
-                            border: '1px solid #e0e0e0'
+                            backgroundColor: 'var(--bg-elevated)',
+                            color: 'var(--accent-primary)',
+                            border: '1px solid var(--border-color)'
                         }}
                         className="page-link"
                         onClick={() => handlePageChange(1)}
@@ -100,8 +103,8 @@ export default function PaginationComponent({ paginationData, onPageChange, onPe
                     const isPrev = link.label === "&laquo; Previous";
                     const isNext = link.label === "Next &raquo;";
                     const isActive = link.active && !isPrev && !isNext;
-                    const bg = isActive ? '#1976d2' : 'white';
-                    const color = isActive ? 'white' : '#1976d2';
+                    const bg = isActive ? 'var(--accent-primary)' : 'var(--bg-elevated)';
+                    const color = isActive ? 'white' : 'var(--accent-primary)';
                     return (
                         <li key={index} className={`page-item ${isActive ? 'active' : ''}`}>
                             <motion.button
@@ -109,7 +112,7 @@ export default function PaginationComponent({ paginationData, onPageChange, onPe
                                     ...circleButtonStyles,
                                     backgroundColor: bg,
                                     color,
-                                    border: '1px solid #e0e0e0'
+                                    border: '1px solid var(--border-color)'
                                 }}
                                 className="page-link btn-circle"
                                 onClick={() => {
@@ -135,9 +138,9 @@ export default function PaginationComponent({ paginationData, onPageChange, onPe
                     <button
                         style={{
                             ...circleButtonStyles,
-                            backgroundColor: 'white',
-                            color: '#1976d2',
-                            border: '1px solid #e0e0e0'
+                            backgroundColor: 'var(--bg-elevated)',
+                            color: 'var(--accent-primary)',
+                            border: '1px solid var(--border-color)'
                         }}
                         className="page-link"
                         onClick={() => handlePageChange(last_page)}

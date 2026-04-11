@@ -10,8 +10,10 @@ import {
     TbPuzzle, TbShieldCheck, TbNote, TbListCheck,
     TbChevronDown, TbChevronUp
 } from 'react-icons/tb';
+import { useTranslation } from 'react-i18next';
 
 const ProductDetails: React.FC = () => {
+    const { t } = useTranslation();
     const { values, handleChange, touched, errors, handleBlur } = useFormikContext<IProductPayload>();
     const [showAll, setShowAll] = useState(false);
 
@@ -49,7 +51,7 @@ const ProductDetails: React.FC = () => {
                                     <Box sx={{ color: '#64748b', display: 'flex' }}>{icon}</Box>
                                 </InputAdornment>
                             ),
-                            sx: { borderRadius: '14px', bgcolor: '#fff' }
+                            sx: { borderRadius: '14px', bgcolor: 'var(--input-bg)' }
                         }}
                     />
                 </Tooltip>
@@ -62,21 +64,21 @@ const ProductDetails: React.FC = () => {
             <Box sx={{ p: 1, borderRadius: '10px', bgcolor: 'rgba(79, 70, 229, 0.08)', color: '#4f46e5', display: 'flex' }}>
                 {icon}
             </Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#1e293b', letterSpacing: '-0.2px' }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
                 {title}
             </Typography>
-            <Box sx={{ flex: 1, height: '1px', bgcolor: '#e2e8f0', ml: 1 }} />
+            <Box sx={{ flex: 1, height: '1px', bgcolor: 'var(--border-color)', ml: 1 }} />
         </Box>
     );
 
     return (
-        <Box sx={{ p: 4, borderRadius: '24px', bgcolor: 'rgba(255, 255, 255, 0.4)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.5)', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' }}>
+        <Box sx={{ p: 4, borderRadius: '24px', bgcolor: 'var(--bg-surface)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Box sx={{ p: 1.5, borderRadius: '14px', bgcolor: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}>
                         <TbListCheck size={24} />
                     </Box>
-                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>Spécifications Techniques</Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--text-primary)' }}>{t('product.technicalSpecs')}</Typography>
                 </Box>
                 <Button
                     onClick={() => setShowAll(!showAll)}
@@ -89,7 +91,7 @@ const ProductDetails: React.FC = () => {
                         '&:hover': { bgcolor: 'rgba(79, 70, 229, 0.05)' }
                     }}
                 >
-                    {showAll ? 'Moins de détails' : 'Plus de détails'}
+                    {showAll ? t('product.showLessSpecs') : t('product.showMoreDetails')}
                 </Button>
             </Box>
 
@@ -100,84 +102,84 @@ const ProductDetails: React.FC = () => {
                     transition={{ duration: 0.3 }}
                 >
                     {/* Brand & Model */}
-                    <SectionHeader title="Identification" icon={<TbBuildingStore size={20} />} />
+                    <SectionHeader title={t('product.identification')} icon={<TbBuildingStore size={20} />} />
                     <Grid container spacing={3}>
-                        {renderField("Marque", "product_details.brand", <TbBuildingStore size={20} />, "Marque du produit")}
-                        {renderField("Modèle", "product_details.model", <TbTag size={20} />, "Nom ou numéro du modèle")}
-                        {renderField("Classe de Qualité", "product_details.quality_class", <TbStar size={20} />, "Classification de qualité")}
+                        {renderField(t('product.brand'), "product_details.brand", <TbBuildingStore size={20} />, t('product.brand'))}
+                        {renderField(t('product.model'), "product_details.model", <TbTag size={20} />, t('product.model'))}
+                        {renderField(t('product.qualityClass'), "product_details.quality_class", <TbStar size={20} />, t('product.qualityClass'))}
                     </Grid>
 
                     {/* Dimensions */}
-                    <SectionHeader title="Dimensions & Mesures" icon={<TbRuler2 size={20} />} />
+                    <SectionHeader title={t('product.dimensionsMeasures')} icon={<TbRuler2 size={20} />} />
                     <Grid container spacing={3}>
-                        {renderField("Dimensions", "product_details.dimensions", <TbRuler2 size={20} />, "Dimensions globales (L x l x H)")}
-                        {renderField("Poids", "product_details.weight", <TbWeight size={20} />, "Poids du produit")}
-                        {renderField("Taille", "product_details.size", <TbRuler2 size={20} />, "Taille standard")}
+                        {renderField(t('product.dimensions'), "product_details.dimensions", <TbRuler2 size={20} />, t('product.dimensions'))}
+                        {renderField(t('product.weight'), "product_details.weight", <TbWeight size={20} />, t('product.weight'))}
+                        {renderField(t('product.size'), "product_details.size", <TbRuler2 size={20} />, t('product.size'))}
 
                         <Grid item xs={12}>
                             <Collapse in={showAll}>
                                 <Grid container spacing={3}>
-                                    {renderField("Longueur", "product_details.length", <TbRuler2 size={20} />, "Longueur")}
-                                    {renderField("Largeur", "product_details.width", <TbRuler2 size={20} />, "Largeur")}
-                                    {renderField("Hauteur", "product_details.height", <TbRuler2 size={20} />, "Hauteur")}
-                                    {renderField("Épaisseur", "product_details.thickness", <TbRuler2 size={20} />, "Épaisseur")}
-                                    {renderField("Diamètre", "product_details.diameter", <TbCircle size={20} />, "Diamètre")}
-                                    {renderField("Calibre (Gauge)", "product_details.gauge", <TbRuler2 size={20} />, "Calibre")}
+                                    {renderField(t('product.length'), "product_details.length", <TbRuler2 size={20} />, t('product.length'))}
+                                    {renderField(t('product.width'), "product_details.width", <TbRuler2 size={20} />, t('product.width'))}
+                                    {renderField(t('product.height'), "product_details.height", <TbRuler2 size={20} />, t('product.height'))}
+                                    {renderField(t('product.thickness'), "product_details.thickness", <TbRuler2 size={20} />, t('product.thickness'))}
+                                    {renderField(t('product.diameter'), "product_details.diameter", <TbCircle size={20} />, t('product.diameter'))}
+                                    {renderField(t('product.gauge'), "product_details.gauge", <TbRuler2 size={20} />, t('product.gauge'))}
                                 </Grid>
                             </Collapse>
                         </Grid>
                     </Grid>
 
                     {/* Aesthetics */}
-                    <SectionHeader title="Esthétique & Matériaux" icon={<TbPalette size={20} />} />
+                    <SectionHeader title={t('product.aestheticsMaterials')} icon={<TbPalette size={20} />} />
                     <Grid container spacing={3}>
-                        {renderField("Couleur", "product_details.color", <TbPalette size={20} />, "Couleur dominante")}
-                        {renderField("Matériau", "product_details.material", <TbBox size={20} />, "Matériau principal")}
-                        {renderField("Finition", "product_details.finish", <TbBrush size={20} />, "Finition de surface")}
+                        {renderField(t('product.color'), "product_details.color", <TbPalette size={20} />, t('product.color'))}
+                        {renderField(t('product.material'), "product_details.material", <TbBox size={20} />, t('product.material'))}
+                        {renderField(t('product.finish'), "product_details.finish", <TbBrush size={20} />, t('product.finish'))}
 
                         <Grid item xs={12}>
                             <Collapse in={showAll}>
                                 <Grid container spacing={3}>
-                                    {renderField("Forme", "product_details.shape", <TbShape size={20} />, "Forme du produit")}
-                                    {renderField("Motif", "product_details.pattern", <TbArtboard size={20} />, "Motif ou design")}
-                                    {renderField("Texture", "product_details.texture", <TbGrain size={20} />, "Texture de surface")}
-                                    {renderField("Style", "product_details.style", <TbBrush size={20} />, "Style de design")}
+                                    {renderField(t('product.shape'), "product_details.shape", <TbShape size={20} />, t('product.shape'))}
+                                    {renderField(t('product.pattern'), "product_details.pattern", <TbArtboard size={20} />, t('product.pattern'))}
+                                    {renderField(t('product.texture'), "product_details.texture", <TbGrain size={20} />, t('product.texture'))}
+                                    {renderField(t('product.style'), "product_details.style", <TbBrush size={20} />, t('product.style'))}
                                 </Grid>
                             </Collapse>
                         </Grid>
                     </Grid>
 
                     {/* Technical */}
-                    <SectionHeader title="Technique & Électrique" icon={<TbBolt size={20} />} />
+                    <SectionHeader title={t('product.technicalElectrical')} icon={<TbBolt size={20} />} />
                     <Grid container spacing={3}>
-                        {renderField("Puissance", "product_details.power", <TbBolt size={20} />, "Puissance nominale")}
-                        {renderField("Tension (Voltage)", "product_details.voltage", <TbBolt size={20} />, "Tension de fonctionnement")}
-                        {renderField("Capacité", "product_details.capacity", <TbBox size={20} />, "Capacité totale")}
+                        {renderField(t('product.power'), "product_details.power", <TbBolt size={20} />, t('product.power'))}
+                        {renderField(t('product.voltage'), "product_details.voltage", <TbBolt size={20} />, t('product.voltage'))}
+                        {renderField(t('product.capacity'), "product_details.capacity", <TbBox size={20} />, t('product.capacity'))}
 
                         <Grid item xs={12}>
                             <Collapse in={showAll}>
                                 <Grid container spacing={3}>
-                                    {renderField("Tension Nominale", "product_details.voltage_rating", <TbBolt size={20} />, "Classe de tension")}
-                                    {renderField("Intensité Nominale", "product_details.current_rating", <TbBolt size={20} />, "Courant max")}
-                                    {renderField("Capacité (Volume)", "product_details.capacity_volume", <TbBox size={20} />, "Volume")}
-                                    {renderField("Capacité (Poids)", "product_details.capacity_weight", <TbWeight size={20} />, "Charge max")}
-                                    {renderField("Débit (Flow Rate)", "product_details.flow_rate", <TbArrowsRightLeft size={20} />, "Débit")}
-                                    {renderField("Pression", "product_details.pressure", <TbGauge size={20} />, "Pression nominale")}
-                                    {renderField("Température", "product_details.temperature", <TbTemperature size={20} />, "Température max/min")}
+                                    {renderField(t('product.voltageRating'), "product_details.voltage_rating", <TbBolt size={20} />, t('product.voltageRating'))}
+                                    {renderField(t('product.currentRating'), "product_details.current_rating", <TbBolt size={20} />, t('product.currentRating'))}
+                                    {renderField(t('product.capacityVolume'), "product_details.capacity_volume", <TbBox size={20} />, t('product.capacityVolume'))}
+                                    {renderField(t('product.capacityWeight'), "product_details.capacity_weight", <TbWeight size={20} />, t('product.capacityWeight'))}
+                                    {renderField(t('product.flowRate'), "product_details.flow_rate", <TbArrowsRightLeft size={20} />, t('product.flowRate'))}
+                                    {renderField(t('product.pressure'), "product_details.pressure", <TbGauge size={20} />, t('product.pressure'))}
+                                    {renderField(t('product.temperature'), "product_details.temperature", <TbTemperature size={20} />, t('product.temperature'))}
                                 </Grid>
                             </Collapse>
                         </Grid>
                     </Grid>
 
                     {/* Usage & Support */}
-                    <SectionHeader title="Usage & Support" icon={<TbShieldCheck size={20} />} />
+                    <SectionHeader title={t('product.usageSupport')} icon={<TbShieldCheck size={20} />} />
                     <Grid container spacing={3}>
-                        {renderField("Garantie", "product_details.warranty", <TbShieldCheck size={20} />, "Informations de garantie")}
-                        {renderField("Usage", "product_details.usage", <TbTool size={20} />, "Usage recommandé")}
-                        {renderField("Compatibilité", "product_details.compatibility", <TbPuzzle size={20} />, "Appareils/systèmes compatibles")}
+                        {renderField(t('product.warranty'), "product_details.warranty", <TbShieldCheck size={20} />, t('product.warranty'))}
+                        {renderField(t('product.usage'), "product_details.usage", <TbTool size={20} />, t('product.usage'))}
+                        {renderField(t('product.compatibility'), "product_details.compatibility", <TbPuzzle size={20} />, t('product.compatibility'))}
 
-                        {renderField("Caractéristiques", "product_details.features", <TbListCheck size={20} />, "Points clés", "text", true)}
-                        {renderField("Notes", "product_details.notes", <TbNote size={20} />, "Notes additionnelles", "text", true)}
+                        {renderField(t('product.features'), "product_details.features", <TbListCheck size={20} />, t('product.features'), "text", true)}
+                        {renderField(t('product.notes'), "product_details.notes", <TbNote size={20} />, t('product.notes'), "text", true)}
                     </Grid>
 
                     {!showAll && (
@@ -197,7 +199,7 @@ const ProductDetails: React.FC = () => {
                                     '&:hover': { borderColor: '#4f46e5', color: '#4f46e5', bgcolor: 'transparent' }
                                 }}
                             >
-                                Afficher tous les champs techniques
+                                {t('product.showMoreSpecs')}
                             </Button>
                         </Box>
                     )}

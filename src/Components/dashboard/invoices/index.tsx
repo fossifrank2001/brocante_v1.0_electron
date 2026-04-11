@@ -258,7 +258,7 @@ export default function IndexInvoice() {
                 size: 150,
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ fontWeight: 900, color: '#0f172a' }}>
-                        {UtilMethods.formatNumber(cell.getValue() as number)}
+                        {UtilMethods.formatAmount(cell.getValue() as number)}
                     </Typography>
                 ),
             },
@@ -268,7 +268,7 @@ export default function IndexInvoice() {
                 size: 130,
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ fontWeight: 800, color: '#10b981' }}>
-                        {UtilMethods.formatNumber(cell.getValue() as number)}
+                        {UtilMethods.formatAmount(cell.getValue() as number)}
                     </Typography>
                 ),
             },
@@ -280,7 +280,7 @@ export default function IndexInvoice() {
                     const value = cell.getValue() as number;
                     return (
                         <Typography variant="body2" sx={{ fontWeight: 800, color: value > 0 ? '#ef4444' : '#64748b' }}>
-                            {UtilMethods.formatNumber(value)}
+                            {UtilMethods.formatAmount(value)}
                         </Typography>
                     );
                 },

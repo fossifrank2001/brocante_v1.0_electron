@@ -143,8 +143,8 @@ const Layout: React.FC = () => {
       >
         <Aside role={roleId} isSidebarOpen={isSidebarOpen} />
         <div className="body-wrapper" style={{
-          backgroundColor: "rgba(208,208,208,0.5)",
-          transition: 'margin-left 0.2s ease-in-out'
+          backgroundColor: "var(--bg-primary)",
+          transition: 'margin-left 0.2s ease-in-out, background-color 0.3s ease'
         }}>
           <Navbar
             onHandleChangeRole={(_role) => {

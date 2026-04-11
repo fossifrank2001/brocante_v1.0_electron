@@ -315,7 +315,7 @@ const StockMovementsPage: React.FC = () => {
                 ),
             },
         ],
-        [],
+        [t],
     );
 
     const mrTable = useMaterialReactTable({

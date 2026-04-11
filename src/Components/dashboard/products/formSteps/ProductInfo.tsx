@@ -8,6 +8,7 @@ import { TextField, MenuItem, Select, FormControl, InputLabel, Box, Grid, Alert,
 import { TbShoppingBag, TbBarcode, TbTag, TbBuildingFactory2, TbScan, TbBox, TbCurrencyEuro, TbCategory, TbTags, TbFileDescription, TbScale } from 'react-icons/tb';
 import UnitAPI from 'Data/Api/Unit';
 import { IUnit } from 'Data/Interfaces/Unit';
+import { useTranslation } from 'react-i18next';
 import './ProductInfo.scss';
 
 interface IProductInfoProps {
@@ -15,6 +16,7 @@ interface IProductInfoProps {
 }
 
 const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
+    const { t } = useTranslation();
     const [categories, setCategories] = useState<ICategory[] | null>(null);
     const [units, setUnits] = useState<IUnit[] | null>(null);
     const [category, setCategory] = useState<ICategory | null>(null);
@@ -59,31 +61,31 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
 
     return (
         <Box className="product-info-modern">
-            <Box sx={{ p: 4, borderRadius: '24px', bgcolor: 'rgba(255, 255, 255, 0.4)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.5)', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' }}>
+            <Box sx={{ p: 4, borderRadius: '24px', bgcolor: 'var(--bg-surface)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
                     <Box sx={{ p: 1.5, borderRadius: '14px', bgcolor: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}>
                         <TbShoppingBag size={24} />
                     </Box>
-                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>Informations Générales</Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--text-primary)' }}>{t('common.generalInfo')}</Typography>
                 </Box>
 
                 <Alert severity="info" sx={{ mb: 4, borderRadius: '16px', border: '1px solid rgba(3, 169, 244, 0.2)', '& .MuiAlert-icon': { color: '#0288d1' } }}>
-                    <AlertTitle sx={{ fontWeight: 700 }}>Identifiant Unique</AlertTitle>
-                    La référence interne est unique et sera utilisée pour générer le <strong>QR code</strong> du produit.
+                    <AlertTitle sx={{ fontWeight: 700 }}>{t('product.uniqueId')}</AlertTitle>
+                    {t('product.uniqueIdDesc')}
                 </Alert>
 
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
-                            label="Nom du Produit"
+                            label={t('common.name')}
                             name="name"
                             value={values.name}
                             onChange={handleChange}
                             onBlur={handleBlur}
                             error={touched.name && Boolean(errors.name)}
                             helperText={touched.name && errors.name}
-                            placeholder="ex: Chaise Vintage en Cuir"
+                            placeholder={t('common.namePlaceholder')}
                             variant="outlined"
                             InputProps={{
                                 startAdornment: (
@@ -91,7 +93,7 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                                         <TbTag size={20} color="#64748b" />
                                     </InputAdornment>
                                 ),
-                                sx: { borderRadius: '14px', bgcolor: '#fff' }
+                                sx: { borderRadius: '14px', bgcolor: 'var(--input-bg)' }
                             }}
                         />
                     </Grid>
@@ -99,14 +101,14 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
-                            label="Référence Interne (SKU)"
+                            label={t('common.internalReference')}
                             name="internal_reference"
                             value={values.internal_reference}
                             onChange={handleChange}
                             onBlur={handleBlur}
                             error={touched.internal_reference && Boolean(errors.internal_reference)}
                             helperText={touched.internal_reference && errors.internal_reference}
-                            placeholder="ex: ART-2024-001"
+                            placeholder={t('common.internalRefPlaceholder')}
                             variant="outlined"
                             required
                             InputProps={{
@@ -115,7 +117,7 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                                         <TbBarcode size={20} color="#64748b" />
                                     </InputAdornment>
                                 ),
-                                sx: { borderRadius: '14px', bgcolor: '#fff' }
+                                sx: { borderRadius: '14px', bgcolor: 'var(--input-bg)' }
                             }}
                         />
                     </Grid>
@@ -123,12 +125,12 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
-                            label="Référence Fabricant"
+                            label={t('common.manufacturerReference')}
                             name="manufacturer_reference"
                             value={values.manufacturer_reference}
                             onChange={handleChange}
                             onBlur={handleBlur}
-                            placeholder="ex: MFR-XYZ-123"
+                            placeholder={t('common.mfrRefPlaceholder')}
                             variant="outlined"
                             InputProps={{
                                 startAdornment: (
@@ -136,7 +138,7 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                                         <TbBuildingFactory2 size={20} color="#64748b" />
                                     </InputAdornment>
                                 ),
-                                sx: { borderRadius: '14px', bgcolor: '#fff' }
+                                sx: { borderRadius: '14px', bgcolor: 'var(--input-bg)' }
                             }}
                         />
                     </Grid>
@@ -144,12 +146,12 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
-                            label="Code-barres (EAN/UPC)"
+                            label={t('common.barcode')}
                             name="barcode"
                             value={values.barcode}
                             onChange={handleChange}
                             onBlur={handleBlur}
-                            placeholder="ex: 3760123456789"
+                            placeholder={t('common.barcodePlaceholder')}
                             variant="outlined"
                             InputProps={{
                                 startAdornment: (
@@ -157,7 +159,7 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                                         <TbScan size={20} color="#64748b" />
                                     </InputAdornment>
                                 ),
-                                sx: { borderRadius: '14px', bgcolor: '#fff' }
+                                sx: { borderRadius: '14px', bgcolor: 'var(--input-bg)' }
                             }}
                         />
                     </Grid>
@@ -165,7 +167,7 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                     <Grid item xs={12} md={3}>
                         <TextField
                             fullWidth
-                            label="Stock Initial"
+                            label={t('common.initialStock')}
                             name="stock_quantity"
                             type="number"
                             value={values.stock_quantity}
@@ -180,7 +182,7 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                                         <TbBox size={20} color="#64748b" />
                                     </InputAdornment>
                                 ),
-                                sx: { borderRadius: '14px', bgcolor: '#fff' }
+                                sx: { borderRadius: '14px', bgcolor: 'var(--input-bg)' }
                             }}
                         />
                     </Grid>
@@ -188,7 +190,7 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                     <Grid item xs={12} md={3}>
                         <TextField
                             fullWidth
-                            label="Prix de Vente"
+                            label={t('common.price')}
                             name="price"
                             type="number"
                             value={values.price}
@@ -203,17 +205,17 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                                         <TbCurrencyEuro size={20} color="#64748b" />
                                     </InputAdornment>
                                 ),
-                                sx: { borderRadius: '14px', bgcolor: '#fff' }
+                                sx: { borderRadius: '14px', bgcolor: 'var(--input-bg)' }
                             }}
                         />
                     </Grid>
 
                     <Grid item xs={12} md={6}>
                         <FormControl fullWidth variant="outlined">
-                            <InputLabel id="unit-label">Unité de Mesure</InputLabel>
+                            <InputLabel id="unit-label">{t('product.uom')}</InputLabel>
                             <Select
                                 labelId="unit-label"
-                                label="Unité de Mesure"
+                                label={t('product.uom')}
                                 name="unit_id"
                                 value={values.unit_id || ''}
                                 onChange={handleChange}
@@ -223,9 +225,9 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                                         <TbScale size={20} color="#64748b" />
                                     </InputAdornment>
                                 }
-                                sx={{ borderRadius: '14px', bgcolor: '#fff' }}
+                                sx={{ borderRadius: '14px', bgcolor: 'var(--input-bg)' }}
                             >
-                                <MenuItem value=""><em>Par défaut (Unitaire)</em></MenuItem>
+                                <MenuItem value=""><em>{t('product.defaultUnit')}</em></MenuItem>
                                 {units?.map(unit => (
                                     <MenuItem key={unit.id} value={unit.id}>
                                         {unit.name} ({unit.abbreviation})
@@ -237,10 +239,10 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
 
                     <Grid item xs={12} md={6}>
                         <FormControl fullWidth variant="outlined">
-                            <InputLabel id="category-label">Catégorie</InputLabel>
+                            <InputLabel id="category-label">{t('common.category')}</InputLabel>
                             <Select
                                 labelId="category-label"
-                                label="Catégorie"
+                                label={t('common.category')}
                                 name="category"
                                 value={values.category || ''}
                                 onChange={(e) => {
@@ -260,9 +262,9 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                                         <TbCategory size={20} color="#64748b" />
                                     </InputAdornment>
                                 }
-                                sx={{ borderRadius: '14px', bgcolor: '#fff' }}
+                                sx={{ borderRadius: '14px', bgcolor: 'var(--input-bg)' }}
                             >
-                                <MenuItem value=""><em>Aucune</em></MenuItem>
+                                <MenuItem value=""><em>{t('common.none')}</em></MenuItem>
                                 {categories?.map(cat => (
                                     <MenuItem key={cat.id} value={String(cat.id)}>{cat.label}</MenuItem>
                                 ))}
@@ -271,10 +273,10 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                     </Grid>
 
                     <Grid item xs={12}>
-                        <Box sx={{ p: 2, borderRadius: '16px', border: '1px solid #e2e8f0', bgcolor: '#f8fafc' }}>
+                        <Box sx={{ p: 2, borderRadius: '16px', border: '1px solid var(--border-color)', bgcolor: 'var(--bg-secondary)' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                                 <TbTags size={18} color="#4f46e5" />
-                                <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sous-Catégories</Typography>
+                                <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('product.subCategories')}</Typography>
                             </Box>
                             <Multiselect
                                 options={category?.sub_categories || []}
@@ -282,17 +284,17 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                                 onSelect={(list: SubCategory[]) => setFieldValue('subcategory_ids', list)}
                                 onRemove={(list: SubCategory[]) => setFieldValue('subcategory_ids', list)}
                                 displayValue="label"
-                                placeholder={category ? "Rechercher..." : "Veuillez d'abord choisir une catégorie"}
+                                placeholder={category ? t('common.search') : t('common.chooseCategoryFirst')}
                                 disable={!category || isLoading}
                                 style={{
                                     chips: { background: '#4f46e5', borderRadius: '8px', fontWeight: 600 },
                                     searchBox: { border: 'none', background: 'transparent', padding: '0' },
-                                    inputField: { color: '#1e293b' }
+                                    inputField: { color: 'var(--text-primary)' }
                                 }}
                             />
                             {touched.subcategory_ids && errors.subcategory_ids && (
                                 <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
-                                    {typeof errors.subcategory_ids === 'string' ? errors.subcategory_ids : 'Une sélection est requise'}
+                                    {typeof errors.subcategory_ids === 'string' ? errors.subcategory_ids : t('product.selectionRequired')}
                                 </Typography>
                             )}
                         </Box>
@@ -301,13 +303,13 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                     <Grid item xs={12}>
                         <TextField
                             fullWidth
-                            label="Description"
+                            label={t('common.description')}
                             name="description"
                             multiline
                             rows={4}
                             value={values.description}
                             onChange={handleChange}
-                            placeholder="Décrivez votre produit en détail..."
+                            placeholder={t('common.descriptionPlaceholder')}
                             variant="outlined"
                             InputProps={{
                                 startAdornment: (
@@ -315,7 +317,7 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                                         <TbFileDescription size={20} color="#64748b" />
                                     </InputAdornment>
                                 ),
-                                sx: { borderRadius: '14px', bgcolor: '#fff' }
+                                sx: { borderRadius: '14px', bgcolor: 'var(--input-bg)' }
                             }}
                         />
                     </Grid>
@@ -324,5 +326,6 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
         </Box>
     );
 };
+
 
 export default ProductInfo;
