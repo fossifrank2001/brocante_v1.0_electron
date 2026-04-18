@@ -151,7 +151,7 @@ function runArtisan(phpPath: string, laravelPath: string, args: string[]): strin
  */
 function waitForServer(port: number, host: string = 'localhost'): Promise<void> {
   return new Promise((resolve, reject) => {
-    const maxAttempts = 30;
+    const maxAttempts = 50;
     let attempts = 0;
 
     const check = () => {
@@ -162,7 +162,7 @@ function waitForServer(port: number, host: string = 'localhost'): Promise<void> 
 
       const socket = new net.Socket();
       
-      socket.setTimeout(1000);
+      socket.setTimeout(500);
       
       socket.on('connect', () => {
         socket.destroy();
@@ -174,7 +174,7 @@ function waitForServer(port: number, host: string = 'localhost'): Promise<void> 
         if (attempts >= maxAttempts) {
           reject(new Error(`PHP server did not start after ${maxAttempts} attempts`));
         } else {
-          setTimeout(check, 500);
+          setTimeout(check, 200);
         }
       });
 
@@ -183,7 +183,7 @@ function waitForServer(port: number, host: string = 'localhost'): Promise<void> 
         if (attempts >= maxAttempts) {
           reject(new Error(`PHP server did not start after ${maxAttempts} attempts`));
         } else {
-          setTimeout(check, 500);
+          setTimeout(check, 200);
         }
       });
 
@@ -254,27 +254,13 @@ async function startPhpServerOnce(): Promise<number> {
   const dbPath = setupEnvironment(laravelPath);
   console.log(`[PHP Server] Database path: ${dbPath}`);
 
-  // Test PHP works first
-  console.log('[PHP Server] Testing PHP executable...');
-  try {
-    const testResult = execSync(`"${phpPath}" -v`, { encoding: 'utf-8', timeout: 5000 });
-    console.log('[PHP Server] PHP test OK:', testResult.split('\n')[0]);
-  } catch (e: any) {
-    throw new Error(`PHP test failed: ${e.message}`);
-  }
-
-  // Test artisan works
-  console.log('[PHP Server] Testing artisan...');
-  try {
-    const artisanPath = path.join(laravelPath, 'artisan');
-    execSync(`"${phpPath}" "${artisanPath}" --version`, { 
-      encoding: 'utf-8', 
-      timeout: 10000,
-      cwd: laravelPath 
-    });
-    console.log('[PHP Server] Artisan test OK');
-  } catch (e: any) {
-    throw new Error(`Artisan test failed: ${e.message}`);
+  // Quick PHP sanity check (only on first attempt)
+  if (restartCount === 0) {
+    try {
+      execSync(`"${phpPath}" -r "echo 'ok';"`, { encoding: 'utf-8', timeout: 3000 });
+    } catch (e: any) {
+      throw new Error(`PHP not working: ${e.message}`);
+    }
   }
 
   // Find a free port
@@ -296,13 +282,28 @@ async function startPhpServerOnce(): Promise<number> {
     runArtisan(phpPath, laravelPath, ['db:seed', '--force']);
     console.log('[PHP Server] Database initialized with seed data.');
   } else {
-    console.log('[PHP Server] Existing database found: running migrations only...');
-    runArtisan(phpPath, laravelPath, ['migrate', '--force']);
-    console.log('[PHP Server] Migrations applied successfully.');
+    // Run migrations in background — don't block server start for existing DBs
+    console.log('[PHP Server] Existing database: running migrations async...');
+    try {
+      const artisanPath = path.join(laravelPath, 'artisan');
+      spawn(phpPath, [artisanPath, 'migrate', '--force'], {
+        cwd: laravelPath,
+        stdio: 'ignore',
+        windowsHide: true,
+        env: { ...process.env, APP_ENV: 'production' },
+      });
+    } catch (e: any) {
+      console.warn('[PHP Server] Async migration failed, will retry:', e.message);
+    }
   }
 
-  // Clear and cache config for production
-  runArtisan(phpPath, laravelPath, ['config:clear']);
+  // Cache config + routes for production (fast startup)
+  try {
+    runArtisan(phpPath, laravelPath, ['config:cache']);
+    runArtisan(phpPath, laravelPath, ['route:cache']);
+  } catch (e: any) {
+    console.warn('[PHP Server] Cache commands failed (non-critical):', e.message);
+  }
 
   // Start the PHP built-in server DIRECTLY (not via artisan serve)
   // artisan serve spawns a child php process that can't find php.exe in PATH

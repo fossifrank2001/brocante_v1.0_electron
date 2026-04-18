@@ -73,21 +73,21 @@ const AutoQRCodeGenerator: React.FC<{ productId?: number }> = ({ productId }) =>
 const TemplateFormBridge: React.FC = () => {
     const { values, setFieldValue } = useFormikContext<FormValues>();
 
-    const subCategoryIds = (values.subcategory_ids || [])
+    const subCategories = (values.subcategory_ids || [])
         .filter(sub => sub && sub.id)
-        .map(sub => sub.id as number);
+        .map(sub => ({ id: sub.id as number, label: sub.label }));
 
     return (
         <Box>
             <DynamicTemplateForm
-                subCategoryIds={subCategoryIds}
+                subCategories={subCategories}
                 templateId={values.template_id || null}
                 templateValues={values.template_values || {}}
                 onTemplateChange={(templateId) => setFieldValue('template_id', templateId)}
                 onValuesChange={(templateValues) => setFieldValue('template_values', templateValues)}
             />
             {/* Keep legacy ProductDetails as fallback for products without a template */}
-            {subCategoryIds.length === 0 && <ProductDetails />}
+            {subCategories.length === 0 && <ProductDetails />}
         </Box>
     );
 };
@@ -116,7 +116,9 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
         barcode: record?.barcode ?? '',
         description: record?.description ?? '',
         price: record?.price ?? 0,
+        cost_price: (record as any)?.cost_price ?? null,
         stock_quantity: record?.stock_quantity ?? 0,
+        stock_alert_threshold: (record as any)?.stock_alert_threshold ?? null,
         unit_id: record?.unit_id ?? null,
         price_per_unit: record?.price_per_unit ?? null,
         template_id: (record as any)?.template_id ?? null,
@@ -213,6 +215,8 @@ const MultiStepForm: React.FC<IMultiFormProps> = ({ record, id }) => {
                     ...values,
                     stock_quantity: parseFloat(String(values.stock_quantity)) || 0,
                     price: parseFloat(String(values.price)) || 0,
+                    cost_price: values.cost_price ? parseFloat(String(values.cost_price)) : null,
+                    stock_alert_threshold: values.stock_alert_threshold ? parseInt(String(values.stock_alert_threshold)) : null,
                     subcategory_ids: (values.subcategory_ids || [])
                         .filter(sub => sub && sub.id)
                         .map(sub => sub.id),

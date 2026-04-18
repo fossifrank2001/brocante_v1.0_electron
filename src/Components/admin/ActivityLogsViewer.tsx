@@ -36,6 +36,7 @@ import {
     Search as SearchIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import ActivityLogService from '@/Services/ActivityLogService';
 import { ActivityLog, ActivityLogFilters, ActivityType, ActivityAction, ActivityStatus } from '@/Data/Interfaces/ActivityLog';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
@@ -59,6 +60,7 @@ const glassTableContainerStyle = {
 };
 
 const ActivityLogsViewer: React.FC = () => {
+    const { t } = useTranslation();
     const [filteredLogs, setFilteredLogs] = useState<ActivityLog[]>([]);
     const [filters, setFilters] = useState<ActivityLogFilters>({});
     const [loading, setLoading] = useState(false);
@@ -175,7 +177,7 @@ const ActivityLogsViewer: React.FC = () => {
 
     return (<Box>
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <Breadcrumd parent="📊 Journal d'Activités" />
+            <Breadcrumd parent={`📊 ${t('activityLogs.title')}`} />
             <Box>
                 <Grid container spacing={3} sx={{ mb: 4 }}>
                     <Grid item xs={12} md={3}>
@@ -184,7 +186,7 @@ const ActivityLogsViewer: React.FC = () => {
                                 <Typography variant="h4" sx={{ fontWeight: 900, color: '#6366f1' }}>
                                     {summary?.total_logs ?? '-'}
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>Total des activités</Typography>
+                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>{t('activityLogs.totalActivities')}</Typography>
                             </CardContent>
                         </Card>
                     </Grid>
@@ -192,9 +194,9 @@ const ActivityLogsViewer: React.FC = () => {
                         <Card sx={{ ...glassCardStyle }}>
                             <CardContent>
                                 <Typography variant="h4" sx={{ fontWeight: 900, color: '#10b981' }}>
-                                    {summary ? UtilMethods.formatNumber(summary.total_amount) : '-'}
+                                    {summary ? UtilMethods.formatAmount(summary.total_amount) : '-'}
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>Montant total</Typography>
+                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>{t('activityLogs.totalAmount')}</Typography>
                             </CardContent>
                         </Card>
                     </Grid>
@@ -204,7 +206,7 @@ const ActivityLogsViewer: React.FC = () => {
                                 <Typography variant="h4" sx={{ fontWeight: 900, color: '#10b981' }}>
                                     {summary?.successful_transactions ?? '-'}
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>Transactions réussies</Typography>
+                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>{t('activityLogs.successfulTransactions')}</Typography>
                             </CardContent>
                         </Card>
                     </Grid>
@@ -214,7 +216,7 @@ const ActivityLogsViewer: React.FC = () => {
                                 <Typography variant="h4" sx={{ fontWeight: 900, color: '#ef4444' }}>
                                     {summary?.failed_transactions ?? '-'}
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>Transactions échouées</Typography>
+                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>{t('activityLogs.failedTransactions')}</Typography>
                             </CardContent>
                         </Card>
                     </Grid>
@@ -224,13 +226,13 @@ const ActivityLogsViewer: React.FC = () => {
                 <Card sx={{ ...glassCardStyle, mb: 4 }}>
                     <CardContent sx={{ p: 4 }}>
                         <Typography variant="h6" sx={{ mb: 3, fontWeight: 800, color: '#1e293b' }}>
-                            🔍 Filtres
+                            🔍 {t('activityLogs.filters')}
                         </Typography>
                         <Grid container spacing={3} alignItems="center">
                             <Grid item xs={12} md={3}>
                                 <TextField
                                     fullWidth
-                                    label="Recherche"
+                                    label={t('activityLogs.search')}
                                     value={filters.search || ''}
                                     onChange={(e) => handleFilterChange('search', e.target.value)}
                                     size="small"
@@ -246,14 +248,14 @@ const ActivityLogsViewer: React.FC = () => {
                             </Grid>
                             <Grid item xs={12} md={2}>
                                 <FormControl fullWidth size="small">
-                                    <InputLabel sx={{ fontWeight: 600, color: '#64748b' }}>Type</InputLabel>
+                                    <InputLabel sx={{ fontWeight: 600, color: '#64748b' }}>{t('activityLogs.type')}</InputLabel>
                                     <Select
                                         value={filters.type || ''}
                                         onChange={(e) => handleFilterChange('type', e.target.value)}
-                                        label="Type"
+                                        label={t('activityLogs.type')}
                                         sx={{ borderRadius: '14px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }}
                                     >
-                                        <MenuItem value="">Tous</MenuItem>
+                                        <MenuItem value="">{t('activityLogs.all')}</MenuItem>
                                         {Object.values(ActivityType).map(type => (
                                             <MenuItem key={type} value={type}>{type}</MenuItem>
                                         ))}
@@ -262,14 +264,14 @@ const ActivityLogsViewer: React.FC = () => {
                             </Grid>
                             <Grid item xs={12} md={2}>
                                 <FormControl fullWidth size="small">
-                                    <InputLabel sx={{ fontWeight: 600, color: '#64748b' }}>Statut</InputLabel>
+                                    <InputLabel sx={{ fontWeight: 600, color: '#64748b' }}>{t('activityLogs.status')}</InputLabel>
                                     <Select
                                         value={filters.status || ''}
                                         onChange={(e) => handleFilterChange('status', e.target.value)}
-                                        label="Statut"
+                                        label={t('activityLogs.status')}
                                         sx={{ borderRadius: '14px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }}
                                     >
-                                        <MenuItem value="">Tous</MenuItem>
+                                        <MenuItem value="">{t('activityLogs.all')}</MenuItem>
                                         {Object.values(ActivityStatus).map(status => (
                                             <MenuItem key={status} value={status}>{status}</MenuItem>
                                         ))}
@@ -279,7 +281,7 @@ const ActivityLogsViewer: React.FC = () => {
                             <Grid item xs={12} md={2}>
                                 <TextField
                                     fullWidth
-                                    label="Code vente"
+                                    label={t('activityLogs.sellCode')}
                                     value={filters.sellCode || ''}
                                     onChange={(e) => handleFilterChange('sellCode', e.target.value)}
                                     size="small"
@@ -303,7 +305,7 @@ const ActivityLogsViewer: React.FC = () => {
                                             flex: 1
                                         }}
                                     >
-                                        Effacer
+                                        {t('activityLogs.clear')}
                                     </Button>
                                     <Button
                                         variant="contained"
@@ -321,7 +323,7 @@ const ActivityLogsViewer: React.FC = () => {
                                             }
                                         }}
                                     >
-                                        Exporter
+                                        {t('activityLogs.export')}
                                     </Button>
                                 </Box>
                             </Grid>
@@ -333,14 +335,14 @@ const ActivityLogsViewer: React.FC = () => {
                 <TableContainer component={Paper} sx={{ ...glassTableContainerStyle }}>
                     <Table>
                         <TableHead>
-                            <TableRow sx={{ bgcolor: 'rgba(248, 250, 252, 0.6)' }}>
-                                <TableCell sx={{ fontWeight: 800, color: '#64748b', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.1em' }}>Date</TableCell>
-                                <TableCell sx={{ fontWeight: 800, color: '#64748b', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.1em' }}>Type</TableCell>
-                                <TableCell sx={{ fontWeight: 800, color: '#64748b', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.1em' }}>Action</TableCell>
-                                <TableCell sx={{ fontWeight: 800, color: '#64748b', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.1em' }}>Description</TableCell>
-                                <TableCell sx={{ fontWeight: 800, color: '#64748b', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.1em' }}>Montant</TableCell>
-                                <TableCell sx={{ fontWeight: 800, color: '#64748b', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.1em' }}>Statut</TableCell>
-                                <TableCell sx={{ fontWeight: 800, color: '#64748b', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.1em' }}>Actions</TableCell>
+                            <TableRow sx={{ bgcolor: '#f1f5f9' }}>
+                                <TableCell sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em', py: 2 }}>{t('activityLogs.date')}</TableCell>
+                                <TableCell sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em', py: 2 }}>{t('activityLogs.type')}</TableCell>
+                                <TableCell sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em', py: 2 }}>{t('activityLogs.action')}</TableCell>
+                                <TableCell sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em', py: 2 }}>{t('activityLogs.description')}</TableCell>
+                                <TableCell sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em', py: 2 }}>{t('activityLogs.amount')}</TableCell>
+                                <TableCell sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em', py: 2 }}>{t('activityLogs.status')}</TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em', py: 2 }}>{t('common.actions')}</TableCell>
                             </TableRow>
                         </TableHead>
                         {!loading && <TableBody>
@@ -348,7 +350,7 @@ const ActivityLogsViewer: React.FC = () => {
                                 <TableRow>
                                     <TableCell colSpan={7}>
                                         <Alert severity="info" sx={{ mt: 2, borderRadius: '12px' }}>
-                                            Aucune activité trouvée
+                                            {t('activityLogs.noActivitiesFound')}
                                         </Alert>
                                     </TableCell>
                                 </TableRow>
@@ -356,36 +358,37 @@ const ActivityLogsViewer: React.FC = () => {
                                 {filteredLogs.map((log) => (
                                     <TableRow key={log.id} sx={{ '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.04)' }, transition: 'background-color 0.2s' }}>
                                         <TableCell sx={{ color: '#475569', fontWeight: 600 }}>
-                                            {new Date(log.timestamp).toLocaleString('fr-FR')}
+                                            {new Date(log.timestamp).toLocaleString(localStorage.getItem('i18nextLng') || 'fr')}
                                         </TableCell>
                                         <TableCell>
                                             <Chip
-                                                label={log.type}
+                                                label={t(`activityLogs.types.${log.type}`)}
                                                 color={getTypeColor(log.type)}
                                                 size="small"
-                                                sx={{ fontWeight: 700, borderRadius: '8px' }}
+                                                variant="outlined"
+                                                sx={{ fontWeight: 700, borderRadius: '6px' }}
                                             />
                                         </TableCell>
                                         <TableCell>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#475569', fontWeight: 600 }}>
                                                 {getActionIcon(log.action)}
-                                                {log.action}
+                                                {t(`activityLogs.actions.${log.action}`)}
                                             </Box>
                                         </TableCell>
-                                        <TableCell sx={{ color: '#475569' }}>{log.description}</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: '#1e293b' }}>
-                                            {log.amount ? UtilMethods.formatNumber(log.amount) : '-'}
+                                        <TableCell sx={{ color: '#475569', fontSize: '0.85rem' }}>{log.description}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#4f46e5' }}>
+                                            {log.amount ? UtilMethods.formatAmount(log.amount) : '-'}
                                         </TableCell>
                                         <TableCell>
                                             <Chip
-                                                label={log.status}
+                                                label={t(`activityLogs.statuses.${log.status}`)}
                                                 color={getStatusColor(log.status)}
                                                 size="small"
-                                                sx={{ fontWeight: 700, borderRadius: '8px' }}
+                                                sx={{ fontWeight: 700, borderRadius: '6px' }}
                                             />
                                         </TableCell>
-                                        <TableCell>
-                                            <Tooltip title="Voir le diagramme d'états">
+                                        <TableCell align="right">
+                                            <Tooltip title={t('activityLogs.viewStateDiagram')}>
                                                 <span>
                                                     <IconButton
                                                         size="small"
@@ -415,14 +418,14 @@ const ActivityLogsViewer: React.FC = () => {
                         <CardContent sx={{ p: 4 }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                                 <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b' }}>
-                                    🔄 Diagramme d'états de transition
+                                    🔄 {t('activityLogs.stateDiagramTitle')}
                                 </Typography>
                                 <Button
                                     variant="outlined"
                                     onClick={() => setShowStateDiagram(false)}
                                     sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, borderColor: '#e2e8f0', color: '#64748b' }}
                                 >
-                                    Fermer
+                                    {t('activityLogs.close')}
                                 </Button>
                             </Box>
                             <Box sx={{

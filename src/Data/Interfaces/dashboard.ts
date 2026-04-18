@@ -22,6 +22,8 @@ export interface ProductStats {
     status: {
         [key: string]: number;
     };
+    low_stock?: number;
+    out_of_stock?: number;
 }
 
 export interface DashboardChartsStats {

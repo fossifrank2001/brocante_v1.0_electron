@@ -150,7 +150,9 @@
 
 
 // ─── Transition on theme change ──────────────────────────────────
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -456,17 +458,21 @@ button {
 
 // ─── Dark mode overrides for Bootstrap & vendor classes ──────────
 [data-theme="dark"] {
+
   // Bootstrap backgrounds
   .bg-white {
     background-color: var(--bg-surface) !important;
     color: var(--text-primary) !important;
   }
+
   .bg-light {
     background-color: var(--bg-secondary) !important;
   }
+
   .bg-light-primary {
     background-color: var(--accent-primary-muted) !important;
   }
+
   .bg-secondary-subtle {
     background-color: var(--bg-elevated) !important;
   }
@@ -475,12 +481,15 @@ button {
   .text-dark {
     color: var(--text-primary) !important;
   }
+
   .text-muted {
     color: var(--text-muted) !important;
   }
 
   // Borders
-  .border, .border-bottom, .border-top {
+  .border,
+  .border-bottom,
+  .border-top {
     border-color: var(--border-color) !important;
   }
 
@@ -491,17 +500,21 @@ button {
     color: var(--text-primary);
     box-shadow: var(--card-shadow) !important;
   }
+
   .card-body {
     color: var(--text-primary);
   }
+
   .card-title {
     color: var(--text-primary) !important;
   }
+
   .card-header {
     background-color: var(--bg-secondary) !important;
     border-bottom-color: var(--border-color) !important;
     color: var(--text-primary) !important;
   }
+
   .card-footer {
     background-color: var(--bg-secondary) !important;
     border-top-color: var(--border-color) !important;
@@ -512,9 +525,11 @@ button {
     background-color: var(--navbar-bg) !important;
     border-bottom-color: var(--border-color) !important;
   }
+
   .navbar {
     border-bottom-color: var(--border-color) !important;
   }
+
   .navbar .nav-link {
     color: var(--text-secondary) !important;
   }
@@ -524,21 +539,26 @@ button {
     background-color: var(--sidebar-bg) !important;
     border-right-color: var(--border-color) !important;
   }
+
   .sidebar-link {
     color: var(--text-secondary) !important;
+
     &:hover {
       background-color: var(--bg-elevated) !important;
       color: var(--text-primary) !important;
     }
+
     // When the link is active (has bg-primary or text-white)
     &.bg-primary {
       background-color: var(--accent-primary) !important;
       color: #ffffff !important;
-      
-      i, span {
+
+      i,
+      span {
         color: #ffffff !important;
       }
     }
+
     &.bg-primary-subtle {
       background-color: rgba(99, 102, 241, 0.15) !important;
       color: var(--text-primary) !important;
@@ -551,12 +571,16 @@ button {
     border-color: var(--border-color) !important;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
   }
+
   .dropdown-item {
     color: var(--text-primary) !important;
-    &:hover, &:focus {
+
+    &:hover,
+    &:focus {
       background-color: var(--dropdown-hover) !important;
     }
   }
+
   .dropdown-header {
     color: var(--text-secondary) !important;
   }
@@ -569,15 +593,18 @@ button {
     --bs-table-border-color: var(--border-color);
     --bs-table-hover-bg: var(--bg-elevated);
     --bs-table-striped-bg: var(--bg-secondary);
+
     th {
       background-color: var(--bg-secondary) !important;
       color: var(--text-secondary) !important;
       border-color: var(--border-color) !important;
     }
+
     td {
       border-color: var(--border-color) !important;
       color: var(--text-primary) !important;
     }
+
     tbody tr:hover {
       background-color: var(--bg-elevated) !important;
     }
@@ -592,48 +619,60 @@ button {
     .MuiDataGrid-main {
       background-color: var(--bg-surface) !important;
     }
+
     .MuiDataGrid-columnHeaders {
       background-color: var(--bg-secondary) !important;
       border-color: var(--border-color) !important;
       color: var(--text-secondary) !important;
     }
+
     .MuiDataGrid-columnHeader {
       background-color: var(--bg-secondary) !important;
       color: var(--text-secondary) !important;
     }
+
     .MuiDataGrid-columnHeaderTitle {
       color: var(--text-secondary) !important;
     }
+
     .MuiDataGrid-columnSeparator {
       color: var(--border-color) !important;
     }
+
     .MuiDataGrid-cell {
       border-color: var(--border-color) !important;
       color: var(--text-primary) !important;
     }
+
     .MuiDataGrid-row {
       &:hover {
         background-color: var(--bg-elevated) !important;
       }
+
       &.Mui-selected {
         background-color: var(--accent-primary-muted) !important;
       }
     }
+
     .MuiDataGrid-footerContainer {
       border-color: var(--border-color) !important;
       background-color: var(--bg-secondary) !important;
       color: var(--text-secondary) !important;
     }
+
     .MuiTablePagination-root {
       color: var(--text-secondary) !important;
     }
+
     .MuiDataGrid-toolbarContainer {
       background-color: var(--bg-secondary) !important;
       color: var(--text-secondary) !important;
+
       button {
         color: var(--text-secondary) !important;
       }
     }
+
     .MuiDataGrid-overlay {
       background-color: rgba(15, 23, 42, 0.7) !important;
       color: var(--text-primary) !important;
@@ -643,22 +682,27 @@ button {
   // (Removed redundant specific sidebar-link selectors)
 
   // MUI DataGrid Portals (Panels, Filters, Menus)
-  .MuiDataGrid-panelWrapper, .MuiDataGrid-panel {
+  .MuiDataGrid-panelWrapper,
+  .MuiDataGrid-panel {
     background-color: var(--bg-surface) !important;
     color: var(--text-primary) !important;
   }
+
   .MuiDataGrid-filterForm {
     background-color: var(--bg-surface) !important;
     color: var(--text-primary) !important;
   }
+
   .MuiDataGrid-panelContent {
     background-color: var(--bg-surface) !important;
     color: var(--text-primary) !important;
   }
+
   .MuiDataGrid-menuList {
     background-color: var(--bg-surface) !important;
     color: var(--text-primary) !important;
   }
+
   .MuiDataGrid-paper {
     background-color: var(--bg-surface) !important;
     color: var(--text-primary) !important;
@@ -670,12 +714,16 @@ button {
     color: var(--text-primary) !important;
     border-color: var(--border-color) !important;
   }
+
   // MUI Menu/Popover
-  .MuiMenu-paper, .MuiPopover-paper {
+  .MuiMenu-paper,
+  .MuiPopover-paper {
     background-color: var(--bg-surface) !important;
   }
+
   .MuiMenuItem-root {
     color: var(--text-primary) !important;
+
     &:hover {
       background-color: var(--bg-elevated) !important;
     }
@@ -685,32 +733,41 @@ button {
   .MuiOutlinedInput-root {
     background-color: var(--input-bg) !important;
     color: var(--text-primary) !important;
+
     .MuiOutlinedInput-notchedOutline {
       border-color: var(--input-border) !important;
     }
+
     &:hover .MuiOutlinedInput-notchedOutline {
       border-color: var(--text-muted) !important;
     }
+
     &.Mui-focused .MuiOutlinedInput-notchedOutline {
       border-color: var(--accent-primary) !important;
     }
   }
+
   .MuiInputLabel-root {
     color: var(--text-secondary) !important;
   }
+
   .MuiInputBase-input {
     color: var(--text-primary) !important;
   }
+
   .MuiFilledInput-root {
     background-color: var(--bg-secondary) !important;
     color: var(--text-primary) !important;
+
     &:hover {
       background-color: var(--bg-elevated) !important;
     }
   }
+
   .MuiSelect-select {
     color: var(--text-primary) !important;
   }
+
   .MuiSelect-icon {
     color: var(--text-muted) !important;
   }
@@ -719,8 +776,13 @@ button {
   .MuiTypography-root {
     color: inherit;
   }
-  .MuiTypography-h1, .MuiTypography-h2, .MuiTypography-h3,
-  .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 {
+
+  .MuiTypography-h1,
+  .MuiTypography-h2,
+  .MuiTypography-h3,
+  .MuiTypography-h4,
+  .MuiTypography-h5,
+  .MuiTypography-h6 {
     color: var(--text-primary);
   }
 
@@ -745,21 +807,26 @@ button {
   }
 
   // Form controls (bootstrap)
-  .form-control, .form-select {
+  .form-control,
+  .form-select {
     background-color: var(--input-bg) !important;
     border-color: var(--input-border) !important;
     color: var(--text-primary) !important;
+
     &::placeholder {
       color: var(--input-placeholder) !important;
     }
+
     &:focus {
       border-color: var(--input-focus-border) !important;
       box-shadow: 0 0 0 2px var(--accent-primary-muted) !important;
     }
   }
+
   .form-label {
     color: var(--text-secondary) !important;
   }
+
   .input-group-text {
     background-color: var(--bg-elevated) !important;
     border-color: var(--input-border) !important;
@@ -767,8 +834,18 @@ button {
   }
 
   // h tags in cards — override heading-color from Bootstrap
-  .card h1, .card h2, .card h3, .card h4, .card h5, .card h6,
-  .card .h1, .card .h2, .card .h3, .card .h4, .card .h5, .card .h6 {
+  .card h1,
+  .card h2,
+  .card h3,
+  .card h4,
+  .card h5,
+  .card h6,
+  .card .h1,
+  .card .h2,
+  .card .h3,
+  .card .h4,
+  .card .h5,
+  .card .h6 {
     color: var(--text-primary) !important;
   }
 
@@ -778,14 +855,17 @@ button {
     border-color: var(--border-color) !important;
     color: var(--text-primary) !important;
   }
+
   .modal-header {
     border-bottom-color: var(--border-color) !important;
     background-color: var(--bg-secondary) !important;
     color: var(--text-primary) !important;
   }
+
   .modal-footer {
     border-top-color: var(--border-color) !important;
   }
+
   .modal-title {
     color: var(--text-primary) !important;
   }
@@ -807,10 +887,12 @@ button {
   // MUI tabs
   .MuiTab-root {
     color: var(--text-secondary) !important;
+
     &.Mui-selected {
       color: var(--accent-primary) !important;
     }
   }
+
   .MuiTabs-indicator {
     background-color: var(--accent-primary) !important;
   }
@@ -820,7 +902,7 @@ button {
     border-color: var(--border-color);
     // Allow MuiChip to retain custom sx inline colors (like status chips)
     // We only provide fallbacks if they are default
-    
+
     &.MuiChip-colorPrimary {
       background-color: var(--accent-primary) !important;
       color: white !important;
@@ -832,9 +914,11 @@ button {
     background-color: var(--bg-surface) !important;
     color: var(--text-primary) !important;
   }
+
   .MuiDialogTitle-root {
     color: var(--text-primary) !important;
   }
+
   .MuiDialogContent-root {
     color: var(--text-primary) !important;
   }
@@ -854,6 +938,7 @@ button {
   // Breadcrumb
   .breadcrumb-item {
     color: var(--text-secondary);
+
     &.active {
       color: var(--text-primary);
     }
@@ -879,11 +964,13 @@ button {
     background-color: var(--bg-surface) !important;
     border-color: var(--border-color) !important;
     color: var(--text-secondary) !important;
+
     &:hover {
       background-color: var(--bg-elevated) !important;
       color: var(--text-primary) !important;
     }
   }
+
   .page-item.active .page-link {
     background-color: var(--accent-primary) !important;
     border-color: var(--accent-primary) !important;
@@ -896,10 +983,13 @@ button {
     border-color: var(--input-border) !important;
     color: var(--text-primary) !important;
   }
+
   .optionListContainer {
     background-color: var(--bg-surface) !important;
+
     .option {
       color: var(--text-primary) !important;
+
       &:hover {
         background-color: var(--bg-elevated) !important;
       }
@@ -910,9 +1000,11 @@ button {
   label {
     color: var(--text-secondary);
   }
+
   small {
     color: var(--text-muted);
   }
+
   p {
     color: var(--text-secondary);
   }
@@ -921,35 +1013,44 @@ button {
   .apexcharts-text tspan {
     fill: var(--text-secondary);
   }
+
   .apexcharts-legend-text {
     color: var(--text-secondary) !important;
   }
+
   .apexcharts-tooltip {
     background: var(--bg-surface) !important;
     border: 1px solid var(--border-color) !important;
     box-shadow: var(--shadow-lg) !important;
     color: var(--text-primary) !important;
   }
+
   .apexcharts-tooltip-title {
     background: var(--bg-secondary) !important;
     border-bottom: 1px solid var(--border-color) !important;
     font-weight: bold;
     color: var(--text-primary) !important;
   }
+
   .apexcharts-tooltip-text {
     color: var(--text-primary) !important;
   }
-  .apexcharts-xaxistooltip, .apexcharts-yaxistooltip {
+
+  .apexcharts-xaxistooltip,
+  .apexcharts-yaxistooltip {
     background: var(--bg-surface) !important;
     border: 1px solid var(--border-color) !important;
     color: var(--text-primary) !important;
   }
+
   .apexcharts-xaxistooltip-bottom:before {
     border-bottom-color: var(--border-color) !important;
   }
+
   .apexcharts-xaxistooltip-bottom:after {
     border-bottom-color: var(--bg-surface) !important;
   }
+
   .apexcharts-gridline {
     stroke: var(--border-color);
   }
@@ -989,10 +1090,16 @@ button {
   }
 
   // fw-semibold / misc text
-  .fw-semibold, .fw-bold, .fw-medium {
+  .fw-semibold,
+  .fw-bold,
+  .fw-medium {
     color: inherit;
   }
-  .fs-3, .fs-4, .fs-5, .fs-6 {
+
+  .fs-3,
+  .fs-4,
+  .fs-5,
+  .fs-6 {
     color: inherit;
   }
 }

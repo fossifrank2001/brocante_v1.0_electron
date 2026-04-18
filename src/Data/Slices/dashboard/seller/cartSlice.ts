@@ -20,12 +20,14 @@ export interface CartItem {
     product: IProduct;
     quantity: number;
     subtotal: number;
+    discountAmount: number;
 }
 
 export interface ICartState {
     items: CartItem[];
     totalQuantity: number;
     totalPrice: number;
+    totalDiscount: number;
 }
 
 const loadCartFromStorage = (): ICartState => {
@@ -44,6 +46,7 @@ const loadCartFromStorage = (): ICartState => {
                     ...item,
                     quantity: safeNumber(item.quantity),
                     subtotal: safeNumber(item.subtotal),
+                    discountAmount: safeNumber(item.discountAmount),
                     product: {
                         ...item.product,
                         price: safeNumber(item.product?.price),
@@ -52,7 +55,8 @@ const loadCartFromStorage = (): ICartState => {
                     }
                 })),
                 totalQuantity: safeNumber(parsed.totalQuantity),
-                totalPrice: safeNumber(parsed.totalPrice)
+                totalPrice: safeNumber(parsed.totalPrice),
+                totalDiscount: safeNumber(parsed.totalDiscount),
             };
         }
     } catch (error) {
@@ -61,7 +65,8 @@ const loadCartFromStorage = (): ICartState => {
     return {
         items: [],
         totalQuantity: 0,
-        totalPrice: 0
+        totalPrice: 0,
+        totalDiscount: 0,
     };
 };
 
@@ -78,7 +83,8 @@ const initialState: ICartState = loadCartFromStorage();
 
 const updateCartTotals = (state: ICartState) => {
     state.totalQuantity = state.items.reduce((total, item) => total + (item.quantity || 0), 0);
-    state.totalPrice = state.items.reduce((total, item) => total + (item.subtotal || 0), 0);
+    state.totalDiscount = state.items.reduce((total, item) => total + (item.discountAmount || 0), 0);
+    state.totalPrice = state.items.reduce((total, item) => total + (item.subtotal || 0), 0) - state.totalDiscount;
     saveCartToStorage(state);
 };
 
@@ -106,6 +112,7 @@ export const cartSlice = createSlice({
                     },
                     quantity: 1,
                     subtotal: Math.round(numericPrice * 100) / 100,
+                    discountAmount: 0,
                 });
             }
 
@@ -133,6 +140,7 @@ export const cartSlice = createSlice({
                     },
                     quantity: numericQty,
                     subtotal: Math.round(numericQty * unitPrice * 100) / 100,
+                    discountAmount: 0,
                 });
             }
 
@@ -183,10 +191,19 @@ export const cartSlice = createSlice({
                 updateCartTotals(state);
             }
         },
+        setItemDiscount: (state, action: PayloadAction<{ id: number; discountAmount: number }>) => {
+            const { id, discountAmount } = action.payload;
+            const item = state.items.find(i => i.product.id === id);
+            if (item) {
+                item.discountAmount = Math.max(0, Math.round((discountAmount || 0) * 100) / 100);
+                updateCartTotals(state);
+            }
+        },
         clearCart: (state) => {
             state.items = [];
             state.totalQuantity = 0;
             state.totalPrice = 0;
+            state.totalDiscount = 0;
             localStorage.removeItem(CART_STORAGE_KEY);
         },
     },
@@ -195,6 +212,7 @@ export const cartSlice = createSlice({
 export const selectCartItems = (state: RootState) => state.cart.items;
 export const selectTotalQuantity = (state: RootState) => state.cart.totalQuantity;
 export const selectTotalPrice = (state: RootState) => state.cart.totalPrice;
+export const selectTotalDiscount = (state: RootState) => state.cart.totalDiscount;
 
 export const {
     addToCart,
@@ -202,6 +220,7 @@ export const {
     removeFromCart,
     decreaseQuantity,
     updateCartItem,
+    setItemDiscount,
     clearCart
 } = cartSlice.actions;
 

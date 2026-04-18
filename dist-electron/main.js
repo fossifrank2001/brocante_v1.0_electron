@@ -14556,7 +14556,7 @@ function runArtisan(phpPath, laravelPath, args) {
 }
 function waitForServer(port, host = "localhost") {
   return new Promise((resolve, reject) => {
-    const maxAttempts = 30;
+    const maxAttempts = 50;
     let attempts = 0;
     const check = () => {
       attempts++;
@@ -14564,7 +14564,7 @@ function waitForServer(port, host = "localhost") {
         console.log(`[PHP Server] Connection attempt ${attempts}/${maxAttempts}...`);
       }
       const socket = new net.Socket();
-      socket.setTimeout(1e3);
+      socket.setTimeout(500);
       socket.on("connect", () => {
         socket.destroy();
         resolve();
@@ -14574,7 +14574,7 @@ function waitForServer(port, host = "localhost") {
         if (attempts >= maxAttempts) {
           reject(new Error(`PHP server did not start after ${maxAttempts} attempts`));
         } else {
-          setTimeout(check, 500);
+          setTimeout(check, 200);
         }
       });
       socket.on("timeout", () => {
@@ -14582,7 +14582,7 @@ function waitForServer(port, host = "localhost") {
         if (attempts >= maxAttempts) {
           reject(new Error(`PHP server did not start after ${maxAttempts} attempts`));
         } else {
-          setTimeout(check, 500);
+          setTimeout(check, 200);
         }
       });
       socket.connect(port, host);
@@ -14627,24 +14627,12 @@ async function startPhpServerOnce() {
   }
   const dbPath = setupEnvironment(laravelPath);
   console.log(`[PHP Server] Database path: ${dbPath}`);
-  console.log("[PHP Server] Testing PHP executable...");
-  try {
-    const testResult = execSync(`"${phpPath}" -v`, { encoding: "utf-8", timeout: 5e3 });
-    console.log("[PHP Server] PHP test OK:", testResult.split("\n")[0]);
-  } catch (e) {
-    throw new Error(`PHP test failed: ${e.message}`);
-  }
-  console.log("[PHP Server] Testing artisan...");
-  try {
-    const artisanPath = path$5.join(laravelPath, "artisan");
-    execSync(`"${phpPath}" "${artisanPath}" --version`, {
-      encoding: "utf-8",
-      timeout: 1e4,
-      cwd: laravelPath
-    });
-    console.log("[PHP Server] Artisan test OK");
-  } catch (e) {
-    throw new Error(`Artisan test failed: ${e.message}`);
+  if (restartCount === 0) {
+    try {
+      execSync(`"${phpPath}" -r "echo 'ok';"`, { encoding: "utf-8", timeout: 3e3 });
+    } catch (e) {
+      throw new Error(`PHP not working: ${e.message}`);
+    }
   }
   apiPort = await findFreePort();
   console.log(`[PHP Server] Using port: ${apiPort}`);
@@ -14661,11 +14649,25 @@ async function startPhpServerOnce() {
     runArtisan(phpPath, laravelPath, ["db:seed", "--force"]);
     console.log("[PHP Server] Database initialized with seed data.");
   } else {
-    console.log("[PHP Server] Existing database found: running migrations only...");
-    runArtisan(phpPath, laravelPath, ["migrate", "--force"]);
-    console.log("[PHP Server] Migrations applied successfully.");
+    console.log("[PHP Server] Existing database: running migrations async...");
+    try {
+      const artisanPath = path$5.join(laravelPath, "artisan");
+      spawn(phpPath, [artisanPath, "migrate", "--force"], {
+        cwd: laravelPath,
+        stdio: "ignore",
+        windowsHide: true,
+        env: { ...process.env, APP_ENV: "production" }
+      });
+    } catch (e) {
+      console.warn("[PHP Server] Async migration failed, will retry:", e.message);
+    }
   }
-  runArtisan(phpPath, laravelPath, ["config:clear"]);
+  try {
+    runArtisan(phpPath, laravelPath, ["config:cache"]);
+    runArtisan(phpPath, laravelPath, ["route:cache"]);
+  } catch (e) {
+    console.warn("[PHP Server] Cache commands failed (non-critical):", e.message);
+  }
   const logFile = path$5.join(getUserDataPath(), "php-server.log");
   console.log(`[PHP Server] Logging to: ${logFile}`);
   try {

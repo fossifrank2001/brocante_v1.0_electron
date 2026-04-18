@@ -495,11 +495,13 @@ const treatedDataFunc = (_data: FormValues, useCompanyBalance = false, useSurplu
         amount_paid: actualAmountPaid,
         remaining_balance: remainingBalance,
         date_to_pay: _data.transactionType === 'advance' || _data.transactionType === 'loan' ? _data.date_to_pay : null,
-        items: _data.items.map(item => ({
+        discount_total: _data.items.reduce((sum: number, item: any) => sum + (item.discountAmount || 0), 0),
+        items: _data.items.map((item: any) => ({
             product_id: item.product.id,
             price: item.product.price,
             quantity: item.quantity,
-            total_unit: item.subtotal
+            total_unit: item.subtotal,
+            discount_amount: item.discountAmount || 0,
         })),
         has_authorized: _data.has_authorized,
         use_company_balance: useCompanyBalance,

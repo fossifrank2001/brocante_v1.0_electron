@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { Close, Payment, PointOfSale, AccountCircle, AttachMoney, PersonAdd } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { clearCart } from '@/Data/Slices/dashboard/seller/cartSlice';
+import { clearCart, setItemDiscount } from '@/Data/Slices/dashboard/seller/cartSlice';
 import { incrementSalesCount, addToTotalSales } from '@/Data/Slices/dashboard/cashSessionSlice';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
@@ -76,6 +76,10 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
 
     const companyBalanceToUse = useCompanyBalance ? Math.min(companyBalance, cart.totalPrice) : 0;
     const priceAfterBalance = cart.totalPrice - companyBalanceToUse;
+    
+    // Total discount already calculated in cart slice as sum of item discounts
+    const totalDiscount = cart.totalDiscount;
+
     const actualAmountPaidInt = parseInt(amountGiven || '0', 10);
     const expectedChange = transactionType === 'total' ? Math.max(0, actualAmountPaidInt - priceAfterBalance) : 0;
     const needsCustomer = transactionType === 'advance' || transactionType === 'loan' || useCompanyBalance;
@@ -160,11 +164,13 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                 amount_paid: finalPaidAmount,
                 remaining_balance: remainingBalance,
                 date_to_pay: (transactionType === 'advance' || transactionType === 'loan') ? dateToPay : null,
+                discount_total: cart.totalDiscount || 0,
                 items: cart.items.map(item => ({
                     product_id: item.product.id,
                     price: item.product.price,
                     quantity: item.quantity,
-                    total_unit: item.subtotal
+                    total_unit: item.subtotal,
+                    discount_amount: item.discountAmount || 0,
                 })),
                 has_authorized: true,
                 use_company_balance: useCompanyBalance,
@@ -377,11 +383,20 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                     <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-0.02em', color: '#ffffff' }}>
                         {UtilMethods.formatNumber(priceAfterBalance)}
                     </Typography>
-                    {useCompanyBalance && companyBalanceToUse > 0 && (
-                        <Typography variant="body2" sx={{ mt: 1, color: 'rgba(255,255,255,0.7)', textDecoration: 'line-through' }}>
-                            {t('posCheckout.beforeDeduction')}: {UtilMethods.formatNumber(cart.totalPrice)}
-                        </Typography>
-                    )}
+                    <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
+                        {useCompanyBalance && companyBalanceToUse > 0 && (
+                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'line-through' }}>
+                                {t('posCheckout.beforeDeduction')}: {UtilMethods.formatNumber(cart.totalPrice + companyBalanceToUse)}
+                            </Typography>
+                        )}
+                        {totalDiscount > 0 && (
+                            <Chip 
+                                size="small" 
+                                label={`${t('common.discount')}: -${UtilMethods.formatNumber(totalDiscount)}`}
+                                sx={{ bgcolor: 'rgba(239, 68, 68, 0.2)', color: '#fee2e2', fontWeight: 800, border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                            />
+                        )}
+                    </Box>
                 </Box>
 
                 {/* 2. Transaction Type */}

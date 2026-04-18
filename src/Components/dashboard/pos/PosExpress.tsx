@@ -10,7 +10,9 @@ import {
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { addToCart, addToCartWithQuantity, decreaseQuantity, clearCart, CartItem } from '@/Data/Slices/dashboard/seller/cartSlice';
+import { setActivePage } from '@/Data/Slices/NavigationSlice';
+import { Pages } from '@/Data/Objects/state';
+import { addToCart, addToCartWithQuantity, decreaseQuantity, setItemDiscount, clearCart, CartItem } from '@/Data/Slices/dashboard/seller/cartSlice';
 import ProductAPI from '@/Data/Api/Product';
 import CategoryAPI from '@/Data/Api/Category';
 import { IProduct } from '@/Data/Interfaces/Supply';
@@ -555,6 +557,12 @@ const PosProductCard: React.FC<{ product: IProduct; onAdd: (p: IProduct) => void
             : `${Constants.URL}/${product.thumbnail.path}`)
         : noImage;
 
+    const dispatch = useAppDispatch();
+    const handleViewDetail = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        dispatch(setActivePage({ page: Pages.ARTICLE, id: product.id, param: { sub_page: 'READ' } }));
+    };
+
     return (
         <motion.div
             whileHover={outOfStock ? {} : { y: -6, scale: 1.02 }}
@@ -657,6 +665,29 @@ const PosProductCard: React.FC<{ product: IProduct; onAdd: (p: IProduct) => void
                             </Box>
                         </Box>
                     )}
+
+                    {/* View Detail Icon */}
+                    <Box sx={{
+                        position: 'absolute',
+                        top: 12,
+                        right: 12,
+                        zIndex: 3
+                    }}>
+                        <Tooltip title={t('common.viewDetails')}>
+                            <IconButton 
+                                size="small" 
+                                onClick={handleViewDetail}
+                                sx={{ 
+                                    bgcolor: 'rgba(255,255,255,0.9)', 
+                                    '&:hover': { bgcolor: 'white', transform: 'scale(1.1)' },
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                <PointOfSale sx={{ fontSize: 16, color: '#6366f1' }} />
+                            </IconButton>
+                        </Tooltip>
+                    </Box>
                 </Box>
 
                 {/* Info Area */}
@@ -705,6 +736,7 @@ const PosProductCard: React.FC<{ product: IProduct; onAdd: (p: IProduct) => void
 
 /* ─── Compact Cart Item - PREMIUM ─── */
 const PosCartItem: React.FC<{ item: CartItem }> = ({ item }) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     return (
         <motion.div
@@ -715,49 +747,83 @@ const PosCartItem: React.FC<{ item: CartItem }> = ({ item }) => {
             transition={{ duration: 0.2 }}
         >
             <Box sx={{
-                display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, mb: 1.5,
+                display: 'flex', flexDirection: 'column', mb: 1.5,
                 borderRadius: '16px', bgcolor: 'var(--bg-surface)',
                 border: '1px solid var(--border-subtle)',
                 boxShadow: 'var(--shadow-sm)',
-                position: 'relative', overflow: 'hidden',
+                overflow: 'hidden',
                 '&:hover': { borderColor: '#6366f1', boxShadow: 'var(--shadow-md)' }, transition: 'all 0.2s'
             }}>
-                <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: 'linear-gradient(to bottom, #6366f1, #4338ca)' }} />
-
-                <Box sx={{
-                    width: 40, height: 40, borderRadius: '12px', background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                }}>
-                    <Typography sx={{ fontWeight: 900, color: '#4f46e5', fontSize: '1rem' }}>
-                        {item.product.name.charAt(0)}
-                    </Typography>
-                </Box>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography sx={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {item.product.name}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                        <Typography sx={{ fontWeight: 900, fontSize: '0.9rem', color: '#6366f1' }}>
-                            {UtilMethods.formatAmount(item?.subtotal ?? 0)}
-                        </Typography>
-                        <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>
-                            ({item?.product?.allowsDecimal ? Number(item?.quantity || 0).toFixed(3) : (item?.quantity || 0)} {item?.product?.unitAbbreviation || 'pce'})
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5 }}>
+                    <Box sx={{
+                        width: 40, height: 40, borderRadius: '12px', background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                    }}>
+                        <Typography sx={{ fontWeight: 900, color: '#4f46e5', fontSize: '1rem' }}>
+                            {item.product.name.charAt(0)}
                         </Typography>
                     </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {item.product.name}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                            <Typography sx={{ fontWeight: 900, fontSize: '0.9rem', color: '#6366f1' }}>
+                                {UtilMethods.formatAmount(item?.subtotal ?? 0)}
+                            </Typography>
+                            {item.discountAmount > 0 && (
+                                <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 700, ml: 1 }}>
+                                    -{UtilMethods.formatAmount(item.discountAmount)}
+                                </Typography>
+                            )}
+                        </Box>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0, bgcolor: 'var(--bg-elevated)', borderRadius: '10px', p: 0.5, border: '1px solid var(--border-color)' }}>
+                        <IconButton size="small" onClick={() => dispatch(decreaseQuantity({ id: item.product.id, price: item.product.price }))}
+                            sx={{ width: 24, height: 24, bgcolor: 'var(--bg-surface)', border: '1px solid var(--border-color)', '&:hover': { color: '#ef4444', bgcolor: 'var(--bg-secondary)' } }}>
+                            <Remove sx={{ fontSize: 14 }} />
+                        </IconButton>
+                        <Typography sx={{ minWidth: 24, textAlign: 'center', fontWeight: 900, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                            {item?.product?.allowsDecimal ? Number(item?.quantity || 0).toFixed(3) : (item?.quantity || 0)}
+                        </Typography>
+                        <IconButton size="small" onClick={() => dispatch(addToCart({ ...item.product }))}
+                            disabled={item.product.quantity <= 0}
+                            sx={{ width: 24, height: 24, bgcolor: 'var(--bg-surface)', border: '1px solid var(--border-color)', '&:hover': { color: '#10b981', bgcolor: 'var(--bg-secondary)' } }}>
+                            <Add sx={{ fontSize: 14 }} />
+                        </IconButton>
+                    </Box>
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0, bgcolor: 'var(--bg-elevated)', borderRadius: '10px', p: 0.5, border: '1px solid var(--border-color)' }}>
-                    <IconButton size="small" onClick={() => dispatch(decreaseQuantity({ id: item.product.id, price: item.product.price }))}
-                        sx={{ width: 24, height: 24, bgcolor: 'var(--bg-surface)', border: '1px solid var(--border-color)', '&:hover': { color: '#ef4444', bgcolor: 'var(--bg-secondary)' } }}>
-                        <Remove sx={{ fontSize: 14 }} />
-                    </IconButton>
-                    <Typography sx={{ minWidth: 24, textAlign: 'center', fontWeight: 900, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
-                        {item?.product?.allowsDecimal ? Number(item?.quantity || 0).toFixed(3) : (item?.quantity || 0)}
+                
+                {/* Discount input - PREMIUM */}
+                <Box sx={{ px: 1.5, pb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase' }}>
+                        {t('common.discount')}
                     </Typography>
-                    <IconButton size="small" onClick={() => dispatch(addToCart({ ...item.product }))}
-                        disabled={item.product.quantity <= 0}
-                        sx={{ width: 24, height: 24, bgcolor: 'var(--bg-surface)', border: '1px solid var(--border-color)', '&:hover': { color: '#10b981', bgcolor: 'var(--bg-secondary)' } }}>
-                        <Add sx={{ fontSize: 14 }} />
-                    </IconButton>
+                    <TextField
+                        size="small"
+                        type="number"
+                        placeholder="0.00"
+                        value={item.discountAmount || ''}
+                        onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            dispatch(setItemDiscount({ id: item.product.id, discountAmount: isNaN(val) ? 0 : val }));
+                        }}
+                        InputProps={{
+                            sx: { 
+                                height: 28, 
+                                borderRadius: '8px', 
+                                fontSize: '0.75rem', 
+                                fontWeight: 800,
+                                bgcolor: 'var(--bg-surface)',
+                                '& fieldset': { borderColor: 'var(--border-subtle)' }
+                            }
+                        }}
+                        sx={{ width: 100 }}
+                    />
+                    <Box sx={{ flex: 1 }} />
+                    <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>
+                        ({item?.product?.allowsDecimal ? Number(item?.quantity || 0).toFixed(3) : (item?.quantity || 0)} {item?.product?.unitAbbreviation || 'pce'})
+                    </Typography>
                 </Box>
             </Box>
         </motion.div>

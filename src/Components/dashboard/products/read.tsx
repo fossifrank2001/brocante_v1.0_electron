@@ -228,86 +228,142 @@ const ReadProduct = () => {
                                 </Card>
                             </Grid>
 
-                            {/* Template-based attributes */}
-                            {(record as any).template && (record as any).template_values && Object.keys((record as any).template_values).length > 0 && (
+                            {/* Template-based attributes - Multi-templates support */}
+                            {(record as any).template_values && Object.keys((record as any).template_values).length > 0 && (() => {
+                                const templateValues = (record as any).template_values;
+                                // Group values by template ID (format: templateId_fieldKey)
+                                const templateGroups: Record<string, { templateId: string; fields: Array<{ key: string; value: any }> }> = {};
+                                
+                                Object.entries(templateValues).forEach(([fullKey, value]) => {
+                                    if (value === undefined || value === null || value === '') return;
+                                    
+                                    const parts = fullKey.split('_');
+                                    if (parts.length < 2) return;
+                                    
+                                    const templateId = parts[0];
+                                    const fieldKey = parts.slice(1).join('_');
+                                    
+                                    if (!templateGroups[templateId]) {
+                                        templateGroups[templateId] = { templateId, fields: [] };
+                                    }
+                                    
+                                    templateGroups[templateId].fields.push({ key: fieldKey, value });
+                                });
+
+                                return Object.values(templateGroups).map((group, idx) => {
+                                    // Find corresponding subcategory and template info
+                                    const subCat : any = record.subcategories.find((sc: any) => 
+                                        sc.templates?.some((t: any) => String(t.id) === group.templateId)
+                                    );
+                                    const template = subCat?.templates?.find((t: any) => String(t.id) === group.templateId);
+                                    
+                                    if (!template || group.fields.length === 0) return null;
+
+                                    return (
+                                        <Grid item xs={12} key={`template-${group.templateId}`}>
+                                            <Card sx={{
+                                                borderRadius: '24px',
+                                                border: '1px solid rgba(79, 70, 229, 0.2)',
+                                                background: 'var(--bg-surface)',
+                                                boxShadow: 'var(--shadow-sm)'
+                                            }}>
+                                                <CardContent sx={{ p: 4 }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                                                        <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}>
+                                                            <ListAlt />
+                                                        </Box>
+                                                        <Box>
+                                                            <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b' }}>{template.name}</Typography>
+                                                            {subCat && (
+                                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+                                                                    {subCat.label}
+                                                                </Typography>
+                                                            )}
+                                                        </Box>
+                                                    </Box>
+                                                    {template.description && (
+                                                        <Typography variant="body2" sx={{ color: '#64748b', mb: 2, fontStyle: 'italic' }}>
+                                                            {template.description}
+                                                        </Typography>
+                                                    )}
+                                                    <Grid container spacing={3}>
+                                                        {group.fields.map(({ key, value }) => {
+                                                            const field = template.fields?.find((f: any) => f.field_key === key);
+                                                            if (!field) return null;
+                                                            
+                                                            let displayVal = String(value);
+                                                            if (field.field_type === 'boolean') {
+                                                                displayVal = value === true || value === 'true' ? t('common.yes') : t('common.no');
+                                                            }
+                                                            if (field.unit) {
+                                                                displayVal = `${value} ${field.unit}`;
+                                                            }
+                                                            
+                                                            return (
+                                                                <Grid item xs={12} sm={6} key={`${group.templateId}_${key}`}>
+                                                                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>
+                                                                        {field.name}
+                                                                    </Typography>
+                                                                    <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>
+                                                                        {displayVal}
+                                                                    </Typography>
+                                                                </Grid>
+                                                            );
+                                                        })}
+                                                    </Grid>
+                                                </CardContent>
+                                            </Card>
+                                        </Grid>
+                                    );
+                                });
+                            })()}
+
+                            {/* Technical Specs - Only show if no subcategories (legacy support) */}
+                            {record.subcategories.length === 0 && (
                                 <Grid item xs={12}>
                                     <Card sx={{
                                         borderRadius: '24px',
-                                        border: '1px solid rgba(79, 70, 229, 0.2)',
+                                        border: '1px solid var(--border-color)',
                                         background: 'var(--bg-surface)',
                                         boxShadow: 'var(--shadow-sm)'
                                     }}>
                                         <CardContent sx={{ p: 4 }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                                                <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}>
+                                                <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
                                                     <ListAlt />
                                                 </Box>
-                                                <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b' }}>{(record as any).template.name}</Typography>
+                                                <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b' }}>{t('product.technicalSpecs')}</Typography>
                                             </Box>
                                             <Grid container spacing={3}>
-                                                {((record as any).template.fields || []).map((field: any) => {
-                                                    const val = (record as any).template_values[field.field_key];
-                                                    if (val === undefined || val === null || val === '') return null;
-                                                    let displayVal = String(val);
-                                                    if (field.field_type === 'boolean') displayVal = val === true || val === 'true' ? t('common.yes') : t('common.no');
-                                                    if (field.unit) displayVal = `${val} ${field.unit}`;
-                                                    return (
-                                                        <Grid item xs={12} sm={6} key={field.id || field.field_key}>
-                                                            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{field.name}</Typography>
-                                                            <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{displayVal}</Typography>
-                                                        </Grid>
-                                                    );
-                                                })}
+                                                <Grid item xs={6}>
+                                                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.brand')}</Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.brand || "-"}</Typography>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.model')}</Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.model || "-"}</Typography>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.dimensions')}</Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.size || record.details?.dimensions || "-"}</Typography>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.weight')}</Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.weight || "-"}</Typography>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.material')}</Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.material || "-"}</Typography>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.color')}</Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.color || "-"}</Typography>
+                                                </Grid>
                                             </Grid>
                                         </CardContent>
                                     </Card>
                                 </Grid>
                             )}
-
-                            {/* Technical Specs */}
-                            <Grid item xs={12}>
-                                <Card sx={{
-                                    borderRadius: '24px',
-                                    border: '1px solid var(--border-color)',
-                                    background: 'var(--bg-surface)',
-                                    boxShadow: 'var(--shadow-sm)'
-                                }}>
-                                    <CardContent sx={{ p: 4 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                                            <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
-                                                <ListAlt />
-                                            </Box>
-                                            <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b' }}>{t('product.technicalSpecs')}</Typography>
-                                        </Box>
-                                        <Grid container spacing={3}>
-                                            <Grid item xs={6}>
-                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.brand')}</Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.brand || "-"}</Typography>
-                                            </Grid>
-                                            <Grid item xs={6}>
-                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.model')}</Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.model || "-"}</Typography>
-                                            </Grid>
-                                            <Grid item xs={6}>
-                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.dimensions')}</Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.size || record.details?.dimensions || "-"}</Typography>
-                                            </Grid>
-                                            <Grid item xs={6}>
-                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.weight')}</Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.weight || "-"}</Typography>
-                                            </Grid>
-                                            <Grid item xs={6}>
-                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.material')}</Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.material || "-"}</Typography>
-                                            </Grid>
-                                            <Grid item xs={6}>
-                                                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>{t('product.color')}</Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>{record.details?.color || "-"}</Typography>
-                                            </Grid>
-                                        </Grid>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
 
                             {/* Suppliers */}
                             <Grid item xs={12}>

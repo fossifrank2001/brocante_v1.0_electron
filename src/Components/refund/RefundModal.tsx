@@ -241,19 +241,39 @@ const RefundModal = ({ open, onClose, sell, onRefundCreated }: RefundModalProps)
                             </RadioGroup>
                         </FormControl>
 
-                        <TextField
-                            fullWidth
-                            label={t('refund.reason')}
-                            multiline
-                            rows={3}
-                            value={reason}
-                            onChange={(e) => setReason(e.target.value)}
-                            placeholder={t('refund.reasonPlaceholder')}
-                            InputProps={{
-                                sx: { borderRadius: '12px' }
-                            }}
-                            required
-                        />
+                        <Box sx={{ mt: 1 }}>
+                            <Typography variant="caption" sx={{ mb: 1, display: 'block', color: 'text.secondary', fontWeight: 600 }}>
+                                {t('refund.reason')}
+                            </Typography>
+                            <textarea
+                                placeholder={t('refund.reasonPlaceholder')}
+                                value={reason}
+                                onChange={(e) => setReason(e.target.value)}
+                                rows={3}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px 16px',
+                                    borderRadius: '14px',
+                                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                                    backgroundColor: '#f8fafc',
+                                    fontFamily: 'inherit',
+                                    fontSize: '0.9375rem',
+                                    resize: 'vertical',
+                                    minHeight: '100px',
+                                    outline: 'none',
+                                    fontWeight: 500,
+                                    transition: 'border-color 0.2s, box-shadow 0.2s'
+                                }}
+                                onFocus={(e) => {
+                                    e.currentTarget.style.borderColor = '#f59e0b';
+                                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.1)';
+                                }}
+                                onBlur={(e) => {
+                                    e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.1)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                }}
+                            />
+                        </Box>
                     </>
                 )}
             </DialogContent>

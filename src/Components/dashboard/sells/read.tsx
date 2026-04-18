@@ -524,6 +524,7 @@ const ReadSell = () => {
                                                         <th className="border-0 px-4 py-3" style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700 }}>{t('sellRead.product')}</th>
                                                         <th className="border-0 px-4 py-3 text-center" style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700 }}>{t('sellRead.quantity')}</th>
                                                         <th className="border-0 px-4 py-3 text-end" style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700 }}>{t('sellRead.price')}</th>
+                                                        <th className="border-0 px-4 py-3 text-end" style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700 }}>{t('common.discount')}</th>
                                                         <th className="border-0 px-4 py-3 text-end" style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 700 }}>{t('sellRead.subtotal')}</th>
                                                     </tr>
                                                 </thead>
@@ -540,7 +541,16 @@ const ReadSell = () => {
                                                                 <Typography variant="body2" sx={{ color: '#64748b' }}>{UtilMethods.formatAmount(item?.price ?? 0)}</Typography>
                                                             </td>
                                                             <td className="px-4 py-3 text-end">
-                                                                <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>{UtilMethods.formatAmount((item?.price ?? 0) * (item?.quantity ?? 0))}</Typography>
+                                                                {item.discount_amount > 0 ? (
+                                                                    <Typography variant="body2" sx={{ color: '#ef4444', fontWeight: 700 }}>
+                                                                        -{UtilMethods.formatAmount(item.discount_amount)}
+                                                                    </Typography>
+                                                                ) : (
+                                                                    <Typography variant="body2" sx={{ color: '#cbd5e1' }}>—</Typography>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-4 py-3 text-end">
+                                                                <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>{UtilMethods.formatAmount(item?.total_unit ?? 0)}</Typography>
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -552,7 +562,17 @@ const ReadSell = () => {
                                                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                                             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                                                 <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>{t('sellRead.subtotal')}</Typography>
-                                                                <Typography variant="body2" sx={{ fontWeight: 700 }}>{UtilMethods.formatAmount(record?.total_amount ?? 0)}</Typography>
+                                                                <Typography variant="body2" sx={{ fontWeight: 700 }}>{UtilMethods.formatAmount((record?.total_amount ?? 0) + (record?.discount_total ?? 0))}</Typography>
+                                                            </Box>
+                                                            {record?.discount_total > 0 && (
+                                                                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                                    <Typography variant="body2" sx={{ color: '#ef4444', fontWeight: 600 }}>{t('common.discount')}</Typography>
+                                                                    <Typography variant="body2" sx={{ color: '#ef4444', fontWeight: 700 }}>-{UtilMethods.formatAmount(record.discount_total)}</Typography>
+                                                                </Box>
+                                                            )}
+                                                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                                <Typography variant="subtitle2" sx={{ color: '#1e293b', fontWeight: 800 }}>{t('common.total')}</Typography>
+                                                                <Typography variant="subtitle2" sx={{ fontWeight: 900, color: '#4f46e5' }}>{UtilMethods.formatAmount(record?.total_amount ?? 0)}</Typography>
                                                             </Box>
                                                             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                                                 <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 600 }}>{t('sellRead.amountPaid')}</Typography>
@@ -1059,20 +1079,58 @@ const ReadSell = () => {
                         {t('sellRead.cancelWarning')}
                     </Typography>
 
-                    <TextField
-                        fullWidth
-                        multiline
-                        rows={4}
+                    {record && (
+                        <Box sx={{ p: 2, mb: 3, bgcolor: '#fef2f2', borderRadius: '16px', border: '1px solid #fecaca' }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#991b1b', mb: 1, textTransform: 'uppercase', fontSize: '0.7rem' }}>
+                                {t('sellRead.consequences')}
+                            </Typography>
+                            <Stack spacing={1}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#b91c1c' }}>• {t('sellRead.restockItems')}</Typography>
+                                    <Typography variant="caption" sx={{ fontWeight: 800, color: '#b91c1c' }}>{record.sell_items.length} {t('sellRead.products')}</Typography>
+                                </Box>
+                                {record.paid_amount > 0 && (
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="caption" sx={{ fontWeight: 600, color: '#b91c1c' }}>• {t('sellRead.refundToBalance')}</Typography>
+                                        <Typography variant="caption" sx={{ fontWeight: 800, color: '#b91c1c' }}>+{UtilMethods.formatAmount(record.paid_amount)}</Typography>
+                                    </Box>
+                                )}
+                                {record.remaining_balance > 0 && (
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="caption" sx={{ fontWeight: 600, color: '#b91c1c' }}>• {t('sellRead.deleteDebt')}</Typography>
+                                        <Typography variant="caption" sx={{ fontWeight: 800, color: '#b91c1c' }}>-{UtilMethods.formatAmount(record.remaining_balance)}</Typography>
+                                    </Box>
+                                )}
+                            </Stack>
+                        </Box>
+                    )}
+
+                    <textarea
                         placeholder={t('sellRead.cancelReasonPlaceholder')}
                         value={cancelReason}
                         onChange={(e) => setCancelReason(e.target.value)}
-                        variant="outlined"
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                borderRadius: '16px',
-                                bgcolor: 'var(--input-bg)',
-                                fontWeight: 600
-                            }
+                        rows={4}
+                        style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '14px',
+                            border: '1px solid rgba(0, 0, 0, 0.1)',
+                            backgroundColor: 'var(--bg-secondary)',
+                            fontFamily: 'inherit',
+                            fontSize: '0.9375rem',
+                            resize: 'vertical',
+                            minHeight: '120px',
+                            outline: 'none',
+                            fontWeight: 600,
+                            transition: 'border-color 0.2s, box-shadow 0.2s'
+                        }}
+                        onFocus={(e) => {
+                            e.currentTarget.style.borderColor = '#ef4444';
+                            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+                        }}
+                        onBlur={(e) => {
+                            e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.1)';
+                            e.currentTarget.style.boxShadow = 'none';
                         }}
                     />
                 </DialogContent>

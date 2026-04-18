@@ -5,7 +5,7 @@ import { ICategory, SubCategory } from 'Data/Interfaces/Category';
 import CategoryAPI from 'Data/Api/Category';
 import { IProductPayload } from 'Data/Interfaces/Product';
 import { TextField, MenuItem, Select, FormControl, InputLabel, Box, Grid, Alert, AlertTitle, InputAdornment, Typography } from '@mui/material';
-import { TbShoppingBag, TbBarcode, TbTag, TbBuildingFactory2, TbScan, TbBox, TbCurrencyEuro, TbCategory, TbTags, TbFileDescription, TbScale } from 'react-icons/tb';
+import { TbShoppingBag, TbBarcode, TbTag, TbBuildingFactory2, TbScan, TbBox, TbCurrencyEuro, TbCategory, TbTags, TbFileDescription, TbScale, TbReceipt, TbAlertTriangle } from 'react-icons/tb';
 import UnitAPI from 'Data/Api/Unit';
 import { IUnit } from 'Data/Interfaces/Unit';
 import { useTranslation } from 'react-i18next';
@@ -61,7 +61,7 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
 
     return (
         <Box className="product-info-modern">
-            <Box sx={{ p: 4, borderRadius: '24px', bgcolor: 'var(--bg-surface)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)' }}>
+            <Box sx={{ p: 4,  }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
                     <Box sx={{ p: 1.5, borderRadius: '14px', bgcolor: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}>
                         <TbShoppingBag size={24} />
@@ -210,6 +210,50 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                         />
                     </Grid>
 
+                    <Grid item xs={12} md={3}>
+                        <TextField
+                            fullWidth
+                            label={t('product.costPrice')}
+                            name="cost_price"
+                            type="number"
+                            value={values.cost_price ?? ''}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            placeholder={t('product.costPricePlaceholder')}
+                            variant="outlined"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <TbReceipt size={20} color="#64748b" />
+                                    </InputAdornment>
+                                ),
+                                sx: { borderRadius: '14px', bgcolor: 'var(--input-bg)' }
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid item xs={12} md={3}>
+                        <TextField
+                            fullWidth
+                            label={t('product.stockAlertThreshold')}
+                            name="stock_alert_threshold"
+                            type="number"
+                            value={values.stock_alert_threshold ?? ''}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            placeholder={t('product.stockAlertPlaceholder')}
+                            variant="outlined"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <TbAlertTriangle size={20} color="#f59e0b" />
+                                    </InputAdornment>
+                                ),
+                                sx: { borderRadius: '14px', bgcolor: 'var(--input-bg)' }
+                            }}
+                        />
+                    </Grid>
+
                     <Grid item xs={12} md={6}>
                         <FormControl fullWidth variant="outlined">
                             <InputLabel id="unit-label">{t('product.uom')}</InputLabel>
@@ -301,25 +345,42 @@ const ProductInfo: React.FC<IProductInfoProps> = ({ categoryRecord }) => {
                     </Grid>
 
                     <Grid item xs={12}>
-                        <TextField
-                            fullWidth
-                            label={t('common.description')}
-                            name="description"
-                            multiline
-                            rows={4}
-                            value={values.description}
-                            onChange={handleChange}
-                            placeholder={t('common.descriptionPlaceholder')}
-                            variant="outlined"
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5 }}>
-                                        <TbFileDescription size={20} color="#64748b" />
-                                    </InputAdornment>
-                                ),
-                                sx: { borderRadius: '14px', bgcolor: 'var(--input-bg)' }
-                            }}
-                        />
+                        <Box sx={{ position: 'relative' }}>
+                            <Typography variant="caption" sx={{ mb: 1, display: 'block', color: 'text.secondary', fontWeight: 500 }}>
+                                {t('common.description')}
+                            </Typography>
+                            <Box sx={{ position: 'absolute', top: 36, left: 12, zIndex: 1 }}>
+                                <TbFileDescription size={20} color="#64748b" />
+                            </Box>
+                            <textarea
+                                name="description"
+                                rows={4}
+                                value={values.description}
+                                onChange={handleChange}
+                                placeholder={t('common.descriptionPlaceholder')}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px 12px 12px 44px',
+                                    borderRadius: '14px',
+                                    border: '1px solid rgba(0, 0, 0, 0.23)',
+                                    backgroundColor: 'var(--input-bg, #f8fafc)',
+                                    fontFamily: 'inherit',
+                                    fontSize: '0.9375rem',
+                                    resize: 'vertical',
+                                    minHeight: '100px',
+                                    outline: 'none',
+                                    transition: 'border-color 0.2s, box-shadow 0.2s'
+                                }}
+                                onFocus={(e) => {
+                                    e.target.style.borderColor = '#4f46e5';
+                                    e.target.style.boxShadow = '0 0 0 3px rgba(79, 70, 229, 0.1)';
+                                }}
+                                onBlur={(e) => {
+                                    e.target.style.borderColor = 'rgba(0, 0, 0, 0.23)';
+                                    e.target.style.boxShadow = 'none';
+                                }}
+                            />
+                        </Box>
                     </Grid>
                 </Grid>
             </Box>

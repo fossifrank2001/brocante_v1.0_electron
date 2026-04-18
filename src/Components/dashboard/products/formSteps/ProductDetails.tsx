@@ -29,6 +29,56 @@ const ProductDetails: React.FC = () => {
         const error = touched.product_details?.[key] && Boolean(errors.product_details?.[key]);
         const helperText = touched.product_details?.[key] && (errors.product_details?.[key] as string);
 
+        if (multiline) {
+            return (
+                <Grid item xs={12} md={6}>
+                    <Tooltip title={tooltip} arrow placement="top">
+                        <Box sx={{ position: 'relative' }}>
+                            <Typography variant="caption" sx={{ mb: 1, display: 'block', color: 'text.secondary', fontWeight: 500 }}>
+                                {label}
+                            </Typography>
+                            <Box sx={{ position: 'absolute', top: 32, left: 12, zIndex: 1 }}>
+                                <Box sx={{ color: '#64748b', display: 'flex' }}>{icon}</Box>
+                            </Box>
+                            <textarea
+                                name={fieldName}
+                                rows={4}
+                                value={values.product_details[key] || ''}
+                                onChange={handleChange}
+                                onBlur={(e) => {
+                                    handleBlur(e);
+                                    e.target.style.borderColor = error ? '#ef4444' : 'rgba(0, 0, 0, 0.23)';
+                                    e.target.style.boxShadow = 'none';
+                                }}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px 12px 12px 44px',
+                                    borderRadius: '14px',
+                                    border: error ? '1px solid #ef4444' : '1px solid rgba(0, 0, 0, 0.23)',
+                                    backgroundColor: 'var(--input-bg, #f8fafc)',
+                                    fontFamily: 'inherit',
+                                    fontSize: '0.9375rem',
+                                    resize: 'vertical',
+                                    minHeight: '100px',
+                                    outline: 'none',
+                                    transition: 'border-color 0.2s, box-shadow 0.2s'
+                                }}
+                                onFocus={(e) => {
+                                    e.target.style.borderColor = '#4f46e5';
+                                    e.target.style.boxShadow = '0 0 0 3px rgba(79, 70, 229, 0.1)';
+                                }}
+                            />
+                            {helperText && (
+                                <Typography variant="caption" color="error" sx={{ mt: 0.5, display: 'block' }}>
+                                    {helperText}
+                                </Typography>
+                            )}
+                        </Box>
+                    </Tooltip>
+                </Grid>
+            );
+        }
+
         return (
             <Grid item xs={12} md={6} lg={4}>
                 <Tooltip title={tooltip} arrow placement="top">
@@ -37,8 +87,6 @@ const ProductDetails: React.FC = () => {
                         label={label}
                         name={fieldName}
                         type={type}
-                        multiline={multiline}
-                        rows={multiline ? 4 : 1}
                         value={values.product_details[key] || ''}
                         onChange={handleChange}
                         onBlur={handleBlur}
@@ -178,8 +226,8 @@ const ProductDetails: React.FC = () => {
                         {renderField(t('product.usage'), "product_details.usage", <TbTool size={20} />, t('product.usage'))}
                         {renderField(t('product.compatibility'), "product_details.compatibility", <TbPuzzle size={20} />, t('product.compatibility'))}
 
-                        {renderField(t('product.features'), "product_details.features", <TbListCheck size={20} />, t('product.features'), "text", true)}
-                        {renderField(t('product.notes'), "product_details.notes", <TbNote size={20} />, t('product.notes'), "text", true)}
+                        {renderField(t('product.features'), "product_details.features", <TbListCheck size={20} />, t('product.featuresTooltip', 'Caractéristiques du produit'), "text", true)}
+                        {renderField(t('product.notes'), "product_details.notes", <TbNote size={20} />, t('product.notesTooltip', 'Notes additionnelles'), "text", true)}
                     </Grid>
 
                     {!showAll && (

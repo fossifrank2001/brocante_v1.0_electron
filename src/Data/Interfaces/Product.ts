@@ -9,7 +9,9 @@ export interface IProductPayload {
     qrcode_data?: string;
     description: string;
     price: number;
+    cost_price?: number | null;
     stock_quantity: number;
+    stock_alert_threshold?: number | null;
     subcategory_ids: SubCategory[];
     suppliers: ISupply[];
     product_details: Partial<IProductDetail>;

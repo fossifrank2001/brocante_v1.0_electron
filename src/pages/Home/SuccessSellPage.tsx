@@ -126,16 +126,16 @@ function SuccessSellPage(): JSX.Element {
                             <Box sx={{
                                 py: 2,
                                 px: 3,
-                                bgcolor: '#f1f5f9',
+                                bgcolor: '#059669',
                                 borderRadius: '8px',
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center'
                             }}>
-                                <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500 }}>
+                                <Typography variant="body2" sx={{ color: '#ffffff', fontWeight: 600 }}>
                                     {t('successSell.ticketNumber')}
                                 </Typography>
-                                <Typography variant="subtitle1" sx={{ color: '#0f172a', fontWeight: 700, fontFamily: 'monospace' }}>
+                                <Typography variant="subtitle1" sx={{ color: '#ffffff', fontWeight: 700, fontFamily: 'monospace' }}>
                                     {displayCode}
                                 </Typography>
                             </Box>

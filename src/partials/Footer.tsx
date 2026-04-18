@@ -4,15 +4,14 @@ import { useTranslation } from 'react-i18next'
 
 export default function Footer() {
     const { t } = useTranslation()
-    return <div className="p-6 rounded-4 mb-2 text-center admin_footer" style={{
-        position: 'absolute',
+    return <div className="p-4 rounded-4 mt-auto text-center admin_footer" style={{
+        position: 'relative',
         display: 'block',
-        bottom: 0,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 1000,
+        width: '100%',
         backgroundColor: 'var(--bg-surface)',
         transition: 'background-color 0.3s ease',
+        marginTop: '2rem',
+        borderTop: '1px solid var(--border-color)',
     }}>
         <p className="mb-0 fs-4" style={{ color: 'var(--text-secondary)' }}>{t('footer.designedBy')}
             <Link href="#" target="_blank"

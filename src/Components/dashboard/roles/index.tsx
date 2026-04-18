@@ -23,6 +23,7 @@ import RoleAPI from '@/Data/Api/Role';
 import Toast from '@/Data/Utilities/Toast';
 import { useFormik } from 'formik';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface FormValues {
     label: string;
@@ -30,6 +31,7 @@ interface FormValues {
 }
 
 export default function IndexRole() {
+    const { t } = useTranslation();
     const context = useAppContext();
 
     const [isError, setIsError] = useState(false);
@@ -59,8 +61,8 @@ export default function IndexRole() {
 
     useLayoutEffect(() => {
         context.togglePageLoading();
-        document.title = constants.APP_NAME + ' .:. Rôles';
-    }, [context]);
+        document.title = constants.APP_NAME + ' .:. ' + t('role.title');
+    }, [context, t]);
 
     const resetScroll = () => {
         window.scrollTo(0, 0);
@@ -116,7 +118,7 @@ export default function IndexRole() {
             ...role,
             actions: (
                 <Stack direction="row" spacing={1}>
-                    <Tooltip title="Modifier le rôle" TransitionComponent={Zoom} arrow>
+                    <Tooltip title={t('role.editRole')} TransitionComponent={Zoom} arrow>
                         <IconButton
                             size="small"
                             onClick={() => {
@@ -132,7 +134,7 @@ export default function IndexRole() {
                             <Edit fontSize="small" />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Supprimer le rôle" TransitionComponent={Zoom} arrow>
+                    <Tooltip title={t('role.deleteRole')} TransitionComponent={Zoom} arrow>
                         <IconButton
                             size="small"
                             onClick={() => {
@@ -147,16 +149,16 @@ export default function IndexRole() {
                 </Stack>
             ),
         })) : [];
-    }, [roles]);
+    }, [roles, t]);
 
     const columns: MRT_ColumnDef<IRoleTableData>[] = useMemo(
         () => [
             {
                 accessorKey: "label",
-                header: "Label",
+                header: t('role.label'),
                 size: 200,
                 muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filtrer" },
+                    inputProps: { placeHolder: t('role.filter') },
                 }),
                 Cell: ({ cell }) => (
                     <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>
@@ -166,10 +168,10 @@ export default function IndexRole() {
             },
             {
                 accessorKey: "code",
-                header: "Code",
+                header: t('role.code'),
                 size: 200,
                 muiFilterTextFieldProps: () => ({
-                    inputProps: { placeHolder: "filtrer" },
+                    inputProps: { placeHolder: t('role.filter') },
                 }),
                 Cell: ({ cell }) => (
                     <Box sx={{
@@ -190,14 +192,15 @@ export default function IndexRole() {
             },
             {
                 accessorKey: "actions",
-                header: "Actions",
+                header: t('common.actions'),
                 size: 150,
                 unexport: true,
                 enableColumnFilter: false,
                 enableSorting: false,
             },
         ],
-        [],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [t],
     );
 
     const mrTable: MRT_TableInstance<IRoleTableData> = useMaterialReactTable({
@@ -253,7 +256,7 @@ export default function IndexRole() {
         muiToolbarAlertBannerProps: isError
             ? {
                 color: "error",
-                children: "Erreur de chargement des données",
+                children: t('role.errorLoading'),
             }
             : undefined,
         onColumnFiltersChange: setColumnFilters,
@@ -275,7 +278,7 @@ export default function IndexRole() {
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: "flex", gap: 2.5, p: 3, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
-                    Gestion des Rôles
+                    {t('role.management')}
                 </Typography>
 
                 <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
@@ -295,7 +298,7 @@ export default function IndexRole() {
                             '&:hover': { bgcolor: '#f5f7ff', borderColor: '#6366f1' }
                         }}
                     >
-                        Rafraîchir
+                        {t('role.refresh')}
                     </Button>
 
                     {UtilMethods.getHabilitations(authorizations, 'role').canExport && (
@@ -317,7 +320,7 @@ export default function IndexRole() {
                                 }
                             }}
                         >
-                            Exporter
+                            {t('role.export')}
                         </Button>
                     )}
                 </Box>
@@ -371,13 +374,13 @@ export default function IndexRole() {
             const errors: Partial<FormValues> = {};
 
             if (!values.label) {
-                errors.label = 'Le champ Label est requis.';
+                errors.label = t('role.labelRequired');
             }
 
             if (!values.code) {
-                errors.code = 'Le champ Code est requis.';
+                errors.code = t('role.codeRequired');
             } else if (!/^[A-Z*]{4,}$/.test(values.code)) {
-                errors.code = 'Code invalide.';
+                errors.code = t('role.codeInvalid');
             }
 
             return errors;
@@ -388,7 +391,7 @@ export default function IndexRole() {
         <Box>
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 <Box sx={{ mb: 4 }}>
-                    <Breadcrumd parent="Rôles" />
+                    <Breadcrumd parent={t('role.title')} />
                 </Box>
                 <MaterialReactTable table={mrTable} />
 
@@ -397,7 +400,7 @@ export default function IndexRole() {
                     content={{
                         style: 'ti ti-info-circle text text-danger',
                         icon: 'Warning',
-                        message: 'Voulez-vous vraiment supprimer ce rôle ?'
+                        message: t('role.deleteConfirm')
                     }}
                     onHandleDelete={handleDelete}
                     onHandleOpenDetail={() => setOpenDetailModal(false)}
@@ -426,7 +429,7 @@ export default function IndexRole() {
                                 <Edit sx={{ fontSize: 24 }} />
                             </Box>
                             <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
-                                Mettre à jour le rôle
+                                {t('role.updateRole')}
                             </Typography>
                         </Stack>
                     </DialogTitle>
@@ -436,7 +439,7 @@ export default function IndexRole() {
                                 <div className="col-12 mx-auto">
                                     <div className="row gap-4">
                                         <div className="col-12">
-                                            <label htmlFor="label" className="form-label fw-bold text-secondary mb-2" style={{ fontSize: '0.875rem' }}>Label <span className="text-danger">*</span></label>
+                                            <label htmlFor="label" className="form-label fw-bold text-secondary mb-2" style={{ fontSize: '0.875rem' }}>{t('role.label')} <span className="text-danger">*</span></label>
                                             <input
                                                 type="text"
                                                 className="form-control"
@@ -463,7 +466,7 @@ export default function IndexRole() {
                                             }
                                         </div>
                                         <div className="col-12">
-                                            <label htmlFor="code" className="form-label fw-bold text-secondary mb-2" style={{ fontSize: '0.875rem' }}>Code <span className="text-danger">*</span></label>
+                                            <label htmlFor="code" className="form-label fw-bold text-secondary mb-2" style={{ fontSize: '0.875rem' }}>{t('role.code')} <span className="text-danger">*</span></label>
                                             <input
                                                 type="text"
                                                 className="form-control"
@@ -501,7 +504,7 @@ export default function IndexRole() {
                                 onClick={() => setOpenUpdateModal(false)}
                                 sx={{ color: '#64748b', fontWeight: 700, borderRadius: '14px', px: 3, py: 1.2, '&:hover': { bgcolor: '#f1f5f9' } }}
                             >
-                                Annuler
+                                {t('role.cancel')}
                             </Button>
                             <Button
                                 type="submit"
@@ -521,7 +524,7 @@ export default function IndexRole() {
                                     }
                                 }}
                             >
-                                {inProgress ? <CircularProgress size={20} color="inherit" /> : 'Enregistrer'}
+                                {inProgress ? <CircularProgress size={20} color="inherit" /> : t('role.save')}
                             </Button>
                         </DialogActions>
                     </form>

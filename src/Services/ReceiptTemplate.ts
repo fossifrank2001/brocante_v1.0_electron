@@ -6,6 +6,7 @@ export interface ISellItem {
     price: number;
     quantity: number;
     total_unit: number;
+    discount_amount?: number;
     product?: {
         id: number;
         name: string;
@@ -16,6 +17,7 @@ export interface ISellWithDetails {
     id: number;
     sell_code: string | number;
     total_amount: number;
+    discount_total?: number;
     amount_paid: number;
     remaining_balance: number;
     created_at: string;
@@ -83,7 +85,7 @@ class ReceiptTemplate {
     ${sell.sell_items.map(item => `
         <div class="item-name">${item.product?.name || 'Produit'}</div>
         <div class="item-row">
-            <span style="font-size: 10px">${item.quantity} x ${UtilMethods.formatNumber(item.price)}</span>
+            <span style="font-size: 10px">${item.quantity} x ${UtilMethods.formatNumber(item.price)} ${item.discount_amount && item.discount_amount > 0 ? `(-${UtilMethods.formatNumber(item.discount_amount)})` : ''}</span>
             <span class="bold">${UtilMethods.formatNumber(item.total_unit)}</span>
         </div>
     `).join('')}
@@ -94,6 +96,13 @@ class ReceiptTemplate {
         <span>TOTAL TTC</span>
         <span>${UtilMethods.formatNumber(sell.total_amount)} XAF</span>
     </div>
+    
+    ${sell.discount_total && sell.discount_total > 0 ? `
+    <div class="item-row">
+        <span>Remise totale</span>
+        <span>-${UtilMethods.formatNumber(sell.discount_total)}</span>
+    </div>
+    ` : ''}
     
     <div class="item-row">
         <span>Montant Reçu</span>

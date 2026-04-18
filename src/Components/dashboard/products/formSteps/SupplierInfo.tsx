@@ -58,7 +58,7 @@ const SupplierInfo: React.FC<ISupplyInfoProps> = ({ suppliersRecord }) => {
 
     return (
         <Box className="supplier-info-modern">
-            <Box sx={{ p: 4, borderRadius: '24px', bgcolor: 'var(--bg-surface)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)' }}>
+            <Box sx={{ p: 4, }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
                     <Box sx={{ p: 1.5, borderRadius: '14px', bgcolor: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}>
                         <TbUsers size={24} />

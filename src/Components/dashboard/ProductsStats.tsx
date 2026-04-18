@@ -3,6 +3,7 @@ import { Grid, Box } from '@mui/material';
 import { StatCard } from './StatCard';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import RemoveShoppingCartIcon from '@mui/icons-material/RemoveShoppingCart';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { ProductStats } from "Data/Interfaces/dashboard";
 import { Pages } from '@/Data/Objects/state';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +17,7 @@ export const ProductsStats: React.FC<ProductsStatsProps> = ({ stats }) => {
     return (
         <Box sx={{ py: 3 }}>
             <Grid container spacing={3}>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} sm={6} md={3}>
                     <StatCard
                         title={t('stats.totalProducts')}
                         value={stats.total}
@@ -25,7 +26,7 @@ export const ProductsStats: React.FC<ProductsStatsProps> = ({ stats }) => {
                         viewMorePath={Pages.ARTICLE}
                     />
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} sm={6} md={3}>
                     <StatCard
                         title={t('stats.inStock')}
                         value={stats.status.stock || 0}
@@ -35,14 +36,22 @@ export const ProductsStats: React.FC<ProductsStatsProps> = ({ stats }) => {
                         viewMoreParams={{ type: 'status', value: 'stock' }}
                     />
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} sm={6} md={3}>
+                    <StatCard
+                        title={t('stats.lowStock')}
+                        value={stats.low_stock || 0}
+                        icon={<WarningAmberIcon />}
+                        color="warning"
+                        viewMorePath={Pages.REPORTS}
+                    />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
                     <StatCard
                         title={t('stats.outOfStock')}
-                        value={stats.status.out_of_stock || 0}
+                        value={stats.out_of_stock || 0}
                         icon={<RemoveShoppingCartIcon />}
                         color="error"
-                        viewMorePath={Pages.ARTICLE}
-                        viewMoreParams={{ type: 'status', value: 'out_of_stock' }}
+                        viewMorePath={Pages.REPORTS}
                     />
                 </Grid>
             </Grid>

@@ -44,6 +44,8 @@ import SuccessSellPage from "@/pages/Home/SuccessSellPage";
 import StoreSettingsPage from "@/Components/dashboard/settings/StoreSettingsPage";
 import StockMovementsPage from "@/Components/dashboard/stock/StockMovementsPage";
 import TemplateBuilder from "@/Components/dashboard/templates/TemplateBuilder";
+import ReportsPage from "@/Components/dashboard/reports/ReportsPage";
+import InventoryPage from "@/Components/dashboard/inventory/InventoryPage";
 
 const renderContent = (currentPage, id, param) => {
   switch (currentPage) {
@@ -102,6 +104,10 @@ const renderContent = (currentPage, id, param) => {
       return <StockMovementsPage />;
     case Pages.PRODUCT_TEMPLATES:
       return <TemplateBuilder />;
+    case Pages.REPORTS:
+      return <ReportsPage />;
+    case Pages.INVENTORY:
+      return <InventoryPage />;
     case Pages.SUCCESS_ORDER:
       return <SuccessSellPage />;
     case Pages.DASHBOARD:
@@ -168,8 +174,10 @@ const Layout: React.FC = () => {
               {renderContent(currentPage, id, param)}
             </Box>
           ) : (
-            <div className='container' style={{ minHeight: '100vh', paddingTop: '75px', position: 'relative' }}>
-              {renderContent(currentPage, id, param)}
+            <div className='container' style={{ minHeight: '100vh', paddingTop: '75px', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ flex: 1 }}>
+                {renderContent(currentPage, id, param)}
+              </div>
               <Footer />
             </div>
           )}
