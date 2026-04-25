@@ -6,6 +6,7 @@ import store from 'Data/Objects/store';
 import {redirectToLogin, setLastPageBeforeLogin} from '@/Data/Slices/NavigationSlice';
 import {Pages} from "Data/Objects/state.ts";
 import {clearUserCredential} from '@/Data/Slices/auth/userSlice';
+import i18n from 'i18next';
 
 let isHandlingAuthRedirect = false;
 
@@ -30,7 +31,6 @@ const instance = axios.create({
     timeout: 300000,
     headers: {
         'Content-Type': 'application/json',
-        'X-localization': 'en',
     }
 } as  CreateAxiosDefaults);
 
@@ -39,6 +39,8 @@ instance.interceptors.request.use(
         // Always use the latest BASE_URL (dynamic getter) so IPC-resolved URL is picked up
         config.baseURL = constants.BASE_URL;
         config.headers['Auth-Token'] = store.getState()?.user?.token;
+        // Set X-localization header with current locale from i18n
+        config.headers['X-localization'] = i18n.language || 'en';
         return config;
     },
     (error) => {

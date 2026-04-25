@@ -700,6 +700,13 @@
     "noRolesAssigned": "No specific roles or privileges have been assigned to this account.",
     "registration": "Registration",
     "lastActivity": "Last activity",
+    "userNotFound": "User Not Found",
+    "userNotFoundDesc": "The requested user could not be found or has been deleted.",
+    "returnToList": "Return to List",
+    "loadingProfile": "Loading profile...",
+    "rolesAndAccess": "Roles & Access",
+    "firstConnection": "First Connection",
+    "profile": "Profile",
     "addUser": "Add User",
     "editUser": "Edit User",
     "deleteUser": "Delete User",
@@ -911,7 +918,10 @@
     "cashRegister": {
       "title": "Cash Register Settings",
       "requiredSessions": "Mandatory sessions",
-      "sessionsDescription": "The cashier will systematically need to open a session with a cash float before being able to sell."
+      "sessionsDescription": "The cashier will systematically need to open a session with a cash float before being able to sell.",
+      "creditPolicy": "Credit Policy",
+      "maxUnpaidLoans": "Maximum unpaid loans limit",
+      "maxUnpaidLoansDescription": "Maximum number of unpaid loans allowed per customer before blocking new sales."
     },
     "logoUpdated": "Logo updated",
     "signatureUpdated": "Signature updated",
@@ -1089,7 +1099,14 @@
     "createdAt": "Created At",
     "info": "Info",
     "markAllAsRead": "Mark all as read",
-    "markAsRead": "Mark as read"
+    "markAsRead": "Mark as read",
+    "nature": "Nature",
+    "warning": "Warning",
+    "error": "Error",
+    "success": "Success",
+    "unread": "Unread",
+    "read": "Read",
+    "sentAt": "Sent At"
   },
   "menu": {
     "DASHBOARD": "Dashboard",

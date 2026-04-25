@@ -1,29 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useLayoutEffect } from 'react';
 import {
     Box,
     Typography,
     Card,
     CardContent,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
     Chip,
-    TextField,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
     Button,
     Grid,
-    Alert,
     Tooltip,
     IconButton,
     CircularProgress,
-    InputAdornment
+    Stack
 } from '@mui/material';
 import {
     Refresh,
@@ -33,14 +20,32 @@ import {
     TrendingUp,
     TrendingDown,
     Error as ErrorIcon,
-    Search as SearchIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import {
+    MaterialReactTable,
+    MRT_ColumnDef,
+    MRT_ShowHideColumnsButton,
+    MRT_ToggleDensePaddingButton,
+    MRT_ToggleFiltersButton,
+    MRT_ToggleFullScreenButton,
+    MRT_ToggleGlobalFilterButton,
+    useMaterialReactTable
+} from 'material-react-table';
+import { MRT_Localization_EN } from 'material-react-table/locales/en';
 import ActivityLogService from '@/Services/ActivityLogService';
 import { ActivityLog, ActivityLogFilters, ActivityType, ActivityAction, ActivityStatus } from '@/Data/Interfaces/ActivityLog';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import Breadcrumd from '../Breadcrumd';
+import constants from '@/Data/Utilities/constants';
+import { useAppContext } from '@/contexts/appContext';
+import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
+import ActivityLogAPI from '@/Data/Api/ActivityLog';
+
+interface IActivityLogTableData extends ActivityLog {
+    actions: React.ReactNode;
+}
 
 const glassCardStyle = {
     borderRadius: '24px',
@@ -50,57 +55,82 @@ const glassCardStyle = {
     boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
 };
 
-const glassTableContainerStyle = {
-    borderRadius: '24px',
-    border: '1px solid rgba(255, 255, 255, 0.45)',
-    bgcolor: 'rgba(255, 255, 255, 0.8)',
-    backdropFilter: 'blur(20px) saturate(180%)',
-    boxShadow: '0 25px 50px -12px rgba(0,0,0,0.08)',
-    overflow: 'hidden'
-};
-
 const ActivityLogsViewer: React.FC = () => {
     const { t } = useTranslation();
-    const [filteredLogs, setFilteredLogs] = useState<ActivityLog[]>([]);
-    const [filters, setFilters] = useState<ActivityLogFilters>({});
-    const [loading, setLoading] = useState(false);
+    const context = useAppContext();
+    const [isError, setIsError] = useState(false);
+    const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+    const [isLoading, setIsLoading] = useState(false);
+    const [isRefetching, setIsRefetching] = useState(false);
+    const [rowCount, setRowCount] = useState(0);
+    const [columnFilters, setColumnFilters] = useState<any[]>([]);
+    const [globalFilter, setGlobalFilter] = useState("");
+    const [sorting, setSorting] = useState<any[]>([]);
+    const [rowSelection, setRowSelection] = useState({});
+    const [activityLogs, setActivityLogs] = useState<ActivityLog[] | null>(null);
     const [summary, setSummary] = useState<any>(null);
     const [showStateDiagram, setShowStateDiagram] = useState(false);
     const [stateDiagram, setStateDiagram] = useState('');
 
     const activityLogService = ActivityLogService.getInstance();
 
+    useLayoutEffect(() => {
+        context.togglePageLoading();
+        document.title = constants.APP_NAME + ' .:. ' + t('activityLogs.title');
+    }, [context, t]);
+
+    const resetScroll = () => {
+        window.scrollTo(0, 0);
+        const el = document.querySelector(".__table-container");
+        if (el) el.scrollTo(0, 0);
+    };
+
     const loadLogs = useCallback(async () => {
-        setLoading(true);
+        setIsLoading(true);
         try {
-            const [logs, sum] = await Promise.all([
-                activityLogService.getLogs(filters),
-                activityLogService.getSummary(filters)
-            ]);
-            setFilteredLogs(logs);
-            setSummary(sum);
+            const response = await ActivityLogAPI.list({
+                type: columnFilters.find(f => f.id === 'type')?.value,
+                action: columnFilters.find(f => f.id === 'action')?.value,
+                status: columnFilters.find(f => f.id === 'status')?.value,
+                sellCode: columnFilters.find(f => f.id === 'sellCode')?.value,
+                search: globalFilter,
+            });
+            setActivityLogs(response.data.data);
+            setRowCount(response.data.total);
+            resetScroll();
         } catch (error) {
             console.error('Failed to load logs:', error);
+            setIsError(true);
+            setActivityLogs([]);
         } finally {
-            setLoading(false);
+            setIsLoading(false);
+            setIsRefetching(false);
         }
-    }, [filters]);
+    }, [columnFilters, globalFilter]);
+
+    const loadSummary = useCallback(async () => {
+        try {
+            const sum = await activityLogService.getSummary({});
+            setSummary(sum);
+        } catch (error) {
+            console.error('Failed to load summary:', error);
+        }
+    }, [activityLogService]);
 
     useEffect(() => {
         loadLogs();
-    }, [loadLogs]);
+        loadSummary();
+    }, [loadLogs, loadSummary]);
 
-    const handleFilterChange = (key: keyof ActivityLogFilters, value: any) => {
-        setFilters(prev => ({ ...prev, [key]: value }));
-    };
-
-    const handleClearFilters = () => {
-        setFilters({});
+    const handleRefresh = () => {
+        setIsRefetching(true);
+        loadLogs();
+        loadSummary();
     };
 
     const handleExportLogs = async () => {
         try {
-            const logs = await activityLogService.getLogs(filters);
+            const logs = await activityLogService.getLogs({});
             const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -127,59 +157,288 @@ const ActivityLogsViewer: React.FC = () => {
     const getStatusColor = (status: ActivityStatus) => {
         switch (status) {
             case ActivityStatus.COMPLETED:
-                return 'success';
+                return '#10b981';
             case ActivityStatus.FAILED:
-                return 'error';
+                return '#ef4444';
             case ActivityStatus.PENDING:
-                return 'warning';
+                return '#f59e0b';
             case ActivityStatus.CANCELLED:
-                return 'default';
+                return '#64748b';
             case ActivityStatus.PARTIAL:
-                return 'info';
+                return '#3b82f6';
             default:
-                return 'default';
+                return '#64748b';
         }
     };
 
     const getTypeColor = (type: ActivityType) => {
         switch (type) {
             case ActivityType.SALE:
-                return 'primary';
+                return '#6366f1';
             case ActivityType.PAYMENT:
-                return 'success';
+                return '#10b981';
             case ActivityType.DEBT_RECOVERY:
-                return 'warning';
+                return '#f59e0b';
             case ActivityType.REFUND:
-                return 'error';
+                return '#ef4444';
             case ActivityType.INVOICE:
-                return 'info';
+                return '#3b82f6';
             default:
-                return 'default';
+                return '#64748b';
         }
     };
 
     const getActionIcon = (action: ActivityAction) => {
         switch (action) {
             case ActivityAction.CREATE:
-                return <TrendingUp color="success" />;
+                return <TrendingUp sx={{ color: '#10b981', fontSize: 18 }} />;
             case ActivityAction.PAY:
-                return <TrendingUp color="primary" />;
+                return <TrendingUp sx={{ color: '#6366f1', fontSize: 18 }} />;
             case ActivityAction.RECOVER:
-                return <TrendingDown color="warning" />;
+                return <TrendingDown sx={{ color: '#f59e0b', fontSize: 18 }} />;
             case ActivityAction.CANCEL:
-                return <ErrorIcon color="error" />;
+                return <ErrorIcon sx={{ color: '#ef4444', fontSize: 18 }} />;
             case ActivityAction.REFUND:
-                return <TrendingDown color="error" />;
+                return <TrendingDown sx={{ color: '#ef4444', fontSize: 18 }} />;
             default:
-                return <Timeline />;
+                return <Timeline sx={{ color: '#64748b', fontSize: 18 }} />;
         }
     };
+
+    const tableData: IActivityLogTableData[] = useMemo(() => {
+        return activityLogs ? activityLogs.map((log) => ({
+            ...log,
+            actions: (
+                <Stack direction="row" spacing={1}>
+                    <Tooltip title={t('activityLogs.viewStateDiagram')} arrow>
+                        <IconButton
+                            size="small"
+                            onClick={() => handleViewStateDiagram(log)}
+                            disabled={!log.sellCode && !log.customerId}
+                            sx={{ color: '#6366f1', bgcolor: 'rgba(99,102,241,0.08)', '&:hover': { bgcolor: 'rgba(99,102,241,0.18)', transform: 'translateY(-2px)' }, transition: 'all 0.2s' }}
+                        >
+                            <Visibility sx={{ fontSize: '18px' }} />
+                        </IconButton>
+                    </Tooltip>
+                </Stack>
+            ),
+        })) : [];
+    }, [activityLogs, t]);
+
+    const columns: MRT_ColumnDef<IActivityLogTableData>[] = useMemo(() => [
+        {
+            accessorKey: "created_at",
+            header: t('activityLogs.date'),
+            size: 180,
+            Cell: ({ cell }) => (
+                <Typography sx={{ fontWeight: 600, color: '#475569', fontSize: '0.85rem' }}>
+                    {cell.getValue() ? new Date(cell.getValue() as string).toLocaleString(localStorage.getItem('i18nextLng') || 'fr') : '-'}
+                </Typography>
+            ),
+        },
+        {
+            accessorKey: "type",
+            header: t('activityLogs.type'),
+            size: 120,
+            filterVariant: "select",
+            filterSelectOptions: Object.values(ActivityType).map(type => ({ label: t(`activityLogs.types.${type}`), value: type })),
+            Cell: ({ cell, row }) => {
+                const type = cell.getValue() as ActivityType;
+                const color = getTypeColor(type);
+                return (
+                    <Chip
+                        label={t(`activityLogs.types.${type}`)}
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                            fontWeight: 700,
+                            bgcolor: `${color}15`,
+                            color,
+                            borderColor: `${color}40`,
+                            borderRadius: '6px',
+                        }}
+                    />
+                );
+            },
+        },
+        {
+            accessorKey: "action",
+            header: t('activityLogs.action'),
+            size: 120,
+            filterVariant: "select",
+            filterSelectOptions: Object.values(ActivityAction).map(action => ({ label: t(`activityLogs.actions.${action}`), value: action })),
+            Cell: ({ cell, row }) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#475569', fontWeight: 600 }}>
+                    {getActionIcon(cell.getValue() as ActivityAction)}
+                    {t(`activityLogs.actions.${cell.getValue()}`)}
+                </Box>
+            ),
+        },
+        {
+            accessorKey: "description",
+            header: t('activityLogs.description'),
+            size: 300,
+            Cell: ({ cell }) => (
+                <Typography sx={{ color: '#475569', fontSize: '0.85rem' }}>
+                    {cell.getValue() as string}
+                </Typography>
+            ),
+        },
+        {
+            accessorKey: "amount",
+            header: t('activityLogs.amount'),
+            size: 120,
+            Cell: ({ cell }) => (
+                <Typography sx={{ fontWeight: 700, color: '#4f46e5', fontSize: '0.85rem' }}>
+                    {cell.getValue() ? UtilMethods.formatAmount(cell.getValue() as number) : '-'}
+                </Typography>
+            ),
+        },
+        {
+            accessorKey: "status",
+            header: t('activityLogs.status'),
+            size: 120,
+            filterVariant: "select",
+            filterSelectOptions: Object.values(ActivityStatus).map(status => ({ label: t(`activityLogs.statuses.${status}`), value: status })),
+            Cell: ({ cell }) => {
+                const status = cell.getValue() as ActivityStatus;
+                const color = getStatusColor(status);
+                return (
+                    <Chip
+                        label={t(`activityLogs.statuses.${status}`)}
+                        size="small"
+                        sx={{
+                            fontWeight: 700,
+                            bgcolor: `${color}15`,
+                            color,
+                            borderRadius: '6px',
+                        }}
+                    />
+                );
+            },
+        },
+        {
+            accessorKey: "actions",
+            header: t('common.actions'),
+            size: 80,
+            enableColumnFilter: false,
+            enableSorting: false,
+        },
+    ], [t]);
+
+    const mrTable = useMaterialReactTable({
+        columns,
+        data: tableData,
+        enableRowSelection: true,
+        enableStickyHeader: true,
+        initialState: {
+            showColumnFilters: true,
+            density: "compact",
+        },
+        manualFiltering: true,
+        manualPagination: true,
+        manualSorting: true,
+        muiTablePaperProps: {
+            sx: {
+                borderRadius: '24px',
+                overflow: 'hidden',
+                boxShadow: '0 10px 40px -10px rgba(0,0,0,0.08)',
+                backdropFilter: 'blur(20px)',
+                backgroundColor: 'rgba(255,255,255,0.85)',
+                border: '1px solid rgba(255,255,255,0.4)',
+            }
+        },
+        muiTableContainerProps: { className: "__table-container" },
+        localization: MRT_Localization_EN,
+        muiToolbarAlertBannerProps: isError ? { color: "error", children: "Erreur lors du chargement des données" } : undefined,
+        onColumnFiltersChange: setColumnFilters,
+        onGlobalFilterChange: setGlobalFilter,
+        onPaginationChange: setPagination,
+        onSortingChange: setSorting,
+        onRowSelectionChange: setRowSelection,
+        rowCount,
+        state: {
+            columnFilters,
+            globalFilter,
+            isLoading,
+            pagination,
+            showAlertBanner: isError,
+            showProgressBars: isRefetching,
+            sorting,
+            rowSelection,
+        },
+        muiTableHeadCellProps: {
+            sx: {
+                fontWeight: 800,
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: '#64748b',
+                backgroundColor: 'rgba(248,250,252,0.9)',
+                borderBottom: '1px solid rgba(226,232,240,0.8)',
+            }
+        },
+        renderTopToolbarCustomActions: () => (
+            <Box sx={{ display: "flex", gap: "0.75rem", p: "4px", alignItems: 'center' }}>
+                <Typography variant="h5" sx={{ fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
+                    {t('activityLogs.title')}
+                </Typography>
+                <Tooltip title={t('common.refresh')} arrow>
+                    <motion.div whileTap={{ scale: 0.9 }}>
+                        <Button
+                            onClick={handleRefresh}
+                            variant="outlined"
+                            disabled={isLoading || isRefetching}
+                            startIcon={<Refresh />}
+                            sx={{
+                                borderRadius: '12px',
+                                textTransform: 'none',
+                                fontWeight: 700,
+                                borderColor: 'rgba(99,102,241,0.3)',
+                                color: '#6366f1',
+                                '&:hover': { borderColor: '#6366f1', bgcolor: 'rgba(99,102,241,0.05)' }
+                            }}
+                        >
+                            {t('common.refresh')}
+                        </Button>
+                    </motion.div>
+                </Tooltip>
+                <motion.div whileTap={{ scale: 0.9 }}>
+                    <Button
+                        onClick={handleExportLogs}
+                        variant="outlined"
+                        startIcon={<Download />}
+                        sx={{
+                            borderRadius: '12px',
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            borderColor: 'rgba(16,185,129,0.3)',
+                            color: '#059669',
+                            '&:hover': { borderColor: '#059669', bgcolor: 'rgba(16,185,129,0.05)' }
+                        }}
+                    >
+                        {t('activityLogs.export')}
+                    </Button>
+                </motion.div>
+            </Box>
+        ),
+        renderToolbarInternalActions: ({ table }) => (
+            <Box>
+                <MRT_ToggleGlobalFilterButton table={table} />
+                <MRT_ToggleFiltersButton table={table} />
+                <MRT_ToggleDensePaddingButton table={table} />
+                <MRT_ShowHideColumnsButton table={table} />
+                <MRT_ToggleFullScreenButton table={table} />
+            </Box>
+        ),
+    });
 
     return (<Box>
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <Breadcrumd parent={`📊 ${t('activityLogs.title')}`} />
-            <Box>
-                <Grid container spacing={3} sx={{ mb: 4 }}>
+        </motion.div>
+        <Box sx={{ mt: 4 }}>
+            <Grid container spacing={3} sx={{ mb: 4 }}>
                     <Grid item xs={12} md={3}>
                         <Card sx={{ ...glassCardStyle }}>
                             <CardContent>
@@ -222,198 +481,21 @@ const ActivityLogsViewer: React.FC = () => {
                     </Grid>
                 </Grid>
 
-                {/* Filtres */}
-                <Card sx={{ ...glassCardStyle, mb: 4 }}>
-                    <CardContent sx={{ p: 4 }}>
-                        <Typography variant="h6" sx={{ mb: 3, fontWeight: 800, color: '#1e293b' }}>
-                            🔍 {t('activityLogs.filters')}
-                        </Typography>
-                        <Grid container spacing={3} alignItems="center">
-                            <Grid item xs={12} md={3}>
-                                <TextField
-                                    fullWidth
-                                    label={t('activityLogs.search')}
-                                    value={filters.search || ''}
-                                    onChange={(e) => handleFilterChange('search', e.target.value)}
-                                    size="small"
-                                    InputProps={{
-                                        sx: { borderRadius: '14px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } },
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <SearchIcon sx={{ color: '#94a3b8' }} />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={2}>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel sx={{ fontWeight: 600, color: '#64748b' }}>{t('activityLogs.type')}</InputLabel>
-                                    <Select
-                                        value={filters.type || ''}
-                                        onChange={(e) => handleFilterChange('type', e.target.value)}
-                                        label={t('activityLogs.type')}
-                                        sx={{ borderRadius: '14px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }}
-                                    >
-                                        <MenuItem value="">{t('activityLogs.all')}</MenuItem>
-                                        {Object.values(ActivityType).map(type => (
-                                            <MenuItem key={type} value={type}>{type}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={2}>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel sx={{ fontWeight: 600, color: '#64748b' }}>{t('activityLogs.status')}</InputLabel>
-                                    <Select
-                                        value={filters.status || ''}
-                                        onChange={(e) => handleFilterChange('status', e.target.value)}
-                                        label={t('activityLogs.status')}
-                                        sx={{ borderRadius: '14px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }}
-                                    >
-                                        <MenuItem value="">{t('activityLogs.all')}</MenuItem>
-                                        {Object.values(ActivityStatus).map(status => (
-                                            <MenuItem key={status} value={status}>{status}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={2}>
-                                <TextField
-                                    fullWidth
-                                    label={t('activityLogs.sellCode')}
-                                    value={filters.sellCode || ''}
-                                    onChange={(e) => handleFilterChange('sellCode', e.target.value)}
-                                    size="small"
-                                    InputProps={{
-                                        sx: { borderRadius: '14px', bgcolor: '#f8fafc', fontWeight: 600, '& fieldset': { borderColor: '#e2e8f0' } }
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={3}>
-                                <Box sx={{ display: 'flex', gap: 2 }}>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={handleClearFilters}
-                                        startIcon={<Refresh />}
-                                        sx={{
-                                            borderRadius: '12px',
-                                            textTransform: 'none',
-                                            fontWeight: 700,
-                                            borderColor: '#e2e8f0',
-                                            color: '#64748b',
-                                            flex: 1
-                                        }}
-                                    >
-                                        {t('activityLogs.clear')}
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        onClick={handleExportLogs}
-                                        startIcon={<Download />}
-                                        sx={{
-                                            borderRadius: '12px',
-                                            textTransform: 'none',
-                                            fontWeight: 800,
-                                            background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
-                                            boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3)',
-                                            flex: 1,
-                                            '&:hover': {
-                                                background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
-                                            }
-                                        }}
-                                    >
-                                        {t('activityLogs.export')}
-                                    </Button>
-                                </Box>
-                            </Grid>
-                        </Grid>
-                    </CardContent>
-                </Card>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.4 }}
+            >
+                <MaterialReactTable table={mrTable} />
+            </motion.div>
 
-                {/* Tableau des logs */}
-                <TableContainer component={Paper} sx={{ ...glassTableContainerStyle }}>
-                    <Table>
-                        <TableHead>
-                            <TableRow sx={{ bgcolor: '#f1f5f9' }}>
-                                <TableCell sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em', py: 2 }}>{t('activityLogs.date')}</TableCell>
-                                <TableCell sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em', py: 2 }}>{t('activityLogs.type')}</TableCell>
-                                <TableCell sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em', py: 2 }}>{t('activityLogs.action')}</TableCell>
-                                <TableCell sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em', py: 2 }}>{t('activityLogs.description')}</TableCell>
-                                <TableCell sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em', py: 2 }}>{t('activityLogs.amount')}</TableCell>
-                                <TableCell sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em', py: 2 }}>{t('activityLogs.status')}</TableCell>
-                                <TableCell align="right" sx={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em', py: 2 }}>{t('common.actions')}</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        {!loading && <TableBody>
-                            {filteredLogs.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={7}>
-                                        <Alert severity="info" sx={{ mt: 2, borderRadius: '12px' }}>
-                                            {t('activityLogs.noActivitiesFound')}
-                                        </Alert>
-                                    </TableCell>
-                                </TableRow>
-                            ) : <>
-                                {filteredLogs.map((log) => (
-                                    <TableRow key={log.id} sx={{ '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.04)' }, transition: 'background-color 0.2s' }}>
-                                        <TableCell sx={{ color: '#475569', fontWeight: 600 }}>
-                                            {new Date(log.timestamp).toLocaleString(localStorage.getItem('i18nextLng') || 'fr')}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Chip
-                                                label={t(`activityLogs.types.${log.type}`)}
-                                                color={getTypeColor(log.type)}
-                                                size="small"
-                                                variant="outlined"
-                                                sx={{ fontWeight: 700, borderRadius: '6px' }}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#475569', fontWeight: 600 }}>
-                                                {getActionIcon(log.action)}
-                                                {t(`activityLogs.actions.${log.action}`)}
-                                            </Box>
-                                        </TableCell>
-                                        <TableCell sx={{ color: '#475569', fontSize: '0.85rem' }}>{log.description}</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: '#4f46e5' }}>
-                                            {log.amount ? UtilMethods.formatAmount(log.amount) : '-'}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Chip
-                                                label={t(`activityLogs.statuses.${log.status}`)}
-                                                color={getStatusColor(log.status)}
-                                                size="small"
-                                                sx={{ fontWeight: 700, borderRadius: '6px' }}
-                                            />
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            <Tooltip title={t('activityLogs.viewStateDiagram')}>
-                                                <span>
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={() => handleViewStateDiagram(log)}
-                                                        disabled={!log.sellCode && !log.customerId}
-                                                        sx={{ color: '#6366f1', bgcolor: 'rgba(99, 102, 241, 0.08)', '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.18)', transform: 'translateY(-2px)' }, transition: 'all 0.2s' }}
-                                                    >
-                                                        <Visibility fontSize="small" />
-                                                    </IconButton>
-                                                </span>
-                                            </Tooltip>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </>}
-                        </TableBody>}
-                    </Table>
-
-                    {loading && <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4 }}>
-                        <CircularProgress size={40} />
-                    </Box>}
-                </TableContainer>
-
-                {/* Modal du diagramme d'états */}
-                {showStateDiagram && (
+            {/* Modal du diagramme d'états */}
+            {showStateDiagram && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1, duration: 0.4 }}
+                >
                     <Card sx={{ ...glassCardStyle, mt: 4 }}>
                         <CardContent sx={{ p: 4 }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -443,9 +525,9 @@ const ActivityLogsViewer: React.FC = () => {
                             </Box>
                         </CardContent>
                     </Card>
-                )}
+                </motion.div>
+            )}
             </Box>
-        </motion.div>
     </Box>);
 };
 

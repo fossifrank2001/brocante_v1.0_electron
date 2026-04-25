@@ -647,7 +647,14 @@
     "privilegesAndSecurity": "Privilèges & Sécurité",
     "noRolesAssigned": "Aucun rôle ou privilège spécifique n'a été attribué à ce compte.",
     "registration": "Inscription",
-    "lastActivity": "Dernière activité"
+    "lastActivity": "Dernière activité",
+    "userNotFound": "Utilisateur non trouvé",
+    "userNotFoundDesc": "L'utilisateur demandé est introuvable ou a été supprimé.",
+    "returnToList": "Retourner à la liste",
+    "loadingProfile": "Chargement du profil...",
+    "rolesAndAccess": "Rôles et Accès",
+    "firstConnection": "Première connexion",
+    "profile": "Profil"
   },
   "profile": {
     "profile": "Profil",
@@ -841,7 +848,10 @@
     "cashRegister": {
       "title": "Paramètres de Caisse",
       "requiredSessions": "Sessions obligatoires",
-      "sessionsDescription": "Le caissier devra systématiquement ouvrir une session avec un fonds de roulement avant de pouvoir vendre."
+      "sessionsDescription": "Le caissier devra systématiquement ouvrir une session avec un fonds de roulement avant de pouvoir vendre.",
+      "creditPolicy": "Politique de Crédit",
+      "maxUnpaidLoans": "Limite de prêts impayés",
+      "maxUnpaidLoansDescription": "Nombre maximum de prêts impayés autorisés par client avant de bloquer les nouvelles ventes."
     },
     "logoUpdated": "Logo mis à jour",
     "signatureUpdated": "Signature mise à jour",
@@ -1033,7 +1043,14 @@
     "createdAt": "Créé le",
     "info": "Info",
     "markAllAsRead": "Tout marquer comme lu",
-    "markAsRead": "Marquer comme lu"
+    "markAsRead": "Marquer comme lu",
+    "nature": "Nature",
+    "warning": "Avertissement",
+    "error": "Erreur",
+    "success": "Succès",
+    "unread": "Non lue",
+    "read": "Lue",
+    "sentAt": "Envoyée le"
   },
   "menu": {
     "DASHBOARD": "Tableau de bord",

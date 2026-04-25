@@ -1,6 +1,6 @@
 export interface ActivityLog {
     id: string;
-    timestamp: string;
+    created_at: string;
     userId?: number;
     customerId?: number;
     sellCode?: string;

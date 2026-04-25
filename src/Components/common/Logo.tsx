@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import logo from '@/assets/logo.png';
+import logoLight from '@/assets/logo.png';
+import logoDark from '@/assets/images/logos/dark-logo.png';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface LogoProps {
     className?: string;
@@ -19,35 +21,23 @@ const Logo: React.FC<LogoProps> = ({
     imageSize = 26,
     fontSize = "1.5rem"
 }) => {
+    const { resolvedTheme } = useTheme();
+    const logo = resolvedTheme === 'dark' ? logoDark : logoLight;
+
     const baseComponent = (
-        <div className={`d-flex align-items-center gap-2 ${className}`}>
+        <div className={`d-flex align-items-center justify-content-center`}>
             {showImage && (
                 <img
                     src={logo}
                     alt='logo'
                     style={{
                         width: `${imageSize}px`,
-                        height: `${imageSize}px`,
-                        objectFit: "cover",
+                        height: `${imageSize/2}px`,
+                        objectFit: "contain",
                         objectPosition: "center"
                     }}
                 />
             )}
-            <h1 className="mb-0" style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700 }}>
-                <span className="text-dark" style={{ fontSize, letterSpacing: '-0.5px' }}>Brocante</span>
-                {showVersion && (
-                    <span
-                        className="ms-2 badge bg-primary"
-                        style={{
-                            fontSize: `calc(${fontSize} * 0.5)`,
-                            verticalAlign: 'middle',
-                            fontWeight: 600
-                        }}
-                    >
-                        V1.0
-                    </span>
-                )}
-            </h1>
         </div>
     );
 

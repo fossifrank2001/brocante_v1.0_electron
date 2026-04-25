@@ -2,7 +2,7 @@ import axiosInstance from 'Data/Utilities/axiosInstance';
 import { ActivityLog, ActivityLogFilters, ActivityLogSummary } from 'Data/Interfaces/ActivityLog';
 
 class ActivityLogAPI {
-    static async create(payload: Omit<ActivityLog, 'id' | 'timestamp' | 'userId'>): Promise<{ data: ActivityLog; message: string }> {
+    static async create(payload: Omit<ActivityLog, 'id' | 'created_at' | 'userId'>): Promise<{ data: ActivityLog; message: string }> {
         console.log('[ActivityLogAPI] Creating log:', payload);
         try {
             const response = await axiosInstance.post('/activity-logs', payload);

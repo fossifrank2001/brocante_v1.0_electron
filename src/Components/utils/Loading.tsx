@@ -18,7 +18,7 @@ const Loading = () => {
                     animate={true} 
                     showVersion={true} 
                     fontSize="2.5rem"
-                    imageSize={40}
+                    imageSize={250}
                 />
                 <p className="text-muted" style={{ fontFamily: "'Inter', sans-serif" }}>{t('common.loadingMessage')}</p>
             </div>

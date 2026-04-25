@@ -18,7 +18,9 @@ export interface IStoreSetting {
     timezone: string;
     locale: string;
     logo_path: string | null;
+    logo_url: string;
     signature_path: string | null;
+    signature_url: string | null;
     receipt_header: string | null;
     receipt_footer: string | null;
     invoice_footer: string | null;
@@ -29,6 +31,7 @@ export interface IStoreSetting {
     low_stock_threshold: number;
     negative_stock_allowed: boolean;
     require_cash_session: boolean;
+    max_unpaid_loans: number;
     created_at: string;
     updated_at: string;
 }
@@ -63,4 +66,5 @@ export interface IStoreSettingPayload {
     low_stock_threshold?: number;
     negative_stock_allowed?: boolean;
     require_cash_session?: boolean;
+    max_unpaid_loans?: number;
 }

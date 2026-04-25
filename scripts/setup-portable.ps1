@@ -180,9 +180,37 @@ foreach ($testDir in $vendorTestDirs) {
 
 Write-Host "       Laravel API bundled!" -ForegroundColor Green
 
-# ─── Step 5: Summary ───
+# ─── Step 5: Configure Windows Task Scheduler (Daily Cron) ───
+Write-Host "[5/6] Configuring Windows Task Scheduler (Daily Cron at 08:00)..." -ForegroundColor Yellow
+
+$TaskName = "BrocanteInvoiceDeadlines"
+$PhpExePath = Join-Path $PhpDir "php.exe"
+$ArtisanPath = Join-Path $LaravelDir "artisan"
+$ActionScript = "$PhpExePath $ArtisanPath notify:invoice-deadlines"
+
+try {
+    # Check if task already exists
+    $existingTask = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+    if ($existingTask) {
+        Write-Host "       Task already exists, updating..." -ForegroundColor DarkGray
+        Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
+    }
+
+    $action = New-ScheduledTaskAction -Execute $PhpExePath -Argument "$ArtisanPath notify:invoice-deadlines"
+    $trigger = New-ScheduledTaskTrigger -Daily -At 8am
+    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
+    
+    Register-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -TaskName $TaskName -Description "Runs Brocante invoice deadline notifications daily at 08:00" -User "SYSTEM" -RunLevel Highest
+    
+    Write-Host "       Windows Task scheduled successfully for 08:00 daily!" -ForegroundColor Green
+} catch {
+    Write-Host "       WARNING: Could not schedule Windows Task. You might need to run this script as Administrator." -ForegroundColor DarkYellow
+    Write-Host "       Error: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# ─── Step 6: Summary ───
 Write-Host ""
-Write-Host "[5/5] Setup complete!" -ForegroundColor Green
+Write-Host "[6/6] Setup complete!" -ForegroundColor Green
 Write-Host ""
 
 # Calculate sizes
@@ -193,6 +221,7 @@ Write-Host "  Resources directory: $ResourcesDir" -ForegroundColor Cyan
 Write-Host "  PHP size:           $([math]::Round($phpSize, 1)) MB" -ForegroundColor Cyan
 Write-Host "  Laravel size:       $([math]::Round($laravelSize, 1)) MB" -ForegroundColor Cyan
 Write-Host "  Total:              $([math]::Round($phpSize + $laravelSize, 1)) MB" -ForegroundColor Cyan
+Write-Host "  Scheduled Task:     $TaskName (08:00 Daily)" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Next steps:" -ForegroundColor Yellow
 Write-Host "    1. Run: brocante-build" -ForegroundColor White

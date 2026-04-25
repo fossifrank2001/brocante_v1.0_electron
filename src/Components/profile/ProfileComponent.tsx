@@ -93,7 +93,7 @@ const ProfileComponent: React.FC = () => {
                                 className="w-100"
                                 style={{
                                     height: '200px',
-                                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                                    background: 'rgb(20 14 117)',
                                     position: 'relative',
                                     overflow: 'hidden'
                                 }}
@@ -134,7 +134,7 @@ const ProfileComponent: React.FC = () => {
                                     <div className="flex-grow-1 pt-2 pb-1">
                                         <h2 className="fw-bold mb-1 text-dark">{authUser?.last_name} {authUser?.first_name || ''}</h2>
                                         <div className="d-flex flex-wrap justify-content-center justify-content-md-start gap-3 align-items-center">
-                                            <span className="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
+                                            <span className="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2  fw-semibold">
                                                 <i className="ti ti-shield-check me-1 fs-4"></i>
                                                 {UtilMethods.capitalizeFirstLetter(authUser?.status ?? 'Professionnel')}
                                             </span>
@@ -145,7 +145,7 @@ const ProfileComponent: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="mb-md-2">
-                                        <button className="btn btn-primary px-4 py-2 rounded-pill shadow-sm d-flex align-items-center gap-2" onClick={() => setIsEditing(true)}>
+                                        <button className="btn btn-primary px-4 py-2  shadow-sm d-flex align-items-center gap-2" onClick={() => setIsEditing(true)}>
                                             <i className="ti ti-user-edit fs-5"></i>
                                             <span>Modifier le Profil</span>
                                         </button>
@@ -155,7 +155,7 @@ const ProfileComponent: React.FC = () => {
                                 {/* Modern Stats Row */}
                                 <div className="d-flex justify-content-center justify-content-md-start gap-5 mt-4 pt-4 border-top">
                                     <div className="d-flex align-items-center gap-3">
-                                        <div className="bg-light-primary rounded-3 p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                        <div className="bg-light-primary  p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
                                             <i className="ti ti-shopping-cart text-primary fs-5"></i>
                                         </div>
                                         <div>
@@ -164,7 +164,7 @@ const ProfileComponent: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="d-flex align-items-center gap-3">
-                                        <div className="bg-light-success rounded-3 p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                        <div className="bg-light-success  p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
                                             <i className="ti ti-device-laptop text-success fs-5"></i>
                                         </div>
                                         <div>
@@ -173,7 +173,7 @@ const ProfileComponent: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="d-flex align-items-center gap-3">
-                                        <div className="bg-light-warning rounded-3 p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                        <div className="bg-light-warning  p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
                                             <i className="ti ti-bolt text-warning fs-5"></i>
                                         </div>
                                         <div>
@@ -217,7 +217,7 @@ const ProfileComponent: React.FC = () => {
                                                 <div className="d-flex justify-content-between align-items-center mb-4">
                                                     <h5 className="fw-bold mb-0">{t('profile.profileInfo')}</h5>
                                                     <button
-                                                        className={`btn btn-${isEditing ? 'success' : 'light-primary'} btn-sm px-3 rounded-pill`}
+                                                        className={`btn btn-${isEditing ? 'success' : 'light-primary'} btn-sm px-3 `}
                                                         onClick={isEditing ? handleSave : () => setIsEditing(true)}
                                                     >
                                                         <i className={`ti ti-${isEditing ? 'check' : 'pencil'} me-1`}></i>
@@ -229,7 +229,7 @@ const ProfileComponent: React.FC = () => {
                                                         <label className="form-label text-muted small fw-bold">{t('profile.name')}</label>
                                                         <input
                                                             type="text"
-                                                            className="form-control rounded-3"
+                                                            className="form-control "
                                                             name="lastName"
                                                             value={isEditing ? formData.lastName : authUser?.last_name || ''}
                                                             onChange={handleInputChange}
@@ -241,7 +241,7 @@ const ProfileComponent: React.FC = () => {
                                                         <label className="form-label text-muted small fw-bold">{t('profile.firstName')}</label>
                                                         <input
                                                             type="text"
-                                                            className="form-control rounded-3"
+                                                            className="form-control "
                                                             name="firstName"
                                                             value={isEditing ? formData.firstName : authUser?.first_name || ''}
                                                             onChange={handleInputChange}
@@ -253,7 +253,7 @@ const ProfileComponent: React.FC = () => {
                                                         <label className="form-label text-muted small fw-bold">{t('user.email')}</label>
                                                         <input
                                                             type="email"
-                                                            className="form-control rounded-3"
+                                                            className="form-control "
                                                             name="email"
                                                             value={isEditing ? formData.email : authUser?.email || ''}
                                                             onChange={handleInputChange}
@@ -265,7 +265,7 @@ const ProfileComponent: React.FC = () => {
                                                         <label className="form-label text-muted small fw-bold">{t('user.phone')}</label>
                                                         <input
                                                             type="tel"
-                                                            className="form-control rounded-3"
+                                                            className="form-control "
                                                             name="phone"
                                                             value={isEditing ? formData.phone : authUser?.phone || ''}
                                                             onChange={handleInputChange}
@@ -304,9 +304,9 @@ const ProfileComponent: React.FC = () => {
                                                     {authUser?.accesses && authUser.accesses.length > 0 ? (
                                                         <div className="d-flex flex-column gap-2">
                                                             {authUser.accesses.map((access, index) => (
-                                                                <div key={index} className="p-2 border rounded-3 d-flex justify-content-between align-items-center">
+                                                                <div key={index} className="p-2 border  d-flex justify-content-between align-items-center">
                                                                     <span className="fw-semibold">{access.role.label}</span>
-                                                                    <span className={`badge bg-${access.status ? 'success' : 'danger'} rounded-pill`}>
+                                                                    <span className={`badge bg-${access.status ? 'success' : 'danger'} `}>
                                                                         {access.status === AccessAPI.ACTIVE ? t('common.active') : t('common.inactive')}
                                                                     </span>
                                                                 </div>
@@ -332,7 +332,7 @@ const ProfileComponent: React.FC = () => {
                                         <p className="text-muted mb-4 mx-auto" style={{ maxWidth: '400px' }}>
                                             {t('profile.noArticlesYet')}
                                         </p>
-                                        <button className="btn btn-primary px-4 rounded-pill">
+                                        <button className="btn btn-primary px-4 ">
                                             <i className="ti ti-plus me-2"></i>
                                             {t('profile.addArticle')}
                                         </button>
@@ -402,17 +402,17 @@ const ProfileComponent: React.FC = () => {
                                                 </h6>
                                                 <div className="mb-3">
                                                     <label className="form-label small fw-bold text-muted">{t('profile.currentPassword')}</label>
-                                                    <input type="password" className="form-control rounded-3" placeholder="••••••••" />
+                                                    <input type="password" className="form-control " placeholder="••••••••" />
                                                 </div>
                                                 <div className="mb-3">
                                                     <label className="form-label small fw-bold text-muted">{t('profile.newPassword')}</label>
-                                                    <input type="password" className="form-control rounded-3" placeholder="••••••••" />
+                                                    <input type="password" className="form-control " placeholder="••••••••" />
                                                 </div>
                                                 <div className="mb-4">
                                                     <label className="form-label small fw-bold text-muted">{t('profile.confirmPassword')}</label>
-                                                    <input type="password" className="form-control rounded-3" placeholder="••••••••" />
+                                                    <input type="password" className="form-control " placeholder="••••••••" />
                                                 </div>
-                                                <button className="btn btn-warning px-4 rounded-pill text-white fw-bold">
+                                                <button className="btn btn-warning px-4  text-white fw-bold">
                                                     {t('profile.updatePassword')}
                                                 </button>
                                             </div>

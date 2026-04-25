@@ -27,7 +27,7 @@ class NotificationsAPI {
         }
     }
 
-    static async maskAsRead(notification: number): Promise<IApiResponse> {
+    static async maskAsRead(notification: string): Promise<IApiResponse> {
         // eslint-disable-next-line no-useless-catch
         try {
             const response = await axiosInstance.post<IApiResponse>(`/notifications/${notification}/read`);

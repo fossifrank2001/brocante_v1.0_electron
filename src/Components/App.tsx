@@ -1,6 +1,4 @@
 import 'Styles/App.less'
-import { AppContextProvider } from '@/contexts/appContext'
-import { ThemeContextProvider } from '@/contexts/ThemeContext'
 import '@/assets/css/styles.min.css';
 
 import { Pages } from 'Data/Objects/state'
@@ -180,26 +178,24 @@ const App: React.FC = () => {
   const shouldShowLockScreen = isAuth && !publicPages.includes(currentPage);
 
   return (
-    <ThemeContextProvider>
-      <AppContextProvider>
-        {shouldShowLockScreen && <LockScreen />}
-        {renderMainContent()}
+    <>
+      {shouldShowLockScreen && <LockScreen />}
+      {renderMainContent()}
 
-        {isOk && <CustomAlert
-          openDetailModal={openDetailModal}
-          content={{
-            style: 'ti ti-info-circle text text-info',
-            icon: 'Info',
-            message: 'This is your first connexion so you should change your generated password for more security.'
-          }}
-          onHandleDelete={handleRedirectToResetPage}
-          onHandleOpenDetail={() => setOpenDetailModal(false)}
-          inProgress={false}
-          successMessageButton="ok"
-          iconClasseBtn="info"
-        />}
-      </AppContextProvider>
-    </ThemeContextProvider>
+      {isOk && <CustomAlert
+        openDetailModal={openDetailModal}
+        content={{
+          style: 'ti ti-info-circle text text-info',
+          icon: 'Info',
+          message: 'This is your first connexion so you should change your generated password for more security.'
+        }}
+        onHandleDelete={handleRedirectToResetPage}
+        onHandleOpenDetail={() => setOpenDetailModal(false)}
+        inProgress={false}
+        successMessageButton="ok"
+        iconClasseBtn="info"
+      />}
+    </>
   );
 }
 

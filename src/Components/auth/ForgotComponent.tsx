@@ -82,7 +82,7 @@ export default function ForgotComponent() {
                         <Logo
                             showVersion={true}
                             animate={true}
-                            imageSize={40}
+                            imageSize={150}
                             fontSize="2rem"
                         />
                     </div>

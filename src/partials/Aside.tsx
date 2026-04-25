@@ -235,18 +235,18 @@ export default function Aside({ role = null, isSidebarOpen = true }: AsideProps)
             }}
         >
             <div>
-                <div className="brand-logo d-flex align-items-center justify-content-between">
+                <div className="brand-logo d-flex align-items-center justify-content-center">
                     <Logo
                         showVersion={true}
                         fontSize="1.25rem"
-                        imageSize={30}
+                        imageSize={125}
                         className="ps-3"
                     />
                     <div className="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
                         <i className="ti ti-x fs-8" onClick={handleRemoveSideBar}></i>
                     </div>
                 </div>
-                <hr />
+                <hr className='w-75 mx-auto' />
                 <nav className="sidebar-nav scroll-sidebar" data-simplebar="" style={{
                     maxHeight: 'calc(100vh - 200px)',
                     overflowY: 'auto'

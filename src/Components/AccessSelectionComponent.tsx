@@ -128,7 +128,7 @@ export default function AccessSelectionComponent() {
                                 <Logo
                                     showVersion={true}
                                     animate={true}
-                                    imageSize={45}
+                                    imageSize={250}
                                     fontSize="2.5rem"
                                 />
                             </Box>

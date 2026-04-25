@@ -8,6 +8,8 @@ import ErrorBoundary from "@/ErrorBoundary";
 import Loading from "Components/utils/Loading";
 import { initApiUrl } from 'Data/Utilities/constants';
 import './i18n/config';
+import { ThemeContextProvider } from '@/contexts/ThemeContext';
+import { AppContextProvider } from '@/contexts/appContext';
 
 import 'Styles/index.less';
 import App from "Components/App.tsx";
@@ -27,13 +29,21 @@ const Root: React.FC = () => {
         });
     }, []);
 
-    if (isLoading) return <Loading />;
+    if (isLoading) return (
+        <ThemeContextProvider>
+            <Loading />
+        </ThemeContextProvider>
+    );
 
     return (
         <ErrorBoundary>
             <Provider store={store}>
-                <App />
-                <ToastContainer />
+                <ThemeContextProvider>
+                    <AppContextProvider>
+                        <App />
+                        <ToastContainer />
+                    </AppContextProvider>
+                </ThemeContextProvider>
             </Provider>
         </ErrorBoundary>
     );

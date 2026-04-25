@@ -18,12 +18,13 @@ class ActivityLogService {
     // ─── Méthodes de création (fire-and-forget vers l'API) ───────────────────
 
     logSale(sellCode: string, customer: IPerson, cart: CartItem[], totalPrice: number, paymentData: any): void {
+        const customerName = customer ? `${customer.lastname || ''} ${customer.firstname || ''}`.trim() : 'Inconnu';
         ActivityLogAPI.create({
             type: ActivityType.SALE,
             action: ActivityAction.CREATE,
             sellCode,
-            customerId: customer.id,
-            description: `Vente ${sellCode} - Client: ${customer.lastname} ${customer.firstname}`,
+            customerId: customer?.id,
+            description: `Vente ${sellCode || 'UNKNOWN'} - Client: ${customerName}`,
             amount: totalPrice,
             paymentMethod: paymentData.payment_mode,
             transactionType: paymentData.transaction_type,
@@ -35,25 +36,26 @@ class ActivityLogService {
                     price: item.product.price,
                     subtotal: item.subtotal,
                 })),
-                customerInfo: {
+                customerInfo: customer ? {
                     id: customer.id,
-                    name: `${customer.lastname} ${customer.firstname}`,
+                    name: customerName,
                     phone: customer.phone,
-                },
+                } : null,
             },
-            previousState: {
+            previousState: customer ? {
                 customerBalance: customer.company_balance,
                 customerDebts: customer.remaining_balance,
-            },
+            } : null,
         }).catch(err => console.error('[ActivityLog] logSale failed:', err));
     }
 
     logPayment(sellCode: string, customer: IPerson, amount: number, paymentMethod: string, transactionType: string): void {
+        const customerName = customer ? `${customer.lastname || ''} ${customer.firstname || ''}`.trim() : 'Inconnu';
         ActivityLogAPI.create({
             type: ActivityType.PAYMENT,
             action: ActivityAction.PAY,
             sellCode,
-            customerId: customer.id,
+            customerId: customer?.id,
             description: `Paiement ${sellCode}`,
             amount,
             paymentMethod,
@@ -61,26 +63,27 @@ class ActivityLogService {
             metadata: {
                 paymentMethod,
                 transactionType,
-                customerInfo: { id: customer.id, name: `${customer.lastname} ${customer.firstname}` },
+                customerInfo: customer ? { id: customer.id, name: customerName } : null,
             },
         }).catch(err => console.error('[ActivityLog] logPayment failed:', err));
     }
 
     logDebtRecovery(customer: IPerson, recoveredAmount: number, method: 'excess' | 'balance' | 'both'): void {
+        const customerName = customer ? `${customer.lastname || ''} ${customer.firstname || ''}`.trim() : 'Inconnu';
         ActivityLogAPI.create({
             type: ActivityType.DEBT_RECOVERY,
             action: ActivityAction.RECOVER,
-            customerId: customer.id,
-            description: `Recouvrement dette - Client: ${customer.lastname} ${customer.firstname}`,
+            customerId: customer?.id,
+            description: `Recouvrement dette - Client: ${customerName}`,
             amount: recoveredAmount,
             metadata: {
                 method,
-                customerInfo: {
+                customerInfo: customer ? {
                     id: customer.id,
-                    name: `${customer.lastname} ${customer.firstname}`,
+                    name: customerName,
                     previousBalance: customer.company_balance,
                     previousDebts: customer.remaining_balance,
-                },
+                } : null,
             },
         }).catch(err => console.error('[ActivityLog] logDebtRecovery failed:', err));
     }

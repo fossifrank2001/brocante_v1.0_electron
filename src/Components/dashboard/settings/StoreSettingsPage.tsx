@@ -264,18 +264,19 @@ const StoreSettingsPage: React.FC = () => {
                                 
                                 <Box sx={{ textAlign: 'center', p: 4, border: '2px dashed', borderColor: 'divider', borderRadius: '20px' }}>
                                     <Avatar
-                                        key={settings?.logo_path}
-                                        src={settings?.logo_path ? `${constants.URL}/storage/${settings.logo_path}` : undefined}
+                                        key={settings?.logo_url}
+                                        src={settings?.logo_url}
                                         sx={{ 
                                             width: 120, 
                                             height: 120, 
                                             mx: 'auto',
                                             mb: 2,
                                             boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                                            bgcolor: 'primary.light'
+                                            bgcolor: 'primary.light',
+                                            '& img': { objectFit: 'contain' }
                                         }}
                                     >
-                                        {!settings?.logo_path && <StoreIcon sx={{ fontSize: 60, color: 'primary.main' }} />}
+                                        {!settings?.logo_url && <StoreIcon sx={{ fontSize: 60, color: 'primary.main' }} />}
                                     </Avatar>
                                     <Button
                                         component="label"
@@ -293,9 +294,9 @@ const StoreSettingsPage: React.FC = () => {
                                     </Typography>
                                     <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: '12px', bgcolor: '#fcfcfc', mb: 2 }}>
                                         <Avatar
-                                            key={settings?.signature_path}
+                                            key={settings?.signature_url}
                                             variant="square"
-                                            src={settings?.signature_path ? `${constants.URL}/storage/${settings.signature_path}` : undefined}
+                                            src={settings?.signature_url || undefined}
                                             sx={{ 
                                                 width: '100%', 
                                                 height: 80, 
@@ -306,7 +307,7 @@ const StoreSettingsPage: React.FC = () => {
                                                 '& img': { objectFit: 'contain' }
                                             }}
                                         >
-                                            {!settings?.signature_path && <Typography variant="caption" color="text.secondary">{t('settings.signature.none')}</Typography>}
+                                            {!settings?.signature_url && <Typography variant="caption" color="text.secondary">{t('settings.signature.none')}</Typography>}
                                         </Avatar>
                                         <Button
                                             component="label"
@@ -567,6 +568,20 @@ const StoreSettingsPage: React.FC = () => {
                                             <Typography variant="body2" color="text.secondary">
                                                 {t('settings.cashRegister.sessionsDescription')}
                                             </Typography>
+
+                                            <Divider />
+
+                                            <Typography variant="subtitle1" fontWeight={700} sx={{ mt: 1 }}>{t('settings.cashRegister.creditPolicy')}</Typography>
+                                            <TextField
+                                                label={t('settings.cashRegister.maxUnpaidLoans')}
+                                                type="number"
+                                                value={form.max_unpaid_loans ?? 3}
+                                                onChange={e => handleChange('max_unpaid_loans', parseInt(e.target.value) || 0)}
+                                                fullWidth
+                                                size="small"
+                                                InputProps={{ startAdornment: <InputAdornment position="start"><OfferIcon sx={{ opacity: 0.5 }} /></InputAdornment> }}
+                                                helperText={t('settings.cashRegister.maxUnpaidLoansDescription')}
+                                            />
                                         </Box>
                                     </CardContent>
                                 </Card>

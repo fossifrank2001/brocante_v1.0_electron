@@ -193,7 +193,7 @@ export default function ResetComponent() {
                         <Logo
                             showVersion={true}
                             animate={true}
-                            imageSize={40}
+                            imageSize={150}
                             fontSize="2rem"
                         />
                     </div>

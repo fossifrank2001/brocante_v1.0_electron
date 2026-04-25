@@ -11,8 +11,17 @@ import {
     useMaterialReactTable
 } from 'material-react-table';
 import {MRT_Localization_EN} from "material-react-table/locales/en";
-import axiosInstance, { IApiResponsePaginated } from 'Data/Utilities/axiosInstance';
-import {Box, Link, Stack} from "@mui/material";
+import axiosInstance from 'Data/Utilities/axiosInstance';
+import {Box, Link, Stack, Chip, Typography, Tooltip, IconButton} from "@mui/material";
+import {
+    NotificationsActive,
+    Warning as WarningIcon,
+    Error as ErrorIcon,
+    Info as InfoIcon,
+    CheckCircle as SuccessIcon,
+    Drafts,
+    MarkEmailRead
+} from '@mui/icons-material';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import dayjs from "dayjs";
 import { INotification, INotificationTableData } from 'Data/Interfaces/Notifications.ts';
@@ -54,8 +63,8 @@ export default function NotificationIndex() {
         }
     };
 
-    // request all menus
-    const getProducts = useCallback(
+    // request all notifications
+    const getNotifications = useCallback(
         async () => {
             setIsLoading(true);
             const url = new URL(`${constants.BASE_URL}/notifications`);
@@ -68,11 +77,17 @@ export default function NotificationIndex() {
             url.searchParams.set("sorting", JSON.stringify(sortingTab));
 
             try {
-                const { status, data: result } = await axiosInstance.get<IApiResponsePaginated<INotification>>(url.href);
-                const { data: notList }: IApiResponsePaginated<INotification> = result;
+                const { status, data: result } = await axiosInstance.get<any>(url.href);
                 if (status === 200) {
-                    setNotifications(notList.data);
-                    setRowCount(notList.total);
+                    // Check if response is paginated or direct list
+                    const notList = result.data;
+                    if (Array.isArray(notList)) {
+                        setNotifications(notList);
+                        setRowCount(notList.length);
+                    } else if (notList && Array.isArray(notList.data)) {
+                        setNotifications(notList.data);
+                        setRowCount(notList.total || notList.data.length);
+                    }
                 }
                 resetScroll();
             } catch (error) {
@@ -90,85 +105,186 @@ export default function NotificationIndex() {
 
 
     useEffect(() => {
-        getProducts();
-    }, [getProducts, isDeleted]);
+        getNotifications();
+    }, [getNotifications, isDeleted]);
 
-    const tableData: INotificationTableData[] = useMemo(() => {
+    const tableData: any[] = useMemo(() => {
         return notifications ? notifications.map((notification) => ({
             ...notification,
-            type: `${notification?.data.nature}`,
-            status: notification?.read_at? NotificationsAPI.READ : NotificationsAPI.UNREAD,
+            title: notification?.data?.title,
+            message: notification?.data?.message,
+            type: `${notification?.data?.nature}`,
+            item_type: notification?.data?.item,
+            status: notification?.read_at ? NotificationsAPI.READ : NotificationsAPI.UNREAD,
             actions: (
                 <Stack direction="row" spacing={1}>
-                    <Link
-                        href="#"
-                        onClick={() => handleMarkAsRead(notification.id)}>
-                        <i color="primary" className="ti ti-mask-off text-primary"></i>
-                    </Link>
+                    {!notification?.read_at && (
+                        <Tooltip title={t('notifications.markAsRead')}>
+                            <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handleMarkAsRead(notification.id)}
+                            >
+                                <Drafts fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    )}
                 </Stack>
             ),
         })) : [];
     }, [notifications]);
 
-    const columns: MRT_ColumnDef<INotificationTableData>[] = useMemo(
+    const columns: MRT_ColumnDef<any>[] = useMemo(
         () => [
             {
                 accessorKey: "title",
                 header: t('notifications.title'),
-                size: 150,
+                size: 200,
                 enableColumnFilter: false,
+                Cell: ({ row }) => {
+                    const nature = row.original.type;
+                    const isUnread = row.original.status === NotificationsAPI.UNREAD;
+                    const itemType = row.original.item_type;
+
+                    let icon = <NotificationsActive fontSize="small" />;
+                    let color = "#6366f1";
+
+                    if (nature === 'warning' || itemType === 'invoice') {
+                        icon = <WarningIcon fontSize="small" />;
+                        color = "#f59e0b";
+                    } else if (nature === 'error') {
+                        icon = <ErrorIcon fontSize="small" />;
+                        color = "#ef4444";
+                    } else if (nature === 'success') {
+                        icon = <SuccessIcon fontSize="small" />;
+                        color = "#10b981";
+                    }
+
+                    return (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Box sx={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: '8px',
+                                bgcolor: `${color}15`,
+                                color: color,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                                animation: isUnread && (nature === 'error' || nature === 'warning') ? 'pulse 2s infinite' : 'none',
+                                '@keyframes pulse': {
+                                    '0%': { transform: 'scale(1)', boxShadow: `0 0 0 0 ${color}40` },
+                                    '70%': { transform: 'scale(1.05)', boxShadow: `0 0 0 10px ${color}00` },
+                                    '100%': { transform: 'scale(1)', boxShadow: `0 0 0 0 ${color}00` },
+                                }
+                            }}>
+                                {icon}
+                            </Box>
+                            <Typography variant="body2" sx={{
+                                fontWeight: isUnread ? 800 : 500,
+                                color: isUnread ? 'var(--text-primary)' : 'var(--text-secondary)'
+                            }}>
+                                {row.original.title}
+                            </Typography>
+                        </Box>
+                    );
+                }
             },
             {
                 accessorKey: "type",
-                header: t('notifications.type'),
+                header: t('notifications.nature'),
                 size: 100,
                 filterVariant: "select",
                 filterSelectOptions: [
-                    {label: t('notifications.info'), value: 'info'}
+                    { label: t('notifications.info'), value: 'info' },
+                    { label: t('notifications.warning'), value: 'warning' },
+                    { label: t('notifications.error'), value: 'error' },
+                    { label: t('notifications.success'), value: 'success' },
                 ],
+                Cell: ({ cell }) => {
+                    const value = cell.getValue<string>();
+                    let color: "info" | "warning" | "error" | "success" | "default" = "info";
+                    if (value === 'warning') color = "warning";
+                    else if (value === 'error') color = "error";
+                    else if (value === 'success') color = "success";
+
+                    return (
+                        <Chip
+                            label={t(`notifications.${value}`)}
+                            size="small"
+                            color={color}
+                            variant="outlined"
+                            sx={{ fontWeight: 700, borderRadius: '6px' }}
+                        />
+                    );
+                }
             },
             {
                 accessorKey: "status",
                 header: t('notifications.status'),
-                size: 150,
+                size: 120,
                 Cell: ({ cell }) => {
-                    const value = cell.getValue();
-                    const status = typeof value === 'string' ? UtilMethods.getStatus(value) : '';
-                    return <span className={status}>{String(value)}</span>;
+                    const value = cell.getValue<string>();
+                    const isUnread = value === NotificationsAPI.UNREAD;
+                    return (
+                        <Chip
+                            label={isUnread ? t('notifications.unread') : t('notifications.read')}
+                            size="small"
+                            icon={isUnread ? <Drafts sx={{ fontSize: '14px !important' }} /> : <MarkEmailRead sx={{ fontSize: '14px !important' }} />}
+                            sx={{
+                                fontWeight: 800,
+                                bgcolor: isUnread ? 'rgba(99, 102, 241, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+                                color: isUnread ? '#6366f1' : '#64748b',
+                                border: 'none'
+                            }}
+                        />
+                    );
                 },
                 enableColumnFilter: false,
             },
             {
                 accessorKey: "message",
                 header: t('notifications.message'),
-                size: 150,
-            },
-            {
-                accessorKey: "read_at",
-                header: t('notifications.readAt'),
-                size: 150,
-                Cell: ({ cell }) => {
-                    const value = cell.getValue();
-                    return <span>{dayjs(String(value)).format('DD/MM/YYYY HH:mm:ss')}</span> ;
-                },
-                enableColumnFilter: false
+                size: 300,
+                Cell: ({ cell }) => (
+                    <Typography variant="body2" sx={{
+                        color: 'var(--text-secondary)',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        lineHeight: 1.4
+                    }}>
+                        {cell.getValue<string>()}
+                    </Typography>
+                )
             },
             {
                 accessorKey: "created_at",
-                header: t('notifications.createdAt'),
+                header: t('notifications.sentAt'),
                 size: 150,
                 Cell: ({ cell }) => {
-                    const value = cell.getValue();
-                    return <span>{dayjs(String(value)).format('DD/MM/YYYY HH:mm:ss')}</span> ;
+                    const value = cell.getValue<string>();
+                    return (
+                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {dayjs(value).format('DD/MM/YYYY')}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+                                {dayjs(value).format('HH:mm')}
+                            </Typography>
+                        </Box>
+                    );
                 },
                 enableColumnFilter: false,
             },
             {
                 accessorKey: "actions",
-                header: t('common.actions'),
-                size: 150,
-                unexport: true,
+                header: "",
+                size: 80,
                 enableColumnFilter: false,
+                enableSorting: false,
             },
         ],
         [t],
@@ -233,7 +349,7 @@ export default function NotificationIndex() {
         ),
     });
 
-    const handleMarkAsRead = async (id : number) => {
+    const handleMarkAsRead = async (id : string) => {
         try {
             context.togglePageLoading(true)
             const {message} = await NotificationsAPI.maskAsRead(id)
@@ -255,6 +371,7 @@ export default function NotificationIndex() {
         } catch (error) {
             console.error(error)
         }finally{
+            setIsDeleted(prev => !prev)
             context.togglePageLoading(false)
         }
     }

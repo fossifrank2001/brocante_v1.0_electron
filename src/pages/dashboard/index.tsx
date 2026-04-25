@@ -301,50 +301,6 @@ export const DashboardIndicator: React.FC = () => {
         }
     };
 
-    if (loading) {
-        return (
-            <Container >
-                <Paper sx={{ ...glassContainerStyle, width: '100%', mb: 2, p: 4, background: 'rgba(255, 255, 255, 0.5)' }} elevation={0}>
-                    {/* Tabs Skeleton */}
-                    <Box sx={{ mb: 4 }}>
-                        <Skeleton variant="rectangular" width={300} height={48} sx={{ borderRadius: '14px' }} />
-                    </Box>
-
-                    {/* Stats Cards Skeletons */}
-                    <Grid container spacing={4}>
-                        <Grid item xs={12} md={4}>
-                            <Card sx={{ ...glassCardStyle }}>
-                                <CardContent sx={{ p: 4 }}>
-                                    <Skeleton variant="text" width="60%" height={30} sx={{ mb: 2 }} />
-                                    <Skeleton variant="rectangular" height={80} sx={{ borderRadius: '16px', mb: 2 }} />
-                                    <Skeleton variant="text" width="40%" />
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <Card sx={{ ...glassCardStyle }}>
-                                <CardContent sx={{ p: 4 }}>
-                                    <Skeleton variant="text" width="60%" height={30} sx={{ mb: 2 }} />
-                                    <Skeleton variant="rectangular" height={80} sx={{ borderRadius: '16px', mb: 2 }} />
-                                    <Skeleton variant="text" width="40%" />
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <Card sx={{ ...glassCardStyle }}>
-                                <CardContent sx={{ p: 4 }}>
-                                    <Skeleton variant="text" width="60%" height={30} sx={{ mb: 2 }} />
-                                    <Skeleton variant="rectangular" height={80} sx={{ borderRadius: '16px', mb: 2 }} />
-                                    <Skeleton variant="text" width="40%" />
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    </Grid>
-                </Paper>
-            </Container>
-        );
-    }
-
     if (error) {
         return (
             <Container>
@@ -399,7 +355,6 @@ export const DashboardIndicator: React.FC = () => {
                         gap: 2,
                         position: 'relative',
                         zIndex: 1,
-                        background: 'linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%)'
                     }}>
                         <Tabs
                             value={tabValue}

@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
 
 export interface INotification{
-    id: number;
-    type: number;
+    id: string;
+    type: string;
     data?: null | IData;
     read_at: string;
     created_at: string
