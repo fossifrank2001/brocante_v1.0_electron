@@ -32,6 +32,9 @@ export interface IStoreSetting {
     negative_stock_allowed: boolean;
     require_cash_session: boolean;
     max_unpaid_loans: number;
+    loyalty_enabled: boolean;
+    loyalty_points_per_hundred: number;
+    loyalty_points_value: number;
     created_at: string;
     updated_at: string;
 }
@@ -67,4 +70,7 @@ export interface IStoreSettingPayload {
     negative_stock_allowed?: boolean;
     require_cash_session?: boolean;
     max_unpaid_loans?: number;
+    loyalty_enabled?: boolean;
+    loyalty_points_per_hundred?: number;
+    loyalty_points_value?: number;
 }

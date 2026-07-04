@@ -802,6 +802,7 @@
     "tabs": {
       "identity": "Identité Store",
       "stockPos": "Gestion Stock & POS",
+      "loyalty": "Fidélité",
       "database": "Base de Données"
     },
     "logo": {
@@ -852,6 +853,20 @@
       "creditPolicy": "Politique de Crédit",
       "maxUnpaidLoans": "Limite de prêts impayés",
       "maxUnpaidLoansDescription": "Nombre maximum de prêts impayés autorisés par client avant de bloquer les nouvelles ventes."
+    },
+    "loyalty": {
+      "title": "Programme de Fidélité",
+      "enableProgram": "Activer le programme de fidélité",
+      "enableDescription": "Les clients accumulent automatiquement des points lors de chaque achat payé intégralement.",
+      "pointsPerHundred": "Points par tranche de 100",
+      "pointsHelper": "Nombre de points accordés pour chaque tranche de 100 unités dépensées.",
+      "pointValue": "Valeur d'un point (FCFA)",
+      "pointValueHelper": "Valeur monétaire d'un point de fidélité lors de l'échange.",
+      "howItWorks": "Comment ça fonctionne",
+      "explanation1": "Lorsqu'un client règle une vente intégralement, le système calcule automatiquement les points gagnés en fonction du montant total.",
+      "explanation2": "Les points sont visibles sur la fiche client et peuvent être utilisés comme remise lors du checkout.",
+      "example": "Exemple",
+      "exampleDetail": "Pour un achat de 10 000 FCFA avec un taux de {{rate}} pts/100, le client gagne {{rate}} × 100 = {{rate}}00 points."
     },
     "logoUpdated": "Logo mis à jour",
     "signatureUpdated": "Signature mise à jour",
@@ -1076,6 +1091,7 @@
     "SETTINGS": "Paramètres",
     "STOCK_MOVEMENTS": "Mouvements de stock",
     "INVENTORY": "Inventaire physique",
+    "PURCHASE_ORDERS": "Commandes d'achat",
     "REPORTS": "Rapports & Analyses",
     "PRODUCT_TEMPLATES": "Fiches Types",
     "PERSON": "Personne",    

@@ -3,9 +3,9 @@ import {
     Drawer, Box, Typography, IconButton, TextField, Button,
     CircularProgress, Chip, Grid, Autocomplete, Alert, Dialog
 } from '@mui/material';
-import { Close, Payment, PointOfSale, AccountCircle, AttachMoney, PersonAdd } from '@mui/icons-material';
+import { Close, Payment, PointOfSale, AccountCircle, AttachMoney, PersonAdd, Loyalty } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { clearCart, setItemDiscount } from '@/Data/Slices/dashboard/seller/cartSlice';
+import { clearCart, setGlobalDiscount } from '@/Data/Slices/dashboard/seller/cartSlice';
 import { incrementSalesCount, addToTotalSales } from '@/Data/Slices/dashboard/cashSessionSlice';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
@@ -40,11 +40,21 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
     const [transactionType, setTransactionType] = useState<TTransactionType>('total');
     // Amounts
     const [amountGiven, setAmountGiven] = useState<string>(''); // Used for 'total' and 'advance'
+    // Mixed payment
+    const [mixedMode, setMixedMode] = useState(false);
+    const [paymentLines, setPaymentLines] = useState<{ method: TPayment; amount: string }[]>([{ method: 'Cash', amount: '' }]);
+    const mixedTotal = paymentLines.reduce((sum, l) => sum + (parseInt(l.amount || '0', 10) || 0), 0);
+    const mixedCashPortion = paymentLines
+        .filter(l => l.method === 'Cash')
+        .reduce((sum, l) => sum + (parseInt(l.amount || '0', 10) || 0), 0);
     // Customer
     const [persons, setPersons] = useState<IPerson[]>([]);
     const [selectedPerson, setSelectedPerson] = useState<IPerson | null>(null);
     const [loadingPersons, setLoadingPersons] = useState(false);
     const [useCompanyBalance, setUseCompanyBalance] = useState(false);
+    // Loyalty redemption
+    const [redeemLoyaltyPoints, setRedeemLoyaltyPoints] = useState(false);
+    const [loyaltyPointsToUse, setLoyaltyPointsToUse] = useState(0);
     // New Customer Dialog
     const [openAddCustomer, setOpenAddCustomer] = useState(false);
     const [newCustomer, setNewCustomer] = useState({ firstname: '', lastname: '', phone: '' });
@@ -59,6 +69,9 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
     const [dateToPay, setDateToPay] = useState<string>(today);
     // Derived values
     const companyBalance = selectedPerson?.company_balance || 0;
+    const loyaltyPoints = selectedPerson?.loyalty_points ?? 0;
+    const loyaltyPointValue = 1; // Default: 1 FCFA per point; could be fetched from settings
+    const loyaltyDiscountAmount = redeemLoyaltyPoints ? Math.min(loyaltyPoints * loyaltyPointValue, cart.totalPrice) : 0;
 
     const totalDebtAmount = React.useMemo(() => {
         const remaining = selectedPerson?.remaining_balance as any;
@@ -74,13 +87,13 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
         return 0;
     }, [selectedPerson]);
 
-    const companyBalanceToUse = useCompanyBalance ? Math.min(companyBalance, cart.totalPrice) : 0;
-    const priceAfterBalance = cart.totalPrice - companyBalanceToUse;
+    const companyBalanceToUse = useCompanyBalance ? Math.min(companyBalance, cart.totalPrice - loyaltyDiscountAmount) : 0;
+    const priceAfterBalance = cart.totalPrice - loyaltyDiscountAmount - companyBalanceToUse;
     
     // Total discount already calculated in cart slice as sum of item discounts
     const totalDiscount = cart.totalDiscount;
 
-    const actualAmountPaidInt = parseInt(amountGiven || '0', 10);
+    const actualAmountPaidInt = mixedMode ? mixedTotal : parseInt(amountGiven || '0', 10);
     const expectedChange = transactionType === 'total' ? Math.max(0, actualAmountPaidInt - priceAfterBalance) : 0;
     const needsCustomer = transactionType === 'advance' || transactionType === 'loan' || useCompanyBalance;
     const remainingBalance = transactionType === 'loan'
@@ -93,8 +106,12 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
             setPaymentMethod('Cash');
             setTransactionType('total');
             setAmountGiven(cart.totalPrice.toString());
+            setMixedMode(false);
+            setPaymentLines([{ method: 'Cash', amount: cart.totalPrice.toString() }]);
             setSelectedPerson(null);
             setUseCompanyBalance(false);
+            setRedeemLoyaltyPoints(false);
+            setLoyaltyPointsToUse(0);
             setDateToPay(today);
             getCustomers('');
         }
@@ -151,12 +168,21 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
         try {
             setLoading(true);
 
-            const finalPaidAmount = transactionType === 'loan' ? 0 :
-                (transactionType === 'total' ? priceAfterBalance : actualAmountPaidInt);
+            const finalPaidAmount = transactionType === 'loan' ? 0 : actualAmountPaidInt;
+
+            // Mixed payment: build breakdown and derive the dominant method for the receipt
+            const breakdown = mixedMode
+                ? paymentLines
+                    .filter(l => (parseInt(l.amount || '0', 10) || 0) > 0)
+                    .map(l => ({ method: l.method, amount: parseInt(l.amount || '0', 10) }))
+                : undefined;
+            const dominantMethod: TPayment = mixedMode && breakdown && breakdown.length > 0
+                ? breakdown.reduce((a, b) => (b.amount > a.amount ? b : a)).method
+                : paymentMethod;
 
             const payload = {
                 person_id: selectedPerson?.id || null,
-                payment: paymentMethod,
+                payment: dominantMethod,
                 total_amount: cart.totalPrice,
                 tax: 0,
                 shipping_price: 0,
@@ -172,15 +198,24 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                     total_unit: item.subtotal,
                     discount_amount: item.discountAmount || 0,
                 })),
+                ...(breakdown && breakdown.length > 0 ? { payment_breakdown: breakdown } : {}),
                 has_authorized: true,
                 use_company_balance: useCompanyBalance,
                 use_surplus_for_debts: true,
+                loyalty_points_to_redeem: redeemLoyaltyPoints ? loyaltyPoints : 0,
                 cash_session_id: currentSession.id,
             };
 
             const result = await SellAPI.create(payload);
 
-            if (paymentMethod === 'Cash' && finalPaidAmount > 0) {
+            if (mixedMode) {
+                // Cash retained in drawer = cash portion minus any change returned
+                const cashNet = Math.max(0, mixedCashPortion - expectedChange);
+                if (finalPaidAmount > 0) {
+                    dispatch(incrementSalesCount());
+                    if (cashNet > 0) dispatch(addToTotalSales(cashNet));
+                }
+            } else if (paymentMethod === 'Cash' && finalPaidAmount > 0) {
                 dispatch(incrementSalesCount());
                 dispatch(addToTotalSales(finalPaidAmount));
             } else if (paymentMethod === 'Cash') {
@@ -326,6 +361,38 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                         onChange={(_, value) => setSelectedPerson(value)}
                     />
 
+                    {selectedPerson && (selectedPerson.loyalty_points ?? 0) > 0 && (
+                        <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            <Chip
+                                size="small"
+                                icon={<Loyalty sx={{ fontSize: 16 }} />}
+                                label={`${t('posCheckout.loyaltyPoints', 'Points fidélité')}: ${selectedPerson.loyalty_points}`}
+                                sx={{ fontWeight: 800, bgcolor: 'rgba(245, 158, 11, 0.12)', color: '#b45309', borderRadius: '8px', alignSelf: 'flex-start' }}
+                            />
+                            <Box sx={{
+                                p: 1.5, bgcolor: 'rgba(245, 158, 11, 0.06)', borderRadius: '12px',
+                                display: 'flex', alignItems: 'center', gap: 1.5,
+                                border: '1px solid rgba(245, 158, 11, 0.2)'
+                            }}>
+                                <input
+                                    type="checkbox"
+                                    id="use_loyalty"
+                                    checked={redeemLoyaltyPoints}
+                                    onChange={(e) => setRedeemLoyaltyPoints(e.target.checked)}
+                                    style={{ width: 18, height: 18, accentColor: '#f59e0b' }}
+                                />
+                                <label htmlFor="use_loyalty" style={{ cursor: 'pointer', flex: 1, display: 'flex', justifyContent: 'space-between' }}>
+                                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#92400e' }}>
+                                        {t('posCheckout.redeemPoints', 'Utiliser mes points')}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ fontWeight: 900, color: '#b45309' }}>
+                                        -{UtilMethods.formatNumber(loyaltyDiscountAmount)}
+                                    </Typography>
+                                </label>
+                            </Box>
+                        </Box>
+                    )}
+
                     {selectedPerson && ((totalDebtAmount as any) > 0 || companyBalance > 0) && (
                         <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
                             {(totalDebtAmount as any) > 0 && (
@@ -370,6 +437,49 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                     )}
                 </Box>
 
+                {/* Global discount */}
+                <Box sx={{ mb: 4, p: 3, bgcolor: 'var(--bg-surface)', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#64748b', mb: 1.5, textTransform: 'uppercase' }}>
+                        {t('posCheckout.globalDiscount', 'Remise globale')}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'stretch' }}>
+                        <TextField
+                            type="number"
+                            value={cart.globalDiscountValue || ''}
+                            onChange={(e) => {
+                                const val = parseFloat(e.target.value);
+                                dispatch(setGlobalDiscount({ value: isNaN(val) ? 0 : val, mode: cart.globalDiscountMode }));
+                            }}
+                            placeholder="0"
+                            inputProps={{ min: 0, step: cart.globalDiscountMode === 'percent' ? 1 : 100 }}
+                            sx={{ flex: 1 }}
+                            InputProps={{ sx: { borderRadius: '12px', bgcolor: 'var(--input-bg)', fontWeight: 800 } }}
+                        />
+                        <Box sx={{ display: 'flex', p: 0.5, bgcolor: 'var(--bg-elevated)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                            {(['amount', 'percent'] as const).map((mode) => (
+                                <Button
+                                    key={mode}
+                                    onClick={() => dispatch(setGlobalDiscount({ value: cart.globalDiscountValue, mode }))}
+                                    sx={{
+                                        minWidth: 56, borderRadius: '10px', fontWeight: 800,
+                                        bgcolor: cart.globalDiscountMode === mode ? '#6366f1' : 'transparent',
+                                        color: cart.globalDiscountMode === mode ? '#fff' : '#64748b',
+                                        '&:hover': { bgcolor: cart.globalDiscountMode === mode ? '#4f46e5' : 'rgba(99,102,241,0.08)' }
+                                    }}
+                                >
+                                    {mode === 'percent' ? '%' : 'XAF'}
+                                </Button>
+                            ))}
+                        </Box>
+                    </Box>
+                    {cart.globalDiscountAmount > 0 && (
+                        <Typography variant="caption" sx={{ display: 'block', mt: 1, fontWeight: 700, color: '#ef4444' }}>
+                            -{UtilMethods.formatNumber(cart.globalDiscountAmount)}
+                            {cart.globalDiscountMode === 'percent' ? ` (${cart.globalDiscountValue}%)` : ''}
+                        </Typography>
+                    )}
+                </Box>
+
                 <Box sx={{
                     p: 4, mb: 4, borderRadius: '24px', textAlign: 'center',
                     background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
@@ -386,8 +496,16 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                     <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
                         {useCompanyBalance && companyBalanceToUse > 0 && (
                             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'line-through' }}>
-                                {t('posCheckout.beforeDeduction')}: {UtilMethods.formatNumber(cart.totalPrice + companyBalanceToUse)}
+                                {t('posCheckout.beforeDeduction')}: {UtilMethods.formatNumber(cart.totalPrice + companyBalanceToUse + loyaltyDiscountAmount)}
                             </Typography>
+                        )}
+                        {redeemLoyaltyPoints && loyaltyDiscountAmount > 0 && (
+                            <Chip
+                                size="small"
+                                icon={<Loyalty sx={{ fontSize: 14, color: 'rgba(245, 158, 11, 0.9) !important' }} />}
+                                label={`${t('posCheckout.loyaltyDiscount', 'Fidélité')}: -${UtilMethods.formatNumber(loyaltyDiscountAmount)}`}
+                                sx={{ bgcolor: 'rgba(245, 158, 11, 0.2)', color: '#fef3c7', fontWeight: 800, border: '1px solid rgba(245, 158, 11, 0.3)' }}
+                            />
                         )}
                         {totalDiscount > 0 && (
                             <Chip 
@@ -433,9 +551,31 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                 {/* 3. Amounts & Payment Methods context */}
                 {transactionType !== 'loan' && (
                     <Box sx={{ mb: 4, p: 3, bgcolor: 'var(--bg-surface)', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#64748b', mb: 1.5, textTransform: 'uppercase' }}>
-                            {t('posCheckout.paymentMethod')}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+                                {t('posCheckout.paymentMethod')}
+                            </Typography>
+                            <Button
+                                size="small"
+                                onClick={() => {
+                                    const next = !mixedMode;
+                                    setMixedMode(next);
+                                    if (next) {
+                                        setPaymentLines([{ method: 'Cash', amount: priceAfterBalance.toString() }]);
+                                    }
+                                }}
+                                sx={{
+                                    borderRadius: '10px', fontWeight: 800, textTransform: 'none',
+                                    bgcolor: mixedMode ? '#6366f1' : 'transparent',
+                                    color: mixedMode ? '#fff' : '#6366f1',
+                                    border: '1px solid #6366f1',
+                                    '&:hover': { bgcolor: mixedMode ? '#4f46e5' : 'rgba(99,102,241,0.08)' }
+                                }}
+                            >
+                                {t('posCheckout.mixedPayment', 'Paiement mixte')}
+                            </Button>
+                        </Box>
+                        {!mixedMode && (<>
                         <Grid container spacing={1.5} sx={{ mb: 3 }}>
                             {paymentMethods.map(method => (
                                 <Grid item xs={6} key={method}>
@@ -506,6 +646,76 @@ const PosCheckoutDrawer: React.FC<PosCheckoutDrawerProps> = ({ open, onClose }) 
                                     </Typography>
                                 </Box>
                             </>
+                        )}
+                        </>)}
+
+                        {mixedMode && (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                                {paymentLines.map((line, idx) => (
+                                    <Box key={idx} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                        <Box sx={{ display: 'flex', gap: 0.5, flex: '0 0 auto' }}>
+                                            {paymentMethods.map(m => (
+                                                <Box
+                                                    key={m}
+                                                    onClick={() => setPaymentLines(prev => prev.map((l, i) => i === idx ? { ...l, method: m as TPayment } : l))}
+                                                    sx={{
+                                                        px: 1, py: 0.75, borderRadius: '8px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 800,
+                                                        border: '2px solid',
+                                                        borderColor: line.method === m ? '#6366f1' : 'var(--border-color)',
+                                                        bgcolor: line.method === m ? 'rgba(99,102,241,0.08)' : 'var(--bg-elevated)',
+                                                        color: line.method === m ? '#4f46e5' : 'var(--text-secondary)',
+                                                    }}
+                                                >
+                                                    {m}
+                                                </Box>
+                                            ))}
+                                        </Box>
+                                        <TextField
+                                            size="small"
+                                            value={line.amount}
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                                setPaymentLines(prev => prev.map((l, i) => i === idx ? { ...l, amount: val } : l));
+                                            }}
+                                            placeholder="0"
+                                            sx={{ flex: 1 }}
+                                            InputProps={{ sx: { borderRadius: '10px', bgcolor: 'var(--input-bg)', fontWeight: 800 } }}
+                                        />
+                                        {paymentLines.length > 1 && (
+                                            <IconButton size="small" onClick={() => setPaymentLines(prev => prev.filter((_, i) => i !== idx))} sx={{ color: '#ef4444' }}>
+                                                <Close fontSize="small" />
+                                            </IconButton>
+                                        )}
+                                    </Box>
+                                ))}
+                                <Button
+                                    onClick={() => setPaymentLines(prev => [...prev, { method: 'Cash', amount: '' }])}
+                                    sx={{ alignSelf: 'flex-start', borderRadius: '10px', fontWeight: 800, textTransform: 'none' }}
+                                >
+                                    + {t('posCheckout.addPaymentMethod', 'Ajouter un moyen')}
+                                </Button>
+
+                                <Box sx={{
+                                    mt: 1, p: 2, borderRadius: '14px', bgcolor: 'var(--bg-elevated)', border: '1px solid var(--border-color)',
+                                    display: 'flex', flexDirection: 'column', gap: 0.5
+                                }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography sx={{ fontWeight: 700, color: 'var(--text-secondary)' }}>{t('posCheckout.totalEntered', 'Total saisi')}</Typography>
+                                        <Typography sx={{ fontWeight: 900 }}>{UtilMethods.formatNumber(mixedTotal)}</Typography>
+                                    </Box>
+                                    {transactionType === 'total' && (
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography sx={{ fontWeight: 700, color: expectedChange > 0 ? '#10b981' : '#64748b' }}>{t('posCheckout.changeToGive')}</Typography>
+                                            <Typography sx={{ fontWeight: 900, color: expectedChange > 0 ? '#10b981' : '#64748b' }}>{UtilMethods.formatNumber(expectedChange)}</Typography>
+                                        </Box>
+                                    )}
+                                    {actualAmountPaidInt < priceAfterBalance && transactionType === 'total' && (
+                                        <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 700 }}>
+                                            {t('posCheckout.insufficientAmount')} (-{UtilMethods.formatNumber(priceAfterBalance - actualAmountPaidInt)})
+                                        </Typography>
+                                    )}
+                                </Box>
+                            </Box>
                         )}
 
                         {transactionType === 'advance' && (

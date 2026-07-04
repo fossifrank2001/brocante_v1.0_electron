@@ -10,10 +10,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import "Styles/Navbar.less"
 import { setActivePage } from "Data/Slices/NavigationSlice.ts";
 import { Pages } from "Data/Objects/state.ts";
+import { clearCart } from "@/Data/Slices/dashboard/seller/cartSlice";
 import CashSessionBar from '@/Components/dashboard/pos/CashSessionBar';
 import LanguageSwitcher from '@/Components/utils/LanguageSwitcher';
 import ThemeToggle from '@/Components/utils/ThemeToggle';
 import { useTranslation } from 'react-i18next';
+
+const ipc = (window as any).ipcRenderer;
 
 interface INavBarPropsInterface {
     onHandleChangeRole: (role?: IRole) => void;
@@ -29,7 +32,6 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
     const [hasClickToLoadNotif, setHasClickToLoadNotif] = useState(false);
     const { auth_access_id } = useAppSelector(state => state.userAuthorizing);
     const [notifications, setNotifications] = useState<INotification[] | null>(null);
-
     const { totalQuantity } = useAppSelector(state => state.cart);
     const notificationRef = useRef<HTMLDivElement>(null);
     const accessDropdownRef = useRef<HTMLLIElement>(null);
@@ -38,6 +40,242 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
     const [error, setError] = useState<string | null>(null);
     const [showAccessDropdown, setShowAccessDropdown] = useState(false);
     const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+    // Google Drive Sync States
+    const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
+    const [syncMessage, setSyncMessage] = useState('');
+    const [lastSyncTime, setLastSyncTime] = useState('');
+
+    // Auto-Updater States
+    const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'error'>('idle');
+    const [updateProgress, setUpdateProgress] = useState(0);
+    const [updateVersion, setUpdateVersion] = useState('');
+
+    const checkActualConnection = async () => {
+        if (!navigator.onLine) return false;
+        try {
+            await fetch('https://www.google.com/generate_204', {
+                method: 'HEAD',
+                mode: 'no-cors',
+                cache: 'no-store'
+            });
+            return true;
+        } catch (e) {
+            return false;
+        }
+    };
+
+    useEffect(() => {
+        let isChecking = false;
+        let lastOnlineState = navigator.onLine;
+
+        const updateOnlineStatus = async () => {
+            if (isChecking) return;
+            isChecking = true;
+            
+            const actuallyOnline = await checkActualConnection();
+            
+            if (actuallyOnline !== lastOnlineState) {
+                lastOnlineState = actuallyOnline;
+                setIsOnline(actuallyOnline);
+                
+                if (actuallyOnline) {
+                    try {
+                        if (ipc?.gdriveStatus) {
+                            const status = await ipc.gdriveStatus();
+                            if (status?.authenticated && status?.autoSyncEnabled) {
+                                console.log('[GDrive] Internet restored! Triggering auto-sync...');
+                                const result = await ipc.gdriveUpload();
+                                if (result?.success) {
+                                    console.log('[GDrive] Auto-upload complete upon reconnection.');
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error('[GDrive] Sync on reconnect failed:', e);
+                    }
+                }
+            }
+            isChecking = false;
+        };
+
+        updateOnlineStatus();
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        const intervalId = setInterval(updateOnlineStatus, 5000);
+
+        return () => {
+            window.removeEventListener('online', updateOnlineStatus);
+            window.removeEventListener('offline', updateOnlineStatus);
+            clearInterval(intervalId);
+        };
+    }, []);
+
+    // Notification Helper using HTML5 Notification API
+    const showNotification = (title: string, body: string) => {
+        try {
+            if (Notification.permission === 'granted') {
+                new Notification(title, { body });
+            } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        new Notification(title, { body });
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Failed to show notification:', err);
+        }
+    };
+
+    // Google Drive and Local Backup triggers
+    const triggerLocalBackup = async () => {
+        try {
+            console.log('[Shortcut] Triggering local backup...');
+            if (ipc?.backupCreateNow) {
+                const result = await ipc.backupCreateNow();
+                if (result?.success) {
+                    showNotification(t('backup.successTitle', 'Sauvegarde réussie'), `${t('backup.successMessage', 'Sauvegarde locale créée')} : ${result.filename}`);
+                } else {
+                    showNotification(t('backup.errorTitle', 'Échec sauvegarde'), result?.error || t('backup.errorMessage', 'Impossible de créer la sauvegarde locale.'));
+                }
+            }
+        } catch (e: any) {
+            console.error('Local backup failed:', e);
+            showNotification(t('backup.errorTitle', 'Échec sauvegarde'), e.message);
+        }
+    };
+
+    const triggerGDriveSync = async () => {
+        try {
+            console.log('[Shortcut] Triggering Google Drive sync...');
+            if (ipc?.gdriveUpload) {
+                const result = await ipc.gdriveUpload();
+                if (result?.success) {
+                    showNotification(t('sync.successTitle', 'Synchronisation réussie'), `${t('sync.successMessage', 'Fichier envoyé vers Google Drive')} : ${result.fileName}`);
+                } else {
+                    showNotification(t('sync.errorTitle', 'Échec synchronisation'), t('sync.errorMessage', 'Erreur lors du transfert Google Drive.'));
+                }
+            }
+        } catch (e: any) {
+            console.error('Google Drive sync failed:', e);
+            showNotification(t('sync.errorTitle', 'Échec synchronisation'), e.message);
+        }
+    };
+
+    const formatLastSync = (isoString?: string) => {
+        if (!isoString) return t('sync.never', 'Aucune synchronisation');
+        const date = new Date(isoString);
+        if (isNaN(date.getTime())) return t('sync.never', 'Aucune synchronisation');
+        return t('sync.lastSyncAt', 'Dernière synchro : ') + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    // Initialize sync status from main configuration
+    useEffect(() => {
+        if (ipc?.gdriveStatus) {
+            ipc.gdriveStatus().then((status: any) => {
+                if (status?.lastSyncTime) {
+                    setLastSyncTime(status.lastSyncTime);
+                }
+            }).catch((e: any) => console.error('[GDrive] status fetch error:', e));
+        }
+    }, []);
+
+    // Listen for sync events from main process
+    useEffect(() => {
+        if (ipc?.onSyncEvent) {
+            const unsubscribe = ipc.onSyncEvent((_event: any, data: any) => {
+                console.log('[GDrive Sync Event]', data);
+                if (data.type === 'sync-start') {
+                    setSyncStatus('syncing');
+                } else if (data.type === 'sync-success') {
+                    setSyncStatus('success');
+                    if (data.timestamp) {
+                        setLastSyncTime(data.timestamp);
+                    } else {
+                        setLastSyncTime(new Date().toISOString());
+                    }
+                    const timer = setTimeout(() => setSyncStatus('idle'), 5000);
+                    return () => clearTimeout(timer);
+                } else if (data.type === 'sync-error') {
+                    setSyncStatus('error');
+                    setSyncMessage(data.message || 'Erreur');
+                    const timer = setTimeout(() => setSyncStatus('idle'), 10000);
+                    return () => clearTimeout(timer);
+                }
+            });
+            return () => unsubscribe();
+        }
+    }, []);
+
+    // Listen for update events from main process (auto-updater)
+    useEffect(() => {
+        if (ipc?.onUpdateEvent) {
+            const unsubscribe = ipc.onUpdateEvent((_event: any, data: any) => {
+                console.log('[AutoUpdater Event]', data);
+                if (data.type === 'checking') {
+                    setUpdateStatus('checking');
+                } else if (data.type === 'available') {
+                    setUpdateStatus('available');
+                    if (data.version) setUpdateVersion(data.version);
+                } else if (data.type === 'downloading') {
+                    setUpdateStatus('downloading');
+                    if (data.progress !== undefined) setUpdateProgress(data.progress);
+                } else if (data.type === 'downloaded') {
+                    setUpdateStatus('downloaded');
+                    if (data.version) setUpdateVersion(data.version);
+                } else if (data.type === 'error') {
+                    setUpdateStatus('error');
+                    console.error('[AutoUpdater Error]', data.error || 'Erreur');
+                    setTimeout(() => setUpdateStatus('idle'), 10000);
+                } else if (data.type === 'not-available') {
+                    setUpdateStatus('idle');
+                }
+            });
+            return () => unsubscribe();
+        }
+    }, []);
+
+    // Handle Keyboard Shortcuts
+    useEffect(() => {
+        if (ipc?.onShortcut) {
+            const unsubscribe = ipc.onShortcut((_event: any, data: { action: string }) => {
+                console.log('[Shortcut Received]', data.action);
+                switch (data.action) {
+                    case 'pos':
+                        dispatch(setActivePage({ page: Pages.POS_EXPRESS }));
+                        break;
+                    case 'search':
+                        dispatch(setActivePage({ page: Pages.ARTICLE }));
+                        break;
+                    case 'new-sale':
+                        dispatch(clearCart());
+                        dispatch(setActivePage({ page: Pages.POS_EXPRESS }));
+                        break;
+                    case 'sales-history':
+                        dispatch(setActivePage({ page: Pages.SELL }));
+                        break;
+                    case 'dashboard':
+                        dispatch(setActivePage({ page: Pages.DASHBOARD }));
+                        break;
+                    case 'settings':
+                        dispatch(setActivePage({ page: Pages.SETTINGS }));
+                        break;
+                    case 'backup':
+                        triggerLocalBackup();
+                        break;
+                    case 'sync-drive':
+                        triggerGDriveSync();
+                        break;
+                    default:
+                        break;
+                }
+            });
+            return () => unsubscribe();
+        }
+    }, [dispatch]);
 
     const handleLogout = async () => {
         try {
@@ -209,6 +447,25 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
         <header className="app-header" style={{
             zIndex: 100
         }}>
+            {updateStatus === 'downloading' && (
+                <div className="update-banner update-banner--downloading update-banner-enter">
+                    <i className="ti ti-loader sync-spinning"></i>
+                    <span>📥 {t('updater.downloading', 'Téléchargement de la mise à jour')} v{updateVersion} ({updateProgress}%) ...</span>
+                </div>
+            )}
+            {updateStatus === 'downloaded' && (
+                <button 
+                    className="update-banner update-banner--ready update-banner-enter"
+                    onClick={() => {
+                        if (ipc?.updaterInstall) {
+                            ipc.updaterInstall();
+                        }
+                    }}
+                >
+                    <i className="ti ti-gift fs-4"></i>
+                    <span>🎉 {t('updater.ready', 'Une nouvelle version est disponible ! Cliquer ici pour l\'installer et redémarrer.')} (v{updateVersion})</span>
+                </button>
+            )}
             <nav className="navbar navbar-expand-lg navbar-light" style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--navbar-bg)' }}>
                 <ul className="navbar-nav">
                     <li className="nav-item">
@@ -316,6 +573,57 @@ const Navbar: React.FC<INavBarPropsInterface> = ({ onHandleChangeRole, toggleSid
                         </li>
                         <li className="nav-item me-2">
                             <ThemeToggle />
+                        </li>
+                        <li className="nav-item me-3 d-flex align-items-center">
+                            <span 
+                                className="d-flex align-items-center rounded-pill fw-semibold"
+                                style={{
+                                    fontSize: '0.75rem',
+                                    padding: '4px 10px',
+                                    borderRadius: '50px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    fontWeight: 700,
+                                    backgroundColor: isOnline ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                    color: isOnline ? '#10b981' : '#ef4444',
+                                    border: isOnline ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)',
+                                    transition: 'all 0.3s ease'
+                                }}
+                            >
+                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', display: 'inline-block', backgroundColor: 'currentColor' }}></span>
+                                {isOnline ? t('common.online', 'En ligne') : t('common.offline', 'Hors-ligne')}
+                            </span>
+                        </li>
+                        <li className="nav-item me-3 d-flex align-items-center">
+                            <span 
+                                className={`sync-badge sync-badge--${syncStatus}`}
+                                title={syncStatus === 'error' ? syncMessage : formatLastSync(lastSyncTime)}
+                                onClick={triggerGDriveSync}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                {syncStatus === 'syncing' ? (
+                                    <>
+                                        <i className="ti ti-refresh sync-spinning"></i>
+                                        <span>{t('sync.syncing', 'Synchro...')}</span>
+                                    </>
+                                ) : syncStatus === 'success' ? (
+                                    <>
+                                        <i className="ti ti-cloud-check"></i>
+                                        <span>{t('sync.synced', 'Synchronisé')}</span>
+                                    </>
+                                ) : syncStatus === 'error' ? (
+                                    <>
+                                        <i className="ti ti-alert-triangle"></i>
+                                        <span>{t('sync.error', 'Erreur sync')}</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="ti ti-cloud"></i>
+                                        <span>{t('sync.cloud', 'Cloud')}</span>
+                                    </>
+                                )}
+                            </span>
                         </li>
                         <li className="nav-item nav-icon-hover-bg rounded-circle">
                             <Link className="nav-link position-relative" href="#"

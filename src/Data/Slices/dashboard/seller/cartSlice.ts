@@ -23,11 +23,16 @@ export interface CartItem {
     discountAmount: number;
 }
 
+export type TDiscountMode = 'amount' | 'percent';
+
 export interface ICartState {
     items: CartItem[];
     totalQuantity: number;
     totalPrice: number;
     totalDiscount: number;
+    globalDiscountValue: number;
+    globalDiscountMode: TDiscountMode;
+    globalDiscountAmount: number;
 }
 
 const loadCartFromStorage = (): ICartState => {
@@ -57,6 +62,9 @@ const loadCartFromStorage = (): ICartState => {
                 totalQuantity: safeNumber(parsed.totalQuantity),
                 totalPrice: safeNumber(parsed.totalPrice),
                 totalDiscount: safeNumber(parsed.totalDiscount),
+                globalDiscountValue: safeNumber(parsed.globalDiscountValue),
+                globalDiscountMode: parsed.globalDiscountMode === 'percent' ? 'percent' : 'amount',
+                globalDiscountAmount: safeNumber(parsed.globalDiscountAmount),
             };
         }
     } catch (error) {
@@ -67,6 +75,9 @@ const loadCartFromStorage = (): ICartState => {
         totalQuantity: 0,
         totalPrice: 0,
         totalDiscount: 0,
+        globalDiscountValue: 0,
+        globalDiscountMode: 'amount',
+        globalDiscountAmount: 0,
     };
 };
 
@@ -83,8 +94,24 @@ const initialState: ICartState = loadCartFromStorage();
 
 const updateCartTotals = (state: ICartState) => {
     state.totalQuantity = state.items.reduce((total, item) => total + (item.quantity || 0), 0);
-    state.totalDiscount = state.items.reduce((total, item) => total + (item.discountAmount || 0), 0);
-    state.totalPrice = state.items.reduce((total, item) => total + (item.subtotal || 0), 0) - state.totalDiscount;
+    const itemsSubtotal = state.items.reduce((total, item) => total + (item.subtotal || 0), 0);
+    const itemDiscounts = state.items.reduce((total, item) => total + (item.discountAmount || 0), 0);
+    const baseAfterItemDiscounts = Math.max(0, itemsSubtotal - itemDiscounts);
+
+    // Resolve global discount (percent or fixed amount), clamped to the remaining base
+    let globalDiscountAmount = 0;
+    const gdv = state.globalDiscountValue || 0;
+    if (gdv > 0) {
+        if (state.globalDiscountMode === 'percent') {
+            globalDiscountAmount = Math.round(baseAfterItemDiscounts * Math.min(gdv, 100) / 100 * 100) / 100;
+        } else {
+            globalDiscountAmount = Math.min(gdv, baseAfterItemDiscounts);
+        }
+    }
+    state.globalDiscountAmount = Math.max(0, Math.round(globalDiscountAmount * 100) / 100);
+
+    state.totalDiscount = Math.round((itemDiscounts + state.globalDiscountAmount) * 100) / 100;
+    state.totalPrice = Math.max(0, Math.round((itemsSubtotal - state.totalDiscount) * 100) / 100);
     saveCartToStorage(state);
 };
 
@@ -199,11 +226,26 @@ export const cartSlice = createSlice({
                 updateCartTotals(state);
             }
         },
+        loadCartSnapshot: (state, action: PayloadAction<{ items: CartItem[]; globalDiscountValue?: number; globalDiscountMode?: TDiscountMode }>) => {
+            state.items = action.payload.items || [];
+            state.globalDiscountValue = Math.max(0, Number(action.payload.globalDiscountValue) || 0);
+            state.globalDiscountMode = action.payload.globalDiscountMode === 'percent' ? 'percent' : 'amount';
+            updateCartTotals(state);
+        },
+        setGlobalDiscount: (state, action: PayloadAction<{ value: number; mode: TDiscountMode }>) => {
+            const { value, mode } = action.payload;
+            state.globalDiscountValue = Math.max(0, Number(value) || 0);
+            state.globalDiscountMode = mode === 'percent' ? 'percent' : 'amount';
+            updateCartTotals(state);
+        },
         clearCart: (state) => {
             state.items = [];
             state.totalQuantity = 0;
             state.totalPrice = 0;
             state.totalDiscount = 0;
+            state.globalDiscountValue = 0;
+            state.globalDiscountMode = 'amount';
+            state.globalDiscountAmount = 0;
             localStorage.removeItem(CART_STORAGE_KEY);
         },
     },
@@ -213,6 +255,9 @@ export const selectCartItems = (state: RootState) => state.cart.items;
 export const selectTotalQuantity = (state: RootState) => state.cart.totalQuantity;
 export const selectTotalPrice = (state: RootState) => state.cart.totalPrice;
 export const selectTotalDiscount = (state: RootState) => state.cart.totalDiscount;
+export const selectGlobalDiscountValue = (state: RootState) => state.cart.globalDiscountValue;
+export const selectGlobalDiscountMode = (state: RootState) => state.cart.globalDiscountMode;
+export const selectGlobalDiscountAmount = (state: RootState) => state.cart.globalDiscountAmount;
 
 export const {
     addToCart,
@@ -221,6 +266,8 @@ export const {
     decreaseQuantity,
     updateCartItem,
     setItemDiscount,
+    setGlobalDiscount,
+    loadCartSnapshot,
     clearCart
 } = cartSlice.actions;
 

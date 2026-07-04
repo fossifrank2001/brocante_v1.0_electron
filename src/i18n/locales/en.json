@@ -872,6 +872,7 @@
     "tabs": {
       "identity": "Store Identity",
       "stockPos": "Stock & POS Management",
+      "loyalty": "Loyalty",
       "database": "Database"
     },
     "logo": {
@@ -922,6 +923,20 @@
       "creditPolicy": "Credit Policy",
       "maxUnpaidLoans": "Maximum unpaid loans limit",
       "maxUnpaidLoansDescription": "Maximum number of unpaid loans allowed per customer before blocking new sales."
+    },
+    "loyalty": {
+      "title": "Loyalty Program",
+      "enableProgram": "Enable loyalty program",
+      "enableDescription": "Customers automatically earn points on every fully paid purchase.",
+      "pointsPerHundred": "Points per 100 spent",
+      "pointsHelper": "Number of points awarded for each 100 units spent.",
+      "pointValue": "Point value (FCFA)",
+      "pointValueHelper": "Monetary value of one loyalty point when redeemed.",
+      "howItWorks": "How it works",
+      "explanation1": "When a customer fully pays for a sale, the system automatically calculates earned points based on the total amount.",
+      "explanation2": "Points are visible on the customer profile and can be redeemed as a discount at checkout.",
+      "example": "Example",
+      "exampleDetail": "For a 10,000 purchase with a rate of {{rate}} pts/100, the customer earns {{rate}} × 100 = {{rate}}00 points."
     },
     "logoUpdated": "Logo updated",
     "signatureUpdated": "Signature updated",
@@ -1132,6 +1147,7 @@
     "SETTINGS": "Settings",
     "STOCK_MOVEMENTS": "Stock Movements",
     "INVENTORY": "Physical Inventory",
+    "PURCHASE_ORDERS": "Purchase Orders",
     "REPORTS": "Reports & Analytics",
     "PRODUCT_TEMPLATES": "Product Templates",
     "PERSON": "Person",

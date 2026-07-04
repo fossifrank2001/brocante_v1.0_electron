@@ -1,7 +1,7 @@
 {
   "name": "brocante-v-1-0",
   "private": true,
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Brocante - Point of Sale Application",
   "author": "Nozakap FOSSI Frank Jordan",
   "type": "module",
@@ -42,6 +42,7 @@
     "dist": "electron-builder",
     "rebuild": "electron-rebuild",
     "build": "tsc && vite build && electron-builder --config",
+    "release": "tsc && vite build && electron-builder --publish always",
     "setup:portable": "powershell -ExecutionPolicy Bypass -File scripts/setup-portable.ps1",
     "build:portable": "powershell -ExecutionPolicy Bypass -File scripts/build-portable.ps1"
   },
@@ -63,6 +64,7 @@
     "@date-io/date-fns": "^3.0.0",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
+    "@fontsource/comfortaa": "^5.2.8",
     "@mui/icons-material": "^5.15.16",
     "@mui/material": "^5.15.16",
     "@mui/x-data-grid": "^7.20.0",
@@ -76,6 +78,7 @@
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.11",
     "electron-devtools-installer": "^3.2.0",
+    "electron-updater": "^6.8.3",
     "formik": "^2.4.6",
     "framer-motion": "^11.2.10",
     "html5-qrcode": "^2.3.8",

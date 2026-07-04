@@ -10,12 +10,14 @@ import menusReducer from "Data/Slices/dashboard/admin/MenusSlice";
 import cartReducer from "Data/Slices/dashboard/seller/cartSlice.ts"
 import checkoutReducer from "Data/Slices/dashboard/seller/checkoutSlice.ts"
 import cashSessionReducer from "Data/Slices/dashboard/cashSessionSlice.ts"
+import heldOrdersReducer from "Data/Slices/dashboard/seller/heldOrdersSlice.ts"
  
 const reducerMap = {
     navigaton : navReducer,
     checkout : checkoutReducer,
     user : userReducer,
     cart : cartReducer,
+    heldOrders : heldOrdersReducer,
     cashSession : cashSessionReducer,
     forgot : forgotReducer,
     reset : resetReducer,

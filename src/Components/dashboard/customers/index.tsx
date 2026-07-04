@@ -26,7 +26,8 @@ import {
     TrendingDown,
     AccountBalanceWallet,
     Add,
-    Person
+    Person,
+    History
 } from '@mui/icons-material';
 import UtilMethods from '@/Data/Utilities/UtilMethods';
 import { useAppSelector } from '@/hooks';
@@ -36,6 +37,7 @@ import CustomerAPI from "Data/Api/Customer.ts";
 import { IPerson, IPersonTableData } from 'Interfaces';
 import UseCustomerBalance from './UseCustomerBalance';
 import CustomerForm from './CustomerForm';
+import CustomerHistory from './CustomerHistory';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 
@@ -52,6 +54,7 @@ export default function IndexCustomer() {
     const [customerId, setCustomerId] = useState<number | null>(null);
     const [openBalanceModal, setOpenBalanceModal] = useState(false);
     const [openFormModal, setOpenFormModal] = useState(false);
+    const [openHistoryModal, setOpenHistoryModal] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState<IPerson | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [inProgress, setInProgress] = useState(false);
@@ -148,6 +151,7 @@ export default function IndexCustomer() {
     const handleCloseModels = () => {
         setOpenBalanceModal(false);
         setOpenFormModal(false);
+        setOpenHistoryModal(false);
         setSelectedCustomer(null);
     };
 
@@ -172,6 +176,18 @@ export default function IndexCustomer() {
                             }}
                         >
                             <Wallet sx={{ fontSize: '18px' }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title={t('customer.history', 'Historique')} arrow TransitionComponent={Zoom}>
+                        <IconButton
+                            size="small"
+                            onClick={() => {
+                                setSelectedCustomer(person);
+                                setOpenHistoryModal(true);
+                            }}
+                            sx={{ color: '#8b5cf6', bgcolor: 'rgba(139, 92, 246, 0.05)', '&:hover': { bgcolor: 'rgba(139, 92, 246, 0.12)' } }}
+                        >
+                            <History sx={{ fontSize: '18px' }} />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title={t('common.edit')} arrow TransitionComponent={Zoom}>
@@ -461,6 +477,14 @@ export default function IndexCustomer() {
                     open={openBalanceModal}
                     onClose={handleCloseModels}
                     onSuccess={handleSuccess}
+                />
+            )}
+
+            {selectedCustomer && openHistoryModal && (
+                <CustomerHistory
+                    customer={selectedCustomer}
+                    open={openHistoryModal}
+                    onClose={handleCloseModels}
                 />
             )}
 

@@ -5,6 +5,8 @@ import fs from 'fs';
 import installExtension, { REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } from 'electron-devtools-installer';
 import { startPhpServer, stopPhpServer, getApiBaseUrl, getApiPort, waitForApiPort, getDatabaseInfo, resetDatabase, seedDemoData, importDatabase, getAppPaths } from './php-server.js';
 import { GoogleDriveSync } from './google-drive-sync.js';
+import { startDailyBackup, stopDailyBackup, listBackups, restoreBackup, createBackup } from './local-backup.js';
+import { setupAutoUpdater, checkForUpdates, installUpdate, stopAutoUpdater } from './auto-updater.js';
 
 const isDev = process.env.NODE_ENV === 'development';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -103,7 +105,54 @@ function createWindow() {
 
   const template: MenuItemConstructorOptions[] = [
     {
-      label: 'Developer Tools',
+      label: 'Brocante',
+      submenu: [
+        {
+          label: 'Point de Vente',
+          accelerator: 'F1',
+          click: () => mainWindow?.webContents.send('shortcut', { action: 'pos' })
+        },
+        {
+          label: 'Rechercher un produit',
+          accelerator: 'F2',
+          click: () => mainWindow?.webContents.send('shortcut', { action: 'search' })
+        },
+        {
+          label: 'Nouvelle vente',
+          accelerator: 'F3',
+          click: () => mainWindow?.webContents.send('shortcut', { action: 'new-sale' })
+        },
+        {
+          label: 'Historique des ventes',
+          accelerator: 'F4',
+          click: () => mainWindow?.webContents.send('shortcut', { action: 'sales-history' })
+        },
+        { type: 'separator' },
+        {
+          label: 'Tableau de bord',
+          accelerator: 'F5',
+          click: () => mainWindow?.webContents.send('shortcut', { action: 'dashboard' })
+        },
+        {
+          label: 'Paramètres',
+          accelerator: 'F9',
+          click: () => mainWindow?.webContents.send('shortcut', { action: 'settings' })
+        },
+        { type: 'separator' },
+        {
+          label: 'Sauvegarde manuelle',
+          accelerator: 'CmdOrCtrl+B',
+          click: () => mainWindow?.webContents.send('shortcut', { action: 'backup' })
+        },
+        {
+          label: 'Synchroniser Google Drive',
+          accelerator: 'CmdOrCtrl+Shift+S',
+          click: () => mainWindow?.webContents.send('shortcut', { action: 'sync-drive' })
+        },
+      ]
+    },
+    {
+      label: 'Outils',
       submenu: [
         {
           label: 'Toggle DevTools',
@@ -116,26 +165,26 @@ function createWindow() {
           }
         },
         {
-          label: 'Reload',
+          label: 'Recharger',
           accelerator: 'CmdOrCtrl+R',
           role: 'reload'
         },
         {
-          label: 'Hard Reload (No Cache)',
+          label: 'Recharger (sans cache)',
           accelerator: 'CmdOrCtrl+Shift+R',
           click: () => {
             mainWindow?.webContents.reloadIgnoringCache();
           }
         },
         {
-          label: 'API Documentation',
+          label: 'Documentation API',
           accelerator: 'CmdOrCtrl+D',
           click: () => mainWindow?.loadURL('http://127.0.0.1:8000/docs/api')
         },
       ]
     },
     {
-      label: 'Home',
+      label: 'Accueil',
       accelerator: 'CmdOrCtrl+H',
       click: () => mainWindow?.webContents.send('navigate-home')
     }
@@ -160,10 +209,12 @@ function createWindow() {
     });
   }
 
-  // Open DevTools in both dev and production for debugging
-  mainWindow.webContents.once('dom-ready', () => {
-    mainWindow?.webContents.openDevTools();
-  });
+  // Open DevTools only in development mode
+  if (isDev) {
+    mainWindow.webContents.once('dom-ready', () => {
+      mainWindow?.webContents.openDevTools();
+    });
+  }
 }
 
 app.on('window-all-closed', () => {
@@ -204,6 +255,14 @@ app.whenReady().then(async () => {
   }
 
   createWindow();
+
+  // Start daily local backups
+  startDailyBackup();
+
+  // Setup auto-updater (production only)
+  if (!isDev && mainWindow) {
+    setupAutoUpdater(mainWindow);
+  }
 });
 
 // ─── IPC Handler: Get API Base URL ───
@@ -400,10 +459,38 @@ ipcMain.handle('gdrive:status', async () => {
   return gdriveSync.getStatus();
 });
 
+// ─── IPC Handlers: Local Backups ───
+
+ipcMain.handle('backup:list', async () => {
+  return listBackups();
+});
+
+ipcMain.handle('backup:restore', async (_event, { filename }: { filename: string }) => {
+  return restoreBackup(filename);
+});
+
+ipcMain.handle('backup:create-now', async () => {
+  return createBackup();
+});
+
+// ─── IPC Handlers: Auto-Updater ───
+
+ipcMain.handle('updater:check', async () => {
+  checkForUpdates();
+  return { success: true };
+});
+
+ipcMain.handle('updater:install', async () => {
+  installUpdate();
+  return { success: true };
+});
+
 // Cleanup to prevent memory leaks
 app.on('before-quit', () => {
   stopPhpServer();
   gdriveSync.stopAutoSync();
+  stopDailyBackup();
+  stopAutoUpdater();
   mainWindow?.removeAllListeners();
   ipcMain.removeAllListeners();
 });

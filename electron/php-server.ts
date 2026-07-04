@@ -528,14 +528,34 @@ export function importDatabase(sourcePath: string): boolean {
   const phpPath = getPhpPath();
   const laravelPath = getLaravelPath();
 
+  const bakPath = dbPath + '.bak';
+  let backedUp = false;
+
   try {
-    // Stop any DB activity first
+    // Create safety backup of the current database before overwriting
+    if (fs.existsSync(dbPath)) {
+      fs.copyFileSync(dbPath, bakPath);
+      backedUp = true;
+      console.log(`[PHP Server] Safety backup created at: ${bakPath}`);
+    }
+
     fs.copyFileSync(sourcePath, dbPath);
     // Run migrations on the imported DB to ensure schema is up to date
     runArtisan(phpPath, laravelPath, ['migrate', '--force']);
     return true;
   } catch (e: any) {
     console.error('[PHP Server] Import failed:', e.message);
+    
+    // Automatically restore from the safety backup if we created one
+    if (backedUp && fs.existsSync(bakPath)) {
+      try {
+        fs.copyFileSync(bakPath, dbPath);
+        console.log('[PHP Server] Successfully restored local DB from safety backup');
+      } catch (restoreErr: any) {
+        console.error('[PHP Server] Failed to restore from safety backup:', restoreErr.message);
+      }
+    }
+    
     return false;
   }
 }

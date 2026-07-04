@@ -45,9 +45,35 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   gdriveDisconnect: () => ipcRenderer.invoke('gdrive:disconnect'),
   gdriveStatus: () => ipcRenderer.invoke('gdrive:status'),
 
+  // Google Drive Sync Events (push from main → renderer)
+  onSyncEvent: (callback: (_event: any, data: any) => void) => {
+    ipcRenderer.on('sync-event', callback);
+    return () => ipcRenderer.off('sync-event', callback);
+  },
+
+  // Local Backups
+  backupList: () => ipcRenderer.invoke('backup:list'),
+  backupRestore: (filename: string) => ipcRenderer.invoke('backup:restore', { filename }),
+  backupCreateNow: () => ipcRenderer.invoke('backup:create-now'),
+
+  // Auto-Updater
+  updaterCheck: () => ipcRenderer.invoke('updater:check'),
+  updaterInstall: () => ipcRenderer.invoke('updater:install'),
+  onUpdateEvent: (callback: (_event: any, data: any) => void) => {
+    ipcRenderer.on('update-event', callback);
+    return () => ipcRenderer.off('update-event', callback);
+  },
+
+  // Keyboard Shortcuts (push from main → renderer)
+  onShortcut: (callback: (_event: any, data: { action: string }) => void) => {
+    ipcRenderer.on('shortcut', callback);
+    return () => ipcRenderer.off('shortcut', callback);
+  },
+
   // Printers
   getPrinters: () => ipcRenderer.invoke('get-printers'),
   printThermal: (printerName: string) =>
     ipcRenderer.invoke('print-thermal', { printerName }),
 })
+
 

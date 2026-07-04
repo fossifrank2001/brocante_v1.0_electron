@@ -44,11 +44,17 @@
   "win": {
     "target": [
       {
-        "target": "dir",
+        "target": "nsis",
         "arch": ["x64"]
       }
     ],
-    "artifactName": "${productName}-Windows-${version}",
+    "artifactName": "Brocante-Setup-${version}.exe",
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://example.com/brocante/updates/"
+      }
+    ],
     "sign": null,
     "verifyUpdateCodeSignature": false
   },

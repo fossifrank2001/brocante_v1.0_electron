@@ -8,6 +8,7 @@ export interface IPerson{
     phone : string;
     company_balance?: number;
     remaining_balance?: string;
+    loyalty_points?: number;
 }
 
 export interface IPersonList{

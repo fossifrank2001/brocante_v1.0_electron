@@ -46,6 +46,7 @@ import StockMovementsPage from "@/Components/dashboard/stock/StockMovementsPage"
 import TemplateBuilder from "@/Components/dashboard/templates/TemplateBuilder";
 import ReportsPage from "@/Components/dashboard/reports/ReportsPage";
 import InventoryPage from "@/Components/dashboard/inventory/InventoryPage";
+import PurchaseOrdersPage from "@/Components/dashboard/purchaseOrders/PurchaseOrdersPage";
 
 const renderContent = (currentPage, id, param) => {
   switch (currentPage) {
@@ -108,6 +109,8 @@ const renderContent = (currentPage, id, param) => {
       return <ReportsPage />;
     case Pages.INVENTORY:
       return <InventoryPage />;
+    case Pages.PURCHASE_ORDERS:
+      return <PurchaseOrdersPage />;
     case Pages.SUCCESS_ORDER:
       return <SuccessSellPage />;
     case Pages.DASHBOARD:

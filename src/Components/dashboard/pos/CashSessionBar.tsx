@@ -184,7 +184,8 @@ const CashSessionBar = () => {
     const elapsed = currentSession.opened_at
         ? Math.floor((Date.now() - new Date(currentSession.opened_at).getTime()) / 60000)
         : 0;
-    const hours = Math.floor(elapsed / 60);
+    const days = Math.floor(elapsed / 1440);
+    const hours = Math.floor((elapsed % 1440) / 60);
     const minutes = elapsed % 60;
 
     return (
@@ -217,7 +218,11 @@ const CashSessionBar = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <AccessTime sx={{ fontSize: 14, color: '#64748b' }} />
                         <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b' }}>
-                            {hours > 0 ? `${hours}h${minutes.toString().padStart(2, '0')}` : `${minutes}min`}
+                            {days > 0
+                                ? `${days}j ${hours}h${minutes.toString().padStart(2, '0')}`
+                                : hours > 0
+                                    ? `${hours}h${minutes.toString().padStart(2, '0')}`
+                                    : `${minutes}min`}
                         </Typography>
                     </Box>
                 </Tooltip>

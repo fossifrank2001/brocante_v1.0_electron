@@ -2,17 +2,18 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Box, Typography, TextField, InputAdornment, Chip, IconButton,
     Tooltip, CircularProgress, Button, Paper, FormControl, InputLabel,
-    Select, MenuItem, Checkbox, ListItemText, OutlinedInput
+    Select, MenuItem, Checkbox, ListItemText, OutlinedInput, Dialog, Badge
 } from '@mui/material';
 import {
     Search, ShoppingCart, Add, Remove, Delete, Payment,
-    Refresh, PointOfSale, Category, FilterList
+    Refresh, PointOfSale, Category, FilterList, PauseCircleOutline, ListAlt, PlayArrow
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setActivePage } from '@/Data/Slices/NavigationSlice';
 import { Pages } from '@/Data/Objects/state';
-import { addToCart, addToCartWithQuantity, decreaseQuantity, setItemDiscount, clearCart, CartItem } from '@/Data/Slices/dashboard/seller/cartSlice';
+import { addToCart, addToCartWithQuantity, decreaseQuantity, setItemDiscount, clearCart, loadCartSnapshot, CartItem } from '@/Data/Slices/dashboard/seller/cartSlice';
+import { holdOrder, removeHeldOrder, selectHeldOrders, IHeldOrder } from '@/Data/Slices/dashboard/seller/heldOrdersSlice';
 import ProductAPI from '@/Data/Api/Product';
 import CategoryAPI from '@/Data/Api/Category';
 import { IProduct } from '@/Data/Interfaces/Supply';
@@ -32,6 +33,47 @@ const PosExpress: React.FC = () => {
     const dispatch = useAppDispatch();
     const cart = useAppSelector((state) => state.cart);
     const { currentSession } = useAppSelector((state) => state.cashSession);
+    const heldOrders = useAppSelector(selectHeldOrders);
+    const [heldDialogOpen, setHeldDialogOpen] = useState(false);
+
+    const handleHoldOrder = () => {
+        if (cart.items.length === 0) {
+            Toast.error(t('pos.cartEmpty'));
+            return;
+        }
+        dispatch(holdOrder({
+            label: `#${heldOrders.length + 1}`,
+            items: cart.items,
+            totalPrice: cart.totalPrice,
+            totalQuantity: cart.totalQuantity,
+            globalDiscountValue: cart.globalDiscountValue,
+            globalDiscountMode: cart.globalDiscountMode,
+        }));
+        dispatch(clearCart());
+        Toast.success(t('pos.orderHeld', 'Commande mise en attente'));
+    };
+
+    const handleResumeOrder = (order: IHeldOrder) => {
+        if (cart.items.length > 0) {
+            // Park the current cart first to avoid losing it
+            dispatch(holdOrder({
+                label: `#${heldOrders.length + 1}`,
+                items: cart.items,
+                totalPrice: cart.totalPrice,
+                totalQuantity: cart.totalQuantity,
+                globalDiscountValue: cart.globalDiscountValue,
+                globalDiscountMode: cart.globalDiscountMode,
+            }));
+        }
+        dispatch(loadCartSnapshot({
+            items: order.items,
+            globalDiscountValue: order.globalDiscountValue,
+            globalDiscountMode: order.globalDiscountMode,
+        }));
+        dispatch(removeHeldOrder(order.id));
+        setHeldDialogOpen(false);
+        Toast.success(t('pos.orderResumed', 'Commande reprise'));
+    };
 
     const [products, setProducts] = useState<IProduct[]>([]);
     const [categories, setCategories] = useState<ICategory[]>([]);
@@ -199,6 +241,60 @@ const PosExpress: React.FC = () => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [searchTerm, selectedCategoryIds, cart.items.length, currentSession]);
+
+    // Global barcode scanner listener (USB scanners act as rapid keyboard input + Enter)
+    useEffect(() => {
+        let buffer = '';
+        let lastKeyTime = 0;
+        const SCAN_THRESHOLD = 50; // ms between keystrokes to be considered a scanner
+
+        const handleScan = async (code: string) => {
+            if (!code) return;
+            try {
+                setIsScanning(true);
+                const { data: res }: any = await ProductAPI.findByReference(code.trim());
+                if (res && res.data) {
+                    handleAddProduct(res.data);
+                    Toast.success(t('pos.addedToCart', { name: res.data.name }));
+                }
+            } catch (err: any) {
+                if (err?.response?.status !== 404) {
+                    Toast.error(t('pos.searchError'));
+                } else {
+                    Toast.error(t('pos.productNotFound', { ref: code }));
+                }
+            } finally {
+                setIsScanning(false);
+            }
+        };
+
+        const handleKeyPress = (e: KeyboardEvent) => {
+            // Skip if focus is on an input/textarea (let the search field handle it)
+            const target = e.target as HTMLElement;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+                return;
+            }
+
+            const now = Date.now();
+            if (now - lastKeyTime > SCAN_THRESHOLD) {
+                buffer = '';
+            }
+            lastKeyTime = now;
+
+            if (e.key === 'Enter') {
+                if (buffer.length >= 3) {
+                    e.preventDefault();
+                    handleScan(buffer);
+                }
+                buffer = '';
+            } else if (e.key.length === 1) {
+                buffer += e.key;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [cart.items.length]);
 
     const handleAddProduct = (product: IProduct) => {
         if (product.stock_quantity <= 0) {
@@ -472,13 +568,29 @@ const PosExpress: React.FC = () => {
                                 </Typography>
                             </Box>
                         </Box>
-                        {cart.items.length > 0 && (
-                            <Tooltip title={t('pos.clearCart')}>
-                                <IconButton size="small" onClick={() => dispatch(clearCart())} sx={{ color: '#ef4444', bgcolor: 'rgba(239, 68, 68, 0.1)', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.2)' } }}>
-                                    <Delete fontSize="small" />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Tooltip title={t('pos.heldOrders', 'Commandes en attente')}>
+                                <IconButton size="small" onClick={() => setHeldDialogOpen(true)} sx={{ color: '#6366f1', bgcolor: 'rgba(99, 102, 241, 0.1)', '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.2)' } }}>
+                                    <Badge badgeContent={heldOrders.length} color="primary">
+                                        <ListAlt fontSize="small" />
+                                    </Badge>
                                 </IconButton>
                             </Tooltip>
-                        )}
+                            {cart.items.length > 0 && (
+                                <Tooltip title={t('pos.holdOrder', 'Mettre en attente')}>
+                                    <IconButton size="small" onClick={handleHoldOrder} sx={{ color: '#f59e0b', bgcolor: 'rgba(245, 158, 11, 0.1)', '&:hover': { bgcolor: 'rgba(245, 158, 11, 0.2)' } }}>
+                                        <PauseCircleOutline fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+                            {cart.items.length > 0 && (
+                                <Tooltip title={t('pos.clearCart')}>
+                                    <IconButton size="small" onClick={() => dispatch(clearCart())} sx={{ color: '#ef4444', bgcolor: 'rgba(239, 68, 68, 0.1)', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.2)' } }}>
+                                        <Delete fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+                        </Box>
                     </Box>
                 </Box>
                 <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
@@ -543,6 +655,68 @@ const PosExpress: React.FC = () => {
                 open={checkoutDrawerOpen}
                 onClose={() => setCheckoutDrawerOpen(false)}
             />
+
+            <Dialog
+                open={heldDialogOpen}
+                onClose={() => setHeldDialogOpen(false)}
+                PaperProps={{ sx: { borderRadius: '20px', width: 480, maxWidth: '95vw' } }}
+            >
+                <Box sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                        <ListAlt sx={{ color: '#6366f1' }} />
+                        <Typography variant="h6" sx={{ fontWeight: 900 }}>
+                            {t('pos.heldOrders', 'Commandes en attente')} ({heldOrders.length})
+                        </Typography>
+                    </Box>
+                    {heldOrders.length === 0 ? (
+                        <Box sx={{ textAlign: 'center', py: 6, color: '#94a3b8' }}>
+                            <PauseCircleOutline sx={{ fontSize: 48, opacity: 0.4, mb: 1 }} />
+                            <Typography sx={{ fontWeight: 700 }}>{t('pos.noHeldOrders', 'Aucune commande en attente')}</Typography>
+                        </Box>
+                    ) : (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, maxHeight: 420, overflowY: 'auto' }}>
+                            {heldOrders.map((order) => (
+                                <Box
+                                    key={order.id}
+                                    sx={{
+                                        p: 2, borderRadius: '14px', border: '1px solid var(--border-color)',
+                                        bgcolor: 'var(--bg-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1
+                                    }}
+                                >
+                                    <Box sx={{ minWidth: 0 }}>
+                                        <Typography sx={{ fontWeight: 900, color: 'var(--text-primary)' }}>
+                                            {order.label} · {UtilMethods.formatAmount(order.totalPrice)}
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+                                            {order.totalQuantity} {t('pos.totalItems')} · {new Date(order.createdAt).toLocaleTimeString()}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
+                                        <Tooltip title={t('pos.orderResumed', 'Reprendre')}>
+                                            <IconButton size="small" onClick={() => handleResumeOrder(order)} sx={{ color: '#10b981', bgcolor: 'rgba(16, 185, 129, 0.1)', '&:hover': { bgcolor: 'rgba(16, 185, 129, 0.2)' } }}>
+                                                <PlayArrow fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title={t('common.delete')}>
+                                            <IconButton size="small" onClick={() => dispatch(removeHeldOrder(order.id))} sx={{ color: '#ef4444', bgcolor: 'rgba(239, 68, 68, 0.1)', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.2)' } }}>
+                                                <Delete fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Box>
+                                </Box>
+                            ))}
+                        </Box>
+                    )}
+                    <Button
+                        fullWidth
+                        onClick={() => setHeldDialogOpen(false)}
+                        sx={{ mt: 3, borderRadius: '12px', fontWeight: 800, textTransform: 'none' }}
+                        variant="outlined"
+                    >
+                        {t('common.close')}
+                    </Button>
+                </Box>
+            </Dialog>
         </Box>
     );
 };

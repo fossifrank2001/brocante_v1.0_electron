@@ -3,7 +3,7 @@ import {
     Box, Typography, Button, Card, CardContent, Grid, Switch,
     FormControlLabel, TextField, CircularProgress, Chip, IconButton,
     Tooltip, Dialog, DialogTitle, DialogContent, DialogActions,
-    Alert, Divider, Paper, useTheme
+    Alert, Divider, Paper
 } from '@mui/material';
 import {
     Storage as StorageIcon, CloudUpload, CloudDownload, Refresh,
@@ -38,6 +38,8 @@ interface DriveStatus {
     autoSyncInterval: number;
     lastSyncTime: string;
     lastSyncDirection: string;
+    clientId: string;
+    clientSecret: string;
 }
 
 const formatBytes = (bytes: number): string => {
@@ -80,6 +82,16 @@ const DatabaseManagement: React.FC = () => {
         loadDbInfo();
         loadDriveStatus();
     }, [loadDbInfo, loadDriveStatus]);
+
+    // Pré-remplir les configurations à partir de l'état Google Drive
+    useEffect(() => {
+        if (driveStatus) {
+            setGdriveConfig({
+                clientId: driveStatus.clientId || '',
+                clientSecret: driveStatus.clientSecret || ''
+            });
+        }
+    }, [driveStatus]);
 
     // ─── DB Actions ────────────────────────────────
 

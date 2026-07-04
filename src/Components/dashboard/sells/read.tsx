@@ -541,16 +541,16 @@ const ReadSell = () => {
                                                                 <Typography variant="body2" sx={{ color: '#64748b' }}>{UtilMethods.formatAmount(item?.price ?? 0)}</Typography>
                                                             </td>
                                                             <td className="px-4 py-3 text-end">
-                                                                {item.discount_amount > 0 ? (
+                                                                {(item as any)?.discount_amount > 0 ? (
                                                                     <Typography variant="body2" sx={{ color: '#ef4444', fontWeight: 700 }}>
-                                                                        -{UtilMethods.formatAmount(item.discount_amount)}
+                                                                        -{UtilMethods.formatAmount((item as any)?.discount_amount)}
                                                                     </Typography>
                                                                 ) : (
                                                                     <Typography variant="body2" sx={{ color: '#cbd5e1' }}>—</Typography>
                                                                 )}
                                                             </td>
                                                             <td className="px-4 py-3 text-end">
-                                                                <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>{UtilMethods.formatAmount(item?.total_unit ?? 0)}</Typography>
+                                                                <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>{UtilMethods.formatAmount((item as any)?.total_unit ?? 0)}</Typography>
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -562,12 +562,12 @@ const ReadSell = () => {
                                                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                                             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                                                 <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>{t('sellRead.subtotal')}</Typography>
-                                                                <Typography variant="body2" sx={{ fontWeight: 700 }}>{UtilMethods.formatAmount((record?.total_amount ?? 0) + (record?.discount_total ?? 0))}</Typography>
+                                                                <Typography variant="body2" sx={{ fontWeight: 700 }}>{UtilMethods.formatAmount(((record as any)?.total_amount ?? 0) + ((record as any)?.discount_total ?? 0))}</Typography>
                                                             </Box>
-                                                            {record?.discount_total > 0 && (
+                                                            {(record as any)?.discount_total > 0 && (
                                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                                                     <Typography variant="body2" sx={{ color: '#ef4444', fontWeight: 600 }}>{t('common.discount')}</Typography>
-                                                                    <Typography variant="body2" sx={{ color: '#ef4444', fontWeight: 700 }}>-{UtilMethods.formatAmount(record.discount_total)}</Typography>
+                                                                    <Typography variant="body2" sx={{ color: '#ef4444', fontWeight: 700 }}>-{UtilMethods.formatAmount((record as any)?.discount_total)}</Typography>
                                                                 </Box>
                                                             )}
                                                             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -598,6 +598,7 @@ const ReadSell = () => {
                             {record.status !== 'cancelled' && (
                                 <Grid item xs={12}>
                                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                                        {(record.status === 'pending' || record.status === 'partially_paid') && (
                                         <Button
                                             variant="outlined"
                                             color="error"
@@ -607,6 +608,7 @@ const ReadSell = () => {
                                         >
                                             {t('sellRead.cancelSale')}
                                         </Button>
+                                        )}
                                         <Button
                                             variant="outlined"
                                             color="warning"

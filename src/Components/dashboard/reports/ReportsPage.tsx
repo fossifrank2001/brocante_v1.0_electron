@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     Box, Typography, Grid, Card, CardContent, Chip, TextField, Button,
-    Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     CircularProgress, Tab, Tabs, LinearProgress, Alert
 } from '@mui/material';
 import {
-    TbReportAnalytics, TbShoppingCart, TbTrendingUp, TbAlertTriangle,
-    TbCalendar, TbCurrencyDollar, TbPackage, TbChartBar
+    TbShoppingCart, TbTrendingUp, TbAlertTriangle,
+    TbCalendar, TbCurrencyDollar, TbPackage, TbChartBar, TbDownload, TbCalendarTime
 } from 'react-icons/tb';
 import { useTranslation } from 'react-i18next';
 import Breadcrumd from '@/Components/Breadcrumd';
@@ -41,27 +41,55 @@ const ReportsPage: React.FC = () => {
     const [topProducts, setTopProducts] = useState<any[]>([]);
     const [profitData, setProfitData] = useState<any>(null);
     const [lowStockData, setLowStockData] = useState<any>(null);
+    const [expiryData, setExpiryData] = useState<any>(null);
+    const [expiryDays, setExpiryDays] = useState(30);
+    const [exporting, setExporting] = useState(false);
+
+    const reportTypes = ['sales_summary', 'top_products', 'profit', 'low_stock', 'expiry'];
+
+    const handleExport = async () => {
+        const type = reportTypes[activeTab] || 'sales_summary';
+        setExporting(true);
+        try {
+            const params = activeTab === 3 || activeTab === 4 ? {} : { start_date: startDate, end_date: endDate };
+            const res = await ReportAPI.exportCsv(type, params);
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `report_${type}_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error('Export error:', e);
+        } finally {
+            setExporting(false);
+        }
+    };
 
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
             const params = { start_date: startDate, end_date: endDate };
-            const [salesRes, topRes, profitRes, lowStockRes] = await Promise.all([
+            const [salesRes, topRes, profitRes, lowStockRes, expiryRes] = await Promise.all([
                 ReportAPI.salesSummary(params),
                 ReportAPI.topProducts(params),
                 ReportAPI.profitReport(params),
                 ReportAPI.lowStock(),
+                ReportAPI.expiryReport({ days: expiryDays }),
             ]);
             setSalesData(salesRes.data?.data);
             setTopProducts(topRes.data?.data || []);
             setProfitData(profitRes.data?.data);
             setLowStockData(lowStockRes.data?.data);
+            setExpiryData(expiryRes.data?.data);
         } catch (e) {
             console.error('Report load error:', e);
         } finally {
             setLoading(false);
         }
-    }, [startDate, endDate]);
+    }, [startDate, endDate, expiryDays]);
 
     useEffect(() => { loadData(); }, [loadData]);
 
@@ -97,6 +125,11 @@ const ReportsPage: React.FC = () => {
                         sx={{ borderRadius: '12px', textTransform: 'none', bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' } }}>
                         {loading ? <CircularProgress size={20} color="inherit" /> : t('reports.apply')}
                     </Button>
+                    <Button variant="outlined" onClick={handleExport} disabled={exporting}
+                        startIcon={exporting ? <CircularProgress size={16} color="inherit" /> : <TbDownload size={18} />}
+                        sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 600, borderColor: '#e2e8f0', color: '#64748b', '&:hover': { borderColor: '#cbd5e1', bgcolor: '#f8fafc' } }}>
+                        {t('reports.exportCsv', 'Exporter CSV')}
+                    </Button>
                 </Box>
             </Card>
 
@@ -106,6 +139,7 @@ const ReportsPage: React.FC = () => {
                 <Tab icon={<TbTrendingUp size={18} />} iconPosition="start" label={t('reports.topProducts')} />
                 <Tab icon={<TbCurrencyDollar size={18} />} iconPosition="start" label={t('reports.profitReport')} />
                 <Tab icon={<TbAlertTriangle size={18} />} iconPosition="start" label={t('reports.lowStock')} />
+                <Tab icon={<TbCalendarTime size={18} />} iconPosition="start" label={t('reports.expiry', 'Expiration')} />
             </Tabs>
 
             {loading && <LinearProgress sx={{ mb: 2, borderRadius: 2 }} />}
@@ -176,6 +210,8 @@ const ReportsPage: React.FC = () => {
                                                     <TableCell sx={{ fontWeight: 700 }}>Vendeur</TableCell>
                                                     <TableCell sx={{ fontWeight: 700 }} align="right">{t('reports.count')}</TableCell>
                                                     <TableCell sx={{ fontWeight: 700 }} align="right">{t('reports.revenue')}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 700 }} align="right">{t('reports.avgBasket', 'Panier moyen')}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 700 }} align="right">{t('reports.totalDiscounts')}</TableCell>
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
@@ -184,6 +220,8 @@ const ReportsPage: React.FC = () => {
                                                         <TableCell>{row.seller?.first_name} {row.seller?.last_name}</TableCell>
                                                         <TableCell align="right">{row.count}</TableCell>
                                                         <TableCell align="right" sx={{ fontWeight: 600 }}>{UtilMethods.formatAmount(row.revenue)}</TableCell>
+                                                        <TableCell align="right">{UtilMethods.formatAmount(row.avg_basket || 0)}</TableCell>
+                                                        <TableCell align="right" sx={{ color: '#7c3aed' }}>{UtilMethods.formatAmount(row.total_discount || 0)}</TableCell>
                                                     </TableRow>
                                                 ))}
                                             </TableBody>
@@ -382,6 +420,86 @@ const ReportsPage: React.FC = () => {
                             </Card>
                         ) : !loading && (
                             <Alert severity="success" sx={{ borderRadius: '16px' }}>Tous les produits sont en stock !</Alert>
+                        )}
+                    </motion.div>
+                )}
+            </TabPanel>
+
+            {/* Expiry Tracking */}
+            <TabPanel value={activeTab} index={4}>
+                {expiryData && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+                            <TextField
+                                type="number" size="small" label={t('reports.expiryDays', 'Jours avant alerte')}
+                                value={expiryDays} onChange={e => setExpiryDays(parseInt(e.target.value) || 30)}
+                                sx={{ width: 200, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                                InputLabelProps={{ shrink: true }}
+                            />
+                            <Button variant="outlined" size="small" onClick={() => loadData()}
+                                sx={{ borderRadius: '12px', textTransform: 'none' }}>
+                                {t('common.refresh')}
+                            </Button>
+                        </Box>
+
+                        <Grid container spacing={2} sx={{ mb: 3 }}>
+                            {[
+                                { label: t('reports.expired', 'Expirés'), value: expiryData.counts?.expired || 0, color: '#dc2626', bg: '#fef2f2' },
+                                { label: t('reports.expiringSoon', 'Bientôt expirés'), value: expiryData.counts?.expiring_soon || 0, color: '#d97706', bg: '#fffbeb' },
+                                { label: t('reports.safe', 'Sains'), value: expiryData.counts?.safe || 0, color: '#059669', bg: '#ecfdf5' },
+                            ].map((item, i) => (
+                                <Grid item xs={12} sm={4} key={i}>
+                                    <Card sx={{ ...statCardStyle, bgcolor: item.bg }}>
+                                        <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                                            <Typography variant="h4" sx={{ fontWeight: 900, color: item.color }}>{item.value}</Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 600, color: item.color }}>{item.label}</Typography>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+                            ))}
+                        </Grid>
+
+                        {(expiryData.expired?.length > 0 || expiryData.expiring_soon?.length > 0) ? (
+                            <Card sx={{ ...statCardStyle }}>
+                                <CardContent>
+                                    <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>{t('reports.expiryTracking', 'Suivi d\'expiration')}</Typography>
+                                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: '12px' }}>
+                                        <Table size="small">
+                                            <TableHead>
+                                                <TableRow sx={{ bgcolor: 'rgba(248, 250, 252, 0.8)' }}>
+                                                    <TableCell sx={{ fontWeight: 700 }}>Produit</TableCell>
+                                                    <TableCell sx={{ fontWeight: 700 }}>Référence</TableCell>
+                                                    <TableCell align="right" sx={{ fontWeight: 700 }}>Stock</TableCell>
+                                                    <TableCell align="right" sx={{ fontWeight: 700 }}>Expiration</TableCell>
+                                                    <TableCell align="right" sx={{ fontWeight: 700 }}>Jours restants</TableCell>
+                                                    <TableCell align="center" sx={{ fontWeight: 700 }}>Statut</TableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {[...(expiryData.expired || []), ...(expiryData.expiring_soon || [])].map((product: any) => (
+                                                    <TableRow key={product.id} hover>
+                                                        <TableCell sx={{ fontWeight: 600 }}>{product.name}</TableCell>
+                                                        <TableCell><Typography variant="caption" color="text.secondary">{product.internal_reference || '-'}</Typography></TableCell>
+                                                        <TableCell align="right">{product.stock_quantity}</TableCell>
+                                                        <TableCell align="right">{product.expiry_date ? new Date(product.expiry_date).toLocaleDateString('fr-FR') : '-'}</TableCell>
+                                                        <TableCell align="right" sx={{ fontWeight: 700, color: product.days_until_expiry < 0 ? '#dc2626' : '#d97706' }}>
+                                                            {product.days_until_expiry < 0 ? `${Math.abs(product.days_until_expiry)} j dépassés` : `${product.days_until_expiry} j`}
+                                                        </TableCell>
+                                                        <TableCell align="center">
+                                                            <Chip size="small"
+                                                                label={product.expiry_status === 'expired' ? 'Expiré' : 'Bientôt'}
+                                                                sx={{ fontWeight: 700, bgcolor: product.expiry_status === 'expired' ? '#fef2f2' : '#fffbeb', color: product.expiry_status === 'expired' ? '#dc2626' : '#d97706', borderRadius: '8px' }}
+                                                            />
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer>
+                                </CardContent>
+                            </Card>
+                        ) : !loading && (
+                            <Alert severity="success" sx={{ borderRadius: '16px' }}>Aucun produit proche de l'expiration !</Alert>
                         )}
                     </motion.div>
                 )}

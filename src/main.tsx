@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import 'Styles/index.less';
+import '@fontsource/comfortaa/300.css';
+import '@fontsource/comfortaa/400.css';
+import '@fontsource/comfortaa/500.css';
+import '@fontsource/comfortaa/600.css';
+import '@fontsource/comfortaa/700.css';
 import { Provider } from "react-redux";
 import { ToastContainer } from "react-toastify";
 import store from 'Data/Objects/store';

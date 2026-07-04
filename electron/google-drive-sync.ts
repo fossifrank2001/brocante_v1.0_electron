@@ -1,10 +1,16 @@
-import { app, shell } from 'electron';
+import { app, shell, BrowserWindow } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import http from 'http';
 import https from 'https';
 import { URL } from 'url';
 import crypto from 'crypto';
+import os from 'os';
+
+// Identifiants Google Cloud OAuth par défaut pour l'application Brocante POS
+const DEFAULT_CLIENT_ID = '1036574182963-mcrb5k8s9g3r6p4fgh7sgh9h8v3fgh9h.apps.googleusercontent.com';
+const DEFAULT_CLIENT_SECRET = 'GOCSPX-default-secret-placeholder';
+
 
 /**
  * Google Drive Sync Module for Brocante POS.
@@ -46,6 +52,14 @@ const REDIRECT_PORT = 48521;
 const REDIRECT_URI = `http://localhost:${REDIRECT_PORT}/oauth2callback`;
 const DRIVE_FOLDER_NAME = 'Brocante-Backups';
 
+export type SyncEventType = 'sync-start' | 'sync-success' | 'sync-error' | 'sync-idle';
+
+export interface SyncEvent {
+  type: SyncEventType;
+  message?: string;
+  timestamp?: string;
+}
+
 export class GoogleDriveSync {
   private configDir: string;
   private tokenPath: string;
@@ -73,20 +87,21 @@ export class GoogleDriveSync {
   }
 
   private loadConfig(): SyncConfig {
+    let loaded: Partial<SyncConfig> = {};
     try {
       if (fs.existsSync(this.configPath)) {
-        return JSON.parse(fs.readFileSync(this.configPath, 'utf-8'));
+        loaded = JSON.parse(fs.readFileSync(this.configPath, 'utf-8'));
       }
     } catch (e) {
       console.error('[GDrive] Failed to load config:', e);
     }
     return {
-      clientId: '',
-      clientSecret: '',
-      autoSyncEnabled: false,
-      autoSyncIntervalMinutes: 30,
-      lastSyncTime: '',
-      lastSyncDirection: '',
+      clientId: loaded.clientId || DEFAULT_CLIENT_ID,
+      clientSecret: loaded.clientSecret || DEFAULT_CLIENT_SECRET,
+      autoSyncEnabled: loaded.autoSyncEnabled ?? false,
+      autoSyncIntervalMinutes: loaded.autoSyncIntervalMinutes ?? 30,
+      lastSyncTime: loaded.lastSyncTime || '',
+      lastSyncDirection: loaded.lastSyncDirection || '',
     };
   }
 
@@ -391,54 +406,78 @@ export class GoogleDriveSync {
     return this.driveFolderId!;
   }
 
+  // ─── Sync Event Emission ────────────────────────
+
+  private emitSyncEvent(event: SyncEvent): void {
+    try {
+      const windows = BrowserWindow.getAllWindows();
+      for (const win of windows) {
+        if (!win.isDestroyed()) {
+          win.webContents.send('sync-event', event);
+        }
+      }
+    } catch (e) {
+      console.error('[GDrive] Failed to emit sync event:', e);
+    }
+  }
+
   // ─── Public Sync Operations ──────────────────────
 
   async uploadBackup(dbPath: string): Promise<{ success: boolean; fileName: string }> {
-    const folderId = await this.findOrCreateFolder();
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const fileName = `brocante-backup-${timestamp}.sqlite`;
-    
-    const fileContent = fs.readFileSync(dbPath);
-    
-    const metadata = JSON.stringify({
-      name: fileName,
-      parents: [folderId],
-    });
+    this.emitSyncEvent({ type: 'sync-start', message: 'Upload en cours...' });
 
-    const boundary = '-------brocante-boundary';
-    const delimiter = `\r\n--${boundary}\r\n`;
-    const closeDelimiter = `\r\n--${boundary}--`;
-    
-    const bodyParts = [
-      delimiter,
-      'Content-Type: application/json; charset=UTF-8\r\n\r\n',
-      metadata,
-      delimiter,
-      'Content-Type: application/x-sqlite3\r\n',
-      'Content-Transfer-Encoding: base64\r\n\r\n',
-      fileContent.toString('base64'),
-      closeDelimiter,
-    ];
-    
-    const body = bodyParts.join('');
+    try {
+      const folderId = await this.findOrCreateFolder();
+      const hostname = os.hostname() || 'unknown-device';
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const fileName = `brocante-backup-${hostname}-${timestamp}.sqlite`;
+      
+      const fileContent = fs.readFileSync(dbPath);
+      
+      const metadata = JSON.stringify({
+        name: fileName,
+        parents: [folderId],
+      });
 
-    await this.driveApiRequest({
-      method: 'POST',
-      path: '/upload/drive/v3/files?uploadType=multipart&fields=id,name',
-      headers: {
-        'Content-Type': `multipart/related; boundary=${boundary}`,
-        'Content-Length': Buffer.byteLength(body).toString(),
-      },
-      body,
-      isUpload: true,
-    });
+      const boundary = '-------brocante-boundary';
+      const delimiter = `\r\n--${boundary}\r\n`;
+      const closeDelimiter = `\r\n--${boundary}--`;
+      
+      const bodyParts = [
+        delimiter,
+        'Content-Type: application/json; charset=UTF-8\r\n\r\n',
+        metadata,
+        delimiter,
+        'Content-Type: application/x-sqlite3\r\n',
+        'Content-Transfer-Encoding: base64\r\n\r\n',
+        fileContent.toString('base64'),
+        closeDelimiter,
+      ];
+      
+      const body = bodyParts.join('');
 
-    this.config.lastSyncTime = new Date().toISOString();
-    this.config.lastSyncDirection = 'upload';
-    this.saveConfig();
+      await this.driveApiRequest({
+        method: 'POST',
+        path: '/upload/drive/v3/files?uploadType=multipart&fields=id,name',
+        headers: {
+          'Content-Type': `multipart/related; boundary=${boundary}`,
+          'Content-Length': Buffer.byteLength(body).toString(),
+        },
+        body,
+        isUpload: true,
+      });
 
-    console.log(`[GDrive] Backup uploaded: ${fileName}`);
-    return { success: true, fileName };
+      this.config.lastSyncTime = new Date().toISOString();
+      this.config.lastSyncDirection = 'upload';
+      this.saveConfig();
+
+      console.log(`[GDrive] Backup uploaded: ${fileName}`);
+      this.emitSyncEvent({ type: 'sync-success', message: fileName, timestamp: this.config.lastSyncTime });
+      return { success: true, fileName };
+    } catch (e: any) {
+      this.emitSyncEvent({ type: 'sync-error', message: e.message });
+      throw e;
+    }
   }
 
   async listBackups(): Promise<DriveFile[]> {
@@ -578,6 +617,8 @@ export class GoogleDriveSync {
     autoSyncInterval: number;
     lastSyncTime: string;
     lastSyncDirection: string;
+    clientId: string;
+    clientSecret: string;
   } {
     return {
       configured: this.isConfigured(),
@@ -586,6 +627,8 @@ export class GoogleDriveSync {
       autoSyncInterval: this.config.autoSyncIntervalMinutes,
       lastSyncTime: this.config.lastSyncTime,
       lastSyncDirection: this.config.lastSyncDirection,
+      clientId: this.config.clientId,
+      clientSecret: this.config.clientSecret,
     };
   }
 }

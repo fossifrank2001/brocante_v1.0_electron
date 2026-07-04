@@ -72,6 +72,18 @@ class CustomerAPI {
             throw error;
         }
     }
+
+    static async history(personId: number, page = 1, perPage = 15): Promise<InferApiResponse<any>> {
+        try {
+            const response = await axiosInstance.get(`/customers/${personId}/history`, {
+                params: { page, per_page: perPage },
+            });
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching customer history:", error);
+            throw error;
+        }
+    }
 }
 
 export default CustomerAPI;

@@ -29,6 +29,7 @@ import {
     Payments as PaymentsIcon,
     Description as DescriptionIcon,
     LocalOffer as OfferIcon,
+    Loyalty as LoyaltyIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import StoreSettingAPI from '@/Data/Api/StoreSetting';
@@ -248,6 +249,7 @@ const StoreSettingsPage: React.FC = () => {
                     >
                         <Tab icon={<StoreIcon />} iconPosition="start" label={t('settings.tabs.identity')} />
                         <Tab icon={<InventoryIcon />} iconPosition="start" label={t('settings.tabs.stockPos')} />
+                        <Tab icon={<LoyaltyIcon />} iconPosition="start" label={t('settings.tabs.loyalty')} />
                         <Tab icon={<StorageTabIcon />} iconPosition="start" label={t('settings.tabs.database')} />
                     </Tabs>
                 </Box>
@@ -589,8 +591,101 @@ const StoreSettingsPage: React.FC = () => {
                         </Grid>
                     </TabPanel>
 
-                    {/* ── SECTION 2: BASE DE DONNÉES ── */}
+                    {/* ── SECTION 2: FIDÉLITÉ ── */}
                     <TabPanel value={tab} index={2}>
+                        <Grid container spacing={4}>
+                            <Grid item xs={12} md={6}>
+                                <Card variant="outlined" sx={{ borderRadius: '16px', height: '100%', borderColor: 'secondary.light' }}>
+                                    <CardContent>
+                                        <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+                                            <LoyaltyIcon color="secondary" />
+                                            <Typography variant="h6" fontWeight={700}>{t('settings.loyalty.title')}</Typography>
+                                        </Box>
+                                        <Divider sx={{ mb: 3 }} />
+                                        <Box display="flex" flexDirection="column" gap={3}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Switch
+                                                        checked={form.loyalty_enabled ?? false}
+                                                        onChange={e => handleChange('loyalty_enabled', e.target.checked)}
+                                                        color="secondary"
+                                                    />
+                                                }
+                                                label={<Typography fontWeight={600}>{t('settings.loyalty.enableProgram')}</Typography>}
+                                            />
+                                            <Typography variant="body2" color="text.secondary">
+                                                {t('settings.loyalty.enableDescription')}
+                                            </Typography>
+
+                                            <Divider />
+
+                                            <TextField
+                                                label={t('settings.loyalty.pointsPerHundred')}
+                                                type="number"
+                                                value={form.loyalty_points_per_hundred ?? 1}
+                                                onChange={e => handleChange('loyalty_points_per_hundred', parseFloat(e.target.value) || 0)}
+                                                disabled={!form.loyalty_enabled}
+                                                fullWidth
+                                                size="small"
+                                                InputProps={{
+                                                    startAdornment: <InputAdornment position="start"><LoyaltyIcon sx={{ opacity: 0.5, fontSize: 20 }} /></InputAdornment>,
+                                                    endAdornment: <InputAdornment position="end">pts / 100</InputAdornment>,
+                                                }}
+                                                helperText={t('settings.loyalty.pointsHelper')}
+                                            />
+
+                                            <Divider />
+
+                                            <TextField
+                                                label={t('settings.loyalty.pointValue')}
+                                                type="number"
+                                                value={form.loyalty_points_value ?? 1}
+                                                onChange={e => handleChange('loyalty_points_value', parseFloat(e.target.value) || 0)}
+                                                disabled={!form.loyalty_enabled}
+                                                fullWidth
+                                                size="small"
+                                                InputProps={{
+                                                    startAdornment: <InputAdornment position="start"><OfferIcon sx={{ opacity: 0.5, fontSize: 20 }} /></InputAdornment>,
+                                                }}
+                                                helperText={t('settings.loyalty.pointValueHelper')}
+                                            />
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                                <Card variant="outlined" sx={{ borderRadius: '16px', height: '100%', borderColor: 'divider' }}>
+                                    <CardContent>
+                                        <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+                                            <OfferIcon color="primary" />
+                                            <Typography variant="h6" fontWeight={700}>{t('settings.loyalty.howItWorks')}</Typography>
+                                        </Box>
+                                        <Divider sx={{ mb: 3 }} />
+                                        <Box display="flex" flexDirection="column" gap={2}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                {t('settings.loyalty.explanation1')}
+                                            </Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                {t('settings.loyalty.explanation2')}
+                                            </Typography>
+                                            <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: '12px', mt: 1 }}>
+                                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600, mb: 1 }}>
+                                                    {t('settings.loyalty.example')}
+                                                </Typography>
+                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                    {t('settings.loyalty.exampleDetail', { rate: form.loyalty_points_per_hundred ?? 1 })}
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        </Grid>
+                    </TabPanel>
+
+                    {/* ── SECTION 3: BASE DE DONNÉES ── */}
+                    <TabPanel value={tab} index={3}>
                         <DatabaseManagement />
                     </TabPanel>
                 </Box>

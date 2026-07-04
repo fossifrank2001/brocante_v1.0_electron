@@ -52,8 +52,11 @@ export interface IInvoice {
     debt_coverage?: IDebtCoverageInfo;
     customer?: {
         id: number;
-        first_name: string;
-        last_name: string;
+        firstname: string;
+        lastname: string;
+        phone?: string;
+        address?: string;
+        email?: string;
         company_balance: number;
     };
 }

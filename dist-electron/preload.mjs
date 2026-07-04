@@ -36,6 +36,27 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   gdriveSetAutoSync: (enabled, interval) => electron.ipcRenderer.invoke("gdrive:set-auto-sync", { enabled, interval }),
   gdriveDisconnect: () => electron.ipcRenderer.invoke("gdrive:disconnect"),
   gdriveStatus: () => electron.ipcRenderer.invoke("gdrive:status"),
+  // Google Drive Sync Events (push from main → renderer)
+  onSyncEvent: (callback) => {
+    electron.ipcRenderer.on("sync-event", callback);
+    return () => electron.ipcRenderer.off("sync-event", callback);
+  },
+  // Local Backups
+  backupList: () => electron.ipcRenderer.invoke("backup:list"),
+  backupRestore: (filename) => electron.ipcRenderer.invoke("backup:restore", { filename }),
+  backupCreateNow: () => electron.ipcRenderer.invoke("backup:create-now"),
+  // Auto-Updater
+  updaterCheck: () => electron.ipcRenderer.invoke("updater:check"),
+  updaterInstall: () => electron.ipcRenderer.invoke("updater:install"),
+  onUpdateEvent: (callback) => {
+    electron.ipcRenderer.on("update-event", callback);
+    return () => electron.ipcRenderer.off("update-event", callback);
+  },
+  // Keyboard Shortcuts (push from main → renderer)
+  onShortcut: (callback) => {
+    electron.ipcRenderer.on("shortcut", callback);
+    return () => electron.ipcRenderer.off("shortcut", callback);
+  },
   // Printers
   getPrinters: () => electron.ipcRenderer.invoke("get-printers"),
   printThermal: (printerName) => electron.ipcRenderer.invoke("print-thermal", { printerName })

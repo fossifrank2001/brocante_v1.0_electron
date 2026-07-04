@@ -35,6 +35,7 @@ const iconOfMenus: Record<string, string> = {
     PRODUCT_TEMPLATES: 'ti ti-template',
     REPORTS: 'ti ti-report-analytics',
     INVENTORY: 'ti ti-clipboard-list',
+    PURCHASE_ORDERS: 'ti ti-truck-loading',
 }
 
 const getMenuIcon = (code: string): string => {

@@ -12,6 +12,15 @@ const ReportAPI = {
 
     lowStock: () =>
         axiosInstance.get('/reports/low-stock'),
+
+    expiryReport: (params?: Record<string, any>) =>
+        axiosInstance.get('/reports/expiry', { params }),
+
+    exportCsv: (type: string, params?: Record<string, any>) =>
+        axiosInstance.get('/reports/export', {
+            params: { type, ...params },
+            responseType: 'blob',
+        }),
 };
 
 export default ReportAPI;

@@ -39,6 +39,7 @@ export interface FormValues {
     amount_paid: number;
     use_company_balance?: boolean;
     use_surplus_for_debts?: boolean;
+    loyalty_points_to_redeem?: number;
 }
 
 const stepVariants = {
@@ -505,7 +506,8 @@ const treatedDataFunc = (_data: FormValues, useCompanyBalance = false, useSurplu
         })),
         has_authorized: _data.has_authorized,
         use_company_balance: useCompanyBalance,
-        use_surplus_for_debts: useSurplusForDebts
+        use_surplus_for_debts: useSurplusForDebts,
+        loyalty_points_to_redeem: _data.loyalty_points_to_redeem ?? 0,
     };
 
     console.log("Formatted data ::: ", formattedData)
